@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DataTrace — Проверка утечек</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+      background: #0f1115; color: #e6e8ef;
+    }
+    .container { max-width: 880px; margin: 48px auto; padding: 0 20px; }
+    .card {
+      background: #141824; border: 1px solid #23283b; border-radius: 16px; padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    h1 { font-size: 26px; margin: 0 0 12px; letter-spacing: 0.2px; }
+    p.muted { color: #a3acc3; margin: 0 0 20px; }
+    .row { display: flex; gap: 12px; }
+    input[type="text"] {
+      flex: 1; background: #0f1320; color: #e6e8ef; border: 1px solid #2a3046;
+      border-radius: 12px; padding: 14px 16px; outline: none; font-size: 15px;
+    }
+    input[type="text"]:focus { border-color: #415bff; box-shadow: 0 0 0 4px rgba(65,91,255,0.12); }
+    button {
+      background: #415bff; color: #fff; border: 0; padding: 14px 18px; border-radius: 12px;
+      font-weight: 600; cursor: pointer; min-width: 160px;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .progress { margin: 16px 0 4px; height: 8px; background: #0f1320; border-radius: 999px; overflow: hidden; border: 1px solid #2a3046; }
+    .bar { height: 100%; width: 0; background: linear-gradient(90deg, #5b7bff, #7c4dff); transition: width .35s ease; }
+    .small { font-size: 12px; color: #9aa3ba; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+    .mini-btn { font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid #2a3046; background: #0f1320; color: #e6e8ef; cursor: pointer; }
+    .mini-btn:hover { border-color: #415bff; }
+    .result-card {
+      background: #101524; border: 1px solid #23283b; border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    }
+    .result-header {
+      display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+    }
+    .result-content {
+      margin-top: 12px; display: none;
+    }
+    .result-card.open .result-content {
+      display: block;
+    }
+    .badge {
+      display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid #2a3046; margin-left: 8px;
+    }
+    .badge.found { background: rgba(255,128,128,0.12); color: #ff8080; border-color: rgba(255,128,128,0.35); }
+    .badge.empty { background: rgba(109,209,147,0.12); color: #6dd193; border-color: rgba(109,209,147,0.35); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Проверка утечек</h1>
+      <p class="muted">Выберите режим. Мы последовательно проверим несколько источников.</p>
+      
+      <div class="row" style="gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+        <button id="modeLeaks" class="mini-btn" style="border-color:#415bff;color:#aebcff">Поиск утечек</button>
+        <button id="modeCompany" class="mini-btn">Проверить компанию</button>
+      </div>
+      
+      <div class="row" style="gap: 10px; flex-wrap: wrap;">
+        <select id="field" style="background:#0f1320;color:#e6e8ef;border:1px solid #2a3046;border-radius:12px;padding:14px 12px;min-width:200px;">
+          <option value="phone">Телефон</option>
+          <option value="email">Email</option>
+          <option value="vk">VK</option>
+          <option value="ok">Одноклассники</option>
+          <option value="inn">ИНН</option>
+          <option value="snils">СНИЛС</option>
+        </select>
+        <input id="q" type="text" placeholder="Например: +79990000000" />
+        <button id="btn">Проверить</button>
+      </div>
+      
+      <div class="progress" aria-hidden="true">
+        <div class="bar" id="bar"></div>
+      </div>
+      <div class="small" id="status">Ожидание ввода…</div>
+
+      <div class="grid" id="results"></div>
+      <div id="companyReact" class="mt-4"></div>
+    </div>
+  </div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <script>
+    const React = window.React;
+    const ReactDOM = window.ReactDOM;
+
+    // Элементы DOM
+    const q = document.getElementById('q');
+    const fieldSel = document.getElementById('field');
+    const btn = document.getElementById('btn');
+    const modeLeaks = document.getElementById('modeLeaks');
+    const modeCompany = document.getElementById('modeCompany');
+    const bar = document.getElementById('bar');
+    const statusEl = document.getElementById('status');
+    const results = document.getElementById('results');
+
+    // Переменные состояния
+    let companyMode = false;
+    const API_BASE = '';
+
+    // Плейсхолдеры
+    const placeholders = {
+      phone: 'Например: +79990000000',
+      email: 'Например: example@mail.com',
+      vk: 'Ссылка или @username или id123',
+      ok: 'Ссылка на профиль OK или username',
+      inn: 'Например: 781075550363',
+      snils: 'Например: 11581339245'
+    };
+
+    function updatePlaceholder() {
+      const f = fieldSel.value;
+      q.placeholder = placeholders[f] || 'Введите запрос';
+    }
+    updatePlaceholder();
+    fieldSel.addEventListener('change', updatePlaceholder);
+
+    function setProgress(step, total) {
+      const pct = Math.round((step / total) * 100);
+      bar.style.width = pct + '%';
+    }
+
+    // Обработчики режимов
+    modeLeaks.addEventListener('click', () => {
+      companyMode = false;
+      modeLeaks.style.borderColor = '#415bff'; modeLeaks.style.color = '#aebcff';
+      modeCompany.style.borderColor = '#2a3046'; modeCompany.style.color = '#e6e8ef';
+      fieldSel.disabled = false;
+      updatePlaceholder();
+    });
+
+    modeCompany.addEventListener('click', () => {
+      companyMode = true;
+      modeCompany.style.borderColor = '#415bff'; modeCompany.style.color = '#aebcff';
+      modeLeaks.style.borderColor = '#2a3046'; modeLeaks.style.color = '#e6e8ef';
+      fieldSel.value = 'inn'; fieldSel.disabled = true; updatePlaceholder();
+    });
+
+    // Функция создания карточки результата
+    function createResultCard(item) {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      
+      const hasData = item.ok && item.items && (
+        (Array.isArray(item.items) && item.items.length > 0) ||
+        (typeof item.items === 'object' && Object.keys(item.items).length > 0)
+      );
+
+      card.innerHTML = `
+        <div class="result-header">
+          <div>
+            <h3 style="margin: 0; font-size: 16px;">${item.name}</h3>
+            <span class="badge ${hasData ? 'found' : 'empty'}">${hasData ? 'найдено' : 'нет данных'}</span>
+          </div>
+          <span style="color: #9aa3ba;">▸</span>
+        </div>
+        <div class="result-content">
+          <pre style="background: #0f1320; padding: 12px; border-radius: 8px; font-size: 12px; overflow-x: auto;">${JSON.stringify(item, null, 2)}</pre>
+        </div>
+      `;
+
+      const header = card.querySelector('.result-header');
+      const content = card.querySelector('.result-content');
+      const arrow = card.querySelector('.result-header span:last-child');
+
+      header.addEventListener('click', () => {
+        card.classList.toggle('open');
+        arrow.textContent = card.classList.contains('open') ? '▾' : '▸';
+      });
+
+      return card;
+    }
+
+    // Основной обработчик кнопки
+    btn.addEventListener('click', async () => {
+      const query = (q.value || '').trim();
+      
+      if (!companyMode) {
+        if (query.length < 3) { 
+          alert('Введите корректный запрос (мин. 3 символа)'); 
+          return; 
+        }
+      } else {
+        if (!/^\d{10,12}$/.test(query)) { 
+          alert('Введите корректный ИНН (10 или 12 цифр)'); 
+          return; 
+        }
+      }
+
+      // Очищаем результаты
+      results.innerHTML = '';
+      document.getElementById('companyReact').innerHTML = '';
+      setProgress(0, 5);
+      statusEl.textContent = 'Отправка запроса…';
+      btn.disabled = true;
+
+      try {
+        // Отправляем запрос
+        const url = companyMode ? '/api/company-search' : '/api/search';
+        const payload = companyMode ? { inn: query } : { query, field: fieldSel.value };
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        const items = data.results || [];
+
+        // Отображаем результаты
+        items.forEach((item, idx) => {
+          const card = createResultCard(item);
+          results.appendChild(card);
+          setProgress(idx + 1, items.length || 5);
+        });
+
+        setProgress(5, 5);
+        statusEl.textContent = 'Готово';
+
+      } catch (e) {
+        console.error('Ошибка:', e);
+        statusEl.textContent = 'Ошибка запроса: ' + e.message;
+        results.innerHTML = `<div style="color: #ff8080; padding: 16px;">Ошибка: ${e.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Обработка Enter
+    q.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !btn.disabled) {
+        btn.click();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Команды для подключения к GitHub (замени YOUR_USERNAME на свой username):
+
+git remote add origin https://github.com/YOUR_USERNAME/datatrace-monorepo.git
+git branch -M main
+git push -u origin main
+
+# Пример:
+# git remote add origin https://github.com/johndoe/datatrace-monorepo.git
+# git branch -M main  
+# git push -u origin main

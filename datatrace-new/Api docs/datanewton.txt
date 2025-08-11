@@ -1,0 +1,200 @@
+Формат запроса
+GET
+https://api.datanewton.ru/v1/counterparty
+Параметры запроса
+key
+string
+required
+API-ключ.
+
+Example:
+mi76aFMdgvml
+filters
+array[string]
+Перечень дополнительных секций с данными, которые нужно включить в ответ, разделённые запятой.
+Если не указан, то возвращается общая информация об организации (названия, дата регистрации, КПП, статус, уставный капитал).
+Возможные значения:
+
+ROSSTAT_BLOCK — данные о кодах Росстата (ОКПО, ОКАТО, ОКФС, ОКТМО, ОКОГУ, ОКОПФ);
+ADDRESS_BLOCK — данные о юридическом адресе и отметках из ЕГРЮЛ;
+MANAGER_BLOCK — данные о руководителях организации, имеющих право действовать от имени ЮЛ без доверенности;
+OWNER_BLOCK — данные об учредителях и участниках организации (физических лицах, российских ЮЛ, иностранных ЮЛ, ПИФах, государственных учреждениях и субъектах РФ, инвестиционных товариществах);
+OKVED_BLOCK — данные об основных и дополнительных видах экономической деятельности (кодах ОКВЭД) организации;
+NEGATIVE_LISTS_BLOCK — данные о присутствии контрагента (в том числе руководителей, учредителей) в негативных списках: дисквалификация, недостоверные сведения, РНП и т.д.;
+WORKERS_COUNT_BLOCK — данные о среднесписочной численности сотрудников по годам;
+CONTACT_BLOCK — данные о контактах (email, web-сайт, телефон)
+Allowed values:
+ROSSTAT_BLOCK
+ADDRESS_BLOCK
+MANAGER_BLOCK
+OWNER_BLOCK
+OKVED_BLOCK
+NEGATIVE_LISTS_BLOCK
+WORKERS_COUNT_BLOCK
+CONTACT_BLOCK
+Examples:
+OWNER_BLOCK
+ADDRESS_BLOCK
+inn
+string
+ИНН организации или ИП. Должен быть указан, если не указан ОГРН/ОГРНИП. В случае определения нескольких организаций с этим ИНН (например, при наличии филиалов) будет возвращена информация по головной организации.
+
+Example:
+9728006808
+Match pattern:
+^$|^\d{10}$|^\d{12}$
+ogrn
+string
+ОГРН или ОГРНИП. Должен быть указан, если не указан ИНН.
+
+Example:
+1207700223257
+Match pattern:
+^$|^\d{13}$|^\d{15}$
+Пример запроса
+https://api.datanewton.ru/v1/counterparty?key=mi76aFMdgvml&filters=OWNER_BLOCK%2CADDRESS_BLOCK&ogrn=1207700223257
+Формат ответа
+Успешный ответ
+inn
+string
+ИНН
+
+individual
+object
+Информация об ИП
+
+fio
+string
+ФИО
+
+registration_date
+string<date>
+Дата регистрации
+
+years_from_registration
+integer<int32>
+Количество лет после регистрации
+
+status
+object
+Статус организации
+
+vid_iptext
+string
+Вид ИП
+
+dissolved_date
+string
+Дата прекращения деятельности
+
+ros_stat_codes
+object
+Коды Росстат (stat_registr)
+
+negative_lists
+object
+Негативные списки
+
+workers_count
+dictionary[string, integer<int32>]
+Среднесписочная численность по годам
+
+okveds
+array[object]
+Список ОКВЭД
+
+contacts
+object
+Контакты
+
+ogrn
+string
+ОГРН
+
+company
+object
+Информация о ЮЛ
+
+kpp
+string
+КПП организации
+
+opf
+string
+ОПФ организации
+
+company_names
+object
+Наименование организации
+
+address
+object
+Адрес организации
+
+registration_date
+string<date>
+Дата регистрации
+
+years_from_registration
+integer<int32>
+Количество лет после регистрации
+
+okveds
+array[object]
+Список ОКВЭД
+
+managers
+array[object]
+Руководители (Имеющие право без доверенности действовать от имени ЮЛ)
+
+management_company
+object
+Управляющая компания
+
+status
+object
+Статус организации
+
+dissolved_date
+string<date>
+Дата прекращения деятельности
+
+ros_stat_codes
+object
+Коды Росстат (stat_registr)
+
+owners
+object
+Участники (учредители)
+
+charter_capital
+string
+Уставный капитал (в рублях)
+
+negative_lists
+object
+Негативные списки
+
+workers_count
+dictionary[string, integer<int32>]
+Среднесписочная численность по годам
+
+contacts
+object
+Контакты
+
+tax_mode_info
+object
+Информация о налоговом режиме
+
+predecessors
+array[object]
+Информация о правопредшественниках
+
+successors
+array[object]
+Информация о правопреемниках
+
+available_count
+integer<int32>
+Количество доступных запросов
