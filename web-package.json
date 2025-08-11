@@ -1,0 +1,9 @@
+{
+  "name": "datatrace-web-deploy",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd apps/web && npm install --legacy-peer-deps && npm run build",
+    "start": "cd apps/web && npm start",
+    "dev": "cd apps/web && npm run dev"
+  }
+}
