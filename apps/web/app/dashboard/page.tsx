@@ -45,7 +45,7 @@ export default function DashboardPage() {
 
   const handleLeakSearch = () => {
     // Перенаправление на сервис поиска утечек
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production.up.railway.app'
     console.log('API URL:', apiUrl)
     console.log('Environment:', process.env.NEXT_PUBLIC_API_URL)
     window.open(apiUrl, "_blank")
