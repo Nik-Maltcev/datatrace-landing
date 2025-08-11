@@ -534,7 +534,7 @@ app.post('/api/openai/format-company', async (req, res) => {
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-styled.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-modern.html'));
 });
 
 app.listen(PORT, () => {

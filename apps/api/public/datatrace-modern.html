@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DataTrace — Поиск утечек данных</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=PT+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'PT Mono', monospace;
+      background: white;
+      color: black;
+      margin: 0;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    /* Кнопки в стиле лендинга */
+    .btn-primary {
+      background: black;
+      color: white;
+      border: 2px solid black;
+      padding: 14px 24px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'PT Mono', monospace;
+      text-transform: uppercase;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: white;
+      color: black;
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: black;
+      border: 2px solid #e5e7eb;
+      padding: 8px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'PT Mono', monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    
+    .btn-secondary:hover {
+      border-color: black;
+    }
+    
+    .btn-secondary.active {
+      border-color: black;
+      background: black;
+      color: white;
+    }
+    
+    /* Поля ввода */
+    .input-field {
+      background: white;
+      color: black;
+      border: 2px solid #e5e7eb;
+      padding: 14px 16px;
+      font-family: 'PT Mono', monospace;
+      transition: border-color 0.2s;
+      flex: 1;
+      font-size: 15px;
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: black;
+    }
+    
+    .select-field {
+      background: white;
+      color: black;
+      border: 2px solid #e5e7eb;
+      padding: 14px 16px;
+      font-family: 'PT Mono', monospace;
+      min-width: 200px;
+      font-size: 15px;
+    }
+    
+    .select-field:focus {
+      outline: none;
+      border-color: black;
+    }
+    
+    /* Карточки результатов */
+    .result-card {
+      background: white;
+      border: 2px solid #e5e7eb;
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: all 0.2s;
+    }
+    
+    .result-card:hover {
+      border-color: black;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    
+    .result-title {
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    
+    .status-badge {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-clean {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    
+    .status-found {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    
+    .status-error {
+      background: #fefce8;
+      color: #ca8a04;
+      border: 1px solid #fde047;
+    }
+    
+    .result-body {
+      display: none;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .result-card.open .result-body {
+      display: block;
+    }
+    
+    .caret {
+      transition: transform 0.2s ease;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    .result-card.open .caret {
+      transform: rotate(90deg);
+    }
+    
+    /* Прогресс */
+    .progress-container {
+      margin: 32px 0;
+      padding: 24px;
+      background: #f9fafb;
+      border: 2px solid #e5e7eb;
+      display: none;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: black;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    
+    .progress-percent {
+      font-weight: 600;
+    }
+    
+    /* Данные */
+    .data-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 12px 16px;
+      margin-top: 16px;
+    }
+    
+    .data-label {
+      font-weight: 600;
+      color: #6b7280;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .data-value {
+      color: black;
+      word-break: break-word;
+      font-size: 14px;
+    }
+    
+    /* Итоговый анализ */
+    .summary-container {
+      margin-top: 32px;
+      padding: 24px;
+      background: #f9fafb;
+      border: 2px solid #e5e7eb;
+      display: none;
+    }
+    
+    .summary-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Футер */
+    .footer-section {
+      margin-top: 48px;
+      padding: 32px;
+      background: black;
+      color: white;
+    }
+    
+    .footer-title {
+      font-weight: 600;
+      margin-bottom: 16px;
+      font-size: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .footer-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .footer-text div {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header в стиле лендинга -->
+  <header class="border-b-2 border-gray-200">
+    <div class="container py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+          </svg>
+          <span class="text-xl font-bold">DataTrace</span>
+        </div>
+        <button onclick="window.close()" class="btn-secondary">
+          Закрыть
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container py-16">
+    <!-- Hero Section -->
+    <div class="text-center mb-16">
+      <h1 class="text-5xl font-bold text-black leading-tight mb-6">
+        Поиск утечек данных
+      </h1>
+      <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        Проверим ваши персональные данные по всем доступным источникам утечек и предоставим детальный анализ
+      </p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="max-w-4xl mx-auto">
+      <!-- Mode Selection -->
+      <div class="flex gap-3 mb-8 justify-center flex-wrap">
+        <button id="modeLeaks" class="btn-secondary active">Поиск утечек</button>
+        <button id="modeCompany" class="btn-secondary">Проверить компанию</button>
+        <button id="fastMode" class="btn-secondary" title="Быстрый режим без ИИ обработки">⚡ Быстро</button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="flex gap-4 mb-8 flex-wrap">
+        <select id="field" class="select-field">
+          <option value="phone">Телефон</option>
+          <option value="email">Email</option>
+          <option value="vk">VK</option>
+          <option value="ok">Одноклассники</option>
+          <option value="inn">ИНН</option>
+          <option value="snils">СНИЛС</option>
+        </select>
+        <input id="q" type="text" placeholder="Например: +79990000000" class="input-field" />
+        <button id="btn" class="btn-primary">Проверить</button>
+      </div>
+
+      <!-- Progress -->
+      <div id="progressContainer" class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text">
+          <span id="progressStatus">Ожидание...</span>
+          <span id="progressPercent" class="progress-percent">0%</span>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results"></div>
+
+      <!-- AI Summary -->
+      <div id="summary" class="summary-container">
+        <h3 class="summary-title">Итоговый анализ ИИ</h3>
+        <div id="summaryBody"></div>
+      </div>
+    </div>
+
+    <!-- Footer Info -->
+    <div class="footer-section">
+      <div class="max-w-4xl mx-auto">
+        <div class="footer-title">Удаление информации</div>
+        <div class="footer-text">
+          <div>1. Запустите бота для удаления данных</div>
+          <div>2. Выберите "Мой профиль"</div>
+          <div>3. Нажмите "Скрыть информацию"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Основные элементы
+    const q = document.getElementById('q');
+    const fieldSel = document.getElementById('field');
+    const btn = document.getElementById('btn');
+    const modeLeaks = document.getElementById('modeLeaks');
+    const modeCompany = document.getElementById('modeCompany');
+    const fastMode = document.getElementById('fastMode');
+    const results = document.getElementById('results');
+
+    // Плейсхолдеры для полей
+    const placeholders = {
+      phone: 'Например: +79990000000',
+      email: 'Например: example@mail.com',
+      vk: 'Ссылка или @username или id123',
+      ok: 'Ссылка на профиль OK или username',
+      inn: 'Например: 781075550363',
+      snils: 'Например: 11581339245'
+    };
+
+    // Обновление плейсхолдера
+    function updatePlaceholder() {
+      const f = fieldSel.value;
+      q.placeholder = placeholders[f] || 'Введите запрос';
+    }
+    updatePlaceholder();
+    fieldSel.addEventListener('change', updatePlaceholder);
+
+    // Переключение режимов
+    let currentMode = 'leaks';
+    let isFastMode = false;
+
+    modeLeaks.addEventListener('click', () => {
+      currentMode = 'leaks';
+      modeLeaks.classList.add('active');
+      modeCompany.classList.remove('active');
+    });
+
+    modeCompany.addEventListener('click', () => {
+      currentMode = 'company';
+      modeCompany.classList.add('active');
+      modeLeaks.classList.remove('active');
+    });
+
+    fastMode.addEventListener('click', () => {
+      isFastMode = !isFastMode;
+      if (isFastMode) {
+        fastMode.classList.add('active');
+      } else {
+        fastMode.classList.remove('active');
+      }
+    });
+
+    // Функции прогресса
+    function showProgress() {
+      document.getElementById('progressContainer').style.display = 'block';
+      resetProgress();
+    }
+
+    function hideProgress() {
+      document.getElementById('progressContainer').style.display = 'none';
+    }
+
+    function resetProgress() {
+      const fill = document.getElementById('progressFill');
+      const percent = document.getElementById('progressPercent');
+      const status = document.getElementById('progressStatus');
+      
+      fill.style.width = '0%';
+      percent.textContent = '0%';
+      status.textContent = 'Инициализация...';
+    }
+
+    function updateProgress(percentage, statusText) {
+      const fill = document.getElementById('progressFill');
+      const percent = document.getElementById('progressPercent');
+      const status = document.getElementById('progressStatus');
+      
+      fill.style.width = percentage + '%';
+      percent.textContent = Math.round(percentage) + '%';
+      status.textContent = statusText;
+    }
+
+    // Создание элементов результатов
+    function createResultItem(title, status, data, isOpen = false) {
+      const item = document.createElement('div');
+      item.className = `result-card ${isOpen ? 'open' : ''}`;
+      
+      const statusClass = status === 'success' ? 'status-clean' : 
+                         status === 'danger' ? 'status-found' : 'status-error';
+      const statusText = status === 'success' ? 'Чисто' : 
+                        status === 'danger' ? 'Найдено' : 'Ошибка';
+      
+      item.innerHTML = `
+        <div class="result-header" onclick="toggleResult(this)">
+          <div class="result-title">${title}</div>
+          <div class="flex items-center gap-3">
+            <span class="status-badge ${statusClass}">${statusText}</span>
+            <span class="caret">▶</span>
+          </div>
+        </div>
+        <div class="result-body">
+          ${formatResultData(data)}
+        </div>
+      `;
+      
+      return item;
+    }
+
+    function formatResultData(data) {
+      if (!data || typeof data !== 'object') {
+        return '<div style="color: #6b7280;">Нет данных</div>';
+      }
+      
+      let html = '<div class="data-grid">';
+      for (const [key, value] of Object.entries(data)) {
+        if (value && value !== 'null' && value !== 'undefined') {
+          html += `
+            <div class="data-label">${key}</div>
+            <div class="data-value">${formatValue(value)}</div>
+          `;
+        }
+      }
+      html += '</div>';
+      
+      return html || '<div style="color: #6b7280;">Нет данных</div>';
+    }
+
+    function formatValue(value) {
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      if (typeof value === 'object') {
+        return JSON.stringify(value, null, 2);
+      }
+      return String(value);
+    }
+
+    function toggleResult(header) {
+      const item = header.closest('.result-card');
+      item.classList.toggle('open');
+    }
+
+    // Основная функция поиска
+    async function performSearch() {
+      const query = q.value.trim();
+      if (!query) {
+        alert('Введите данные для поиска');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Поиск...';
+      results.innerHTML = '';
+      showProgress();
+
+      try {
+        let response, data;
+        
+        if (currentMode === 'company') {
+          response = await fetch('/api/company-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inn: query })
+          });
+        } else {
+          response = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              query: query, 
+              field: fieldSel.value 
+            })
+          });
+        }
+
+        data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Ошибка сервера');
+        }
+
+        updateProgress(100, 'Завершено');
+        
+        setTimeout(() => {
+          hideProgress();
+          displayResults(data);
+          
+          if (!isFastMode && data.results) {
+            requestAISummary(data);
+          }
+        }, 1000);
+
+      } catch (error) {
+        console.error('Ошибка поиска:', error);
+        hideProgress();
+        results.innerHTML = `<div class="result-card"><div style="color: #dc2626;">${error.message}</div></div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Проверить';
+      }
+    }
+
+    function displayResults(data) {
+      results.innerHTML = '';
+      
+      if (currentMode === 'company' && data.results) {
+        data.results.forEach((result, index) => {
+          const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
+          const item = createResultItem(result.name || `Источник ${index + 1}`, status, result.items || result.error);
+          results.appendChild(item);
+        });
+      } else if (data.results) {
+        data.results.forEach((result, index) => {
+          const status = result.error ? 'warning' : 
+                        (result.ok && result.items && Object.keys(result.items).length > 0) ? 'danger' : 'success';
+          const item = createResultItem(result.name || `Источник ${index + 1}`, status, result.items || result.error);
+          results.appendChild(item);
+        });
+      }
+    }
+
+    async function requestAISummary(data) {
+      try {
+        const endpoint = currentMode === 'company' ? '/api/company-summarize' : '/api/summarize';
+        const body = currentMode === 'company' ? 
+          { inn: data.query, results: data.results } :
+          { query: data.query, field: data.field, results: data.results };
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const aiData = await response.json();
+        
+        if (aiData.ok && aiData.summary) {
+          const summaryEl = document.getElementById('summary');
+          const summaryBody = document.getElementById('summaryBody');
+          
+          summaryBody.innerHTML = formatSummary(aiData.summary);
+          summaryEl.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Ошибка ИИ анализа:', error);
+      }
+    }
+
+    function formatSummary(summary) {
+      if (!summary) return 'Нет анализа';
+      
+      let html = '<div style="line-height: 1.6;">';
+      
+      if (summary.found) {
+        html += '<div style="font-weight: 600; color: #dc2626; margin-bottom: 12px;">Найдены утечки данных!</div>';
+      } else {
+        html += '<div style="font-weight: 600; color: #16a34a; margin-bottom: 12px;">Утечки не обнаружены</div>';
+      }
+      
+      if (summary.highlights && summary.highlights.length > 0) {
+        html += '<div style="font-weight: 600; margin-bottom: 8px;">Ключевые находки:</div>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px;">';
+        summary.highlights.forEach(highlight => {
+          html += `<li style="margin-bottom: 4px;">${highlight}</li>`;
+        });
+        html += '</ul>';
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    // Обработчики событий
+    btn.addEventListener('click', performSearch);
+    q.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    // Глобальная функция для переключения результатов
+    window.toggleResult = toggleResult;
+  </script>
+</body>
+</html>
