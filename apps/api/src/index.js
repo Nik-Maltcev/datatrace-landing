@@ -533,6 +533,21 @@ app.post('/api/openai/format-company', async (req, res) => {
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
 
+// Новый дизайн на отдельном endpoint
+app.get('/modern', (_req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-modern.html'));
+});
+
+// Старый дизайн для отладки
+app.get('/old', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-styled.html'));
+});
+
 app.get('*', (_req, res) => {
   // Отключаем кеширование
   res.set({
