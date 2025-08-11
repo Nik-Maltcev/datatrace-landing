@@ -45,7 +45,8 @@ export default function DashboardPage() {
 
   const handleLeakSearch = () => {
     // Перенаправление на сервис поиска утечек
-    window.open("http://localhost:3001", "_blank")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+    window.open(apiUrl, "_blank")
   }
 
   if (!user) {
