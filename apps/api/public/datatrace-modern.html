@@ -299,10 +299,10 @@
   <div class="container py-16">
     <!-- Hero Section -->
     <div class="text-center mb-16">
-      <h1 class="text-5xl font-bold text-black leading-tight mb-6">
+      <h1 id="heroTitle" class="text-5xl font-bold text-black leading-tight mb-6">
         Поиск утечек данных
       </h1>
-      <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+      <p id="heroDescription" class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
         Проверим ваши персональные данные по всем доступным источникам утечек и предоставим детальный анализ
       </p>
     </div>
@@ -380,14 +380,26 @@
       email: 'Например: example@mail.com',
       vk: 'Ссылка или @username или id123',
       ok: 'Ссылка на профиль OK или username',
-      inn: 'Например: 781075550363',
+      inn: currentMode === 'company' ? 'Введите ИНН компании (10 или 12 цифр)' : 'Например: 781075550363',
       snils: 'Например: 11581339245'
     };
 
     // Обновление плейсхолдера
     function updatePlaceholder() {
       const f = fieldSel.value;
-      q.placeholder = placeholders[f] || 'Введите запрос';
+      if (f === 'inn' && currentMode === 'company') {
+        q.placeholder = 'Введите ИНН компании (10 или 12 цифр)';
+      } else {
+        const placeholders = {
+          phone: 'Например: +79990000000',
+          email: 'Например: example@mail.com',
+          vk: 'Ссылка или @username или id123',
+          ok: 'Ссылка на профиль OK или username',
+          inn: 'Например: 781075550363',
+          snils: 'Например: 11581339245'
+        };
+        q.placeholder = placeholders[f] || 'Введите запрос';
+      }
     }
     updatePlaceholder();
     fieldSel.addEventListener('change', updatePlaceholder);
@@ -396,16 +408,48 @@
     let currentMode = 'leaks';
     let isFastMode = false;
 
+    // Функция обновления интерфейса в зависимости от режима
+    function updateModeInterface() {
+      const heroTitle = document.getElementById('heroTitle');
+      const heroDescription = document.getElementById('heroDescription');
+      
+      if (currentMode === 'company') {
+        heroTitle.textContent = 'Проверка компании';
+        heroDescription.textContent = 'Получите детальную информацию о компании по ИНН из официальных источников';
+      } else {
+        heroTitle.textContent = 'Поиск утечек данных';
+        heroDescription.textContent = 'Проверим ваши персональные данные по всем доступным источникам утечек и предоставим детальный анализ';
+      }
+    }
+
     modeLeaks.addEventListener('click', () => {
       currentMode = 'leaks';
       modeLeaks.classList.add('active');
       modeCompany.classList.remove('active');
+      
+      // Показываем все опции для поиска утечек
+      fieldSel.innerHTML = `
+        <option value="phone">Телефон</option>
+        <option value="email">Email</option>
+        <option value="vk">VK</option>
+        <option value="ok">Одноклассники</option>
+        <option value="inn">ИНН</option>
+        <option value="snils">СНИЛС</option>
+      `;
+      updatePlaceholder();
+      updateModeInterface();
     });
 
     modeCompany.addEventListener('click', () => {
       currentMode = 'company';
       modeCompany.classList.add('active');
       modeLeaks.classList.remove('active');
+      
+      // Показываем только ИНН для проверки компании
+      fieldSel.innerHTML = `<option value="inn">ИНН</option>`;
+      fieldSel.value = 'inn';
+      updatePlaceholder();
+      updateModeInterface();
     });
 
     fastMode.addEventListener('click', () => {
