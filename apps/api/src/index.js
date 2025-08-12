@@ -29,7 +29,7 @@ const VEKTOR_BASE = 'https://infosearch54321.xyz';
 
 // OpenAI client
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
 // Company check providers
 const DATANEWTON_BASE = process.env.DATANEWTON_BASE || 'https://api.datanewton.ru/v1';
@@ -286,6 +286,9 @@ app.post('/api/company-summarize', async (req, res) => {
     if (!inn || !Array.isArray(results)) {
       return res.status(400).json({ error: 'Missing inn or results' });
     }
+    if (!openai) {
+      return res.status(500).json({ error: 'OpenAI API key not configured' });
+    }
     const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
     const instruction = {
       task: 'Проанализируй и объедини данные о компании из всех источников (Datanewton, Checko). Создай полную структурированную сводку для красивого отображения в UI.',
@@ -343,29 +346,18 @@ app.post('/api/company-summarize', async (req, res) => {
       inn,
       sources: results
     };
-    // Используем новый API для GPT-5
-    if ((process.env.OPENAI_MODEL || 'gpt-5') === 'gpt-5') {
-      const response = await openai.responses.create({
-        model: 'gpt-5',
-        input: `${system}\n\n${JSON.stringify(instruction)}`
-      });
-      const msg = response.output_text || '{}';
-      let parsed; try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
-      res.json({ ok: true, model: 'gpt-5', summary: parsed });
-    } else {
-      // Для других моделей используем старый API
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4o',
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: JSON.stringify(instruction) }
-        ]
-      });
-      const msg = completion.choices?.[0]?.message?.content || '{}';
-      let parsed; try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
-      res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
-    }
+    // Используем стандартный OpenAI API
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: JSON.stringify(instruction) }
+      ]
+    });
+    const msg = completion.choices?.[0]?.message?.content || '{}';
+    let parsed; try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
+    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
   } catch (e) {
     res.status(500).json({ ok: false, error: normalizeError(e) });
   }
@@ -406,6 +398,9 @@ app.post('/api/summarize', async (req, res) => {
     if (!query || !Array.isArray(results)) {
       return res.status(400).json({ error: 'Missing query or results' });
     }
+    if (!openai) {
+      return res.status(500).json({ error: 'OpenAI API key not configured' });
+    }
     const compact = compactResults(results);
     const system = 'Ты — помощник-аналитик утечек. Кратко и структурированно выделяешь ключевую информацию.';
     const instruction = {
@@ -437,7 +432,7 @@ app.post('/api/summarize', async (req, res) => {
     };
 
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-5',
+      model: process.env.OPENAI_MODEL || 'gpt-4o',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: system },
@@ -448,7 +443,7 @@ app.post('/api/summarize', async (req, res) => {
     const msg = completion.choices?.[0]?.message?.content || '{}';
     let parsed;
     try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
-    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-5', summary: parsed });
+    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
   } catch (e) {
     res.status(500).json({ ok: false, error: normalizeError(e) });
   }
@@ -488,43 +483,26 @@ app.post('/api/openai/format-company', async (req, res) => {
 
     console.log('Sending request to OpenAI with model:', process.env.OPENAI_MODEL || model);
     
-    // Используем новый API для GPT-5
-    if ((process.env.OPENAI_MODEL || model) === 'gpt-5') {
-      const response = await openai.responses.create({
-        model: 'gpt-5',
-        input: `Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.\n\n${prompt}`
-      });
-      
-      const htmlContent = response.output_text || '';
-      console.log('OpenAI GPT-5 response received, HTML length:', htmlContent.length);
-      
-      res.json({ 
-        html: htmlContent,
-        model: 'gpt-5',
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      // Для других моделей используем старый API
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || model,
-        messages: [
-          { 
-            role: 'system', 
-            content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
-          },
-          { role: 'user', content: prompt }
-        ]
-      });
+    // Используем стандартный OpenAI API
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
+        },
+        { role: 'user', content: prompt }
+      ]
+    });
 
-      const htmlContent = completion.choices?.[0]?.message?.content || '';
-      console.log('OpenAI response received, HTML length:', htmlContent.length);
-      
-      res.json({ 
-        html: htmlContent,
-        model: process.env.OPENAI_MODEL || model,
-        timestamp: new Date().toISOString()
-      });
-    }
+    const htmlContent = completion.choices?.[0]?.message?.content || '';
+    console.log('OpenAI response received, HTML length:', htmlContent.length);
+    
+    res.json({ 
+      html: htmlContent,
+      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      timestamp: new Date().toISOString()
+    });
   } catch (e) {
     console.error('OpenAI formatting error:', e);
     res.status(500).json({ error: normalizeError(e) });
