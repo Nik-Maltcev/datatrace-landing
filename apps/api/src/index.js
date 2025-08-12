@@ -762,6 +762,66 @@ function optimizeDataForAI(compact) {
   return optimized;
 }
 
+// Функция для создания fallback сводки поиска утечек без OpenAI
+function createLeakFallbackSummary(query, field, compact) {
+  let found = false;
+  let sources = {};
+  let highlights = [];
+  let person = {
+    name: null,
+    phones: [],
+    emails: [],
+    usernames: [],
+    ids: [],
+    addresses: []
+  };
+
+  // Анализируем результаты каждого источника
+  for (const [sourceName, sourceData] of Object.entries(compact)) {
+    if (sourceData.ok && sourceData.data) {
+      found = true;
+      let foundCount = 0;
+      
+      if (sourceName === 'ITP' && typeof sourceData.data === 'object') {
+        for (const [category, items] of Object.entries(sourceData.data)) {
+          if (Array.isArray(items) && items.length > 0) {
+            foundCount += items.length;
+            highlights.push(`${category}: ${items.length} записей`);
+          }
+        }
+      } else if (Array.isArray(sourceData.data)) {
+        foundCount = sourceData.data.length;
+        if (foundCount > 0) {
+          highlights.push(`${sourceName}: ${foundCount} записей`);
+        }
+      }
+      
+      sources[sourceName] = { foundCount, notes: foundCount > 0 ? 'Данные найдены' : 'Нет данных' };
+    } else {
+      sources[sourceName] = { foundCount: 0, notes: 'Источник недоступен или нет данных' };
+    }
+  }
+
+  // Если ничего не найдено
+  if (!found) {
+    highlights.push('Информация по запросу не найдена');
+  }
+
+  return {
+    found,
+    sources,
+    highlights,
+    person,
+    security_recommendations: {
+      password_change_sites: [],
+      immediate_actions: found ? ['Проверьте найденные данные', 'Рассмотрите смену паролей'] : [],
+      general_advice: ['Используйте уникальные пароли', 'Включите двухфакторную аутентификацию']
+    },
+    risk_level: found ? 'medium' : 'low',
+    summary: found ? 'Найдены утечки данных. Рекомендуется принять меры безопасности.' : 'Утечки данных не обнаружены.'
+  };
+}
+
 app.post('/api/summarize', async (req, res) => {
   // Объявляем переменные в начале для доступности в catch блоке
   const { query, field, results } = req.body || {};
