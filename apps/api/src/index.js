@@ -32,16 +32,21 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 let openai = null;
 
 // Initialize OpenAI client only if API key is available
+console.log('Checking OpenAI API key...');
+console.log('OPENAI_API_KEY exists:', !!OPENAI_API_KEY);
+console.log('OPENAI_API_KEY length:', OPENAI_API_KEY ? OPENAI_API_KEY.length : 0);
+
 if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
   try {
     openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-    console.log('OpenAI client initialized successfully');
+    console.log('✅ OpenAI client initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize OpenAI client:', error.message);
+    console.error('❌ Failed to initialize OpenAI client:', error.message);
     openai = null;
   }
 } else {
-  console.warn('OpenAI API key not found in environment variables');
+  console.warn('⚠️ OpenAI API key not found in environment variables');
+  console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('OPENAI')));
 }
 
 // Company check providers
@@ -305,8 +310,12 @@ app.post('/api/company-summarize', async (req, res) => {
     }
 
     // Проверяем доступность OpenAI
+    console.log('🔍 Checking OpenAI availability...');
+    console.log('OpenAI client exists:', !!openai);
+    console.log('OpenAI API key exists:', !!OPENAI_API_KEY);
+    
     if (!openai) {
-      console.log('OpenAI not available, using fallback');
+      console.log('❌ OpenAI not available, using fallback');
       return res.json({ 
         ok: true, 
         model: 'fallback', 
@@ -374,12 +383,18 @@ app.post('/api/company-summarize', async (req, res) => {
     };
 
     // Используем новый API для GPT-5
+    console.log('🚀 Attempting to use GPT-5 API...');
+    console.log('Model from env:', process.env.OPENAI_MODEL);
+    console.log('Final model decision:', process.env.OPENAI_MODEL || 'gpt-5');
+    
     if ((process.env.OPENAI_MODEL || 'gpt-5') === 'gpt-5') {
       try {
+        console.log('📡 Sending request to GPT-5 Responses API...');
         const response = await openai.responses.create({
           model: 'gpt-5',
           input: `${system}\n\n${JSON.stringify(instruction)}`
         });
+        console.log('✅ GPT-5 response received successfully');
         const msg = response.output_text || '{}';
         let parsed; 
         try { 
@@ -387,10 +402,11 @@ app.post('/api/company-summarize', async (req, res) => {
         } catch { 
           parsed = { raw: msg }; 
         }
-        console.log('GPT-5 response received');
+        console.log('📊 GPT-5 response parsed, sending to client');
         res.json({ ok: true, model: 'gpt-5', summary: parsed });
       } catch (gpt5Error) {
-        console.log('GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
+        console.log('❌ GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
+        console.log('🔄 Attempting fallback to GPT-4...');
         // Fallback to chat completions API
         const completion = await openai.chat.completions.create({
           model: 'gpt-4',
@@ -400,6 +416,7 @@ app.post('/api/company-summarize', async (req, res) => {
             { role: 'user', content: JSON.stringify(instruction) }
           ]
         });
+        console.log('✅ GPT-4 fallback response received');
         const msg = completion.choices?.[0]?.message?.content || '{}';
         let parsed; 
         try { 
@@ -407,6 +424,7 @@ app.post('/api/company-summarize', async (req, res) => {
         } catch { 
           parsed = { raw: msg }; 
         }
+        console.log('📊 GPT-4 fallback response parsed, sending to client');
         res.json({ ok: true, model: 'gpt-4-fallback', summary: parsed });
       }
     } else {
