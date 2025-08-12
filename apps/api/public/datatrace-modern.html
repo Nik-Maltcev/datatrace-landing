@@ -1224,30 +1224,190 @@
     }
 
     function formatAIDataForLeakSource(originalData, sourceName, aiSummary) {
-      // Если AI обработка есть, показываем структурированные данные
-      if (aiSummary && aiSummary.person) {
-        const person = aiSummary.person;
-        const formattedData = {};
-        
-        if (person.name) formattedData['Имя'] = person.name;
-        if (person.phones && person.phones.length > 0) formattedData['Телефоны'] = person.phones.join(', ');
-        if (person.emails && person.emails.length > 0) formattedData['Email адреса'] = person.emails.join(', ');
-        if (person.usernames && person.usernames.length > 0) formattedData['Логины'] = person.usernames.join(', ');
-        if (person.ids && person.ids.length > 0) formattedData['ID'] = person.ids.join(', ');
-        if (person.addresses && person.addresses.length > 0) formattedData['Адреса'] = person.addresses.join(', ');
-        
-        // Добавляем информацию о количестве записей из AI
-        if (aiSummary.sources && aiSummary.sources[sourceName]) {
-          const sourceInfo = aiSummary.sources[sourceName];
-          if (sourceInfo.foundCount) formattedData['Найдено записей'] = sourceInfo.foundCount;
-          if (sourceInfo.notes) formattedData['Заметки'] = sourceInfo.notes;
+      // Всегда показываем детальные данные из источника
+      const formattedData = {};
+      
+      // Сначала показываем оригинальные данные из источника
+      if (originalData && typeof originalData === 'object') {
+        // Обрабатываем данные по типу источника
+        switch (sourceName) {
+          case 'ITP':
+            formatITPData(originalData, formattedData);
+            break;
+          case 'Dyxless':
+            formatDyxlessData(originalData, formattedData);
+            break;
+          case 'LeakOsint':
+            formatLeakOsintData(originalData, formattedData);
+            break;
+          case 'Usersbox':
+            formatUsersboxData(originalData, formattedData);
+            break;
+          case 'Vektor':
+            formatVektorData(originalData, formattedData);
+            break;
+          default:
+            // Для неизвестных источников показываем как есть
+            Object.assign(formattedData, originalData);
         }
-        
-        return Object.keys(formattedData).length > 0 ? formattedData : originalData;
       }
       
-      // Если AI обработки нет, возвращаем оригинальные данные
-      return originalData;
+      // Добавляем информацию из AI анализа если есть
+      if (aiSummary && aiSummary.sources && aiSummary.sources[sourceName]) {
+        const sourceInfo = aiSummary.sources[sourceName];
+        if (sourceInfo.foundCount) formattedData['📊 Найдено записей'] = sourceInfo.foundCount;
+        if (sourceInfo.notes) formattedData['📝 Заметки ИИ'] = sourceInfo.notes;
+      }
+      
+      return Object.keys(formattedData).length > 0 ? formattedData : originalData;
+    }
+
+    function formatITPData(data, formattedData) {
+      if (!data || typeof data !== 'object') return;
+      
+      // ITP возвращает данные в виде групп
+      for (const [groupName, groupData] of Object.entries(data)) {
+        if (groupData && groupData.data && Array.isArray(groupData.data)) {
+          formattedData[`📁 ${groupName}`] = `${groupData.data.length} записей`;
+          
+          // Показываем первые несколько записей
+          groupData.data.slice(0, 3).forEach((record, index) => {
+            if (record && typeof record === 'object') {
+              const recordInfo = [];
+              if (record.phone) recordInfo.push(`📞 ${record.phone}`);
+              if (record.email) recordInfo.push(`📧 ${record.email}`);
+              if (record.name) recordInfo.push(`👤 ${record.name}`);
+              if (record.address) recordInfo.push(`🏠 ${record.address}`);
+              
+              if (recordInfo.length > 0) {
+                formattedData[`  └ Запись ${index + 1}`] = recordInfo.join(', ');
+              }
+            }
+          });
+          
+          if (groupData.data.length > 3) {
+            formattedData[`  └ ...`] = `и еще ${groupData.data.length - 3} записей`;
+          }
+        }
+      }
+    }
+
+    function formatDyxlessData(data, formattedData) {
+      if (!Array.isArray(data)) return;
+      
+      formattedData['📊 Всего записей'] = data.length;
+      
+      // Группируем по базам данных
+      const databases = {};
+      data.forEach(record => {
+        if (record && record.database) {
+          if (!databases[record.database]) {
+            databases[record.database] = [];
+          }
+          databases[record.database].push(record);
+        }
+      });
+      
+      // Показываем данные по базам
+      for (const [dbName, records] of Object.entries(databases)) {
+        formattedData[`🗄️ База: ${dbName}`] = `${records.length} записей`;
+        
+        // Показываем первые записи
+        records.slice(0, 2).forEach((record, index) => {
+          const recordInfo = [];
+          if (record.email) recordInfo.push(`📧 ${record.email}`);
+          if (record.phone) recordInfo.push(`📞 ${record.phone}`);
+          if (record.name) recordInfo.push(`👤 ${record.name}`);
+          if (record.password) recordInfo.push(`🔑 ${record.password.substring(0, 10)}...`);
+          
+          if (recordInfo.length > 0) {
+            formattedData[`  └ ${index + 1}`] = recordInfo.join(', ');
+          }
+        });
+      }
+    }
+
+    function formatLeakOsintData(data, formattedData) {
+      if (!Array.isArray(data)) return;
+      
+      formattedData['📊 Найдено баз'] = data.length;
+      
+      data.forEach((leak, index) => {
+        if (leak && leak.db) {
+          formattedData[`🗄️ База: ${leak.db}`] = leak.info || 'Информация о базе';
+          
+          if (leak.data && Array.isArray(leak.data)) {
+            formattedData[`  └ Записей в базе`] = leak.data.length;
+            
+            // Показываем первые записи
+            leak.data.slice(0, 2).forEach((record, recordIndex) => {
+              if (typeof record === 'string') {
+                formattedData[`  └ ${recordIndex + 1}`] = record;
+              } else if (typeof record === 'object') {
+                const recordInfo = [];
+                Object.entries(record).forEach(([key, value]) => {
+                  if (value && typeof value === 'string') {
+                    recordInfo.push(`${key}: ${value}`);
+                  }
+                });
+                if (recordInfo.length > 0) {
+                  formattedData[`  └ ${recordIndex + 1}`] = recordInfo.join(', ');
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    function formatUsersboxData(data, formattedData) {
+      if (!Array.isArray(data)) return;
+      
+      formattedData['📊 Всего записей'] = data.length;
+      
+      data.slice(0, 5).forEach((record, index) => {
+        if (record && typeof record === 'object') {
+          const recordInfo = [];
+          if (record.email) recordInfo.push(`📧 ${record.email}`);
+          if (record.phone) recordInfo.push(`📞 ${record.phone}`);
+          if (record.name) recordInfo.push(`👤 ${record.name}`);
+          if (record.source) recordInfo.push(`🔗 ${record.source}`);
+          
+          if (recordInfo.length > 0) {
+            formattedData[`📄 Запись ${index + 1}`] = recordInfo.join(', ');
+          }
+        }
+      });
+      
+      if (data.length > 5) {
+        formattedData['...'] = `и еще ${data.length - 5} записей`;
+      }
+    }
+
+    function formatVektorData(data, formattedData) {
+      if (Array.isArray(data)) {
+        formattedData['📊 Всего записей'] = data.length;
+        
+        data.slice(0, 5).forEach((record, index) => {
+          if (typeof record === 'string') {
+            formattedData[`📄 ${index + 1}`] = record;
+          } else if (typeof record === 'object') {
+            const recordInfo = [];
+            Object.entries(record).forEach(([key, value]) => {
+              if (value) recordInfo.push(`${key}: ${value}`);
+            });
+            if (recordInfo.length > 0) {
+              formattedData[`📄 ${index + 1}`] = recordInfo.join(', ');
+            }
+          }
+        });
+      } else if (typeof data === 'object') {
+        Object.entries(data).forEach(([key, value]) => {
+          if (value) {
+            formattedData[key] = Array.isArray(value) ? value.join(', ') : value;
+          }
+        });
+      }
     }
 
     // Обработчики событий
