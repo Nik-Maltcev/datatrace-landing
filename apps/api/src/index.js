@@ -282,13 +282,20 @@ app.post('/api/company-search', async (req, res) => {
 
 app.post('/api/company-summarize', async (req, res) => {
   try {
+    console.log('Company summarize request received');
     const { inn, results } = req.body || {};
+    console.log('Request data:', { inn, resultsLength: results?.length });
+    
     if (!inn || !Array.isArray(results)) {
+      console.log('Missing inn or results');
       return res.status(400).json({ error: 'Missing inn or results' });
     }
     if (!openai) {
+      console.log('OpenAI not configured');
       return res.status(500).json({ error: 'OpenAI API key not configured' });
     }
+    
+    console.log('Starting OpenAI request...');
     const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
     const instruction = {
       task: 'Проанализируй и объедини данные о компании из всех источников (Datanewton, Checko). Создай полную структурированную сводку для красивого отображения в UI.',
@@ -355,10 +362,20 @@ app.post('/api/company-summarize', async (req, res) => {
         { role: 'user', content: JSON.stringify(instruction) }
       ]
     });
+    
+    console.log('OpenAI response received');
     const msg = completion.choices?.[0]?.message?.content || '{}';
-    let parsed; try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
+    let parsed; 
+    try { 
+      parsed = JSON.parse(msg); 
+    } catch { 
+      parsed = { raw: msg }; 
+    }
+    
+    console.log('Sending response to client');
     res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
   } catch (e) {
+    console.error('Company summarize error:', e.message, e.stack);
     res.status(500).json({ ok: false, error: normalizeError(e) });
   }
 });

@@ -624,10 +624,16 @@
 
     async function requestAISummary(data) {
       try {
+        console.log('Requesting AI summary for mode:', currentMode);
+        console.log('Data received:', data);
+        
         const endpoint = currentMode === 'company' ? '/api/company-summarize' : '/api/summarize';
         const body = currentMode === 'company' ? 
           { inn: data.query, results: data.results } :
           { query: data.query, field: data.field, results: data.results };
+
+        console.log('Sending request to:', endpoint);
+        console.log('Request body:', body);
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -635,7 +641,9 @@
           body: JSON.stringify(body)
         });
 
+        console.log('Response status:', response.status);
         const aiData = await response.json();
+        console.log('AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
           const summaryEl = document.getElementById('summary');
