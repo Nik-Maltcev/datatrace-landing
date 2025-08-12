@@ -29,7 +29,7 @@ const VEKTOR_BASE = 'https://infosearch54321.xyz';
 
 // OpenAI client
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // Company check providers
 const DATANEWTON_BASE = process.env.DATANEWTON_BASE || 'https://api.datanewton.ru/v1';
@@ -290,10 +290,7 @@ app.post('/api/company-summarize', async (req, res) => {
       console.log('Missing inn or results');
       return res.status(400).json({ error: 'Missing inn or results' });
     }
-    if (!openai) {
-      console.log('OpenAI not configured');
-      return res.status(500).json({ error: 'OpenAI API key not configured' });
-    }
+
     
     console.log('Starting OpenAI request...');
     const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
@@ -415,9 +412,7 @@ app.post('/api/summarize', async (req, res) => {
     if (!query || !Array.isArray(results)) {
       return res.status(400).json({ error: 'Missing query or results' });
     }
-    if (!openai) {
-      return res.status(500).json({ error: 'OpenAI API key not configured' });
-    }
+
     const compact = compactResults(results);
     const system = 'Ты — помощник-аналитик утечек. Кратко и структурированно выделяешь ключевую информацию.';
     const instruction = {
