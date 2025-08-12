@@ -704,8 +704,10 @@ function compactResults(results) {
 }
 
 app.post('/api/summarize', async (req, res) => {
+  // Объявляем переменные в начале для доступности в catch блоке
+  const { query, field, results } = req.body || {};
+  
   try {
-    const { query, field, results } = req.body || {};
     if (!query || !Array.isArray(results)) {
       return res.status(400).json({ error: 'Missing query or results' });
     }
@@ -773,11 +775,11 @@ app.post('/api/summarize', async (req, res) => {
     res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-5', summary: parsed });
   } catch (e) {
     console.error('Summarize error:', e.message);
-    // Fallback при ошибке OpenAI
+    // Fallback при ошибке OpenAI - теперь переменные доступны
     res.json({ 
       ok: true, 
       model: 'fallback', 
-      summary: createLeakFallbackSummary(query, field, compactResults(results))
+      summary: createLeakFallbackSummary(query || '', field || 'full_text', compactResults(results || []))
     });
   }
 });
