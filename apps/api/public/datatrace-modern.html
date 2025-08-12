@@ -374,15 +374,11 @@
     const fastMode = document.getElementById('fastMode');
     const results = document.getElementById('results');
 
-    // Плейсхолдеры для полей
-    const placeholders = {
-      phone: 'Например: +79990000000',
-      email: 'Например: example@mail.com',
-      vk: 'Ссылка или @username или id123',
-      ok: 'Ссылка на профиль OK или username',
-      inn: currentMode === 'company' ? 'Введите ИНН компании (10 или 12 цифр)' : 'Например: 781075550363',
-      snils: 'Например: 11581339245'
-    };
+
+
+    // Переключение режимов
+    let currentMode = 'leaks';
+    let isFastMode = false;
 
     // Обновление плейсхолдера
     function updatePlaceholder() {
@@ -403,10 +399,6 @@
     }
     updatePlaceholder();
     fieldSel.addEventListener('change', updatePlaceholder);
-
-    // Переключение режимов
-    let currentMode = 'leaks';
-    let isFastMode = false;
 
     // Функция обновления интерфейса в зависимости от режима
     function updateModeInterface() {
