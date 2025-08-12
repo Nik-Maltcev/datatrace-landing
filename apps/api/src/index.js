@@ -46,9 +46,9 @@ if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
 
 // Company check providers
 const DATANEWTON_BASE = process.env.DATANEWTON_BASE || 'https://api.datanewton.ru/v1';
-const DATANEWTON_KEY = process.env.DATANEWTON_KEY || 'mi76aFMdgvml'; // demo/example
+const DATANEWTON_KEY = process.env.DATANEWTON_KEY || 'UeHgYI7e4ejX';
 const CHECKO_BASE = process.env.CHECKO_BASE || 'https://api.checko.ru/v2';
-const CHECKO_KEY = process.env.CHECKO_KEY || process.env.CHECKO_API_KEY || '';
+const CHECKO_KEY = process.env.CHECKO_KEY || process.env.CHECKO_API_KEY || 'iWq90n732rGN2rex';
 
 function extractUsernameIfSocial(field, query) {
   if (!query || (field !== 'vk' && field !== 'ok')) return query;
@@ -344,7 +344,7 @@ app.post('/api/company-summarize', async (req, res) => {
     
     // Используем стандартный OpenAI API
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      model: process.env.OPENAI_MODEL || 'gpt-5',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: system },
@@ -362,7 +362,7 @@ app.post('/api/company-summarize', async (req, res) => {
     }
     
     console.log('Sending response to client');
-    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
+    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-5', summary: parsed });
   } catch (e) {
     console.error('Company summarize error:', e.message, e.stack);
     
@@ -570,7 +570,7 @@ app.post('/api/summarize', async (req, res) => {
     };
 
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      model: process.env.OPENAI_MODEL || 'gpt-5',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: system },
@@ -581,7 +581,7 @@ app.post('/api/summarize', async (req, res) => {
     const msg = completion.choices?.[0]?.message?.content || '{}';
     let parsed;
     try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
-    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
+    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-5', summary: parsed });
   } catch (e) {
     console.error('Summarize error:', e.message);
     // Fallback при ошибке OpenAI
@@ -620,7 +620,7 @@ app.get('/api/company', async (req, res) => {
 app.post('/api/openai/format-company', async (req, res) => {
   try {
     console.log('Received OpenAI format request:', req.body);
-    const { prompt, model = 'gpt-4o' } = req.body;
+    const { prompt, model = 'gpt-5' } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
@@ -639,7 +639,7 @@ app.post('/api/openai/format-company', async (req, res) => {
     
     // Используем стандартный OpenAI API
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      model: process.env.OPENAI_MODEL || 'gpt-5',
       messages: [
         { 
           role: 'system', 
@@ -654,7 +654,7 @@ app.post('/api/openai/format-company', async (req, res) => {
     
     res.json({ 
       html: htmlContent,
-      model: process.env.OPENAI_MODEL || 'gpt-4o',
+      model: process.env.OPENAI_MODEL || 'gpt-5',
       timestamp: new Date().toISOString()
     });
   } catch (e) {
