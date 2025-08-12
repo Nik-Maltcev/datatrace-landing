@@ -703,6 +703,65 @@ function compactResults(results) {
   return out;
 }
 
+function optimizeDataForAI(compact) {
+  const optimized = {};
+  
+  for (const [sourceName, sourceData] of Object.entries(compact)) {
+    if (!sourceData.ok || !sourceData.data) {
+      optimized[sourceName] = { ok: false, count: 0 };
+      continue;
+    }
+    
+    const summary = { ok: true, count: 0, samples: [], databases: [] };
+    
+    if (sourceName === 'ITP') {
+      for (const [groupName, records] of Object.entries(sourceData.data)) {
+        if (Array.isArray(records)) {
+          summary.count += records.length;
+          summary.samples.push(...records.slice(0, 2)); // Только первые 2 записи
+          summary.databases.push(groupName);
+        }
+      }
+    } else if (sourceName === 'Dyxless') {
+      if (Array.isArray(sourceData.data)) {
+        summary.count = sourceData.data.length;
+        summary.samples = sourceData.data.slice(0, 3); // Только первые 3 записи
+        // Извлекаем уникальные базы данных
+        const dbs = [...new Set(sourceData.data.map(r => r.database).filter(Boolean))];
+        summary.databases = dbs.slice(0, 5); // Максимум 5 баз
+      }
+    } else if (sourceName === 'LeakOsint') {
+      if (Array.isArray(sourceData.data)) {
+        summary.databases = sourceData.data.map(leak => leak.db).filter(Boolean);
+        summary.count = sourceData.data.reduce((sum, leak) => sum + (leak.data?.length || 0), 0);
+        // Берем по одной записи из каждой базы
+        sourceData.data.forEach(leak => {
+          if (leak.data && leak.data.length > 0) {
+            summary.samples.push(leak.data[0]);
+          }
+        });
+      }
+    } else if (sourceName === 'Usersbox') {
+      if (Array.isArray(sourceData.data)) {
+        summary.count = sourceData.data.length;
+        summary.samples = sourceData.data.slice(0, 3);
+      }
+    } else if (sourceName === 'Vektor') {
+      if (Array.isArray(sourceData.data)) {
+        summary.count = sourceData.data.length;
+        summary.samples = sourceData.data.slice(0, 3);
+      } else if (sourceData.data) {
+        summary.count = 1;
+        summary.samples = [sourceData.data];
+      }
+    }
+    
+    optimized[sourceName] = summary;
+  }
+  
+  return optimized;
+}
+
 app.post('/api/summarize', async (req, res) => {
   // Объявляем переменные в начале для доступности в catch блоке
   const { query, field, results } = req.body || {};
@@ -724,51 +783,46 @@ app.post('/api/summarize', async (req, res) => {
       });
     }
 
-    const system = 'Ты — эксперт-аналитик утечек данных с использованием GPT-5. Твоя задача — детально проанализировать все найденные данные и предоставить структурированную информацию с рекомендациями по безопасности.';
+    const system = 'Ты — аналитик утечек данных. Анализируй найденные данные и создавай краткие отчеты с рекомендациями.';
+    
+    // Оптимизируем данные перед отправкой в OpenAI
+    const optimizedData = optimizeDataForAI(compact);
+    
     const instruction = {
-      task: 'Проанализируй все найденные данные утечек и создай детальный отчет с рекомендациями',
+      task: 'Проанализируй найденные утечки и создай отчет с рекомендациями',
       language: 'ru',
-      enhanced_processing: 'Используй возможности GPT-5 для глубокого анализа всех данных',
-      input_format: 'compact results object with raw data from all sources',
       output_schema: {
-        found: 'boolean — есть ли совпадения в каких-либо источниках',
-        sources: 'map: имя источника -> { foundCount: number, records: array, databases: string[], notes: string }',
-        highlights: 'array of strings — ключевые находки с указанием источников',
+        found: 'boolean',
+        sources: 'map: имя источника -> { foundCount: number, databases: string[], notes: string }',
+        highlights: 'string[] — ключевые находки',
         person: {
           name: 'string | null',
           phones: 'string[]',
           emails: 'string[]',
-          usernames: 'string[]',
-          ids: 'string[]',
-          addresses: 'string[]'
+          usernames: 'string[]'
         },
         security_recommendations: {
-          password_change_sites: 'string[] — список сайтов где нужно сменить пароль',
-          immediate_actions: 'string[] — срочные действия для защиты',
-          general_advice: 'string[] — общие рекомендации по безопасности'
+          password_change_sites: 'string[]',
+          immediate_actions: 'string[]'
         },
-        risk_level: 'string — уровень риска: low/medium/high/critical',
-        summary: 'string — краткая сводка на русском языке'
+        risk_level: 'string — low/medium/high/critical',
+        summary: 'string'
       },
       rules: [
-        'Отвечай строго JSON без комментариев и дополнительного текста',
-        'Обрабатывай ВСЕ найденные записи из всех источников',
-        'В sources.records включай все найденные записи в едином формате',
-        'В sources.databases перечисляй все базы данных где найдены утечки',
-        'В password_change_sites указывай конкретные сайты на основе найденных данных',
-        'Нормализуй форматы (телефоны в +7(XXX)XXX-XX-XX, emails в нижнем регистре)',
-        'Удаляй дубликаты и объединяй данные об одном человеке',
-        'Определяй уровень риска на основе количества и типа утечек',
-        'Если ничего не найдено — found=false и пустые массивы'
+        'Отвечай строго JSON',
+        'Нормализуй телефоны и emails',
+        'Удаляй дубликаты',
+        'Определяй уровень риска',
+        'Указывай конкретные сайты для смены паролей'
       ],
       query,
       field,
-      data: compact
+      data: optimizedData
     };
 
-    // Создаем промис с таймаутом для summarize
+    // Создаем промис с таймаутом для summarize (увеличиваем до 60 секунд)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Summarize OpenAI timeout (30s)')), 30000);
+      setTimeout(() => reject(new Error('Summarize OpenAI timeout (60s)')), 60000);
     });
     
     const openaiPromise = openai.chat.completions.create({
