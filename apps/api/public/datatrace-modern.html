@@ -584,12 +584,27 @@
 
         updateProgress(100, 'Завершено');
         
-        setTimeout(() => {
+        setTimeout(async () => {
           hideProgress();
-          displayResults(data);
           
-          if (!isFastMode && data.results) {
-            requestAISummary(data);
+          if (currentMode === 'company') {
+            // Для режима компании сначала обрабатываем через OpenAI
+            if (!isFastMode && data.results) {
+              updateProgress(50, 'Обработка через ИИ...');
+              showProgress();
+              await requestAISummaryForCompany(data);
+              hideProgress();
+            } else {
+              // В быстром режиме показываем сырые данные
+              displayResults(data);
+            }
+          } else {
+            // Для режима утечек показываем результаты сразу
+            displayResults(data);
+            
+            if (!isFastMode && data.results) {
+              requestAISummary(data);
+            }
           }
         }, 1000);
 
@@ -627,10 +642,8 @@
         console.log('Requesting AI summary for mode:', currentMode);
         console.log('Data received:', data);
         
-        const endpoint = currentMode === 'company' ? '/api/company-summarize' : '/api/summarize';
-        const body = currentMode === 'company' ? 
-          { inn: data.query, results: data.results } :
-          { query: data.query, field: data.field, results: data.results };
+        const endpoint = '/api/summarize';
+        const body = { query: data.query, field: data.field, results: data.results };
 
         console.log('Sending request to:', endpoint);
         console.log('Request body:', body);
@@ -657,6 +670,34 @@
       }
     }
 
+    async function requestAISummaryForCompany(data) {
+      try {
+        console.log('Requesting AI summary for company mode');
+        console.log('Data received:', data);
+        
+        const response = await fetch('/api/company-summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inn: data.query, results: data.results })
+        });
+
+        console.log('Response status:', response.status);
+        const aiData = await response.json();
+        console.log('AI response:', aiData);
+        
+        if (aiData.ok && aiData.summary) {
+          // Показываем только обработанный результат от OpenAI
+          displayCompanyAIResult(aiData.summary);
+        } else {
+          // Если OpenAI не сработал, показываем fallback
+          results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании</div></div>';
+        }
+      } catch (error) {
+        console.error('Ошибка ИИ анализа компании:', error);
+        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании</div></div>';
+      }
+    }
+
     function formatSummary(summary) {
       if (!summary) return 'Нет анализа';
       
@@ -679,6 +720,103 @@
       
       html += '</div>';
       return html;
+    }
+
+    function displayCompanyAIResult(summary) {
+      if (!summary || !summary.company) {
+        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных о компании</div></div>';
+        return;
+      }
+
+      const company = summary.company;
+      let html = '<div class="result-card open">';
+      
+      // Заголовок компании
+      html += `
+        <div class="result-header" onclick="toggleResult(this)">
+          <div class="result-title">
+            <strong>${company.name || company.shortName || 'Неизвестная компания'}</strong>
+            <span class="status-badge success">Обработано ИИ</span>
+            <span class="caret">▼</span>
+          </div>
+        </div>
+        <div class="result-body">
+      `;
+
+      // Основная информация
+      html += '<div class="data-grid">';
+      
+      if (company.name) html += `<div class="data-label">Название</div><div class="data-value">${company.name}</div>`;
+      if (company.fullName && company.fullName !== company.name) html += `<div class="data-label">Полное название</div><div class="data-value">${company.fullName}</div>`;
+      if (company.inn) html += `<div class="data-label">ИНН</div><div class="data-value">${company.inn}</div>`;
+      if (company.ogrn) html += `<div class="data-label">ОГРН</div><div class="data-value">${company.ogrn}</div>`;
+      if (company.kpp) html += `<div class="data-label">КПП</div><div class="data-value">${company.kpp}</div>`;
+      if (company.opf) html += `<div class="data-label">Организационно-правовая форма</div><div class="data-value">${company.opf}</div>`;
+      if (company.status) html += `<div class="data-label">Статус</div><div class="data-value">${company.status}</div>`;
+      if (company.registration_date) html += `<div class="data-label">Дата регистрации</div><div class="data-value">${company.registration_date}</div>`;
+      if (company.years_from_registration) html += `<div class="data-label">Лет с регистрации</div><div class="data-value">${company.years_from_registration}</div>`;
+      if (company.address) html += `<div class="data-label">Адрес</div><div class="data-value">${company.address}</div>`;
+      if (company.charter_capital) html += `<div class="data-label">Уставной капитал</div><div class="data-value">${company.charter_capital}</div>`;
+      
+      // Контакты
+      if (company.contacts) {
+        if (company.contacts.phones && company.contacts.phones.length > 0) {
+          html += `<div class="data-label">Телефоны</div><div class="data-value">${company.contacts.phones.join(', ')}</div>`;
+        }
+        if (company.contacts.emails && company.contacts.emails.length > 0) {
+          html += `<div class="data-label">Email</div><div class="data-value">${company.contacts.emails.join(', ')}</div>`;
+        }
+        if (company.contacts.sites && company.contacts.sites.length > 0) {
+          html += `<div class="data-label">Сайты</div><div class="data-value">${company.contacts.sites.join(', ')}</div>`;
+        }
+      }
+
+      html += '</div>';
+
+      // Руководство
+      if (summary.ceo && (summary.ceo.name || summary.ceo.fio)) {
+        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600;">Руководство</h4>';
+        html += '<div class="data-grid">';
+        html += `<div class="data-label">Руководитель</div><div class="data-value">${summary.ceo.name || summary.ceo.fio}</div>`;
+        if (summary.ceo.position || summary.ceo.post) {
+          html += `<div class="data-label">Должность</div><div class="data-value">${summary.ceo.position || summary.ceo.post}</div>`;
+        }
+        html += '</div>';
+      }
+
+      // ОКВЭД
+      if (summary.okved && summary.okved.main) {
+        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600;">Деятельность</h4>';
+        html += '<div class="data-grid">';
+        if (summary.okved.main.code) html += `<div class="data-label">Код ОКВЭД</div><div class="data-value">${summary.okved.main.code}</div>`;
+        if (summary.okved.main.text || summary.okved.main.title) {
+          html += `<div class="data-label">Основная деятельность</div><div class="data-value">${summary.okved.main.text || summary.okved.main.title}</div>`;
+        }
+        html += '</div>';
+      }
+
+      // Флаги рисков
+      if (summary.risk_flags && summary.risk_flags.length > 0) {
+        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600; color: #dc2626;">Флаги рисков</h4>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px; color: #dc2626;">';
+        summary.risk_flags.forEach(flag => {
+          html += `<li style="margin-bottom: 4px;">${flag}</li>`;
+        });
+        html += '</ul>';
+      }
+
+      // Дополнительные заметки
+      if (summary.notes && summary.notes.length > 0) {
+        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600;">Дополнительная информация</h4>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px;">';
+        summary.notes.forEach(note => {
+          html += `<li style="margin-bottom: 4px;">${note}</li>`;
+        });
+        html += '</ul>';
+      }
+
+      html += '</div></div>';
+      results.innerHTML = html;
     }
 
     // Обработчики событий
