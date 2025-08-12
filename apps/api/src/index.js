@@ -304,65 +304,130 @@ app.post('/api/company-summarize', async (req, res) => {
       return res.status(400).json({ error: 'Missing inn or results' });
     }
 
-    // Извлекаем основные данные из результатов для fallback
-    let companyData = {};
-    for (const result of results) {
-      if (result.ok && result.items) {
-        Object.assign(companyData, result.items);
-      }
-    }
-
     // Проверяем доступность OpenAI
     if (!openai) {
       console.log('OpenAI not available, using fallback');
       return res.json({ 
         ok: true, 
         model: 'fallback', 
-        summary: createFallbackSummary(inn, results, companyData)
+        summary: createFallbackSummary(inn, results, {})
       });
     }
     
     console.log('Starting OpenAI request...');
-    // Упрощенный промпт для надежной работы
-    const system = 'Ты — аналитик корпоративных данных. Создай краткую сводку о компании на основе предоставленных данных.';
-    
-    const instruction = `Проанализируй данные о компании с ИНН ${inn} и создай краткую сводку в формате JSON:
+    const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
+    const instruction = {
+      task: 'Проанализируй и объедини данные о компании из всех источников (Datanewton, Checko). Создай полную структурированную сводку для красивого отображения в UI.',
+      language: 'ru',
+      enhanced_processing: 'Используй возможности GPT-5 для глубокого анализа и нормализации данных',
+      schema: {
+        company: {
+          name: 'string|null - приоритет краткому названию', 
+          fullName: 'string|null - полное официальное название', 
+          shortName: 'string|null - краткое название',
+          inn: 'string|null - нормализованный ИНН', 
+          ogrn: 'string|null - нормализованный ОГРН', 
+          kpp: 'string|null',
+          opf: 'string|null - организационно-правовая форма', 
+          registration_date: 'string|null - дата в формате YYYY-MM-DD или DD.MM.YYYY', 
+          years_from_registration: 'number|null - количество лет с регистрации',
+          status: 'string|null - статус: Действует/Ликвидирована/и т.д.',
+          address: 'string|null - полный нормализованный адрес',
+          charter_capital: 'string|null - уставной капитал с валютой',
+          contacts: { 
+            phones: 'string[] - нормализованные телефоны в формате +7(XXX)XXX-XX-XX', 
+            emails: 'string[] - валидные email адреса', 
+            sites: 'string[] - веб-сайты без http/https префикса' 
+          }
+        },
+        ceo: { 
+          name: 'string|null - ФИО руководителя', 
+          fio: 'string|null - альтернативное поле ФИО', 
+          position: 'string|null - должность', 
+          post: 'string|null - альтернативное поле должности' 
+        },
+        managers: '[{ name: string, fio?: string, position?: string, post?: string }] - все руководители',
+        owners: '[{ name: string, type?: string, inn?: string, share_text?: string, share_percent?: number }] - учредители и владельцы',
+        okved: { 
+          main: '{ code?: string, text?: string, title?: string } - основной ОКВЭД', 
+          additional: '[{ code?: string, text?: string, title?: string }] - дополнительные ОКВЭДы' 
+        },
+        risk_flags: 'string[] - флаги рисков и негативные факторы',
+        notes: 'string[] - дополнительные заметки и важная информация',
+        former_names: 'string[] - прежние названия компании',
+        predecessors: 'string[] - предшественники'
+      },
+      rules: [
+        'Используй возможности GPT-5 для максимально точной обработки данных',
+        'Отвечай строго JSON без комментариев и дополнительного текста',
+        'Объединяй данные из всех источников, приоритет более полным данным',
+        'Удаляй дубликаты и нормализуй форматы (телефоны, даты, адреса)',
+        'Если данные противоречат друг другу, выбирай наиболее достоверные',
+        'Заполняй years_from_registration на основе registration_date',
+        'Нормализуй телефоны в российский формат +7(XXX)XXX-XX-XX',
+        'Если поле недоступно — ставь null или пустой массив',
+        'Добавляй в risk_flags любые негативные факторы из источников',
+        'В notes включай важную дополнительную информацию'
+      ],
+      inn,
+      sources: results
+    };
 
-Данные: ${JSON.stringify(companyData, null, 2)}
-
-Верни JSON в формате:
-{
-  "company": {
-    "name": "название компании",
-    "inn": "${inn}",
-    "status": "статус компании",
-    "address": "адрес",
-    "activity": "основная деятельность"
-  },
-  "summary": "краткое описание компании в 2-3 предложениях"
-}`;
-    
-    // Используем стандартный OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-5',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: instruction }
-      ]
-    });
-    
-    console.log('OpenAI response received');
-    const msg = completion.choices?.[0]?.message?.content || '{}';
-    let parsed; 
-    try { 
-      parsed = JSON.parse(msg); 
-    } catch { 
-      parsed = { raw: msg }; 
+    // Используем новый API для GPT-5
+    if ((process.env.OPENAI_MODEL || 'gpt-5') === 'gpt-5') {
+      try {
+        const response = await openai.responses.create({
+          model: 'gpt-5',
+          input: `${system}\n\n${JSON.stringify(instruction)}`
+        });
+        const msg = response.output_text || '{}';
+        let parsed; 
+        try { 
+          parsed = JSON.parse(msg); 
+        } catch { 
+          parsed = { raw: msg }; 
+        }
+        console.log('GPT-5 response received');
+        res.json({ ok: true, model: 'gpt-5', summary: parsed });
+      } catch (gpt5Error) {
+        console.log('GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
+        // Fallback to chat completions API
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4',
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: JSON.stringify(instruction) }
+          ]
+        });
+        const msg = completion.choices?.[0]?.message?.content || '{}';
+        let parsed; 
+        try { 
+          parsed = JSON.parse(msg); 
+        } catch { 
+          parsed = { raw: msg }; 
+        }
+        res.json({ ok: true, model: 'gpt-4-fallback', summary: parsed });
+      }
+    } else {
+      // Для других моделей используем старый API
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'gpt-4',
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: JSON.stringify(instruction) }
+        ]
+      });
+      const msg = completion.choices?.[0]?.message?.content || '{}';
+      let parsed; 
+      try { 
+        parsed = JSON.parse(msg); 
+      } catch { 
+        parsed = { raw: msg }; 
+      }
+      res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4', summary: parsed });
     }
-    
-    console.log('Sending response to client');
-    res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-5', summary: parsed });
   } catch (e) {
     console.error('Company summarize error:', e.message, e.stack);
     
@@ -370,7 +435,7 @@ app.post('/api/company-summarize', async (req, res) => {
     res.json({ 
       ok: true, 
       model: 'fallback', 
-      summary: createFallbackSummary(inn, results, companyData)
+      summary: createFallbackSummary(inn, results, {})
     });
   }
 });
@@ -637,26 +702,65 @@ app.post('/api/openai/format-company', async (req, res) => {
 
     console.log('Sending request to OpenAI with model:', process.env.OPENAI_MODEL || model);
     
-    // Используем стандартный OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-5',
-      messages: [
-        { 
-          role: 'system', 
-          content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
-        },
-        { role: 'user', content: prompt }
-      ]
-    });
+    // Используем новый API для GPT-5
+    if ((process.env.OPENAI_MODEL || model) === 'gpt-5') {
+      try {
+        const response = await openai.responses.create({
+          model: 'gpt-5',
+          input: `Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.\n\n${prompt}`
+        });
+        
+        const htmlContent = response.output_text || '';
+        console.log('OpenAI GPT-5 response received, HTML length:', htmlContent.length);
+        
+        res.json({ 
+          html: htmlContent,
+          model: 'gpt-5',
+          timestamp: new Date().toISOString()
+        });
+      } catch (gpt5Error) {
+        console.log('GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
+        // Fallback to chat completions API
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
+            },
+            { role: 'user', content: prompt }
+          ]
+        });
 
-    const htmlContent = completion.choices?.[0]?.message?.content || '';
-    console.log('OpenAI response received, HTML length:', htmlContent.length);
-    
-    res.json({ 
-      html: htmlContent,
-      model: process.env.OPENAI_MODEL || 'gpt-5',
-      timestamp: new Date().toISOString()
-    });
+        const htmlContent = completion.choices?.[0]?.message?.content || '';
+        res.json({ 
+          html: htmlContent,
+          model: 'gpt-4-fallback',
+          timestamp: new Date().toISOString()
+        });
+      }
+    } else {
+      // Для других моделей используем старый API
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || model,
+        messages: [
+          { 
+            role: 'system', 
+            content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
+          },
+          { role: 'user', content: prompt }
+        ]
+      });
+
+      const htmlContent = completion.choices?.[0]?.message?.content || '';
+      console.log('OpenAI response received, HTML length:', htmlContent.length);
+      
+      res.json({ 
+        html: htmlContent,
+        model: process.env.OPENAI_MODEL || model,
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (e) {
     console.error('OpenAI formatting error:', e);
     // Fallback HTML при ошибке
