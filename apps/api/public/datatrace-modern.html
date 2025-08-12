@@ -961,14 +961,60 @@
       
       let html = '<div style="line-height: 1.6;">';
       
+      // Статус и уровень риска
       if (summary.found) {
-        html += '<div style="font-weight: 600; color: #dc2626; margin-bottom: 12px;">Найдены утечки данных!</div>';
+        const riskColor = getRiskColor(summary.risk_level);
+        html += `<div style="font-weight: 600; color: #dc2626; margin-bottom: 12px;">🚨 Найдены утечки данных!</div>`;
+        if (summary.risk_level) {
+          html += `<div style="font-weight: 600; color: ${riskColor}; margin-bottom: 12px;">⚠️ Уровень риска: ${getRiskText(summary.risk_level)}</div>`;
+        }
       } else {
-        html += '<div style="font-weight: 600; color: #16a34a; margin-bottom: 12px;">Утечки не обнаружены</div>';
+        html += '<div style="font-weight: 600; color: #16a34a; margin-bottom: 12px;">✅ Утечки не обнаружены</div>';
       }
       
+      // Краткая сводка
+      if (summary.summary) {
+        html += `<div style="margin-bottom: 16px; padding: 12px; background: #f3f4f6; border-left: 4px solid #6b7280;">${summary.summary}</div>`;
+      }
+      
+      // Рекомендации по безопасности
+      if (summary.security_recommendations) {
+        const rec = summary.security_recommendations;
+        
+        // Сайты где нужно сменить пароль
+        if (rec.password_change_sites && rec.password_change_sites.length > 0) {
+          html += '<div style="font-weight: 600; margin: 16px 0 8px 0; color: #dc2626;">🔐 Срочно смените пароли на сайтах:</div>';
+          html += '<ul style="list-style-type: none; padding-left: 20px; background: #fef2f2; padding: 12px; border-radius: 6px;">';
+          rec.password_change_sites.forEach(site => {
+            html += `<li style="margin-bottom: 4px;">🌐 <strong>${site}</strong></li>`;
+          });
+          html += '</ul>';
+        }
+        
+        // Срочные действия
+        if (rec.immediate_actions && rec.immediate_actions.length > 0) {
+          html += '<div style="font-weight: 600; margin: 16px 0 8px 0; color: #dc2626;">⚡ Срочные действия:</div>';
+          html += '<ul style="list-style-type: disc; padding-left: 20px;">';
+          rec.immediate_actions.forEach(action => {
+            html += `<li style="margin-bottom: 4px;">${action}</li>`;
+          });
+          html += '</ul>';
+        }
+        
+        // Общие рекомендации
+        if (rec.general_advice && rec.general_advice.length > 0) {
+          html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">💡 Общие рекомендации:</div>';
+          html += '<ul style="list-style-type: disc; padding-left: 20px;">';
+          rec.general_advice.forEach(advice => {
+            html += `<li style="margin-bottom: 4px;">${advice}</li>`;
+          });
+          html += '</ul>';
+        }
+      }
+      
+      // Ключевые находки
       if (summary.highlights && summary.highlights.length > 0) {
-        html += '<div style="font-weight: 600; margin-bottom: 8px;">Ключевые находки:</div>';
+        html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">🔍 Ключевые находки:</div>';
         html += '<ul style="list-style-type: disc; padding-left: 20px;">';
         summary.highlights.forEach(highlight => {
           html += `<li style="margin-bottom: 4px;">${highlight}</li>`;
@@ -978,6 +1024,26 @@
       
       html += '</div>';
       return html;
+    }
+
+    function getRiskColor(riskLevel) {
+      switch (riskLevel) {
+        case 'low': return '#16a34a';
+        case 'medium': return '#ca8a04';
+        case 'high': return '#dc2626';
+        case 'critical': return '#991b1b';
+        default: return '#6b7280';
+      }
+    }
+
+    function getRiskText(riskLevel) {
+      switch (riskLevel) {
+        case 'low': return 'Низкий';
+        case 'medium': return 'Средний';
+        case 'high': return 'Высокий';
+        case 'critical': return 'Критический';
+        default: return 'Неопределен';
+      }
     }
 
     function displayCompanyAIResult(summary) {
@@ -1224,12 +1290,60 @@
     }
 
     function formatAIDataForLeakSource(originalData, sourceName, aiSummary) {
-      // Всегда показываем детальные данные из источника
       const formattedData = {};
       
-      // Сначала показываем оригинальные данные из источника
+      // Если есть обработанные ИИ данные для этого источника, используем их
+      if (aiSummary && aiSummary.sources && aiSummary.sources[sourceName]) {
+        const sourceInfo = aiSummary.sources[sourceName];
+        
+        // Показываем количество записей
+        if (sourceInfo.foundCount) {
+          formattedData['📊 Найдено записей'] = sourceInfo.foundCount;
+        }
+        
+        // Показываем базы данных
+        if (sourceInfo.databases && sourceInfo.databases.length > 0) {
+          formattedData['🗄️ Базы данных'] = sourceInfo.databases.join(', ');
+        }
+        
+        // Показываем все обработанные записи от ИИ
+        if (sourceInfo.records && Array.isArray(sourceInfo.records)) {
+          sourceInfo.records.forEach((record, index) => {
+            if (record && typeof record === 'object') {
+              const recordInfo = [];
+              
+              // Форматируем каждую запись
+              if (record.email) recordInfo.push(`📧 ${record.email}`);
+              if (record.phone) recordInfo.push(`📞 ${record.phone}`);
+              if (record.name) recordInfo.push(`👤 ${record.name}`);
+              if (record.username) recordInfo.push(`🔑 ${record.username}`);
+              if (record.password) recordInfo.push(`🔐 ${record.password.substring(0, 8)}...`);
+              if (record.database) recordInfo.push(`🗄️ ${record.database}`);
+              if (record.source) recordInfo.push(`🔗 ${record.source}`);
+              if (record.date) recordInfo.push(`📅 ${record.date}`);
+              
+              if (recordInfo.length > 0) {
+                formattedData[`📄 Запись ${index + 1}`] = recordInfo.join(' | ');
+              }
+            } else if (typeof record === 'string') {
+              formattedData[`📄 Запись ${index + 1}`] = record;
+            }
+          });
+        }
+        
+        // Добавляем заметки ИИ
+        if (sourceInfo.notes) {
+          formattedData['📝 Анализ ИИ'] = sourceInfo.notes;
+        }
+        
+        // Если есть обработанные данные, возвращаем их
+        if (Object.keys(formattedData).length > 1) { // больше 1 потому что может быть только счетчик
+          return formattedData;
+        }
+      }
+      
+      // Если нет ИИ данных, показываем оригинальные данные
       if (originalData && typeof originalData === 'object') {
-        // Обрабатываем данные по типу источника
         switch (sourceName) {
           case 'ITP':
             formatITPData(originalData, formattedData);
@@ -1247,16 +1361,8 @@
             formatVektorData(originalData, formattedData);
             break;
           default:
-            // Для неизвестных источников показываем как есть
             Object.assign(formattedData, originalData);
         }
-      }
-      
-      // Добавляем информацию из AI анализа если есть
-      if (aiSummary && aiSummary.sources && aiSummary.sources[sourceName]) {
-        const sourceInfo = aiSummary.sources[sourceName];
-        if (sourceInfo.foundCount) formattedData['📊 Найдено записей'] = sourceInfo.foundCount;
-        if (sourceInfo.notes) formattedData['📝 Заметки ИИ'] = sourceInfo.notes;
       }
       
       return Object.keys(formattedData).length > 0 ? formattedData : originalData;

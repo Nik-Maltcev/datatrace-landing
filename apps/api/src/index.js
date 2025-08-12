@@ -724,15 +724,16 @@ app.post('/api/summarize', async (req, res) => {
       });
     }
 
-    const system = 'Ты — помощник-аналитик утечек. Кратко и структурированно выделяешь ключевую информацию.';
+    const system = 'Ты — эксперт-аналитик утечек данных с использованием GPT-5. Твоя задача — детально проанализировать все найденные данные и предоставить структурированную информацию с рекомендациями по безопасности.';
     const instruction = {
-      task: 'Сделай краткое резюме найденной информации по цели',
+      task: 'Проанализируй все найденные данные утечек и создай детальный отчет с рекомендациями',
       language: 'ru',
-      input_format: 'compact results object',
+      enhanced_processing: 'Используй возможности GPT-5 для глубокого анализа всех данных',
+      input_format: 'compact results object with raw data from all sources',
       output_schema: {
         found: 'boolean — есть ли совпадения в каких-либо источниках',
-        sources: 'map: имя источника -> { foundCount?: number, notes?: string }',
-        highlights: 'array of strings — ключевые находки (телефоны, email, логины, базы, даты)',
+        sources: 'map: имя источника -> { foundCount: number, records: array, databases: string[], notes: string }',
+        highlights: 'array of strings — ключевые находки с указанием источников',
         person: {
           name: 'string | null',
           phones: 'string[]',
@@ -740,13 +741,25 @@ app.post('/api/summarize', async (req, res) => {
           usernames: 'string[]',
           ids: 'string[]',
           addresses: 'string[]'
-        }
+        },
+        security_recommendations: {
+          password_change_sites: 'string[] — список сайтов где нужно сменить пароль',
+          immediate_actions: 'string[] — срочные действия для защиты',
+          general_advice: 'string[] — общие рекомендации по безопасности'
+        },
+        risk_level: 'string — уровень риска: low/medium/high/critical',
+        summary: 'string — краткая сводка на русском языке'
       },
       rules: [
-        'Отвечай строго JSON в одной строке, без пояснений.',
-        'Не выдумывай данные; опирайся только на вход.',
-        'Объединяй одинаковые значения, нормализуй формат телефонов и emails, убирай дубликаты.',
-        'Если ничего нет — found=false и пустые массивы.'
+        'Отвечай строго JSON без комментариев и дополнительного текста',
+        'Обрабатывай ВСЕ найденные записи из всех источников',
+        'В sources.records включай все найденные записи в едином формате',
+        'В sources.databases перечисляй все базы данных где найдены утечки',
+        'В password_change_sites указывай конкретные сайты на основе найденных данных',
+        'Нормализуй форматы (телефоны в +7(XXX)XXX-XX-XX, emails в нижнем регистре)',
+        'Удаляй дубликаты и объединяй данные об одном человеке',
+        'Определяй уровень риска на основе количества и типа утечек',
+        'Если ничего не найдено — found=false и пустые массивы'
       ],
       query,
       field,
