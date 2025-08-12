@@ -29,7 +29,20 @@ const VEKTOR_BASE = 'https://infosearch54321.xyz';
 
 // OpenAI client
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+let openai = null;
+
+// Initialize OpenAI client only if API key is available
+if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
+  try {
+    openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+    console.log('OpenAI client initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize OpenAI client:', error.message);
+    openai = null;
+  }
+} else {
+  console.warn('OpenAI API key not found in environment variables');
+}
 
 // Company check providers
 const DATANEWTON_BASE = process.env.DATANEWTON_BASE || 'https://api.datanewton.ru/v1';
@@ -291,72 +304,51 @@ app.post('/api/company-summarize', async (req, res) => {
       return res.status(400).json({ error: 'Missing inn or results' });
     }
 
+    // Извлекаем основные данные из результатов для fallback
+    let companyData = {};
+    for (const result of results) {
+      if (result.ok && result.items) {
+        Object.assign(companyData, result.items);
+      }
+    }
+
+    // Проверяем доступность OpenAI
+    if (!openai) {
+      console.log('OpenAI not available, using fallback');
+      return res.json({ 
+        ok: true, 
+        model: 'fallback', 
+        summary: createFallbackSummary(inn, results, companyData)
+      });
+    }
     
     console.log('Starting OpenAI request...');
-    const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
-    const instruction = {
-      task: 'Проанализируй и объедини данные о компании из всех источников (Datanewton, Checko). Создай полную структурированную сводку для красивого отображения в UI.',
-      language: 'ru',
-      enhanced_processing: 'Используй возможности GPT-5 для глубокого анализа и нормализации данных',
-      schema: {
-        company: {
-          name: 'string|null - приоритет краткому названию', 
-          fullName: 'string|null - полное официальное название', 
-          shortName: 'string|null - краткое название',
-          inn: 'string|null - нормализованный ИНН', 
-          ogrn: 'string|null - нормализованный ОГРН', 
-          kpp: 'string|null',
-          opf: 'string|null - организационно-правовая форма', 
-          registration_date: 'string|null - дата в формате YYYY-MM-DD или DD.MM.YYYY', 
-          years_from_registration: 'number|null - количество лет с регистрации',
-          status: 'string|null - статус: Действует/Ликвидирована/и т.д.',
-          address: 'string|null - полный нормализованный адрес',
-          charter_capital: 'string|null - уставной капитал с валютой',
-          contacts: { 
-            phones: 'string[] - нормализованные телефоны в формате +7(XXX)XXX-XX-XX', 
-            emails: 'string[] - валидные email адреса', 
-            sites: 'string[] - веб-сайты без http/https префикса' 
-          }
-        },
-        ceo: { 
-          name: 'string|null - ФИО руководителя', 
-          fio: 'string|null - альтернативное поле ФИО', 
-          position: 'string|null - должность', 
-          post: 'string|null - альтернативное поле должности' 
-        },
-        managers: '[{ name: string, fio?: string, position?: string, post?: string }] - все руководители',
-        owners: '[{ name: string, type?: string, inn?: string, share_text?: string, share_percent?: number }] - учредители и владельцы',
-        okved: { 
-          main: '{ code?: string, text?: string, title?: string } - основной ОКВЭД', 
-          additional: '[{ code?: string, text?: string, title?: string }] - дополнительные ОКВЭДы' 
-        },
-        risk_flags: 'string[] - флаги рисков и негативные факторы',
-        notes: 'string[] - дополнительные заметки и важная информация',
-        former_names: 'string[] - прежние названия компании',
-        predecessors: 'string[] - предшественники'
-      },
-      rules: [
-        'Используй возможности GPT-5 для максимально точной обработки данных',
-        'Отвечай строго JSON без комментариев и дополнительного текста',
-        'Объединяй данные из всех источников, приоритет более полным данным',
-        'Удаляй дубликаты и нормализуй форматы (телефоны, даты, адреса)',
-        'Если данные противоречат друг другу, выбирай наиболее достоверные',
-        'Заполняй years_from_registration на основе registration_date',
-        'Нормализуй телефоны в российский формат +7(XXX)XXX-XX-XX',
-        'Если поле недоступно — ставь null или пустой массив',
-        'Добавляй в risk_flags любые негативные факторы из источников',
-        'В notes включай важную дополнительную информацию'
-      ],
-      inn,
-      sources: results
-    };
+    // Упрощенный промпт для надежной работы
+    const system = 'Ты — аналитик корпоративных данных. Создай краткую сводку о компании на основе предоставленных данных.';
+    
+    const instruction = `Проанализируй данные о компании с ИНН ${inn} и создай краткую сводку в формате JSON:
+
+Данные: ${JSON.stringify(companyData, null, 2)}
+
+Верни JSON в формате:
+{
+  "company": {
+    "name": "название компании",
+    "inn": "${inn}",
+    "status": "статус компании",
+    "address": "адрес",
+    "activity": "основная деятельность"
+  },
+  "summary": "краткое описание компании в 2-3 предложениях"
+}`;
+    
     // Используем стандартный OpenAI API
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4o',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: system },
-        { role: 'user', content: JSON.stringify(instruction) }
+        { role: 'user', content: instruction }
       ]
     });
     
@@ -373,9 +365,132 @@ app.post('/api/company-summarize', async (req, res) => {
     res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
   } catch (e) {
     console.error('Company summarize error:', e.message, e.stack);
-    res.status(500).json({ ok: false, error: normalizeError(e) });
+    
+    // Fallback: возвращаем базовую информацию без GPT
+    res.json({ 
+      ok: true, 
+      model: 'fallback', 
+      summary: createFallbackSummary(inn, results, companyData)
+    });
   }
 });
+
+// Функция для создания fallback сводки без OpenAI
+function createFallbackSummary(inn, results, companyData) {
+  let fallbackSummary = {
+    company: {
+      name: "Информация недоступна",
+      inn: inn,
+      status: "Неизвестно",
+      address: "Не указан",
+      activity: "Не указана"
+    },
+    summary: "Базовая информация о компании получена из открытых источников."
+  };
+  
+  // Попытаемся извлечь хотя бы базовую информацию из результатов
+  try {
+    for (const result of results) {
+      if (result.ok && result.items) {
+        const items = result.items;
+        
+        // Извлекаем название компании
+        if (items.company_names?.short_name) {
+          fallbackSummary.company.name = items.company_names.short_name;
+        } else if (items.company_names?.full_name) {
+          fallbackSummary.company.name = items.company_names.full_name;
+        } else if (items.name) {
+          fallbackSummary.company.name = items.name;
+        }
+        
+        // Извлекаем адрес
+        if (items.address?.line_address) {
+          fallbackSummary.company.address = items.address.line_address;
+        } else if (items.address) {
+          fallbackSummary.company.address = items.address;
+        }
+        
+        // Извлекаем деятельность
+        if (items.okved_main?.value) {
+          fallbackSummary.company.activity = items.okved_main.value;
+        } else if (items.activity) {
+          fallbackSummary.company.activity = items.activity;
+        }
+        
+        // Извлекаем статус
+        if (items.status) {
+          fallbackSummary.company.status = items.status;
+        } else if (items.state) {
+          fallbackSummary.company.status = items.state;
+        }
+      }
+    }
+    
+    // Создаем более информативную сводку
+    if (fallbackSummary.company.name !== "Информация недоступна") {
+      fallbackSummary.summary = `Компания ${fallbackSummary.company.name} с ИНН ${inn}. ` +
+        `Статус: ${fallbackSummary.company.status}. ` +
+        `Основная деятельность: ${fallbackSummary.company.activity}.`;
+    }
+  } catch (fallbackError) {
+    console.error('Fallback error:', fallbackError);
+  }
+  
+  return fallbackSummary;
+}
+
+// Функция для создания fallback сводки поиска утечек без OpenAI
+function createLeakFallbackSummary(query, field, compact) {
+  let found = false;
+  let sources = {};
+  let highlights = [];
+  let person = {
+    name: null,
+    phones: [],
+    emails: [],
+    usernames: [],
+    ids: [],
+    addresses: []
+  };
+
+  // Анализируем результаты каждого источника
+  for (const [sourceName, sourceData] of Object.entries(compact)) {
+    if (sourceData.ok && sourceData.data) {
+      found = true;
+      let foundCount = 0;
+      
+      if (sourceName === 'ITP' && typeof sourceData.data === 'object') {
+        for (const [category, items] of Object.entries(sourceData.data)) {
+          if (Array.isArray(items) && items.length > 0) {
+            foundCount += items.length;
+            highlights.push(`${category}: ${items.length} записей`);
+          }
+        }
+      } else if (Array.isArray(sourceData.data)) {
+        foundCount = sourceData.data.length;
+        if (foundCount > 0) {
+          highlights.push(`${sourceName}: ${foundCount} записей`);
+        }
+      }
+      
+      sources[sourceName] = { foundCount, notes: foundCount > 0 ? 'Данные найдены' : 'Нет данных' };
+    } else {
+      sources[sourceName] = { foundCount: 0, notes: 'Источник недоступен или нет данных' };
+    }
+  }
+
+  // Если ничего не найдено
+  if (!found) {
+    highlights.push('Информация по запросу не найдена');
+  }
+
+  return {
+    found,
+    sources,
+    highlights,
+    person
+  };
+}
 
 function compactResults(results) {
   const out = {};
@@ -414,6 +529,17 @@ app.post('/api/summarize', async (req, res) => {
     }
 
     const compact = compactResults(results);
+    
+    // Проверяем доступность OpenAI
+    if (!openai) {
+      console.log('OpenAI not available for summarize, using fallback');
+      return res.json({ 
+        ok: true, 
+        model: 'fallback', 
+        summary: createLeakFallbackSummary(query, field, compact)
+      });
+    }
+
     const system = 'Ты — помощник-аналитик утечек. Кратко и структурированно выделяешь ключевую информацию.';
     const instruction = {
       task: 'Сделай краткое резюме найденной информации по цели',
@@ -457,7 +583,13 @@ app.post('/api/summarize', async (req, res) => {
     try { parsed = JSON.parse(msg); } catch { parsed = { raw: msg }; }
     res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4o', summary: parsed });
   } catch (e) {
-    res.status(500).json({ ok: false, error: normalizeError(e) });
+    console.error('Summarize error:', e.message);
+    // Fallback при ошибке OpenAI
+    res.json({ 
+      ok: true, 
+      model: 'fallback', 
+      summary: createLeakFallbackSummary(query, field, compactResults(results))
+    });
   }
 });
 
@@ -488,9 +620,19 @@ app.get('/api/company', async (req, res) => {
 app.post('/api/openai/format-company', async (req, res) => {
   try {
     console.log('Received OpenAI format request:', req.body);
-    const { prompt, model = 'gpt-5' } = req.body;
+    const { prompt, model = 'gpt-4o' } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // Проверяем доступность OpenAI
+    if (!openai) {
+      console.log('OpenAI not available for formatting, using fallback HTML');
+      return res.json({ 
+        html: '<div class="p-4 bg-yellow-100 border border-yellow-400 rounded"><p class="text-yellow-800">OpenAI недоступен. Показаны базовые данные.</p></div>',
+        model: 'fallback',
+        timestamp: new Date().toISOString()
+      });
     }
 
     console.log('Sending request to OpenAI with model:', process.env.OPENAI_MODEL || model);
@@ -517,7 +659,12 @@ app.post('/api/openai/format-company', async (req, res) => {
     });
   } catch (e) {
     console.error('OpenAI formatting error:', e);
-    res.status(500).json({ error: normalizeError(e) });
+    // Fallback HTML при ошибке
+    res.json({ 
+      html: '<div class="p-4 bg-red-100 border border-red-400 rounded"><p class="text-red-800">Ошибка форматирования данных. Попробуйте позже.</p></div>',
+      model: 'fallback',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
