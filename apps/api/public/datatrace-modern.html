@@ -807,11 +807,22 @@
         for (const endpoint of endpoints) {
           try {
             console.log(`🔄 Trying endpoint: ${endpoint}`);
+            
+            // Создаем AbortController для таймаута
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+              console.log(`⏰ Request timeout for ${endpoint}`);
+              controller.abort();
+            }, 60000); // 60 секунд таймаут
+            
             response = await fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: data.query, field: data.field, results: data.results })
+              body: JSON.stringify({ query: data.query, field: data.field, results: data.results }),
+              signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
               console.log(`✅ Success with endpoint: ${endpoint}`);
@@ -822,7 +833,12 @@
             }
           } catch (fetchError) {
             console.log(`💥 Fetch error with endpoint: ${endpoint}:`, fetchError.message);
-            lastError = fetchError;
+            if (fetchError.name === 'AbortError') {
+              console.log(`⏰ Request was aborted due to timeout`);
+              lastError = new Error('Request timeout (60s)');
+            } else {
+              lastError = fetchError;
+            }
             response = null;
           }
         }
@@ -881,11 +897,22 @@
         for (const endpoint of endpoints) {
           try {
             console.log(`🔄 Trying company endpoint: ${endpoint}`);
+            
+            // Создаем AbortController для таймаута
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+              console.log(`⏰ Company request timeout for ${endpoint}`);
+              controller.abort();
+            }, 60000); // 60 секунд таймаут
+            
             response = await fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(requestBody)
+              body: JSON.stringify(requestBody),
+              signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
               console.log(`✅ Success with company endpoint: ${endpoint}`);
@@ -893,6 +920,9 @@
             }
           } catch (fetchError) {
             console.log(`💥 Fetch error with company endpoint: ${endpoint}:`, fetchError.message);
+            if (fetchError.name === 'AbortError') {
+              console.log(`⏰ Company request was aborted due to timeout`);
+            }
           }
         }
         

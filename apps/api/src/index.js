@@ -474,10 +474,18 @@ app.post('/api/company-summarize', async (req, res) => {
     if ((process.env.OPENAI_MODEL || 'gpt-5') === 'gpt-5') {
       try {
         console.log('📡 Sending request to GPT-5 Responses API...');
-        const response = await openai.responses.create({
+        
+        // Создаем промис с таймаутом
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('OpenAI request timeout (45s)')), 45000);
+        });
+        
+        const openaiPromise = openai.responses.create({
           model: 'gpt-5',
           input: `${system}\n\n${JSON.stringify(instruction)}`
         });
+        
+        const response = await Promise.race([openaiPromise, timeoutPromise]);
         console.log('✅ GPT-5 response received successfully');
         const msg = response.output_text || '{}';
         let parsed; 
@@ -491,8 +499,13 @@ app.post('/api/company-summarize', async (req, res) => {
       } catch (gpt5Error) {
         console.log('❌ GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
         console.log('🔄 Attempting fallback to GPT-4...');
-        // Fallback to chat completions API
-        const completion = await openai.chat.completions.create({
+        
+        // Fallback to chat completions API с таймаутом
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('GPT-4 fallback timeout (30s)')), 30000);
+        });
+        
+        const gpt4Promise = openai.chat.completions.create({
           model: 'gpt-4',
           response_format: { type: 'json_object' },
           messages: [
@@ -500,6 +513,8 @@ app.post('/api/company-summarize', async (req, res) => {
             { role: 'user', content: JSON.stringify(instruction) }
           ]
         });
+        
+        const completion = await Promise.race([gpt4Promise, timeoutPromise]);
         console.log('✅ GPT-4 fallback response received');
         const msg = completion.choices?.[0]?.message?.content || '{}';
         let parsed; 
@@ -736,7 +751,12 @@ app.post('/api/summarize', async (req, res) => {
       data: compact
     };
 
-    const completion = await openai.chat.completions.create({
+    // Создаем промис с таймаутом для summarize
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Summarize OpenAI timeout (30s)')), 30000);
+    });
+    
+    const openaiPromise = openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-5',
       response_format: { type: 'json_object' },
       messages: [
@@ -744,6 +764,8 @@ app.post('/api/summarize', async (req, res) => {
         { role: 'user', content: JSON.stringify(instruction) }
       ]
     });
+    
+    const completion = await Promise.race([openaiPromise, timeoutPromise]);
 
     const msg = completion.choices?.[0]?.message?.content || '{}';
     let parsed;
