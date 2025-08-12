@@ -298,6 +298,40 @@ app.post('/api/company-search', async (req, res) => {
   }
 });
 
+// Новый эндпоинт для последовательного поиска по компаниям
+app.post('/api/company-search-step', async (req, res) => {
+  try {
+    const { inn, step } = req.body || {};
+    if (!inn || !/^\d{10,12}$/.test(String(inn).trim())) {
+      return res.status(400).json({ error: 'Введите корректный ИНН (10 или 12 цифр)' });
+    }
+    
+    let result;
+    switch (step) {
+      case 1:
+        console.log('🔍 Step 1: Searching Datanewton...');
+        result = await searchDatanewton(inn);
+        break;
+      case 2:
+        console.log('🔍 Step 2: Searching Checko...');
+        result = await searchChecko(inn);
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid step' });
+    }
+    
+    res.json({ 
+      query: String(inn).trim(), 
+      field: 'inn', 
+      step,
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ error: normalizeError(e) });
+  }
+});
+
 app.post('/api/company-summarize', async (req, res) => {
   try {
     console.log('Company summarize request received');

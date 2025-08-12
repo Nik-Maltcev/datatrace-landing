@@ -557,66 +557,11 @@
       showProgress();
 
       try {
-        let response, data;
-        
         if (currentMode === 'company') {
-          response = await fetch('/api/company-search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ inn: query })
-          });
+          await performCompanySearch(query);
         } else {
-          response = await fetch('/api/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              query: query, 
-              field: fieldSel.value 
-            })
-          });
+          await performLeakSearch(query);
         }
-
-        data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Ошибка сервера');
-        }
-
-        updateProgress(100, 'Завершено');
-        
-        setTimeout(async () => {
-          hideProgress();
-          
-          if (currentMode === 'company') {
-            console.log('🏢 Company mode detected');
-            console.log('⚡ Fast mode:', isFastMode);
-            console.log('📊 Data results:', data.results);
-            
-            // Для режима компании сначала обрабатываем через OpenAI
-            if (!isFastMode && data.results && data.results.length > 0) {
-              console.log('🚀 Starting AI processing...');
-              updateProgress(50, 'Обработка через ИИ...');
-              showProgress();
-              await requestAISummaryForCompany(data);
-              hideProgress();
-            } else if (isFastMode) {
-              console.log('⚡ Fast mode - showing raw data');
-              // В быстром режиме показываем сырые данные
-              displayResults(data);
-            } else {
-              console.log('❌ No results to process');
-              results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для обработки</div></div>';
-            }
-          } else {
-            // Для режима утечек показываем результаты сразу
-            displayResults(data);
-            
-            if (!isFastMode && data.results) {
-              requestAISummary(data);
-            }
-          }
-        }, 1000);
-
       } catch (error) {
         console.error('Ошибка поиска:', error);
         hideProgress();
@@ -625,6 +570,107 @@
         btn.disabled = false;
         btn.textContent = 'Проверить';
       }
+    }
+
+    // Поиск утечек (старая логика)
+    async function performLeakSearch(query) {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          query: query, 
+          field: fieldSel.value 
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка сервера');
+      }
+
+      updateProgress(100, 'Завершено');
+      
+      setTimeout(() => {
+        hideProgress();
+        displayResults(data);
+        
+        if (!isFastMode && data.results) {
+          requestAISummary(data);
+        }
+      }, 1000);
+    }
+
+    // Последовательный поиск по компаниям
+    async function performCompanySearch(query) {
+      console.log('🏢 Starting company search for:', query);
+      
+      const allResults = [];
+      const sources = [
+        { name: 'Datanewton', step: 1 },
+        { name: 'Checko', step: 2 }
+      ];
+
+      // Шаг 1-2: Последовательный поиск по источникам
+      for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        const progress = 25 + (i * 25); // 25%, 50%
+        
+        updateProgress(progress, `Поиск в ${source.name}...`);
+        console.log(`🔍 Step ${source.step}: Searching ${source.name}...`);
+        
+        try {
+          const response = await fetch('/api/company-search-step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inn: query, step: source.step })
+          });
+
+          const stepData = await response.json();
+          
+          if (response.ok && stepData.result) {
+            allResults.push(stepData.result);
+            console.log(`✅ ${source.name} completed:`, stepData.result);
+            
+            // Показываем результат по источнику
+            if (isFastMode) {
+              displaySourceResult(stepData.result, i === 0);
+            }
+          } else {
+            console.log(`❌ ${source.name} failed:`, stepData.error);
+            allResults.push({ name: source.name, ok: false, error: stepData.error });
+          }
+        } catch (error) {
+          console.error(`💥 Error in ${source.name}:`, error);
+          allResults.push({ name: source.name, ok: false, error: error.message });
+        }
+        
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Шаг 3: Обработка через OpenAI (если не быстрый режим)
+      if (!isFastMode && allResults.length > 0) {
+        updateProgress(75, 'Обработка через ИИ...');
+        console.log('🤖 Processing through OpenAI...');
+        
+        const combinedData = {
+          query: query,
+          field: 'inn',
+          results: allResults
+        };
+        
+        await requestAISummaryForCompany(combinedData);
+      }
+
+      // Шаг 4: Завершение
+      updateProgress(100, 'Завершено');
+      setTimeout(() => {
+        hideProgress();
+        if (isFastMode && allResults.length === 0) {
+          results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
+        }
+      }, 500);
     }
 
     function displayResults(data) {
@@ -644,6 +690,16 @@
           results.appendChild(item);
         });
       }
+    }
+
+    function displaySourceResult(result, isFirst) {
+      if (isFirst) {
+        results.innerHTML = '';
+      }
+      
+      const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
+      const item = createResultItem(result.name || 'Источник', status, result.items || result.error);
+      results.appendChild(item);
     }
 
     async function requestAISummary(data) {
