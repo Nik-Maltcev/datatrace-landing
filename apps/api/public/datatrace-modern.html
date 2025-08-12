@@ -588,15 +588,24 @@
           hideProgress();
           
           if (currentMode === 'company') {
+            console.log('🏢 Company mode detected');
+            console.log('⚡ Fast mode:', isFastMode);
+            console.log('📊 Data results:', data.results);
+            
             // Для режима компании сначала обрабатываем через OpenAI
-            if (!isFastMode && data.results) {
+            if (!isFastMode && data.results && data.results.length > 0) {
+              console.log('🚀 Starting AI processing...');
               updateProgress(50, 'Обработка через ИИ...');
               showProgress();
               await requestAISummaryForCompany(data);
               hideProgress();
-            } else {
+            } else if (isFastMode) {
+              console.log('⚡ Fast mode - showing raw data');
               // В быстром режиме показываем сырые данные
               displayResults(data);
+            } else {
+              console.log('❌ No results to process');
+              results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для обработки</div></div>';
             }
           } else {
             // Для режима утечек показываем результаты сразу
@@ -672,29 +681,44 @@
 
     async function requestAISummaryForCompany(data) {
       try {
-        console.log('Requesting AI summary for company mode');
-        console.log('Data received:', data);
+        console.log('🏢 Requesting AI summary for company mode');
+        console.log('📊 Data received:', data);
+        console.log('🔍 Query:', data.query);
+        console.log('📋 Results count:', data.results ? data.results.length : 0);
+        console.log('📋 Results data:', data.results);
+        
+        const requestBody = { inn: data.query, results: data.results };
+        console.log('📤 Sending to OpenAI:', requestBody);
         
         const response = await fetch('/api/company-summarize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inn: data.query, results: data.results })
+          body: JSON.stringify(requestBody)
         });
 
-        console.log('Response status:', response.status);
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ HTTP Error:', response.status, errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
         const aiData = await response.json();
-        console.log('AI response:', aiData);
+        console.log('🤖 AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
+          console.log('✅ Displaying AI processed result');
           // Показываем только обработанный результат от OpenAI
           displayCompanyAIResult(aiData.summary);
         } else {
+          console.error('❌ AI processing failed:', aiData);
           // Если OpenAI не сработал, показываем fallback
-          results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании</div></div>';
+          results.innerHTML = `<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании: ${aiData.error || 'Неизвестная ошибка'}</div></div>`;
         }
       } catch (error) {
-        console.error('Ошибка ИИ анализа компании:', error);
-        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании</div></div>';
+        console.error('💥 Ошибка ИИ анализа компании:', error);
+        results.innerHTML = `<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании: ${error.message}</div></div>`;
       }
     }
 
