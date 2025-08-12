@@ -764,13 +764,13 @@
         console.log('🤖 AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
-          console.log('✅ Displaying AI processed result');
-          // Показываем только обработанный результат от OpenAI
-          displayCompanyAIResult(aiData.summary);
+          console.log('✅ Displaying AI processed result by sources');
+          // Показываем результаты по источникам
+          displayCompanyResultsBySources(data.results, aiData.summary);
         } else {
           console.error('❌ AI processing failed:', aiData);
-          // Если OpenAI не сработал, показываем fallback
-          results.innerHTML = `<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании: ${aiData.error || 'Неизвестная ошибка'}</div></div>`;
+          // Если OpenAI не сработал, показываем fallback по источникам
+          displayCompanyResultsBySources(data.results, null);
         }
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа компании:', error);
@@ -897,6 +897,96 @@
 
       html += '</div></div>';
       results.innerHTML = html;
+    }
+
+    function displayCompanyResultsBySources(sourceResults, aiSummary) {
+      results.innerHTML = '';
+      
+      if (!sourceResults || sourceResults.length === 0) {
+        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
+        return;
+      }
+
+      sourceResults.forEach((result, index) => {
+        const sourceName = result.name || `Источник ${index + 1}`;
+        const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
+        
+        let displayData = result.items || result.error;
+        
+        // Если есть обработанные данные от AI, используем их для соответствующего источника
+        if (aiSummary && result.ok && result.items) {
+          // Для Datanewton и Checko показываем обработанные данные
+          if (sourceName.toLowerCase().includes('datanewton') || sourceName.toLowerCase().includes('checko')) {
+            displayData = formatAIDataForSource(aiSummary, sourceName);
+          }
+        }
+        
+        const item = createResultItem(sourceName, status, displayData);
+        results.appendChild(item);
+      });
+    }
+
+    function formatAIDataForSource(aiSummary, sourceName) {
+      if (!aiSummary || !aiSummary.company) {
+        return { message: 'Нет обработанных данных' };
+      }
+
+      const company = aiSummary.company;
+      const formattedData = {};
+
+      // Основная информация
+      if (company.name) formattedData['Название'] = company.name;
+      if (company.fullName && company.fullName !== company.name) formattedData['Полное название'] = company.fullName;
+      if (company.inn) formattedData['ИНН'] = company.inn;
+      if (company.ogrn) formattedData['ОГРН'] = company.ogrn;
+      if (company.kpp) formattedData['КПП'] = company.kpp;
+      if (company.opf) formattedData['Организационно-правовая форма'] = company.opf;
+      if (company.status) formattedData['Статус'] = company.status;
+      if (company.registration_date) formattedData['Дата регистрации'] = company.registration_date;
+      if (company.years_from_registration) formattedData['Лет с регистрации'] = company.years_from_registration;
+      if (company.address) formattedData['Адрес'] = company.address;
+      if (company.charter_capital) formattedData['Уставной капитал'] = company.charter_capital;
+
+      // Контакты
+      if (company.contacts) {
+        if (company.contacts.phones && company.contacts.phones.length > 0) {
+          formattedData['Телефоны'] = company.contacts.phones.join(', ');
+        }
+        if (company.contacts.emails && company.contacts.emails.length > 0) {
+          formattedData['Email'] = company.contacts.emails.join(', ');
+        }
+        if (company.contacts.sites && company.contacts.sites.length > 0) {
+          formattedData['Сайты'] = company.contacts.sites.join(', ');
+        }
+      }
+
+      // Руководство
+      if (aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio)) {
+        formattedData['Руководитель'] = aiSummary.ceo.name || aiSummary.ceo.fio;
+        if (aiSummary.ceo.position || aiSummary.ceo.post) {
+          formattedData['Должность руководителя'] = aiSummary.ceo.position || aiSummary.ceo.post;
+        }
+      }
+
+      // ОКВЭД
+      if (aiSummary.okved && aiSummary.okved.main) {
+        if (aiSummary.okved.main.code) formattedData['Код ОКВЭД'] = aiSummary.okved.main.code;
+        if (aiSummary.okved.main.text || aiSummary.okved.main.title) {
+          formattedData['Основная деятельность'] = aiSummary.okved.main.text || aiSummary.okved.main.title;
+        }
+      }
+
+      // Флаги рисков
+      if (aiSummary.risk_flags && aiSummary.risk_flags.length > 0) {
+        formattedData['Флаги рисков'] = aiSummary.risk_flags.join('; ');
+      }
+
+      // Дополнительные заметки
+      if (aiSummary.notes && aiSummary.notes.length > 0) {
+        formattedData['Дополнительная информация'] = aiSummary.notes.join('; ');
+      }
+
+      return formattedData;
     }
 
     // Обработчики событий
