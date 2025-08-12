@@ -572,33 +572,86 @@
       }
     }
 
-    // Поиск утечек (старая логика)
+    // Последовательный поиск утечек
     async function performLeakSearch(query) {
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          query: query, 
-          field: fieldSel.value 
-        })
-      });
+      console.log('🔍 Starting leak search for:', query);
+      
+      const allResults = [];
+      const sources = [
+        { name: 'ITP', step: 1 },
+        { name: 'Dyxless', step: 2 },
+        { name: 'LeakOsint', step: 3 },
+        { name: 'Usersbox', step: 4 },
+        { name: 'Vektor', step: 5 }
+      ];
 
-      const data = await response.json();
+      // Шаг 1-5: Последовательный поиск по источникам
+      for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        const progress = 10 + (i * 15); // 10%, 25%, 40%, 55%, 70%
+        
+        updateProgress(progress, `Поиск в ${source.name}...`);
+        console.log(`🔍 Step ${source.step}: Searching ${source.name}...`);
+        
+        try {
+          const response = await fetch('/api/leak-search-step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              query: query, 
+              field: fieldSel.value,
+              step: source.step 
+            })
+          });
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Ошибка сервера');
+          const stepData = await response.json();
+          
+          if (response.ok && stepData.result) {
+            allResults.push(stepData.result);
+            console.log(`✅ ${source.name} completed:`, stepData.result);
+            
+            // Показываем результат по источнику в быстром режиме
+            if (isFastMode) {
+              displaySourceResult(stepData.result, i === 0);
+            }
+          } else {
+            console.log(`❌ ${source.name} failed:`, stepData.error);
+            allResults.push({ name: source.name, ok: false, error: stepData.error });
+          }
+        } catch (error) {
+          console.error(`💥 Error in ${source.name}:`, error);
+          allResults.push({ name: source.name, ok: false, error: error.message });
+        }
+        
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
+      // Шаг 6: Обработка через OpenAI (если не быстрый режим)
+      if (!isFastMode && allResults.length > 0) {
+        updateProgress(85, 'Обработка через ИИ...');
+        console.log('🤖 Processing leaks through OpenAI...');
+        
+        const combinedData = {
+          query: query,
+          field: fieldSel.value,
+          results: allResults
+        };
+        
+        await requestAISummaryForLeaks(combinedData);
+      } else if (!isFastMode) {
+        // Показываем результаты по источникам без AI
+        displayLeakResultsBySources(allResults, null);
+      }
+
+      // Шаг 7: Завершение
       updateProgress(100, 'Завершено');
-      
       setTimeout(() => {
         hideProgress();
-        displayResults(data);
-        
-        if (!isFastMode && data.results) {
-          requestAISummary(data);
+        if (isFastMode && allResults.length === 0) {
+          results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
         }
-      }, 1000);
+      }, 500);
     }
 
     // Последовательный поиск по компаниям
@@ -732,6 +785,49 @@
         }
       } catch (error) {
         console.error('Ошибка ИИ анализа:', error);
+      }
+    }
+
+    async function requestAISummaryForLeaks(data) {
+      try {
+        console.log('🔍 Requesting AI summary for leak search');
+        console.log('📊 Data received:', data);
+        
+        const response = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: data.query, field: data.field, results: data.results })
+        });
+
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ HTTP Error:', response.status, errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const aiData = await response.json();
+        console.log('🤖 AI response:', aiData);
+        
+        if (aiData.ok && aiData.summary) {
+          console.log('✅ Displaying AI processed leak results by sources');
+          // Показываем результаты по источникам с AI анализом
+          displayLeakResultsBySources(data.results, aiData.summary);
+          
+          // Также показываем общую сводку
+          const summaryEl = document.getElementById('summary');
+          const summaryBody = document.getElementById('summaryBody');
+          summaryBody.innerHTML = formatSummary(aiData.summary);
+          summaryEl.style.display = 'block';
+        } else {
+          console.error('❌ AI processing failed:', aiData);
+          // Если OpenAI не сработал, показываем результаты без AI
+          displayLeakResultsBySources(data.results, null);
+        }
+      } catch (error) {
+        console.error('💥 Ошибка ИИ анализа утечек:', error);
+        displayLeakResultsBySources(data.results, null);
       }
     }
 
@@ -987,6 +1083,89 @@
       }
 
       return formattedData;
+    }
+
+    function displayLeakResultsBySources(sourceResults, aiSummary) {
+      results.innerHTML = '';
+      
+      if (!sourceResults || sourceResults.length === 0) {
+        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
+        return;
+      }
+
+      sourceResults.forEach((result, index) => {
+        const sourceName = result.name || `Источник ${index + 1}`;
+        
+        // Определяем статус на основе найденных данных
+        let status = 'success'; // По умолчанию зеленый (нет утечек)
+        
+        if (result.error) {
+          status = 'warning'; // Желтый (ошибка источника)
+        } else if (result.ok && result.items) {
+          // Проверяем, есть ли данные в результатах
+          const hasData = checkIfSourceHasLeakData(result, sourceName);
+          if (hasData) {
+            status = 'danger'; // Красный (найдены утечки)
+          }
+        }
+        
+        let displayData = result.items || result.error;
+        
+        // Если есть обработанные данные от AI, используем их
+        if (aiSummary && result.ok && result.items) {
+          displayData = formatAIDataForLeakSource(result.items, sourceName, aiSummary);
+        }
+        
+        const item = createResultItem(sourceName, status, displayData);
+        results.appendChild(item);
+      });
+    }
+
+    function checkIfSourceHasLeakData(result, sourceName) {
+      if (!result.ok || !result.items) return false;
+      
+      // Проверяем каждый источник на наличие данных
+      switch (sourceName) {
+        case 'ITP':
+          return result.items && typeof result.items === 'object' && Object.keys(result.items).length > 0;
+        case 'Dyxless':
+          return Array.isArray(result.items) && result.items.length > 0;
+        case 'LeakOsint':
+          return Array.isArray(result.items) && result.items.length > 0;
+        case 'Usersbox':
+          return Array.isArray(result.items) && result.items.length > 0;
+        case 'Vektor':
+          return result.items && (Array.isArray(result.items) ? result.items.length > 0 : Object.keys(result.items).length > 0);
+        default:
+          return false;
+      }
+    }
+
+    function formatAIDataForLeakSource(originalData, sourceName, aiSummary) {
+      // Если AI обработка есть, показываем структурированные данные
+      if (aiSummary && aiSummary.person) {
+        const person = aiSummary.person;
+        const formattedData = {};
+        
+        if (person.name) formattedData['Имя'] = person.name;
+        if (person.phones && person.phones.length > 0) formattedData['Телефоны'] = person.phones.join(', ');
+        if (person.emails && person.emails.length > 0) formattedData['Email адреса'] = person.emails.join(', ');
+        if (person.usernames && person.usernames.length > 0) formattedData['Логины'] = person.usernames.join(', ');
+        if (person.ids && person.ids.length > 0) formattedData['ID'] = person.ids.join(', ');
+        if (person.addresses && person.addresses.length > 0) formattedData['Адреса'] = person.addresses.join(', ');
+        
+        // Добавляем информацию о количестве записей из AI
+        if (aiSummary.sources && aiSummary.sources[sourceName]) {
+          const sourceInfo = aiSummary.sources[sourceName];
+          if (sourceInfo.foundCount) formattedData['Найдено записей'] = sourceInfo.foundCount;
+          if (sourceInfo.notes) formattedData['Заметки'] = sourceInfo.notes;
+        }
+        
+        return Object.keys(formattedData).length > 0 ? formattedData : originalData;
+      }
+      
+      // Если AI обработки нет, возвращаем оригинальные данные
+      return originalData;
     }
 
     // Обработчики событий

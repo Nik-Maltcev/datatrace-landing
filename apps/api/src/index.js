@@ -332,6 +332,56 @@ app.post('/api/company-search-step', async (req, res) => {
   }
 });
 
+// Новый эндпоинт для последовательного поиска утечек
+app.post('/api/leak-search-step', async (req, res) => {
+  try {
+    const { query, field, step } = req.body || {};
+    if (!query || typeof query !== 'string' || query.trim().length < 3) {
+      return res.status(400).json({ error: 'Введите корректный запрос (мин. 3 символа)' });
+    }
+    
+    const allowedFields = new Set(['phone', 'email', 'vk', 'ok', 'inn', 'snils']);
+    const f = allowedFields.has(field) ? field : 'full_text';
+    const finalQuery = extractUsernameIfSocial(f, query);
+    
+    let result;
+    switch (step) {
+      case 1:
+        console.log('🔍 Step 1: Searching ITP...');
+        result = await searchITP(finalQuery, f);
+        break;
+      case 2:
+        console.log('🔍 Step 2: Searching Dyxless...');
+        result = await searchDyxless(finalQuery);
+        break;
+      case 3:
+        console.log('🔍 Step 3: Searching LeakOsint...');
+        result = await searchLeakOsint(finalQuery);
+        break;
+      case 4:
+        console.log('🔍 Step 4: Searching Usersbox...');
+        result = await searchUsersbox(finalQuery);
+        break;
+      case 5:
+        console.log('🔍 Step 5: Searching Vektor...');
+        result = await searchVektor(finalQuery);
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid step' });
+    }
+    
+    res.json({ 
+      query: finalQuery, 
+      field: f, 
+      step,
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ error: normalizeError(e) });
+  }
+});
+
 app.post('/api/company-summarize', async (req, res) => {
   try {
     console.log('Company summarize request received');
