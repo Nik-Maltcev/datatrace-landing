@@ -778,21 +778,32 @@
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Шаг 3: Обработка через OpenAI (временно отключено из-за 502 ошибок)
+      // Шаг 3: Обработка через OpenAI (включено обратно с улучшенной обработкой ошибок)
       if (!isFastMode && allResults.length > 0) {
-        updateProgress(75, 'Показ результатов...');
-        console.log('🤖 AI processing temporarily disabled to avoid 502 errors');
+        updateProgress(75, 'Обработка через ИИ...');
+        console.log('🤖 Processing through OpenAI with improved error handling...');
         
-        // Показываем результаты без ИИ анализа
-        displayCompanyResultsBySources(allResults);
+        const combinedData = {
+          query: query,
+          field: 'inn',
+          results: allResults
+        };
         
-        // Показываем уведомление пользователю
-        const summaryEl = document.getElementById('summary');
-        const summaryBody = document.getElementById('summaryBody');
-        summaryBody.innerHTML = '<div style="color: #6b7280;">ИИ анализ временно отключен. Показаны базовые результаты по источникам.</div>';
-        summaryEl.style.display = 'block';
+        try {
+          await requestAISummaryForCompany(combinedData);
+        } catch (error) {
+          console.error('🚨 AI processing failed, showing results without AI:', error);
+          // Если ИИ не сработал, показываем результаты без него
+          displayCompanyResultsBySources(allResults);
+          
+          // Показываем уведомление пользователю
+          const summaryEl = document.getElementById('summary');
+          const summaryBody = document.getElementById('summaryBody');
+          summaryBody.innerHTML = '<div style="color: #dc2626;">ИИ анализ недоступен. Показаны базовые результаты по источникам.</div>';
+          summaryEl.style.display = 'block';
+        }
       } else if (!isFastMode) {
-        // Показываем результаты без ИИ анализа
+        // Показываем результаты без ИИ анализа в быстром режиме
         displayCompanyResultsBySources(allResults);
       }
 
@@ -1027,34 +1038,123 @@
           }
         }
         
-        if (!response) {
-          throw new Error('All company endpoints failed');
+        if (!response || !response.ok) {
+          console.error('❌ All company endpoints failed or returned errors');
+          // Показываем результаты без ИИ анализа
+          displayCompanyResultsBySources(data.results);
+          
+          // Показываем уведомление пользователю
+          const summaryEl = document.getElementById('summary');
+          const summaryBody = document.getElementById('summaryBody');
+          summaryBody.innerHTML = '<div style="color: #dc2626;">ИИ анализ недоступен. Показаны базовые результаты по источникам.</div>';
+          summaryEl.style.display = 'block';
+          return;
         }
 
         console.log('📡 Response status:', response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ HTTP Error:', response.status, errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
         
         const aiData = await response.json();
         console.log('🤖 AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
-          console.log('✅ Displaying AI processed result by sources');
+          console.log('✅ Displaying AI processed company results');
           // Показываем результаты по источникам
-          displayCompanyResultsBySources(data.results, aiData.summary);
+          displayCompanyResultsBySources(data.results);
+          
+          // Показываем ИИ анализ
+          const summaryEl = document.getElementById('summary');
+          const summaryBody = document.getElementById('summaryBody');
+          summaryBody.innerHTML = formatCompanySummary(aiData.summary);
+          summaryEl.style.display = 'block';
         } else {
           console.error('❌ AI processing failed:', aiData);
           // Если OpenAI не сработал, показываем fallback по источникам
-          displayCompanyResultsBySources(data.results, null);
+          displayCompanyResultsBySources(data.results);
+          
+          // Показываем уведомление пользователю
+          const summaryEl = document.getElementById('summary');
+          const summaryBody = document.getElementById('summaryBody');
+          summaryBody.innerHTML = '<div style="color: #dc2626;">ИИ анализ недоступен. Показаны базовые результаты по источникам.</div>';
+          summaryEl.style.display = 'block';
         }
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа компании:', error);
-        results.innerHTML = `<div class="result-card"><div style="color: #dc2626;">Ошибка обработки данных компании: ${error.message}</div></div>`;
+        // Показываем результаты без ИИ анализа
+        displayCompanyResultsBySources(data.results);
+        
+        // Показываем уведомление об ошибке
+        const summaryEl = document.getElementById('summary');
+        const summaryBody = document.getElementById('summaryBody');
+        summaryBody.innerHTML = `<div style="color: #dc2626;">Ошибка ИИ анализа: ${error.message}. Показаны базовые результаты.</div>`;
+        summaryEl.style.display = 'block';
       }
+    }
+    
+    function formatCompanySummary(summary) {
+      if (!summary) return 'Нет анализа';
+      
+      let html = '<div style="line-height: 1.6;">';
+      
+      // Основная информация о компании
+      if (summary.company) {
+        const company = summary.company;
+        html += '<div style="font-weight: 600; margin-bottom: 16px; font-size: 18px;">🏢 Информация о компании</div>';
+        
+        if (company.name) {
+          html += `<div style="margin-bottom: 8px;"><strong>Название:</strong> ${company.name}</div>`;
+        }
+        if (company.inn) {
+          html += `<div style="margin-bottom: 8px;"><strong>ИНН:</strong> ${company.inn}</div>`;
+        }
+        if (company.status) {
+          const statusColor = company.status.toLowerCase().includes('действует') ? '#16a34a' : '#dc2626';
+          html += `<div style="margin-bottom: 8px;"><strong>Статус:</strong> <span style="color: ${statusColor};">${company.status}</span></div>`;
+        }
+        if (company.address) {
+          html += `<div style="margin-bottom: 8px;"><strong>Адрес:</strong> ${company.address}</div>`;
+        }
+        if (company.activity) {
+          html += `<div style="margin-bottom: 8px;"><strong>Деятельность:</strong> ${company.activity}</div>`;
+        }
+      }
+      
+      // Руководство
+      if (summary.ceo && summary.ceo.name) {
+        html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">👤 Руководство</div>';
+        html += `<div style="margin-bottom: 8px;"><strong>Руководитель:</strong> ${summary.ceo.name}`;
+        if (summary.ceo.position) {
+          html += ` (${summary.ceo.position})`;
+        }
+        html += '</div>';
+      }
+      
+      // Флаги рисков
+      if (summary.risk_flags && summary.risk_flags.length > 0) {
+        html += '<div style="font-weight: 600; margin: 16px 0 8px 0; color: #dc2626;">⚠️ Флаги рисков</div>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px; background: #fef2f2; padding: 12px; border-radius: 6px;">';
+        summary.risk_flags.forEach(flag => {
+          html += `<li style="margin-bottom: 4px;">${flag}</li>`;
+        });
+        html += '</ul>';
+      }
+      
+      // Дополнительные заметки
+      if (summary.notes && summary.notes.length > 0) {
+        html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">📝 Дополнительная информация</div>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px;">';
+        summary.notes.forEach(note => {
+          html += `<li style="margin-bottom: 4px;">${note}</li>`;
+        });
+        html += '</ul>';
+      }
+      
+      // Если есть общая сводка
+      if (summary.summary) {
+        html += `<div style="margin-top: 16px; padding: 12px; background: #f3f4f6; border-left: 4px solid #6b7280;">${summary.summary}</div>`;
+      }
+      
+      html += '</div>';
+      return html;
     }
 
     function formatSummary(summary) {
