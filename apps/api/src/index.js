@@ -387,45 +387,6 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
   }
 });
 
-// Простой эндпоинт для тестирования
-app.post('/api/company-summarize-test', async (req, res) => {
-  try {
-    console.log('Company summarize TEST request received');
-    const { inn, results } = req.body || {};
-    console.log('TEST Request data:', { inn, resultsLength: results?.length });
-
-    if (!inn || !Array.isArray(results)) {
-      console.log('TEST Missing inn or results');
-      return res.status(400).json({ error: 'Missing inn or results' });
-    }
-
-    console.log('TEST Returning fallback summary immediately');
-    res.json({
-      ok: true,
-      model: 'test-fallback',
-      summary: createFallbackSummary(inn, results, {}),
-      timestamp: new Date().toISOString()
-    });
-  } catch (e) {
-    console.error('TEST Company summarize error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Еще более простой эндпоинт для отладки
-app.post('/api/company-simple', async (req, res) => {
-  try {
-    console.log('Simple company endpoint called');
-    res.json({ 
-      ok: true, 
-      message: 'Simple endpoint works',
-      timestamp: new Date().toISOString()
-    });
-  } catch (e) {
-    console.error('Simple endpoint error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
 
 // Initialize OpenAI service
 const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4');
