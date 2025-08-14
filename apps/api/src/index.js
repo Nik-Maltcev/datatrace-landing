@@ -382,6 +382,31 @@ app.post('/api/leak-search-step', async (req, res) => {
   }
 });
 
+// Простой эндпоинт для тестирования
+app.post('/api/company-summarize-test', async (req, res) => {
+  try {
+    console.log('Company summarize TEST request received');
+    const { inn, results } = req.body || {};
+    console.log('TEST Request data:', { inn, resultsLength: results?.length });
+    
+    if (!inn || !Array.isArray(results)) {
+      console.log('TEST Missing inn or results');
+      return res.status(400).json({ error: 'Missing inn or results' });
+    }
+
+    console.log('TEST Returning fallback summary immediately');
+    res.json({ 
+      ok: true, 
+      model: 'test-fallback', 
+      summary: createFallbackSummary(inn, results, {}),
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('TEST Company summarize error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.post('/api/company-summarize', async (req, res) => {
   try {
     console.log('Company summarize request received');
@@ -392,6 +417,15 @@ app.post('/api/company-summarize', async (req, res) => {
       console.log('Missing inn or results');
       return res.status(400).json({ error: 'Missing inn or results' });
     }
+
+    // Временно возвращаем только fallback для отладки
+    console.log('🔧 DEBUG: Returning fallback immediately to avoid 502');
+    return res.json({ 
+      ok: true, 
+      model: 'debug-fallback', 
+      summary: createFallbackSummary(inn, results, {}),
+      timestamp: new Date().toISOString()
+    });
 
     // Проверяем доступность OpenAI
     console.log('🔍 Checking OpenAI availability...');
@@ -406,6 +440,18 @@ app.post('/api/company-summarize', async (req, res) => {
         summary: createFallbackSummary(inn, results, {})
       });
     }
+    
+    // Устанавливаем общий таймаут для всего запроса
+    const requestTimeout = setTimeout(() => {
+      console.log('⏰ Request timeout reached, sending fallback');
+      if (!res.headersSent) {
+        res.json({ 
+          ok: true, 
+          model: 'timeout-fallback', 
+          summary: createFallbackSummary(inn, results, {})
+        });
+      }
+    }, 25000); // 25 секунд общий таймаут
     
     console.log('Starting OpenAI request...');
     const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
@@ -477,7 +523,7 @@ app.post('/api/company-summarize', async (req, res) => {
         
         // Создаем промис с таймаутом
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('OpenAI request timeout (45s)')), 45000);
+          setTimeout(() => reject(new Error('OpenAI request timeout (20s)')), 20000);
         });
         
         const openaiPromise = openai.responses.create({
@@ -486,6 +532,7 @@ app.post('/api/company-summarize', async (req, res) => {
         });
         
         const response = await Promise.race([openaiPromise, timeoutPromise]);
+        clearTimeout(requestTimeout);
         console.log('✅ GPT-5 response received successfully');
         const msg = response.output_text || '{}';
         let parsed; 
@@ -495,14 +542,16 @@ app.post('/api/company-summarize', async (req, res) => {
           parsed = { raw: msg }; 
         }
         console.log('📊 GPT-5 response parsed, sending to client');
-        res.json({ ok: true, model: 'gpt-5', summary: parsed });
+        if (!res.headersSent) {
+          res.json({ ok: true, model: 'gpt-5', summary: parsed });
+        }
       } catch (gpt5Error) {
         console.log('❌ GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
         console.log('🔄 Attempting fallback to GPT-4...');
         
         // Fallback to chat completions API с таймаутом
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('GPT-4 fallback timeout (30s)')), 30000);
+          setTimeout(() => reject(new Error('GPT-4 fallback timeout (15s)')), 15000);
         });
         
         const gpt4Promise = openai.chat.completions.create({
@@ -515,6 +564,7 @@ app.post('/api/company-summarize', async (req, res) => {
         });
         
         const completion = await Promise.race([gpt4Promise, timeoutPromise]);
+        clearTimeout(requestTimeout);
         console.log('✅ GPT-4 fallback response received');
         const msg = completion.choices?.[0]?.message?.content || '{}';
         let parsed; 
@@ -524,7 +574,9 @@ app.post('/api/company-summarize', async (req, res) => {
           parsed = { raw: msg }; 
         }
         console.log('📊 GPT-4 fallback response parsed, sending to client');
-        res.json({ ok: true, model: 'gpt-4-fallback', summary: parsed });
+        if (!res.headersSent) {
+          res.json({ ok: true, model: 'gpt-4-fallback', summary: parsed });
+        }
       }
     } else {
       // Для других моделей используем старый API
@@ -536,6 +588,7 @@ app.post('/api/company-summarize', async (req, res) => {
           { role: 'user', content: JSON.stringify(instruction) }
         ]
       });
+      clearTimeout(requestTimeout);
       const msg = completion.choices?.[0]?.message?.content || '{}';
       let parsed; 
       try { 
@@ -543,17 +596,22 @@ app.post('/api/company-summarize', async (req, res) => {
       } catch { 
         parsed = { raw: msg }; 
       }
-      res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4', summary: parsed });
+      if (!res.headersSent) {
+        res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4', summary: parsed });
+      }
     }
   } catch (e) {
+    clearTimeout(requestTimeout);
     console.error('Company summarize error:', e.message, e.stack);
     
     // Fallback: возвращаем базовую информацию без GPT
-    res.json({ 
-      ok: true, 
-      model: 'fallback', 
-      summary: createFallbackSummary(inn, results, {})
-    });
+    if (!res.headersSent) {
+      res.json({ 
+        ok: true, 
+        model: 'fallback', 
+        summary: createFallbackSummary(inn, results, {})
+      });
+    }
   }
 });
 
@@ -910,6 +968,264 @@ app.post('/api/summarize', async (req, res) => {
     });
   }
 });
+
+// Эндпоинт для генерации полного отчета
+app.post('/api/generate-full-report', async (req, res) => {
+  try {
+    const { query, field, results, mode } = req.body || {};
+    
+    if (!query || !Array.isArray(results)) {
+      return res.status(400).json({ error: 'Missing query or results' });
+    }
+
+    console.log(`📊 Generating full report for ${mode} mode`);
+    
+    // Генерируем HTML отчет
+    const reportHtml = generateReportHTML(query, field, results, mode);
+    
+    res.json({ 
+      ok: true, 
+      html: reportHtml,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Report generation error:', e.message);
+    res.status(500).json({ error: normalizeError(e) });
+  }
+});
+
+// Функция для генерации HTML отчета
+function generateReportHTML(query, field, results, mode) {
+  const timestamp = new Date().toLocaleString('ru-RU');
+  const isCompanyMode = mode === 'company';
+  
+  let html = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataTrace - Полный отчет</title>
+    <link href="https://fonts.googleapis.com/css2?family=PT+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'PT Mono', monospace; 
+            background: white; 
+            color: black; 
+            line-height: 1.6; 
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { 
+            border-bottom: 2px solid #e5e7eb; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+        }
+        .title { font-size: 2rem; font-weight: bold; margin-bottom: 10px; }
+        .subtitle { color: #6b7280; margin-bottom: 10px; }
+        .meta { font-size: 0.9rem; color: #9ca3af; }
+        .source-section { 
+            border: 2px solid #e5e7eb; 
+            margin-bottom: 30px; 
+            background: white;
+        }
+        .source-header { 
+            background: #f9fafb; 
+            padding: 15px 20px; 
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .source-name { font-weight: bold; font-size: 1.2rem; }
+        .status-badge { 
+            padding: 4px 12px; 
+            font-size: 0.8rem; 
+            font-weight: bold; 
+            border-radius: 4px;
+        }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-danger { background: #fecaca; color: #991b1b; }
+        .status-warning { background: #fef3c7; color: #92400e; }
+        .source-content { padding: 20px; }
+        .data-grid { 
+            display: grid; 
+            grid-template-columns: 200px 1fr; 
+            gap: 10px 20px; 
+            margin-bottom: 20px;
+        }
+        .data-label { font-weight: 600; color: #6b7280; }
+        .data-value { color: black; word-break: break-word; }
+        .records-section { margin-top: 20px; }
+        .record-item { 
+            background: #f9fafb; 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-left: 4px solid #6b7280;
+        }
+        .no-data { 
+            text-align: center; 
+            color: #6b7280; 
+            padding: 40px; 
+            font-style: italic;
+        }
+        .print-btn { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            background: black; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            font-family: 'PT Mono', monospace;
+        }
+        .print-btn:hover { background: #374151; }
+        @media print {
+            .print-btn { display: none; }
+            .source-section { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ ПЕЧАТЬ</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">DATATRACE - ПОЛНЫЙ ОТЧЕТ</h1>
+            <div class="subtitle">${isCompanyMode ? 'Проверка компании' : 'Поиск утечек данных'}</div>
+            <div class="meta">
+                <strong>Запрос:</strong> ${query} | 
+                <strong>Тип:</strong> ${field || 'Не указан'} | 
+                <strong>Дата:</strong> ${timestamp}
+            </div>
+        </div>
+        
+        <div class="sources">
+  `;
+
+  // Добавляем данные по каждому источнику
+  results.forEach((result, index) => {
+    const sourceName = result.name || `Источник ${index + 1}`;
+    const hasData = result.ok && result.items;
+    const status = result.error ? 'warning' : hasData ? 'danger' : 'success';
+    const statusText = result.error ? 'ОШИБКА' : hasData ? 'НАЙДЕНО' : 'ЧИСТО';
+    const statusClass = `status-${status}`;
+
+    html += `
+        <div class="source-section">
+            <div class="source-header">
+                <div class="source-name">${sourceName}</div>
+                <div class="status-badge ${statusClass}">${statusText}</div>
+            </div>
+            <div class="source-content">
+    `;
+
+    if (result.error) {
+      html += `<div class="no-data">Ошибка: ${JSON.stringify(result.error)}</div>`;
+    } else if (!hasData) {
+      html += `<div class="no-data">Данные не найдены</div>`;
+    } else {
+      // Отображаем данные в зависимости от источника
+      html += formatSourceDataForReport(sourceName, result.items);
+    }
+
+    html += `
+            </div>
+        </div>
+    `;
+  });
+
+  html += `
+        </div>
+    </div>
+    
+    <script>
+        // Автоматически фокусируемся на окне для удобства печати
+        window.focus();
+    </script>
+</body>
+</html>
+  `;
+
+  return html;
+}
+
+// Функция для форматирования данных источника в отчете
+function formatSourceDataForReport(sourceName, items) {
+  let html = '';
+
+  if (sourceName === 'ITP' && typeof items === 'object') {
+    for (const [groupName, groupData] of Object.entries(items)) {
+      if (groupData && groupData.data && Array.isArray(groupData.data)) {
+        html += `<h3>${groupName} (${groupData.data.length} записей)</h3>`;
+        html += '<div class="records-section">';
+        
+        groupData.data.forEach((record, index) => {
+          html += `<div class="record-item">`;
+          html += `<strong>Запись ${index + 1}:</strong><br>`;
+          
+          if (typeof record === 'object') {
+            for (const [key, value] of Object.entries(record)) {
+              if (value) {
+                html += `<strong>${key}:</strong> ${value}<br>`;
+              }
+            }
+          } else {
+            html += record;
+          }
+          
+          html += `</div>`;
+        });
+        
+        html += '</div>';
+      }
+    }
+  } else if (Array.isArray(items)) {
+    html += `<div class="data-grid">`;
+    html += `<div class="data-label">Всего записей</div>`;
+    html += `<div class="data-value">${items.length}</div>`;
+    html += `</div>`;
+    
+    html += '<div class="records-section">';
+    html += `<h3>Найденные записи:</h3>`;
+    
+    items.forEach((record, index) => {
+      html += `<div class="record-item">`;
+      html += `<strong>Запись ${index + 1}:</strong><br>`;
+      
+      if (typeof record === 'object') {
+        for (const [key, value] of Object.entries(record)) {
+          if (value && key !== 'password') { // Скрываем пароли в отчете
+            html += `<strong>${key}:</strong> ${value}<br>`;
+          } else if (key === 'password' && value) {
+            html += `<strong>password:</strong> ${String(value).substring(0, 8)}...<br>`;
+          }
+        }
+      } else {
+        html += record;
+      }
+      
+      html += `</div>`;
+    });
+    
+    html += '</div>';
+  } else if (typeof items === 'object') {
+    html += '<div class="data-grid">';
+    
+    for (const [key, value] of Object.entries(items)) {
+      if (value) {
+        html += `<div class="data-label">${key}</div>`;
+        html += `<div class="data-value">${Array.isArray(value) ? value.join(', ') : value}</div>`;
+      }
+    }
+    
+    html += '</div>';
+  }
+
+  return html;
+}
 
 // Новый эндпоинт для получения информации о компании (заглушка)
 app.get('/api/company', async (req, res) => {
