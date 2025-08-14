@@ -389,7 +389,6 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 
 
 // Initialize AI services
-const OpenAIService = require('./services/OpenAIService');
 const DeepSeekService = require('./services/DeepSeekService');
 
 const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4');
