@@ -289,12 +289,53 @@
           </svg>
           <span class="text-xl font-bold">DataTrace</span>
         </div>
-        <button onclick="window.close()" class="btn-secondary">
-          Закрыть
-        </button>
+        <div class="flex items-center space-x-4">
+          <div id="userInfo" class="hidden">
+            <span id="userEmail" class="text-sm"></span>
+            <button id="logoutBtn" class="btn-secondary ml-2">Выйти</button>
+          </div>
+          <button id="loginBtn" class="btn-secondary">Войти</button>
+        </div>
       </div>
     </div>
   </header>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white max-w-md w-full p-6 border-2 border-black">
+        <div class="flex justify-between items-center mb-6">
+          <h2 id="authTitle" class="text-xl font-bold">Вход в систему</h2>
+          <button id="closeAuthModal" class="text-2xl">&times;</button>
+        </div>
+        
+        <div id="authError" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-700"></div>
+        <div id="authSuccess" class="hidden mb-4 p-3 bg-green-100 border border-green-400 text-green-700"></div>
+        
+        <form id="authForm">
+          <div class="mb-4">
+            <label class="block text-sm font-bold mb-2">Email</label>
+            <input id="authEmail" type="email" class="input-field w-full" required>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-bold mb-2">Пароль</label>
+            <input id="authPassword" type="password" class="input-field w-full" required>
+          </div>
+          
+          <div class="mb-6">
+            <button id="authSubmit" type="submit" class="btn-primary w-full">Войти</button>
+          </div>
+          
+          <div class="text-center">
+            <button id="authToggle" type="button" class="text-sm underline">
+              Нет аккаунта? Зарегистрироваться
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <div class="container py-16">
     <!-- Hero Section -->
@@ -313,11 +354,11 @@
       <div class="flex gap-3 mb-8 justify-center flex-wrap">
         <button id="modeLeaks" class="btn-secondary active">Поиск утечек</button>
         <button id="modeCompany" class="btn-secondary">Проверить компанию</button>
-        <button id="fastMode" class="btn-secondary" title="Быстрый режим без ИИ обработки">⚡ Быстро</button>
+        <button id="modePassword" class="btn-secondary">🔐 Проверить пароль</button>
       </div>
 
       <!-- Search Input -->
-      <div class="flex gap-4 mb-8 flex-wrap">
+      <div id="searchInput" class="flex gap-4 mb-8 flex-wrap">
         <select id="field" class="select-field">
           <option value="phone">Телефон</option>
           <option value="email">Email</option>
@@ -328,6 +369,30 @@
         </select>
         <input id="q" type="text" placeholder="Например: +79990000000" class="input-field" />
         <button id="btn" class="btn-primary">Проверить</button>
+      </div>
+
+      <!-- Password Check Input -->
+      <div id="passwordInput" class="hidden mb-8">
+        <div class="max-w-2xl mx-auto">
+          <div class="mb-4">
+            <label class="block text-sm font-bold mb-2">Введите пароль для проверки</label>
+            <div class="relative">
+              <input id="passwordField" type="password" placeholder="Введите пароль..." class="input-field w-full pr-12" />
+              <button id="togglePassword" type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-black">
+                👁️
+              </button>
+            </div>
+          </div>
+          <div class="mb-4">
+            <div id="passwordStrength" class="text-sm text-gray-600"></div>
+          </div>
+          <div class="text-center">
+            <button id="checkPasswordBtn" class="btn-primary">🔐 Проверить пароль</button>
+          </div>
+          <div class="mt-4 text-xs text-gray-500 text-center">
+            <p>⚠️ Пароль проверяется через зашифрованный хеш. Сам пароль не передается на сервер.</p>
+          </div>
+        </div>
       </div>
 
       <!-- Progress -->
@@ -371,14 +436,38 @@
     const btn = document.getElementById('btn');
     const modeLeaks = document.getElementById('modeLeaks');
     const modeCompany = document.getElementById('modeCompany');
-    const fastMode = document.getElementById('fastMode');
+    const modePassword = document.getElementById('modePassword');
     const results = document.getElementById('results');
+    
+    // Password check elements
+    const searchInput = document.getElementById('searchInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordField = document.getElementById('passwordField');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const checkPasswordBtn = document.getElementById('checkPasswordBtn');
 
+    // Authentication elements
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userInfo = document.getElementById('userInfo');
+    const userEmail = document.getElementById('userEmail');
+    const authModal = document.getElementById('authModal');
+    const closeAuthModal = document.getElementById('closeAuthModal');
+    const authForm = document.getElementById('authForm');
+    const authTitle = document.getElementById('authTitle');
+    const authSubmit = document.getElementById('authSubmit');
+    const authToggle = document.getElementById('authToggle');
+    const authError = document.getElementById('authError');
+    const authSuccess = document.getElementById('authSuccess');
 
+    // Authentication state
+    let currentUser = null;
+    let authToken = null;
+    let isLoginMode = true;
 
     // Переключение режимов
     let currentMode = 'leaks';
-    let isFastMode = false;
 
     // Обновление плейсхолдера
     function updatePlaceholder() {
@@ -408,9 +497,18 @@
       if (currentMode === 'company') {
         heroTitle.textContent = 'Проверка компании';
         heroDescription.textContent = 'Получите детальную информацию о компании по ИНН из официальных источников';
+        searchInput.classList.remove('hidden');
+        passwordInput.classList.add('hidden');
+      } else if (currentMode === 'password') {
+        heroTitle.textContent = 'Проверка пароля';
+        heroDescription.textContent = 'Проверьте, был ли ваш пароль скомпрометирован в утечках данных';
+        searchInput.classList.add('hidden');
+        passwordInput.classList.remove('hidden');
       } else {
         heroTitle.textContent = 'Поиск утечек данных';
         heroDescription.textContent = 'Проверим ваши персональные данные по всем доступным источникам утечек и предоставим детальный анализ';
+        searchInput.classList.remove('hidden');
+        passwordInput.classList.add('hidden');
       }
     }
 
@@ -479,9 +577,13 @@
     
     // Функция для обновления UI после переключения режима
     function updateUI() {
+      // Сброс активных классов
+      modeLeaks.classList.remove('active');
+      modeCompany.classList.remove('active');
+      modePassword.classList.remove('active');
+      
       if (currentMode === 'leaks') {
         modeLeaks.classList.add('active');
-        modeCompany.classList.remove('active');
         
         // Показываем все опции для поиска утечек
         fieldSel.innerHTML = `
@@ -492,13 +594,14 @@
           <option value="inn">ИНН</option>
           <option value="snils">СНИЛС</option>
         `;
-      } else {
+      } else if (currentMode === 'company') {
         modeCompany.classList.add('active');
-        modeLeaks.classList.remove('active');
         
         // Показываем только ИНН для проверки компании
         fieldSel.innerHTML = `<option value="inn">ИНН</option>`;
         fieldSel.value = 'inn';
+      } else if (currentMode === 'password') {
+        modePassword.classList.add('active');
       }
       
       updatePlaceholder();
@@ -513,12 +616,432 @@
       switchMode('company');
     });
 
-    fastMode.addEventListener('click', () => {
-      isFastMode = !isFastMode;
-      if (isFastMode) {
-        fastMode.classList.add('active');
+    modePassword.addEventListener('click', () => {
+      switchMode('password');
+    });
+
+    // Authentication functions
+    function showAuthModal(loginMode = true) {
+      isLoginMode = loginMode;
+      authTitle.textContent = loginMode ? 'Вход в систему' : 'Регистрация';
+      authSubmit.textContent = loginMode ? 'Войти' : 'Зарегистрироваться';
+      authToggle.textContent = loginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
+      
+      hideAuthMessages();
+      authForm.reset();
+      authModal.classList.remove('hidden');
+    }
+
+    function hideAuthModal() {
+      authModal.classList.add('hidden');
+      hideAuthMessages();
+    }
+
+    function showAuthError(message) {
+      authError.textContent = message;
+      authError.classList.remove('hidden');
+      authSuccess.classList.add('hidden');
+    }
+
+    function showAuthSuccess(message) {
+      authSuccess.textContent = message;
+      authSuccess.classList.remove('hidden');
+      authError.classList.add('hidden');
+    }
+
+    function hideAuthMessages() {
+      authError.classList.add('hidden');
+      authSuccess.classList.add('hidden');
+    }
+
+    function updateUserInterface(user, token) {
+      currentUser = user;
+      authToken = token;
+      
+      if (user) {
+        userEmail.textContent = user.email;
+        userInfo.classList.remove('hidden');
+        loginBtn.classList.add('hidden');
+        
+        // Store token in localStorage
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
       } else {
-        fastMode.classList.remove('active');
+        userInfo.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
+        
+        // Clear stored data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
+    }
+
+    async function performAuth(email, password, isLogin) {
+      try {
+        const endpoint = isLogin ? '/api/auth/signin' : '/api/auth/signup';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          if (isLogin) {
+            updateUserInterface(data.user, data.session.access_token);
+            showAuthSuccess('Успешный вход в систему');
+            setTimeout(() => hideAuthModal(), 1500);
+          } else {
+            showAuthSuccess(data.message || 'Регистрация успешна');
+            if (data.session) {
+              updateUserInterface(data.user, data.session.access_token);
+              setTimeout(() => hideAuthModal(), 1500);
+            }
+          }
+        } else {
+          showAuthError(data.error?.message || 'Ошибка аутентификации');
+        }
+      } catch (error) {
+        console.error('Auth error:', error);
+        showAuthError('Ошибка соединения с сервером');
+      }
+    }
+
+    async function performLogout() {
+      try {
+        if (authToken) {
+          await fetch('/api/auth/signout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        updateUserInterface(null, null);
+      }
+    }
+
+    function checkStoredAuth() {
+      const storedToken = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          
+          // Basic token expiration check
+          const tokenPayload = JSON.parse(atob(storedToken.split('.')[1]));
+          if (tokenPayload.exp * 1000 > Date.now()) {
+            updateUserInterface(user, storedToken);
+          } else {
+            // Token expired, clear storage
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          console.error('Error parsing stored auth data:', error);
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+        }
+      }
+    }
+
+    // Event listeners for auth
+    loginBtn.addEventListener('click', () => showAuthModal(true));
+    logoutBtn.addEventListener('click', performLogout);
+    closeAuthModal.addEventListener('click', hideAuthModal);
+    
+    authToggle.addEventListener('click', () => {
+      showAuthModal(!isLoginMode);
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      
+      if (!email || !password) {
+        showAuthError('Заполните все поля');
+        return;
+      }
+
+      authSubmit.disabled = true;
+      authSubmit.textContent = isLoginMode ? 'Вход...' : 'Регистрация...';
+      
+      await performAuth(email, password, isLoginMode);
+      
+      authSubmit.disabled = false;
+      authSubmit.textContent = isLoginMode ? 'Войти' : 'Зарегистрироваться';
+    });
+
+    // Close modal on outside click
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) {
+        hideAuthModal();
+      }
+    });
+
+    // Check for stored authentication on page load
+    checkStoredAuth();
+
+    // Helper function to create headers with auth token
+    function createAuthHeaders() {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      return headers;
+    }
+
+    // Password checking functions
+    function analyzePasswordStrength(password) {
+      const analysis = {
+        length: password.length,
+        hasLowercase: /[a-z]/.test(password),
+        hasUppercase: /[A-Z]/.test(password),
+        hasNumbers: /\d/.test(password),
+        hasSpecialChars: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+        score: 0
+      };
+      
+      // Calculate strength score
+      if (analysis.length >= 8) analysis.score += 1;
+      if (analysis.length >= 12) analysis.score += 1;
+      if (analysis.hasLowercase) analysis.score += 1;
+      if (analysis.hasUppercase) analysis.score += 1;
+      if (analysis.hasNumbers) analysis.score += 1;
+      if (analysis.hasSpecialChars) analysis.score += 1;
+      
+      // Determine strength level and color
+      let level, color;
+      if (analysis.score >= 5) {
+        level = 'Сильный';
+        color = '#16a34a'; // green
+      } else if (analysis.score >= 4) {
+        level = 'Хороший';
+        color = '#65a30d'; // lime
+      } else if (analysis.score >= 3) {
+        level = 'Средний';
+        color = '#d97706'; // amber
+      } else if (analysis.score >= 2) {
+        level = 'Слабый';
+        color = '#dc2626'; // red
+      } else {
+        level = 'Очень слабый';
+        color = '#991b1b'; // dark red
+      }
+      
+      return { ...analysis, level, color };
+    }
+
+    function updatePasswordStrength(password) {
+      if (!password) {
+        passwordStrength.innerHTML = '';
+        return;
+      }
+      
+      const strength = analyzePasswordStrength(password);
+      const requirements = [];
+      
+      if (!strength.hasLowercase) requirements.push('строчные буквы');
+      if (!strength.hasUppercase) requirements.push('заглавные буквы');
+      if (!strength.hasNumbers) requirements.push('цифры');
+      if (!strength.hasSpecialChars) requirements.push('спецсимволы');
+      if (strength.length < 8) requirements.push('минимум 8 символов');
+      
+      let html = `<span style="color: ${strength.color}; font-weight: bold;">Сила пароля: ${strength.level}</span>`;
+      
+      if (requirements.length > 0) {
+        html += `<br><span style="color: #6b7280;">Добавьте: ${requirements.join(', ')}</span>`;
+      }
+      
+      passwordStrength.innerHTML = html;
+    }
+
+    async function performPasswordCheck(password) {
+      try {
+        checkPasswordBtn.disabled = true;
+        checkPasswordBtn.textContent = '🔍 Проверяем...';
+        
+        showProgress();
+        updateProgress(20, 'Анализ пароля...');
+        
+        const response = await fetch('/api/password-check', {
+          method: 'POST',
+          headers: createAuthHeaders(),
+          body: JSON.stringify({ password })
+        });
+        
+        updateProgress(80, 'Получение результатов...');
+        
+        const data = await response.json();
+        
+        updateProgress(100, 'Завершено');
+        
+        if (data.ok) {
+          displayPasswordResults(data);
+        } else {
+          displayPasswordError(data.error?.message || 'Ошибка при проверке пароля');
+        }
+        
+        setTimeout(hideProgress, 500);
+      } catch (error) {
+        console.error('Password check error:', error);
+        displayPasswordError('Ошибка соединения с сервером');
+        hideProgress();
+      } finally {
+        checkPasswordBtn.disabled = false;
+        checkPasswordBtn.textContent = '🔐 Проверить пароль';
+      }
+    }
+
+    function displayPasswordResults(data) {
+      results.innerHTML = '';
+      
+      // Main result card
+      const mainCard = document.createElement('div');
+      mainCard.className = 'result-card';
+      
+      const statusClass = data.isCompromised ? 'status-found' : 'status-clean';
+      const statusText = data.isCompromised ? 'СКОМПРОМЕТИРОВАН' : 'БЕЗОПАСЕН';
+      const statusIcon = data.isCompromised ? '🚨' : '✅';
+      
+      mainCard.innerHTML = `
+        <div class="result-header">
+          <div class="result-title">${statusIcon} Результат проверки пароля</div>
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+        <div class="result-body" style="display: block;">
+          <div class="data-grid">
+            <div class="data-label">Статус</div>
+            <div class="data-value">${data.isCompromised ? 'Пароль найден в утечках данных!' : 'Пароль не найден в известных утечках'}</div>
+            
+            <div class="data-label">Количество утечек</div>
+            <div class="data-value">${data.breachCount || 0}</div>
+            
+            <div class="data-label">Сила пароля</div>
+            <div class="data-value" style="color: ${data.passwordStrength?.color || '#666'}">${data.passwordStrength?.level || 'Неизвестно'}</div>
+            
+            <div class="data-label">Длина</div>
+            <div class="data-value">${data.passwordStrength?.length || 0} символов</div>
+          </div>
+        </div>
+      `;
+      
+      results.appendChild(mainCard);
+      
+      // Breaches card if compromised
+      if (data.isCompromised && data.breaches && data.breaches.length > 0) {
+        const breachCard = document.createElement('div');
+        breachCard.className = 'result-card';
+        
+        let breachesHtml = '';
+        data.breaches.forEach(breach => {
+          breachesHtml += `
+            <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb;">
+              <div style="font-weight: bold; margin-bottom: 4px;">${breach.name}</div>
+              <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">${breach.date}</div>
+              <div style="font-size: 14px; margin-bottom: 4px;">${breach.description}</div>
+              <div style="font-size: 12px; color: #9ca3af;">Типы данных: ${breach.dataTypes.join(', ')}</div>
+            </div>
+          `;
+        });
+        
+        breachCard.innerHTML = `
+          <div class="result-header" onclick="toggleResult(this)">
+            <div class="result-title">🗃️ Найденные утечки (${data.breaches.length})</div>
+            <span class="caret">▶</span>
+          </div>
+          <div class="result-body">
+            ${breachesHtml}
+          </div>
+        `;
+        
+        results.appendChild(breachCard);
+      }
+      
+      // Recommendations card
+      if (data.recommendations && data.recommendations.length > 0) {
+        const recCard = document.createElement('div');
+        recCard.className = 'result-card';
+        
+        let recHtml = '<ul style="margin: 0; padding-left: 20px;">';
+        data.recommendations.forEach(rec => {
+          recHtml += `<li style="margin-bottom: 8px;">${rec}</li>`;
+        });
+        recHtml += '</ul>';
+        
+        recCard.innerHTML = `
+          <div class="result-header" onclick="toggleResult(this)">
+            <div class="result-title">💡 Рекомендации по безопасности</div>
+            <span class="caret">▶</span>
+          </div>
+          <div class="result-body">
+            ${recHtml}
+          </div>
+        `;
+        
+        results.appendChild(recCard);
+      }
+    }
+
+    function displayPasswordError(message) {
+      results.innerHTML = `
+        <div class="result-card">
+          <div class="result-header">
+            <div class="result-title">❌ Ошибка проверки</div>
+            <span class="status-badge status-error">ОШИБКА</span>
+          </div>
+          <div class="result-body" style="display: block;">
+            <div style="color: #dc2626;">${message}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Password field event listeners
+    passwordField.addEventListener('input', (e) => {
+      updatePasswordStrength(e.target.value);
+    });
+
+    togglePassword.addEventListener('click', () => {
+      const type = passwordField.type === 'password' ? 'text' : 'password';
+      passwordField.type = type;
+      togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+
+    checkPasswordBtn.addEventListener('click', () => {
+      const password = passwordField.value.trim();
+      
+      if (!password) {
+        alert('Введите пароль для проверки');
+        return;
+      }
+      
+      if (password.length > 200) {
+        alert('Пароль слишком длинный (максимум 200 символов)');
+        return;
+      }
+      
+      performPasswordCheck(password);
+    });
+
+    // Enter key support for password field
+    passwordField.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        checkPasswordBtn.click();
       }
     });
 
@@ -616,6 +1139,11 @@
 
     // Основная функция поиска
     async function performSearch() {
+      if (currentMode === 'password') {
+        // Password mode uses its own button and logic
+        return;
+      }
+      
       const query = q.value.trim();
       if (!query) {
         alert('Введите данные для поиска');
@@ -667,7 +1195,7 @@
         try {
           const response = await fetch('/api/leak-search-step', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: createAuthHeaders(),
             body: JSON.stringify({ 
               query: query, 
               field: fieldSel.value,
@@ -681,10 +1209,7 @@
             allResults.push(stepData.result);
             console.log(`✅ ${source.name} completed:`, stepData.result);
             
-            // Показываем результат по источнику в быстром режиме
-            if (isFastMode) {
-              displaySourceResult(stepData.result, i === 0);
-            }
+            // Результат получен, продолжаем обработку
           } else {
             console.log(`❌ ${source.name} failed:`, stepData.error);
             allResults.push({ name: source.name, ok: false, error: stepData.error });
@@ -698,8 +1223,8 @@
         await new Promise(resolve => setTimeout(resolve, 300));
       }
 
-      // Шаг 6: Обработка через OpenAI (если не быстрый режим)
-      if (!isFastMode && allResults.length > 0) {
+      // Шаг 6: Обработка через OpenAI
+      if (allResults.length > 0) {
         updateProgress(85, 'Обработка через ИИ...');
         console.log('🤖 Processing leaks through OpenAI...');
         
@@ -715,7 +1240,7 @@
           console.error('🚨 AI processing completely failed, showing raw results');
           displayLeakResultsBySources(allResults, null);
         }
-      } else if (!isFastMode) {
+      } else {
         // Показываем результаты по источникам без AI
         displayLeakResultsBySources(allResults, null);
       }
@@ -724,7 +1249,7 @@
       updateProgress(100, 'Завершено');
       setTimeout(() => {
         hideProgress();
-        if (isFastMode && allResults.length === 0) {
+        if (allResults.length === 0) {
           results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
         }
       }, 500);
@@ -751,7 +1276,7 @@
         try {
           const response = await fetch('/api/company-search-step', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: createAuthHeaders(),
             body: JSON.stringify({ inn: query, step: source.step })
           });
 
@@ -761,10 +1286,7 @@
             allResults.push(stepData.result);
             console.log(`✅ ${source.name} completed:`, stepData.result);
             
-            // Показываем результат по источнику
-            if (isFastMode) {
-              displaySourceResult(stepData.result, i === 0);
-            }
+            // Результат получен, продолжаем обработку
           } else {
             console.log(`❌ ${source.name} failed:`, stepData.error);
             allResults.push({ name: source.name, ok: false, error: stepData.error });
@@ -778,8 +1300,8 @@
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Шаг 3: Обработка через OpenAI (включено обратно с улучшенной обработкой ошибок)
-      if (!isFastMode && allResults.length > 0) {
+      // Шаг 3: Обработка через OpenAI
+      if (allResults.length > 0) {
         updateProgress(75, 'Обработка через ИИ...');
         console.log('🤖 Processing through OpenAI with improved error handling...');
         
@@ -802,8 +1324,8 @@
           summaryBody.innerHTML = '<div style="color: #dc2626;">ИИ анализ недоступен. Показаны базовые результаты по источникам.</div>';
           summaryEl.style.display = 'block';
         }
-      } else if (!isFastMode) {
-        // Показываем результаты без ИИ анализа в быстром режиме
+      } else {
+        // Показываем результаты без ИИ анализа
         displayCompanyResultsBySources(allResults);
       }
 
@@ -811,7 +1333,7 @@
       updateProgress(100, 'Завершено');
       setTimeout(() => {
         hideProgress();
-        if (isFastMode && allResults.length === 0) {
+        if (allResults.length === 0) {
           results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
         }
       }, 500);
@@ -885,7 +1407,7 @@
 
         const response = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: createAuthHeaders(),
           body: JSON.stringify(body)
         });
 
@@ -929,7 +1451,7 @@
             
             response = await fetch(endpoint, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: createAuthHeaders(),
               body: JSON.stringify({ query: data.query, field: data.field, results: data.results }),
               signal: controller.signal
             });
@@ -1004,7 +1526,7 @@
         
         // Пробуем несколько вариантов URL для надежности
         let response = null;
-        const endpoints = ['/api/company-summarize', './api/company-summarize', '/api/company-summarize-test'];
+        const endpoints = ['/api/company-simple', '/api/company-summarize', './api/company-summarize', '/api/company-summarize-test'];
         
         for (const endpoint of endpoints) {
           try {
@@ -1019,7 +1541,7 @@
             
             response = await fetch(endpoint, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: createAuthHeaders(),
               body: JSON.stringify(requestBody),
               signal: controller.signal
             });

@@ -3,6 +3,11 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const OpenAI = require('openai');
+const OpenAIService = require('./services/OpenAIService');
+const ErrorHandler = require('./utils/ErrorHandler');
+const AuthService = require('./services/AuthService');
+const DeHashedService = require('./services/DeHashedService');
+const { requireAuth, optionalAuth, requireAdmin, userRateLimit, authService } = require('./middleware/auth');
 require('dotenv').config();
 
 const app = express();
@@ -222,7 +227,7 @@ function normalizeError(err) {
 }
 
 // Sequential search
-app.post('/api/search', async (req, res) => {
+app.post('/api/search', optionalAuth, userRateLimit(30, 15 * 60 * 1000), async (req, res) => {
   try {
     const { query, field } = req.body || {};
     if (!query || typeof query !== 'string' || query.trim().length < 3) {
@@ -283,7 +288,7 @@ async function searchChecko(inn) {
   }
 }
 
-app.post('/api/company-search', async (req, res) => {
+app.post('/api/company-search', optionalAuth, userRateLimit(20, 15 * 60 * 1000), async (req, res) => {
   try {
     const { inn } = req.body || {};
     if (!inn || !/^\d{10,12}$/.test(String(inn).trim())) {
@@ -299,7 +304,7 @@ app.post('/api/company-search', async (req, res) => {
 });
 
 // Новый эндпоинт для последовательного поиска по компаниям
-app.post('/api/company-search-step', async (req, res) => {
+app.post('/api/company-search-step', optionalAuth, userRateLimit(40, 15 * 60 * 1000), async (req, res) => {
   try {
     const { inn, step } = req.body || {};
     if (!inn || !/^\d{10,12}$/.test(String(inn).trim())) {
@@ -333,7 +338,7 @@ app.post('/api/company-search-step', async (req, res) => {
 });
 
 // Новый эндпоинт для последовательного поиска утечек
-app.post('/api/leak-search-step', async (req, res) => {
+app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000), async (req, res) => {
   try {
     const { query, field, step } = req.body || {};
     if (!query || typeof query !== 'string' || query.trim().length < 3) {
@@ -407,7 +412,291 @@ app.post('/api/company-summarize-test', async (req, res) => {
   }
 });
 
-app.post('/api/company-summarize', async (req, res) => {
+// Еще более простой эндпоинт для отладки
+app.post('/api/company-simple', async (req, res) => {
+  try {
+    console.log('Simple company endpoint called');
+    res.json({ 
+      ok: true, 
+      message: 'Simple endpoint works',
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Simple endpoint error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Initialize OpenAI service
+const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4');
+
+// Initialize DeHashed service
+const dehashedService = new DeHashedService(
+  process.env.DEHASHED_API_KEY,
+  process.env.DEHASHED_BASE_URL || 'https://api.dehashed.com'
+);
+
+// Authentication endpoints
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { email, password, userData } = req.body;
+
+    if (!email || !password) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Email and password are required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    const result = await authService.signUp(email, password, userData);
+    
+    if (result.ok) {
+      res.json(result);
+    } else {
+      const statusCode = result.error.code === 'AUTH_ERROR' ? 400 : 500;
+      res.status(statusCode).json(result);
+    }
+  } catch (error) {
+    console.error('Signup endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/auth/signin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Email and password are required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    const result = await authService.signIn(email, password);
+    
+    if (result.ok) {
+      res.json(result);
+    } else {
+      const statusCode = result.error.code === 'AUTH_ERROR' ? 401 : 500;
+      res.status(statusCode).json(result);
+    }
+  } catch (error) {
+    console.error('Signin endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/auth/signout', requireAuth, async (req, res) => {
+  try {
+    const result = await authService.signOut();
+    res.json(result);
+  } catch (error) {
+    console.error('Signout endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.get('/api/auth/user', requireAuth, async (req, res) => {
+  try {
+    res.json({
+      ok: true,
+      user: req.user
+    });
+  } catch (error) {
+    console.error('Get user endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Refresh token is required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    const result = await authService.refreshSession(refresh_token);
+    
+    if (result.ok) {
+      res.json(result);
+    } else {
+      const statusCode = 401;
+      res.status(statusCode).json(result);
+    }
+  } catch (error) {
+    console.error('Refresh endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Email is required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    const result = await authService.resetPassword(email);
+    res.json(result);
+  } catch (error) {
+    console.error('Reset password endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/auth/update-password', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'New password is required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    const result = await authService.updatePassword(req.token, password);
+    res.json(result);
+  } catch (error) {
+    console.error('Update password endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+// Password checking endpoints
+app.post('/api/password-check', optionalAuth, userRateLimit(20, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password || typeof password !== 'string') {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Password is required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    if (password.length < 1 || password.length > 200) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Password length must be between 1 and 200 characters' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    if (!dehashedService.isAvailable()) {
+      return res.json({
+        ok: false,
+        error: {
+          code: 'SERVICE_UNAVAILABLE',
+          message: 'Сервис проверки паролей временно недоступен'
+        }
+      });
+    }
+
+    console.log('🔐 Password check request received');
+    
+    const result = await dehashedService.checkPassword(password);
+    
+    // Log for monitoring (without exposing the actual password)
+    console.log(`🔍 Password check completed: compromised=${result.isCompromised}, breaches=${result.breachCount}`);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Password check endpoint error:', error);
+    
+    // Don't expose detailed error information for security
+    const sanitizedError = {
+      name: 'ServiceError',
+      message: 'Ошибка при проверке пароля. Попробуйте позже.'
+    };
+    
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(sanitizedError, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/dehashed-search', optionalAuth, requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { query, field = 'email' } = req.body;
+
+    if (!query || typeof query !== 'string') {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Search query is required' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    if (!dehashedService.isAvailable()) {
+      return res.json({
+        ok: false,
+        error: {
+          code: 'SERVICE_UNAVAILABLE',
+          message: 'Сервис поиска утечек временно недоступен'
+        }
+      });
+    }
+
+    const allowedFields = ['email', 'username', 'name', 'phone'];
+    if (!allowedFields.includes(field)) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: `Field must be one of: ${allowedFields.join(', ')}` },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    console.log(`🔍 DeHashed search request: field=${field}`);
+    
+    const result = await dehashedService.searchByField(query, field);
+    
+    console.log(`✅ DeHashed search completed: found=${result.found}, total=${result.total}`);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('DeHashed search endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.get('/api/dehashed-info', (req, res) => {
+  try {
+    const info = dehashedService.getServiceInfo();
+    res.json({
+      ok: true,
+      service: info
+    });
+  } catch (error) {
+    console.error('DeHashed info endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 1000), async (req, res) => {
   try {
     console.log('Company summarize request received');
     const { inn, results } = req.body || {};
@@ -415,195 +704,66 @@ app.post('/api/company-summarize', async (req, res) => {
 
     if (!inn || !Array.isArray(results)) {
       console.log('Missing inn or results');
-      return res.status(400).json({ error: 'Missing inn or results' });
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        new Error('Missing inn or results'), req
+      );
+      return res.status(statusCode).json(response);
     }
 
-    // Убираем временный debug return - теперь работаем нормально
-
-    // Проверяем доступность OpenAI
-    console.log('🔍 Checking OpenAI availability...');
-    console.log('OpenAI client exists:', !!openai);
-    console.log('OpenAI API key exists:', !!OPENAI_API_KEY);
-
-    if (!openai) {
-      console.log('❌ OpenAI not available, using fallback');
-      return res.json({
-        ok: true,
-        model: 'fallback',
-        summary: createFallbackSummary(inn, results, {})
-      });
+    // Проверяем доступность OpenAI сервиса
+    console.log('🔍 Checking OpenAI service availability...');
+    
+    if (!openaiService.isAvailable()) {
+      console.log('❌ OpenAI service not available, using fallback');
+      const fallbackResponse = ErrorHandler.createFallbackResponse(
+        { query: inn, results }, 'company', 'openai-unavailable'
+      );
+      return res.json(fallbackResponse);
     }
 
     // Устанавливаем общий таймаут для всего запроса
     const requestTimeout = setTimeout(() => {
       console.log('⏰ Request timeout reached, sending fallback');
       if (!res.headersSent) {
-        res.json({
-          ok: true,
-          model: 'timeout-fallback',
-          summary: createFallbackSummary(inn, results, {})
-        });
+        const fallbackResponse = ErrorHandler.createFallbackResponse(
+          { query: inn, results }, 'company', 'timeout'
+        );
+        res.json(fallbackResponse);
       }
     }, 25000); // 25 секунд общий таймаут
 
     console.log('Starting OpenAI request...');
-    const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
-    const instruction = {
-      task: 'Проанализируй и объедини данные о компании из всех источников (Datanewton, Checko). Создай полную структурированную сводку для красивого отображения в UI.',
-      language: 'ru',
-      enhanced_processing: 'Используй возможности GPT-5 для глубокого анализа и нормализации данных',
-      schema: {
-        company: {
-          name: 'string|null - приоритет краткому названию',
-          fullName: 'string|null - полное официальное название',
-          shortName: 'string|null - краткое название',
-          inn: 'string|null - нормализованный ИНН',
-          ogrn: 'string|null - нормализованный ОГРН',
-          kpp: 'string|null',
-          opf: 'string|null - организационно-правовая форма',
-          registration_date: 'string|null - дата в формате YYYY-MM-DD или DD.MM.YYYY',
-          years_from_registration: 'number|null - количество лет с регистрации',
-          status: 'string|null - статус: Действует/Ликвидирована/и т.д.',
-          address: 'string|null - полный нормализованный адрес',
-          charter_capital: 'string|null - уставной капитал с валютой',
-          contacts: {
-            phones: 'string[] - нормализованные телефоны в формате +7(XXX)XXX-XX-XX',
-            emails: 'string[] - валидные email адреса',
-            sites: 'string[] - веб-сайты без http/https префикса'
-          }
-        },
-        ceo: {
-          name: 'string|null - ФИО руководителя',
-          fio: 'string|null - альтернативное поле ФИО',
-          position: 'string|null - должность',
-          post: 'string|null - альтернативное поле должности'
-        },
-        managers: '[{ name: string, fio?: string, position?: string, post?: string }] - все руководители',
-        owners: '[{ name: string, type?: string, inn?: string, share_text?: string, share_percent?: number }] - учредители и владельцы',
-        okved: {
-          main: '{ code?: string, text?: string, title?: string } - основной ОКВЭД',
-          additional: '[{ code?: string, text?: string, title?: string }] - дополнительные ОКВЭДы'
-        },
-        risk_flags: 'string[] - флаги рисков и негативные факторы',
-        notes: 'string[] - дополнительные заметки и важная информация',
-        former_names: 'string[] - прежние названия компании',
-        predecessors: 'string[] - предшественники'
-      },
-      rules: [
-        'Используй возможности GPT-5 для максимально точной обработки данных',
-        'Отвечай строго JSON без комментариев и дополнительного текста',
-        'Объединяй данные из всех источников, приоритет более полным данным',
-        'Удаляй дубликаты и нормализуй форматы (телефоны, даты, адреса)',
-        'Если данные противоречат друг другу, выбирай наиболее достоверные',
-        'Заполняй years_from_registration на основе registration_date',
-        'Нормализуй телефоны в российский формат +7(XXX)XXX-XX-XX',
-        'Если поле недоступно — ставь null или пустой массив',
-        'Добавляй в risk_flags любые негативные факторы из источников',
-        'В notes включай важную дополнительную информацию'
-      ],
-      inn,
-      sources: results
-    };
-
-    // Используем новый API для GPT-5
-    console.log('🚀 Attempting to use GPT-5 API...');
-    console.log('Model from env:', process.env.OPENAI_MODEL);
-    console.log('Final model decision:', process.env.OPENAI_MODEL || 'gpt-5');
-
-    if ((process.env.OPENAI_MODEL || 'gpt-5') === 'gpt-5') {
-      try {
-        console.log('📡 Sending request to GPT-5 Responses API...');
-
-        // Создаем промис с таймаутом
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('OpenAI request timeout (20s)')), 20000);
-        });
-
-        const openaiPromise = openai.responses.create({
-          model: 'gpt-5',
-          input: `${system}\n\n${JSON.stringify(instruction)}`
-        });
-
-        const response = await Promise.race([openaiPromise, timeoutPromise]);
-        clearTimeout(requestTimeout);
-        console.log('✅ GPT-5 response received successfully');
-        const msg = response.output_text || '{}';
-        let parsed;
-        try {
-          parsed = JSON.parse(msg);
-        } catch {
-          parsed = { raw: msg };
-        }
-        console.log('📊 GPT-5 response parsed, sending to client');
-        if (!res.headersSent) {
-          res.json({ ok: true, model: 'gpt-5', summary: parsed });
-        }
-      } catch (gpt5Error) {
-        console.log('❌ GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
-        console.log('🔄 Attempting fallback to GPT-4...');
-
-        // Fallback to chat completions API с таймаутом
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('GPT-4 fallback timeout (15s)')), 15000);
-        });
-
-        const gpt4Promise = openai.chat.completions.create({
-          model: 'gpt-4',
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: JSON.stringify(instruction) }
-          ]
-        });
-
-        const completion = await Promise.race([gpt4Promise, timeoutPromise]);
-        clearTimeout(requestTimeout);
-        console.log('✅ GPT-4 fallback response received');
-        const msg = completion.choices?.[0]?.message?.content || '{}';
-        let parsed;
-        try {
-          parsed = JSON.parse(msg);
-        } catch {
-          parsed = { raw: msg };
-        }
-        console.log('📊 GPT-4 fallback response parsed, sending to client');
-        if (!res.headersSent) {
-          res.json({ ok: true, model: 'gpt-4-fallback', summary: parsed });
-        }
-      }
-    } else {
-      // Для других моделей используем старый API
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4',
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: JSON.stringify(instruction) }
-        ]
-      });
+    
+    try {
+      // Используем новый OpenAI сервис
+      const response = await openaiService.generateSummary(
+        { query: inn, results }, 'company'
+      );
+      
       clearTimeout(requestTimeout);
-      const msg = completion.choices?.[0]?.message?.content || '{}';
-      let parsed;
-      try {
-        parsed = JSON.parse(msg);
-      } catch {
-        parsed = { raw: msg };
-      }
+      console.log('✅ OpenAI service response received');
+      
       if (!res.headersSent) {
-        res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4', summary: parsed });
+        res.json(response);
+      }
+    } catch (openaiError) {
+      console.log('❌ OpenAI service failed, using fallback:', openaiError.message);
+      clearTimeout(requestTimeout);
+      
+      if (!res.headersSent) {
+        const fallbackResponse = openaiService.createFallbackResponse(
+          { query: inn, results }, 'company'
+        );
+        res.json(fallbackResponse);
       }
     }
   } catch (e) {
-    clearTimeout(requestTimeout);
     console.error('Company summarize error:', e.message, e.stack);
+    ErrorHandler.logError(e, { endpoint: '/api/company-summarize', inn, resultsCount: results?.length });
 
-    // Fallback: возвращаем базовую информацию без GPT
     if (!res.headersSent) {
-      res.json({
-        ok: true,
-        model: 'fallback',
-        summary: createFallbackSummary(inn, results, {})
-      });
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
+      res.status(statusCode).json(response);
     }
   }
 });

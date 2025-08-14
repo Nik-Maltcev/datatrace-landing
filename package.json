@@ -1,24 +1,31 @@
 {
   "name": "datatrace-monorepo",
   "version": "1.0.0",
+  "description": "DataTrace - система поиска утечек данных и анализа компаний",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
-    "dev:web": "cd apps/web && npm run dev",
-    "dev:api": "cd apps/api && npm run dev",
-    "build": "npm run build:web && npm run build:api",
-    "build:web": "cd apps/web && npm install --legacy-peer-deps && npm run build",
-    "build:api": "cd apps/api && npm install",
-    "start": "concurrently \"npm run start:web\" \"npm run start:api\"",
-    "start:web": "cd apps/web && npm start",
-    "start:api": "cd apps/api && npm start",
-    "install:all": "npm install && cd apps/web && npm install && cd ../api && npm install",
-    "railway:build:web": "cd apps/web && npm install --legacy-peer-deps && npm run build",
-    "railway:start:web": "cd apps/web && npm start",
-    "railway:build:api": "cd apps/api && npm install",
-    "railway:start:api": "cd apps/api && npm start"
+    "dev": "cd apps/api && npm run dev",
+    "start": "cd apps/api && npm start",
+    "test": "cd apps/api && npm test",
+    "test:coverage": "cd apps/api && npm run test:coverage",
+    "install:api": "cd apps/api && npm install",
+    "build": "echo 'No build step required for this project'",
+    "deploy": "echo 'Deploy using Railway or your preferred platform'"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+  "keywords": [
+    "data-leak",
+    "security",
+    "company-analysis",
+    "password-check",
+    "monorepo"
+  ],
+  "author": "DataTrace Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
