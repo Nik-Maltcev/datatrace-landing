@@ -305,7 +305,7 @@ app.post('/api/company-search-step', async (req, res) => {
     if (!inn || !/^\d{10,12}$/.test(String(inn).trim())) {
       return res.status(400).json({ error: 'Введите корректный ИНН (10 или 12 цифр)' });
     }
-    
+
     let result;
     switch (step) {
       case 1:
@@ -319,10 +319,10 @@ app.post('/api/company-search-step', async (req, res) => {
       default:
         return res.status(400).json({ error: 'Invalid step' });
     }
-    
-    res.json({ 
-      query: String(inn).trim(), 
-      field: 'inn', 
+
+    res.json({
+      query: String(inn).trim(),
+      field: 'inn',
       step,
       result,
       timestamp: new Date().toISOString()
@@ -339,11 +339,11 @@ app.post('/api/leak-search-step', async (req, res) => {
     if (!query || typeof query !== 'string' || query.trim().length < 3) {
       return res.status(400).json({ error: 'Введите корректный запрос (мин. 3 символа)' });
     }
-    
+
     const allowedFields = new Set(['phone', 'email', 'vk', 'ok', 'inn', 'snils']);
     const f = allowedFields.has(field) ? field : 'full_text';
     const finalQuery = extractUsernameIfSocial(f, query);
-    
+
     let result;
     switch (step) {
       case 1:
@@ -369,10 +369,10 @@ app.post('/api/leak-search-step', async (req, res) => {
       default:
         return res.status(400).json({ error: 'Invalid step' });
     }
-    
-    res.json({ 
-      query: finalQuery, 
-      field: f, 
+
+    res.json({
+      query: finalQuery,
+      field: f,
       step,
       result,
       timestamp: new Date().toISOString()
@@ -388,16 +388,16 @@ app.post('/api/company-summarize-test', async (req, res) => {
     console.log('Company summarize TEST request received');
     const { inn, results } = req.body || {};
     console.log('TEST Request data:', { inn, resultsLength: results?.length });
-    
+
     if (!inn || !Array.isArray(results)) {
       console.log('TEST Missing inn or results');
       return res.status(400).json({ error: 'Missing inn or results' });
     }
 
     console.log('TEST Returning fallback summary immediately');
-    res.json({ 
-      ok: true, 
-      model: 'test-fallback', 
+    res.json({
+      ok: true,
+      model: 'test-fallback',
       summary: createFallbackSummary(inn, results, {}),
       timestamp: new Date().toISOString()
     });
@@ -412,47 +412,40 @@ app.post('/api/company-summarize', async (req, res) => {
     console.log('Company summarize request received');
     const { inn, results } = req.body || {};
     console.log('Request data:', { inn, resultsLength: results?.length });
-    
+
     if (!inn || !Array.isArray(results)) {
       console.log('Missing inn or results');
       return res.status(400).json({ error: 'Missing inn or results' });
     }
 
-    // Временно возвращаем только fallback для отладки
-    console.log('🔧 DEBUG: Returning fallback immediately to avoid 502');
-    return res.json({ 
-      ok: true, 
-      model: 'debug-fallback', 
-      summary: createFallbackSummary(inn, results, {}),
-      timestamp: new Date().toISOString()
-    });
+    // Убираем временный debug return - теперь работаем нормально
 
     // Проверяем доступность OpenAI
     console.log('🔍 Checking OpenAI availability...');
     console.log('OpenAI client exists:', !!openai);
     console.log('OpenAI API key exists:', !!OPENAI_API_KEY);
-    
+
     if (!openai) {
       console.log('❌ OpenAI not available, using fallback');
-      return res.json({ 
-        ok: true, 
-        model: 'fallback', 
+      return res.json({
+        ok: true,
+        model: 'fallback',
         summary: createFallbackSummary(inn, results, {})
       });
     }
-    
+
     // Устанавливаем общий таймаут для всего запроса
     const requestTimeout = setTimeout(() => {
       console.log('⏰ Request timeout reached, sending fallback');
       if (!res.headersSent) {
-        res.json({ 
-          ok: true, 
-          model: 'timeout-fallback', 
+        res.json({
+          ok: true,
+          model: 'timeout-fallback',
           summary: createFallbackSummary(inn, results, {})
         });
       }
     }, 25000); // 25 секунд общий таймаут
-    
+
     console.log('Starting OpenAI request...');
     const system = 'Ты — эксперт-аналитик корпоративных данных с использованием GPT-5. Твоя задача — создать максимально полную и структурированную сводку о компании для красивого отображения в интерфейсе.';
     const instruction = {
@@ -461,35 +454,35 @@ app.post('/api/company-summarize', async (req, res) => {
       enhanced_processing: 'Используй возможности GPT-5 для глубокого анализа и нормализации данных',
       schema: {
         company: {
-          name: 'string|null - приоритет краткому названию', 
-          fullName: 'string|null - полное официальное название', 
+          name: 'string|null - приоритет краткому названию',
+          fullName: 'string|null - полное официальное название',
           shortName: 'string|null - краткое название',
-          inn: 'string|null - нормализованный ИНН', 
-          ogrn: 'string|null - нормализованный ОГРН', 
+          inn: 'string|null - нормализованный ИНН',
+          ogrn: 'string|null - нормализованный ОГРН',
           kpp: 'string|null',
-          opf: 'string|null - организационно-правовая форма', 
-          registration_date: 'string|null - дата в формате YYYY-MM-DD или DD.MM.YYYY', 
+          opf: 'string|null - организационно-правовая форма',
+          registration_date: 'string|null - дата в формате YYYY-MM-DD или DD.MM.YYYY',
           years_from_registration: 'number|null - количество лет с регистрации',
           status: 'string|null - статус: Действует/Ликвидирована/и т.д.',
           address: 'string|null - полный нормализованный адрес',
           charter_capital: 'string|null - уставной капитал с валютой',
-          contacts: { 
-            phones: 'string[] - нормализованные телефоны в формате +7(XXX)XXX-XX-XX', 
-            emails: 'string[] - валидные email адреса', 
-            sites: 'string[] - веб-сайты без http/https префикса' 
+          contacts: {
+            phones: 'string[] - нормализованные телефоны в формате +7(XXX)XXX-XX-XX',
+            emails: 'string[] - валидные email адреса',
+            sites: 'string[] - веб-сайты без http/https префикса'
           }
         },
-        ceo: { 
-          name: 'string|null - ФИО руководителя', 
-          fio: 'string|null - альтернативное поле ФИО', 
-          position: 'string|null - должность', 
-          post: 'string|null - альтернативное поле должности' 
+        ceo: {
+          name: 'string|null - ФИО руководителя',
+          fio: 'string|null - альтернативное поле ФИО',
+          position: 'string|null - должность',
+          post: 'string|null - альтернативное поле должности'
         },
         managers: '[{ name: string, fio?: string, position?: string, post?: string }] - все руководители',
         owners: '[{ name: string, type?: string, inn?: string, share_text?: string, share_percent?: number }] - учредители и владельцы',
-        okved: { 
-          main: '{ code?: string, text?: string, title?: string } - основной ОКВЭД', 
-          additional: '[{ code?: string, text?: string, title?: string }] - дополнительные ОКВЭДы' 
+        okved: {
+          main: '{ code?: string, text?: string, title?: string } - основной ОКВЭД',
+          additional: '[{ code?: string, text?: string, title?: string }] - дополнительные ОКВЭДы'
         },
         risk_flags: 'string[] - флаги рисков и негативные факторы',
         notes: 'string[] - дополнительные заметки и важная информация',
@@ -516,30 +509,30 @@ app.post('/api/company-summarize', async (req, res) => {
     console.log('🚀 Attempting to use GPT-5 API...');
     console.log('Model from env:', process.env.OPENAI_MODEL);
     console.log('Final model decision:', process.env.OPENAI_MODEL || 'gpt-5');
-    
+
     if ((process.env.OPENAI_MODEL || 'gpt-5') === 'gpt-5') {
       try {
         console.log('📡 Sending request to GPT-5 Responses API...');
-        
+
         // Создаем промис с таймаутом
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('OpenAI request timeout (20s)')), 20000);
         });
-        
+
         const openaiPromise = openai.responses.create({
           model: 'gpt-5',
           input: `${system}\n\n${JSON.stringify(instruction)}`
         });
-        
+
         const response = await Promise.race([openaiPromise, timeoutPromise]);
         clearTimeout(requestTimeout);
         console.log('✅ GPT-5 response received successfully');
         const msg = response.output_text || '{}';
-        let parsed; 
-        try { 
-          parsed = JSON.parse(msg); 
-        } catch { 
-          parsed = { raw: msg }; 
+        let parsed;
+        try {
+          parsed = JSON.parse(msg);
+        } catch {
+          parsed = { raw: msg };
         }
         console.log('📊 GPT-5 response parsed, sending to client');
         if (!res.headersSent) {
@@ -548,12 +541,12 @@ app.post('/api/company-summarize', async (req, res) => {
       } catch (gpt5Error) {
         console.log('❌ GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
         console.log('🔄 Attempting fallback to GPT-4...');
-        
+
         // Fallback to chat completions API с таймаутом
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('GPT-4 fallback timeout (15s)')), 15000);
         });
-        
+
         const gpt4Promise = openai.chat.completions.create({
           model: 'gpt-4',
           response_format: { type: 'json_object' },
@@ -562,16 +555,16 @@ app.post('/api/company-summarize', async (req, res) => {
             { role: 'user', content: JSON.stringify(instruction) }
           ]
         });
-        
+
         const completion = await Promise.race([gpt4Promise, timeoutPromise]);
         clearTimeout(requestTimeout);
         console.log('✅ GPT-4 fallback response received');
         const msg = completion.choices?.[0]?.message?.content || '{}';
-        let parsed; 
-        try { 
-          parsed = JSON.parse(msg); 
-        } catch { 
-          parsed = { raw: msg }; 
+        let parsed;
+        try {
+          parsed = JSON.parse(msg);
+        } catch {
+          parsed = { raw: msg };
         }
         console.log('📊 GPT-4 fallback response parsed, sending to client');
         if (!res.headersSent) {
@@ -590,11 +583,11 @@ app.post('/api/company-summarize', async (req, res) => {
       });
       clearTimeout(requestTimeout);
       const msg = completion.choices?.[0]?.message?.content || '{}';
-      let parsed; 
-      try { 
-        parsed = JSON.parse(msg); 
-      } catch { 
-        parsed = { raw: msg }; 
+      let parsed;
+      try {
+        parsed = JSON.parse(msg);
+      } catch {
+        parsed = { raw: msg };
       }
       if (!res.headersSent) {
         res.json({ ok: true, model: process.env.OPENAI_MODEL || 'gpt-4', summary: parsed });
@@ -603,12 +596,12 @@ app.post('/api/company-summarize', async (req, res) => {
   } catch (e) {
     clearTimeout(requestTimeout);
     console.error('Company summarize error:', e.message, e.stack);
-    
+
     // Fallback: возвращаем базовую информацию без GPT
     if (!res.headersSent) {
-      res.json({ 
-        ok: true, 
-        model: 'fallback', 
+      res.json({
+        ok: true,
+        model: 'fallback',
         summary: createFallbackSummary(inn, results, {})
       });
     }
@@ -627,13 +620,13 @@ function createFallbackSummary(inn, results, companyData) {
     },
     summary: "Базовая информация о компании получена из открытых источников."
   };
-  
+
   // Попытаемся извлечь хотя бы базовую информацию из результатов
   try {
     for (const result of results) {
       if (result.ok && result.items) {
         const items = result.items;
-        
+
         // Извлекаем название компании
         if (items.company_names?.short_name) {
           fallbackSummary.company.name = items.company_names.short_name;
@@ -642,21 +635,21 @@ function createFallbackSummary(inn, results, companyData) {
         } else if (items.name) {
           fallbackSummary.company.name = items.name;
         }
-        
+
         // Извлекаем адрес
         if (items.address?.line_address) {
           fallbackSummary.company.address = items.address.line_address;
         } else if (items.address) {
           fallbackSummary.company.address = items.address;
         }
-        
+
         // Извлекаем деятельность
         if (items.okved_main?.value) {
           fallbackSummary.company.activity = items.okved_main.value;
         } else if (items.activity) {
           fallbackSummary.company.activity = items.activity;
         }
-        
+
         // Извлекаем статус
         if (items.status) {
           fallbackSummary.company.status = items.status;
@@ -665,7 +658,7 @@ function createFallbackSummary(inn, results, companyData) {
         }
       }
     }
-    
+
     // Создаем более информативную сводку
     if (fallbackSummary.company.name !== "Информация недоступна") {
       fallbackSummary.summary = `Компания ${fallbackSummary.company.name} с ИНН ${inn}. ` +
@@ -675,7 +668,7 @@ function createFallbackSummary(inn, results, companyData) {
   } catch (fallbackError) {
     console.error('Fallback error:', fallbackError);
   }
-  
+
   return fallbackSummary;
 }
 
@@ -698,7 +691,7 @@ function createLeakFallbackSummary(query, field, compact) {
     if (sourceData.ok && sourceData.data) {
       found = true;
       let foundCount = 0;
-      
+
       if (sourceName === 'ITP' && typeof sourceData.data === 'object') {
         for (const [category, items] of Object.entries(sourceData.data)) {
           if (Array.isArray(items) && items.length > 0) {
@@ -712,7 +705,7 @@ function createLeakFallbackSummary(query, field, compact) {
           highlights.push(`${sourceName}: ${foundCount} записей`);
         }
       }
-      
+
       sources[sourceName] = { foundCount, notes: foundCount > 0 ? 'Данные найдены' : 'Нет данных' };
     } else {
       sources[sourceName] = { foundCount: 0, notes: 'Источник недоступен или нет данных' };
@@ -763,15 +756,15 @@ function compactResults(results) {
 
 function optimizeDataForAI(compact) {
   const optimized = {};
-  
+
   for (const [sourceName, sourceData] of Object.entries(compact)) {
     if (!sourceData.ok || !sourceData.data) {
       optimized[sourceName] = { ok: false, count: 0 };
       continue;
     }
-    
+
     const summary = { ok: true, count: 0, samples: [], databases: [] };
-    
+
     if (sourceName === 'ITP') {
       for (const [groupName, records] of Object.entries(sourceData.data)) {
         if (Array.isArray(records)) {
@@ -813,10 +806,10 @@ function optimizeDataForAI(compact) {
         summary.samples = [sourceData.data];
       }
     }
-    
+
     optimized[sourceName] = summary;
   }
-  
+
   return optimized;
 }
 
@@ -839,7 +832,7 @@ function createLeakFallbackSummary(query, field, compact) {
     if (sourceData.ok && sourceData.data) {
       found = true;
       let foundCount = 0;
-      
+
       if (sourceName === 'ITP' && typeof sourceData.data === 'object') {
         for (const [category, items] of Object.entries(sourceData.data)) {
           if (Array.isArray(items) && items.length > 0) {
@@ -853,7 +846,7 @@ function createLeakFallbackSummary(query, field, compact) {
           highlights.push(`${sourceName}: ${foundCount} записей`);
         }
       }
-      
+
       sources[sourceName] = { foundCount, notes: foundCount > 0 ? 'Данные найдены' : 'Нет данных' };
     } else {
       sources[sourceName] = { foundCount: 0, notes: 'Источник недоступен или нет данных' };
@@ -883,29 +876,29 @@ function createLeakFallbackSummary(query, field, compact) {
 app.post('/api/summarize', async (req, res) => {
   // Объявляем переменные в начале для доступности в catch блоке
   const { query, field, results } = req.body || {};
-  
+
   try {
     if (!query || !Array.isArray(results)) {
       return res.status(400).json({ error: 'Missing query or results' });
     }
 
     const compact = compactResults(results);
-    
+
     // Проверяем доступность OpenAI
     if (!openai) {
       console.log('OpenAI not available for summarize, using fallback');
-      return res.json({ 
-        ok: true, 
-        model: 'fallback', 
+      return res.json({
+        ok: true,
+        model: 'fallback',
         summary: createLeakFallbackSummary(query, field, compact)
       });
     }
 
     const system = 'Ты — аналитик утечек данных. Анализируй найденные данные и создавай краткие отчеты с рекомендациями.';
-    
+
     // Оптимизируем данные перед отправкой в OpenAI
     const optimizedData = optimizeDataForAI(compact);
-    
+
     const instruction = {
       task: 'Проанализируй найденные утечки и создай отчет с рекомендациями',
       language: 'ru',
@@ -942,7 +935,7 @@ app.post('/api/summarize', async (req, res) => {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Summarize OpenAI timeout (60s)')), 60000);
     });
-    
+
     const openaiPromise = openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-5',
       response_format: { type: 'json_object' },
@@ -951,7 +944,7 @@ app.post('/api/summarize', async (req, res) => {
         { role: 'user', content: JSON.stringify(instruction) }
       ]
     });
-    
+
     const completion = await Promise.race([openaiPromise, timeoutPromise]);
 
     const msg = completion.choices?.[0]?.message?.content || '{}';
@@ -961,9 +954,9 @@ app.post('/api/summarize', async (req, res) => {
   } catch (e) {
     console.error('Summarize error:', e.message);
     // Fallback при ошибке OpenAI - теперь переменные доступны
-    res.json({ 
-      ok: true, 
-      model: 'fallback', 
+    res.json({
+      ok: true,
+      model: 'fallback',
       summary: createLeakFallbackSummary(query || '', field || 'full_text', compactResults(results || []))
     });
   }
@@ -973,18 +966,18 @@ app.post('/api/summarize', async (req, res) => {
 app.post('/api/generate-full-report', async (req, res) => {
   try {
     const { query, field, results, mode } = req.body || {};
-    
+
     if (!query || !Array.isArray(results)) {
       return res.status(400).json({ error: 'Missing query or results' });
     }
 
     console.log(`📊 Generating full report for ${mode} mode`);
-    
+
     // Генерируем HTML отчет
     const reportHtml = generateReportHTML(query, field, results, mode);
-    
-    res.json({ 
-      ok: true, 
+
+    res.json({
+      ok: true,
       html: reportHtml,
       timestamp: new Date().toISOString()
     });
@@ -998,7 +991,7 @@ app.post('/api/generate-full-report', async (req, res) => {
 function generateReportHTML(query, field, results, mode) {
   const timestamp = new Date().toLocaleString('ru-RU');
   const isCompanyMode = mode === 'company';
-  
+
   let html = `
 <!DOCTYPE html>
 <html lang="ru">
@@ -1161,11 +1154,11 @@ function formatSourceDataForReport(sourceName, items) {
       if (groupData && groupData.data && Array.isArray(groupData.data)) {
         html += `<h3>${groupName} (${groupData.data.length} записей)</h3>`;
         html += '<div class="records-section">';
-        
+
         groupData.data.forEach((record, index) => {
           html += `<div class="record-item">`;
           html += `<strong>Запись ${index + 1}:</strong><br>`;
-          
+
           if (typeof record === 'object') {
             for (const [key, value] of Object.entries(record)) {
               if (value) {
@@ -1175,10 +1168,10 @@ function formatSourceDataForReport(sourceName, items) {
           } else {
             html += record;
           }
-          
+
           html += `</div>`;
         });
-        
+
         html += '</div>';
       }
     }
@@ -1187,14 +1180,14 @@ function formatSourceDataForReport(sourceName, items) {
     html += `<div class="data-label">Всего записей</div>`;
     html += `<div class="data-value">${items.length}</div>`;
     html += `</div>`;
-    
+
     html += '<div class="records-section">';
     html += `<h3>Найденные записи:</h3>`;
-    
+
     items.forEach((record, index) => {
       html += `<div class="record-item">`;
       html += `<strong>Запись ${index + 1}:</strong><br>`;
-      
+
       if (typeof record === 'object') {
         for (const [key, value] of Object.entries(record)) {
           if (value && key !== 'password') { // Скрываем пароли в отчете
@@ -1206,21 +1199,21 @@ function formatSourceDataForReport(sourceName, items) {
       } else {
         html += record;
       }
-      
+
       html += `</div>`;
     });
-    
+
     html += '</div>';
   } else if (typeof items === 'object') {
     html += '<div class="data-grid">';
-    
+
     for (const [key, value] of Object.entries(items)) {
       if (value) {
         html += `<div class="data-label">${key}</div>`;
         html += `<div class="data-value">${Array.isArray(value) ? value.join(', ') : value}</div>`;
       }
     }
-    
+
     html += '</div>';
   }
 
@@ -1239,9 +1232,9 @@ app.get('/api/company', async (req, res) => {
     const steps = [];
     steps.push(await searchDatanewton(inn));
     steps.push(await searchChecko(inn));
-    
-    res.json({ 
-      inn: String(inn).trim(), 
+
+    res.json({
+      inn: String(inn).trim(),
       results: steps,
       timestamp: new Date().toISOString()
     });
@@ -1262,7 +1255,7 @@ app.post('/api/openai/format-company', async (req, res) => {
     // Проверяем доступность OpenAI
     if (!openai) {
       console.log('OpenAI not available for formatting, using fallback HTML');
-      return res.json({ 
+      return res.json({
         html: '<div class="p-4 bg-yellow-100 border border-yellow-400 rounded"><p class="text-yellow-800">OpenAI недоступен. Показаны базовые данные.</p></div>',
         model: 'fallback',
         timestamp: new Date().toISOString()
@@ -1270,7 +1263,7 @@ app.post('/api/openai/format-company', async (req, res) => {
     }
 
     console.log('Sending request to OpenAI with model:', process.env.OPENAI_MODEL || model);
-    
+
     // Используем новый API для GPT-5
     if ((process.env.OPENAI_MODEL || model) === 'gpt-5') {
       try {
@@ -1278,11 +1271,11 @@ app.post('/api/openai/format-company', async (req, res) => {
           model: 'gpt-5',
           input: `Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.\n\n${prompt}`
         });
-        
+
         const htmlContent = response.output_text || '';
         console.log('OpenAI GPT-5 response received, HTML length:', htmlContent.length);
-        
-        res.json({ 
+
+        res.json({
           html: htmlContent,
           model: 'gpt-5',
           timestamp: new Date().toISOString()
@@ -1293,16 +1286,16 @@ app.post('/api/openai/format-company', async (req, res) => {
         const completion = await openai.chat.completions.create({
           model: 'gpt-4',
           messages: [
-            { 
-              role: 'system', 
-              content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
+            {
+              role: 'system',
+              content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.'
             },
             { role: 'user', content: prompt }
           ]
         });
 
         const htmlContent = completion.choices?.[0]?.message?.content || '';
-        res.json({ 
+        res.json({
           html: htmlContent,
           model: 'gpt-4-fallback',
           timestamp: new Date().toISOString()
@@ -1313,9 +1306,9 @@ app.post('/api/openai/format-company', async (req, res) => {
       const completion = await openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || model,
         messages: [
-          { 
-            role: 'system', 
-            content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.' 
+          {
+            role: 'system',
+            content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.'
           },
           { role: 'user', content: prompt }
         ]
@@ -1323,8 +1316,8 @@ app.post('/api/openai/format-company', async (req, res) => {
 
       const htmlContent = completion.choices?.[0]?.message?.content || '';
       console.log('OpenAI response received, HTML length:', htmlContent.length);
-      
-      res.json({ 
+
+      res.json({
         html: htmlContent,
         model: process.env.OPENAI_MODEL || model,
         timestamp: new Date().toISOString()
@@ -1333,7 +1326,7 @@ app.post('/api/openai/format-company', async (req, res) => {
   } catch (e) {
     console.error('OpenAI formatting error:', e);
     // Fallback HTML при ошибке
-    res.json({ 
+    res.json({
       html: '<div class="p-4 bg-red-100 border border-red-400 rounded"><p class="text-red-800">Ошибка форматирования данных. Попробуйте позже.</p></div>',
       model: 'fallback',
       timestamp: new Date().toISOString()
