@@ -32,20 +32,20 @@ class DeHashedService {
     }
 
     try {
-      // Create SHA-1 hash of the password (common format for breach databases)
-      const sha1Hash = crypto.createHash('sha1').update(password).digest('hex').toUpperCase();
+      // Create SHA-256 hash of the password (DeHashed v2 API requirement)
+      const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
       
-      // Search by password hash
-      const result = await this.searchByHash(sha1Hash);
+      // Search by password hash using v2 API
+      const result = await this.searchByPasswordHash(sha256Hash);
       
       return {
         ok: true,
         isCompromised: result.found,
-        breachCount: result.breachCount,
-        breaches: result.breaches,
-        recommendations: this.generateRecommendations(result.found, result.breachCount),
+        breachCount: result.results_found || 0,
+        breaches: [], // v2 password search doesn't return detailed breach info
+        recommendations: this.generateRecommendations(result.found, result.results_found || 0),
         passwordStrength: this.analyzePasswordStrength(password),
-        searchHash: sha1Hash.substring(0, 10) + '...' // Show partial hash for reference
+        searchHash: sha256Hash.substring(0, 10) + '...' // Show partial hash for reference
       };
     } catch (error) {
       console.error('DeHashed password check error:', error);
@@ -54,43 +54,33 @@ class DeHashedService {
   }
 
   /**
-   * Search for breaches by password hash
-   * @param {string} hash - SHA-1 hash of the password
+   * Search for breaches by password hash using DeHashed v2 API
+   * @param {string} sha256Hash - SHA-256 hash of the password
    * @returns {Promise<Object>} - Search results
    */
-  async searchByHash(hash) {
+  async searchByPasswordHash(sha256Hash) {
     try {
-      const response = await axios.get(`${this.baseUrl}/search`, {
-        params: {
-          query: `password:${hash}`,
-          size: 100 // Limit results
-        },
+      const response = await axios.post(`${this.baseUrl}/v2/search-password`, {
+        sha256_hashed_password: sha256Hash
+      }, {
         headers: {
-          'Accept': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}`
+          'Content-Type': 'application/json',
+          'Dehashed-Api-Key': this.apiKey
         },
         timeout: 15000
       });
 
       const data = response.data;
       
-      if (!data) {
-        return { found: false, breachCount: 0, breaches: [] };
-      }
-
-      const entries = data.entries || [];
-      const breaches = this.formatBreachResults(entries);
-      
       return {
-        found: entries.length > 0,
-        breachCount: entries.length,
-        breaches: breaches,
-        total: data.total || entries.length
+        found: (data.results_found || 0) > 0,
+        results_found: data.results_found || 0
       };
     } catch (error) {
       if (error.response) {
         const status = error.response.status;
         const statusText = error.response.statusText;
+        const errorData = error.response.data;
         
         if (status === 401) {
           throw new Error('DeHashed API authentication failed. Check your API key.');
@@ -98,6 +88,8 @@ class DeHashedService {
           throw new Error('DeHashed API rate limit exceeded. Please try again later.');
         } else if (status === 403) {
           throw new Error('DeHashed API access forbidden. Check your subscription.');
+        } else if (status === 400) {
+          throw new Error(`DeHashed API bad request: ${errorData?.error || statusText}`);
         } else {
           throw new Error(`DeHashed API error: ${status} ${statusText}`);
         }
@@ -110,7 +102,7 @@ class DeHashedService {
   }
 
   /**
-   * Search for general information by email, username, etc.
+   * Search for general information by email, username, etc. using DeHashed v2 API
    * @param {string} query - Search query
    * @param {string} field - Field type (email, username, etc.)
    * @returns {Promise<Object>} - Search results
@@ -123,14 +115,15 @@ class DeHashedService {
     try {
       const searchQuery = `${field}:${query}`;
       
-      const response = await axios.get(`${this.baseUrl}/search`, {
-        params: {
-          query: searchQuery,
-          size: 50
-        },
+      const response = await axios.post(`${this.baseUrl}/v2/search`, {
+        query: searchQuery,
+        size: 50,
+        page: 1,
+        de_dupe: true
+      }, {
         headers: {
-          'Accept': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}`
+          'Content-Type': 'application/json',
+          'Dehashed-Api-Key': this.apiKey
         },
         timeout: 15000
       });
@@ -143,7 +136,8 @@ class DeHashedService {
         found: entries.length > 0,
         total: data.total || entries.length,
         entries: this.formatSearchResults(entries),
-        query: searchQuery
+        query: searchQuery,
+        balance: data.balance
       };
     } catch (error) {
       console.error('DeHashed search error:', error);

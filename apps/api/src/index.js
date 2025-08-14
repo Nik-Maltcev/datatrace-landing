@@ -598,6 +598,56 @@ app.post('/api/password-check', optionalAuth, userRateLimit(20, 15 * 60 * 1000),
   }
 });
 
+// Debug endpoint for DeHashed testing
+app.post('/api/dehashed-debug', async (req, res) => {
+  try {
+    console.log('🔍 DeHashed debug endpoint called');
+    console.log('Environment variables check:');
+    console.log('- DEHASHED_API_KEY exists:', !!process.env.DEHASHED_API_KEY);
+    console.log('- DEHASHED_BASE_URL:', process.env.DEHASHED_BASE_URL || 'default');
+    
+    const serviceInfo = dehashedService.getServiceInfo();
+    console.log('- Service info:', serviceInfo);
+    
+    if (!dehashedService.isAvailable()) {
+      return res.json({
+        ok: false,
+        error: 'DeHashed service not available',
+        debug: {
+          hasApiKey: !!process.env.DEHASHED_API_KEY,
+          serviceInfo
+        }
+      });
+    }
+    
+    // Test with a simple known hash (password: "password" in SHA-256)
+    const testHash = '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8';
+    console.log('Testing with SHA-256 hash:', testHash.substring(0, 10) + '...');
+    
+    const result = await dehashedService.searchByPasswordHash(testHash);
+    console.log('Test result:', result);
+    
+    res.json({
+      ok: true,
+      debug: {
+        serviceAvailable: true,
+        testResult: result,
+        serviceInfo
+      }
+    });
+  } catch (error) {
+    console.error('DeHashed debug error:', error);
+    res.json({
+      ok: false,
+      error: error.message,
+      debug: {
+        errorType: error.constructor.name,
+        serviceInfo: dehashedService.getServiceInfo()
+      }
+    });
+  }
+});
+
 app.post('/api/dehashed-search', optionalAuth, requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
   try {
     const { query, field = 'email' } = req.body;
