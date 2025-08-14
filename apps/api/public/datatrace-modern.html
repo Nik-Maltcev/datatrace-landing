@@ -557,9 +557,11 @@
       const item = document.createElement('div');
       item.className = `result-card ${isOpen ? 'open' : ''}`;
       
-      const statusClass = status === 'success' ? 'status-clean' : 
+      const statusClass = status === 'success' ? 'status-found' : 
+                         status === 'clean' ? 'status-clean' :
                          status === 'danger' ? 'status-found' : 'status-error';
-      const statusText = status === 'success' ? 'Чисто' : 
+      const statusText = status === 'success' ? 'Найдено' : 
+                        status === 'clean' ? 'Чисто' :
                         status === 'danger' ? 'Найдено' : 'Ошибка';
       
       item.innerHTML = `
@@ -776,18 +778,22 @@
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Шаг 3: Обработка через OpenAI (если не быстрый режим)
+      // Шаг 3: Обработка через OpenAI (временно отключено из-за 502 ошибок)
       if (!isFastMode && allResults.length > 0) {
-        updateProgress(75, 'Обработка через ИИ...');
-        console.log('🤖 Processing through OpenAI...');
+        updateProgress(75, 'Показ результатов...');
+        console.log('🤖 AI processing temporarily disabled to avoid 502 errors');
         
-        const combinedData = {
-          query: query,
-          field: 'inn',
-          results: allResults
-        };
+        // Показываем результаты без ИИ анализа
+        displayCompanyResultsBySources(allResults);
         
-        await requestAISummaryForCompany(combinedData);
+        // Показываем уведомление пользователю
+        const summaryEl = document.getElementById('summary');
+        const summaryBody = document.getElementById('summaryBody');
+        summaryBody.innerHTML = '<div style="color: #6b7280;">ИИ анализ временно отключен. Показаны базовые результаты по источникам.</div>';
+        summaryEl.style.display = 'block';
+      } else if (!isFastMode) {
+        // Показываем результаты без ИИ анализа
+        displayCompanyResultsBySources(allResults);
       }
 
       // Шаг 4: Завершение
@@ -827,6 +833,32 @@
       const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
       const item = createResultItem(result.name || 'Источник', status, result.items || result.error);
       results.appendChild(item);
+    }
+    
+    function displayCompanyResultsBySources(allResults) {
+      results.innerHTML = '';
+      
+      allResults.forEach((result, index) => {
+        if (result && result.name) {
+          let status = 'warning';
+          let displayData = result.error || 'Нет данных';
+          
+          if (result.ok && result.items) {
+            // Определяем статус на основе наличия данных
+            const hasData = result.items && typeof result.items === 'object' && Object.keys(result.items).length > 0;
+            status = hasData ? 'success' : 'clean';
+            displayData = hasData ? result.items : 'Данные не найдены';
+          } else if (result.error) {
+            status = 'error';
+            displayData = result.error;
+          }
+          
+          const item = createResultItem(result.name, status, displayData, index === 0);
+          results.appendChild(item);
+        }
+      });
+      
+      console.log('✅ Company results displayed by sources');
     }
 
     async function requestAISummary(data) {
