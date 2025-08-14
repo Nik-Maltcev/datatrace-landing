@@ -388,8 +388,21 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 });
 
 
-// Initialize OpenAI service
+// Initialize AI services
+const OpenAIService = require('./services/OpenAIService');
+const DeepSeekService = require('./services/DeepSeekService');
+
 const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4');
+const deepseekService = new DeepSeekService(
+  process.env.DEEPSEEK_API_KEY,
+  process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
+);
+
+// Choose primary AI service (prefer DeepSeek if available, fallback to OpenAI)
+const primaryAIService = deepseekService.isAvailable() ? deepseekService : openaiService;
+
+console.log(`🤖 Primary AI service: ${primaryAIService.isAvailable() ? 
+  (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'None (fallback mode)'}`);
 
 // Initialize DeHashed service
 const dehashedService = new DeHashedService(
@@ -693,6 +706,44 @@ app.post('/api/dehashed-search', optionalAuth, requireAuth, userRateLimit(10, 15
   }
 });
 
+// Debug endpoint for AI services
+app.get('/api/ai-debug', async (req, res) => {
+  try {
+    console.log('🔍 AI services debug endpoint called');
+    
+    const deepseekInfo = deepseekService.getServiceInfo();
+    const openaiInfo = openaiService.getServiceInfo();
+    
+    console.log('DeepSeek service info:', deepseekInfo);
+    console.log('OpenAI service info:', openaiInfo);
+    
+    res.json({
+      ok: true,
+      services: {
+        deepseek: deepseekInfo,
+        openai: openaiInfo
+      },
+      primary: primaryAIService.isAvailable() ? 
+        (deepseekService.isAvailable() ? 'deepseek' : 'openai') : 'none',
+      environment: {
+        hasDeepSeekKey: !!process.env.DEEPSEEK_API_KEY,
+        hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+        deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL || 'default'
+      }
+    });
+  } catch (error) {
+    console.error('AI debug error:', error);
+    res.json({
+      ok: false,
+      error: error.message,
+      services: {
+        deepseek: deepseekService.getServiceInfo(),
+        openai: openaiService.getServiceInfo()
+      }
+    });
+  }
+});
+
 app.get('/api/dehashed-info', (req, res) => {
   try {
     const info = dehashedService.getServiceInfo();
@@ -721,13 +772,13 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
       return res.status(statusCode).json(response);
     }
 
-    // Проверяем доступность OpenAI сервиса
-    console.log('🔍 Checking OpenAI service availability...');
+    // Проверяем доступность AI сервиса
+    console.log('🔍 Checking AI service availability...');
     
-    if (!openaiService.isAvailable()) {
-      console.log('❌ OpenAI service not available, using fallback');
+    if (!primaryAIService.isAvailable()) {
+      console.log('❌ AI service not available, using fallback');
       const fallbackResponse = ErrorHandler.createFallbackResponse(
-        { query: inn, results }, 'company', 'openai-unavailable'
+        { query: inn, results }, 'company', 'ai-unavailable'
       );
       return res.json(fallbackResponse);
     }
@@ -743,26 +794,27 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
       }
     }, 25000); // 25 секунд общий таймаут
 
-    console.log('Starting OpenAI request...');
+    console.log(`Starting AI request with ${primaryAIService.isAvailable() ? 
+      (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback'}...`);
     
     try {
-      // Используем новый OpenAI сервис
-      const response = await openaiService.generateSummary(
+      // Используем выбранный AI сервис
+      const response = await primaryAIService.generateSummary(
         { query: inn, results }, 'company'
       );
       
       clearTimeout(requestTimeout);
-      console.log('✅ OpenAI service response received');
+      console.log('✅ AI service response received');
       
       if (!res.headersSent) {
         res.json(response);
       }
-    } catch (openaiError) {
-      console.log('❌ OpenAI service failed, using fallback:', openaiError.message);
+    } catch (aiError) {
+      console.log('❌ AI service failed, using fallback:', aiError.message);
       clearTimeout(requestTimeout);
       
       if (!res.headersSent) {
-        const fallbackResponse = openaiService.createFallbackResponse(
+        const fallbackResponse = primaryAIService.createFallbackResponse(
           { query: inn, results }, 'company'
         );
         res.json(fallbackResponse);
@@ -771,6 +823,80 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
   } catch (e) {
     console.error('Company summarize error:', e.message, e.stack);
     ErrorHandler.logError(e, { endpoint: '/api/company-summarize', inn, resultsCount: results?.length });
+
+    if (!res.headersSent) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
+      res.status(statusCode).json(response);
+    }
+  }
+});
+
+// Leak summarization endpoint
+app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('Leak summarize request received');
+    const { query, field, results } = req.body || {};
+    console.log('Request data:', { query, field, resultsLength: results?.length });
+
+    if (!query || !Array.isArray(results)) {
+      console.log('Missing query or results');
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        new Error('Missing query or results'), req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    // Проверяем доступность AI сервиса
+    console.log('🔍 Checking AI service availability...');
+    
+    if (!primaryAIService.isAvailable()) {
+      console.log('❌ AI service not available, using fallback');
+      const fallbackResponse = ErrorHandler.createFallbackResponse(
+        { query, field, results }, 'leak', 'ai-unavailable'
+      );
+      return res.json(fallbackResponse);
+    }
+
+    // Устанавливаем общий таймаут для всего запроса
+    const requestTimeout = setTimeout(() => {
+      console.log('⏰ Request timeout reached, sending fallback');
+      if (!res.headersSent) {
+        const fallbackResponse = ErrorHandler.createFallbackResponse(
+          { query, field, results }, 'leak', 'timeout'
+        );
+        res.json(fallbackResponse);
+      }
+    }, 25000); // 25 секунд общий таймаут
+
+    console.log(`Starting AI request with ${primaryAIService.isAvailable() ? 
+      (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback'}...`);
+    
+    try {
+      // Используем выбранный AI сервис
+      const response = await primaryAIService.generateSummary(
+        { query, field, results }, 'leak'
+      );
+      
+      clearTimeout(requestTimeout);
+      console.log('✅ AI service response received');
+      
+      if (!res.headersSent) {
+        res.json(response);
+      }
+    } catch (aiError) {
+      console.log('❌ AI service failed, using fallback:', aiError.message);
+      clearTimeout(requestTimeout);
+      
+      if (!res.headersSent) {
+        const fallbackResponse = primaryAIService.createFallbackResponse(
+          { query, field, results }, 'leak'
+        );
+        res.json(fallbackResponse);
+      }
+    }
+  } catch (e) {
+    console.error('Leak summarize error:', e.message, e.stack);
+    ErrorHandler.logError(e, { endpoint: '/api/summarize', query, resultsCount: results?.length });
 
     if (!res.headersSent) {
       const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
