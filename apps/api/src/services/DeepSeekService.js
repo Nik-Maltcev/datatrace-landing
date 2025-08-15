@@ -36,7 +36,7 @@ class DeepSeekService {
       console.log('📝 Prompt built, length:', prompt.length);
       
       const response = await axios.post(`${this.baseUrl}/v1/chat/completions`, {
-        model: 'deepseek-reasoner',
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
@@ -47,7 +47,7 @@ class DeepSeekService {
             content: prompt
           }
         ],
-        max_tokens: 2000,
+        max_tokens: 3000,
         temperature: 0.3,
         top_p: 0.9,
         stream: false
@@ -56,7 +56,7 @@ class DeepSeekService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`
         },
-        timeout: 120000
+        timeout: 45000
       });
 
       console.log('✅ DeepSeek API response received:', {
@@ -77,7 +77,7 @@ class DeepSeekService {
         ok: true,
         summary: this.parseSummaryResponse(aiResponse, type),
         provider: 'deepseek',
-        model: 'deepseek-reasoner',
+        model: 'deepseek-chat',
         usage: response.data?.usage
       };
     } catch (error) {
@@ -266,7 +266,7 @@ class DeepSeekService {
       baseUrl: this.baseUrl,
       hasApiKey: !!this.apiKey,
       provider: 'deepseek',
-      model: 'deepseek-reasoner',
+      model: 'deepseek-chat',
       version: '1.0.0'
     };
   }
