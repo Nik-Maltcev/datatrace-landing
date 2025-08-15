@@ -823,7 +823,7 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
         );
         res.json(fallbackResponse);
       }
-    }, 25000); // 25 секунд общий таймаут
+    }, 90000); // 90 секунд общий таймаут для DeepSeek R1
 
     console.log('Starting AI request...');
     

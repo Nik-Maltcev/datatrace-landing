@@ -47,7 +47,7 @@ class DeepSeekService {
             content: prompt
           }
         ],
-        max_tokens: 4000,
+        max_tokens: 2000,
         temperature: 0.3,
         top_p: 0.9,
         stream: false
@@ -56,7 +56,7 @@ class DeepSeekService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`
         },
-        timeout: 30000
+        timeout: 120000
       });
 
       console.log('✅ DeepSeek API response received:', {
@@ -172,20 +172,25 @@ class DeepSeekService {
     results.forEach((result, index) => {
       if (result.ok && result.items) {
         prompt += `=== Источник ${index + 1}: ${result.name} ===\n`;
-        prompt += `${JSON.stringify(result.items, null, 2)}\n\n`;
+        // Сокращаем данные для уменьшения размера промпта
+        const itemsStr = JSON.stringify(result.items, null, 2);
+        if (itemsStr.length > 5000) {
+          prompt += `${itemsStr.substring(0, 5000)}...[данные сокращены]\n\n`;
+        } else {
+          prompt += `${itemsStr}\n\n`;
+        }
       } else if (!result.ok) {
         prompt += `=== Источник ${index + 1}: ${result.name} (ошибка) ===\n`;
         prompt += `Ошибка: ${result.error?.message || 'Неизвестная ошибка'}\n\n`;
       }
     });
     
-    prompt += `Создай структурированную сводку о компании, включающую:
+    prompt += `Создай краткую структурированную сводку о компании, включающую:
 1. Основную информацию (название, статус, адрес)
 2. Сферу деятельности
-3. Финансовые показатели (если есть)
-4. Руководство и владельцев
-5. Потенциальные риски или проблемы
-6. Общую оценку надежности компании`;
+3. Руководство и владельцев
+4. Потенциальные риски или проблемы
+5. Общую оценку надежности компании`;
     
     return prompt;
   }
