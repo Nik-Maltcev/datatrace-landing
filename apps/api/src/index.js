@@ -1755,11 +1755,26 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
 
     console.log('🚀 Starting GPT-5 leak analysis...');
     try {
+      // Проверяем доступность модели gpt-5-mini
+      let modelToUse = 'gpt-5-mini';
+      try {
+        const modelsResponse = await openai.models.list();
+        const availableModels = modelsResponse.data.map(m => m.id);
+        
+        if (!availableModels.includes('gpt-5-mini')) {
+          console.log('⚠️ gpt-5-mini not available, falling back to gpt-4o-mini');
+          modelToUse = 'gpt-4o-mini';
+        }
+      } catch (modelCheckError) {
+        console.log('⚠️ Could not check available models, using gpt-4o-mini as fallback');
+        modelToUse = 'gpt-4o-mini';
+      }
+      
       // Создаем специальный промпт для GPT-5
       const prompt = buildGPT5LeakPrompt({ query, field, results });
       
       const response = await openai.chat.completions.create({
-        model: 'gpt-5-mini',
+        model: modelToUse,
         messages: [
           {
             role: 'system',
@@ -1846,26 +1861,45 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
           ok: true,
           summary: summary,
           provider: 'openai',
-          model: 'gpt-5-mini',
+          model: modelToUse,
           usage: response.usage
         });
       }
     } catch (aiError) {
-      console.log('❌ GPT-5 failed, using fallback:', aiError.message);
+      console.log('❌ OpenAI API failed, using fallback:', aiError.message);
       clearTimeout(requestTimeout);
+      
+      // Определяем тип ошибки согласно OpenAI API документации
+      let errorType = 'unknown';
+      let errorMessage = aiError.message;
+      
+      if (aiError.status === 401) {
+        errorType = 'authentication';
+        errorMessage = 'Ошибка аутентификации OpenAI API';
+      } else if (aiError.status === 429) {
+        errorType = 'rate_limit';
+        errorMessage = 'Превышен лимит запросов OpenAI API';
+      } else if (aiError.status === 400) {
+        errorType = 'invalid_request';
+        errorMessage = 'Некорректный запрос к OpenAI API';
+      } else if (aiError.status >= 500) {
+        errorType = 'server_error';
+        errorMessage = 'Ошибка сервера OpenAI API';
+      }
       
       if (!res.headersSent) {
         const fallbackResponse = {
           ok: false,
-          error: aiError.message,
+          error: errorMessage,
+          error_type: errorType,
           fallback: true,
           summary: {
             found: false,
             sources: {},
-            highlights: ['Ошибка при анализе GPT-5: ' + aiError.message],
+            highlights: [`Ошибка при анализе: ${errorMessage}`],
             person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
             recommendations: ['🔧 Проверьте настройки API', '🔄 Попробуйте позже'],
-            ai_analysis: 'Анализ недоступен из-за ошибки: ' + aiError.message,
+            ai_analysis: `Анализ недоступен из-за ошибки: ${errorMessage}`,
             risk_level: 'Неизвестно',
             summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
           }
