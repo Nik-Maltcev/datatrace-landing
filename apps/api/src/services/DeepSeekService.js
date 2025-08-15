@@ -237,13 +237,162 @@ class DeepSeekService {
    * @returns {Object} - Parsed summary
    */
   parseSummaryResponse(response, type) {
-    // For now, return the response as-is since DeepSeek provides well-structured responses
-    // In the future, we could add more sophisticated parsing
+    if (type === 'company') {
+      return this.parseCompanyResponse(response);
+    } else if (type === 'leaks' || type === 'leak') {
+      return this.parseLeaksResponse(response);
+    } else {
+      return {
+        text: response,
+        type: type,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
+   * Parse company analysis response into structured format
+   * @param {string} response - AI response text
+   * @returns {Object} - Structured company summary
+   */
+  parseCompanyResponse(response) {
+    // Создаем структурированный ответ для компании
     return {
-      text: response,
-      type: type,
-      timestamp: new Date().toISOString()
+      company: {
+        name: this.extractFromResponse(response, /название[:\s]*([^\n]+)/i) || "Не указано",
+        inn: this.extractFromResponse(response, /инн[:\s]*([^\n]+)/i) || "Не указан",
+        status: this.extractFromResponse(response, /статус[:\s]*([^\n]+)/i) || "Неизвестно",
+        address: this.extractFromResponse(response, /адрес[:\s]*([^\n]+)/i) || "Не указан",
+        contacts: {
+          phones: [],
+          emails: [],
+          sites: []
+        }
+      },
+      ceo: {
+        name: this.extractFromResponse(response, /руководитель[:\s]*([^\n]+)/i) || null,
+        position: "Руководитель"
+      },
+      managers: [],
+      owners: [],
+      okved: {
+        main: this.extractFromResponse(response, /деятельность[:\s]*([^\n]+)/i) || null,
+        additional: []
+      },
+      risk_flags: this.extractRisks(response),
+      notes: [response], // Полный AI анализ
+      former_names: [],
+      predecessors: [],
+      ai_analysis: response, // Добавляем полный AI анализ
+      reliability_score: this.extractReliabilityScore(response)
     };
+  }
+
+  /**
+   * Parse leaks analysis response into structured format
+   * @param {string} response - AI response text
+   * @returns {Object} - Structured leaks summary
+   */
+  parseLeaksResponse(response) {
+    return {
+      found: response.toLowerCase().includes('найден') || response.toLowerCase().includes('обнаружен'),
+      sources: {},
+      highlights: this.extractHighlights(response),
+      person: {
+        name: null,
+        phones: [],
+        emails: [],
+        usernames: [],
+        ids: [],
+        addresses: []
+      },
+      recommendations: this.extractRecommendations(response),
+      ai_analysis: response, // Полный AI анализ
+      risk_level: this.extractRiskLevel(response)
+    };
+  }
+
+  /**
+   * Extract specific information from AI response using regex
+   * @param {string} text - AI response text
+   * @param {RegExp} pattern - Regex pattern to match
+   * @returns {string|null} - Extracted text or null
+   */
+  extractFromResponse(text, pattern) {
+    const match = text.match(pattern);
+    return match ? match[1].trim() : null;
+  }
+
+  /**
+   * Extract risk flags from AI response
+   * @param {string} text - AI response text
+   * @returns {Array} - Array of risk flags
+   */
+  extractRisks(text) {
+    const risks = [];
+    if (text.toLowerCase().includes('риск')) {
+      risks.push('Выявлены потенциальные риски');
+    }
+    if (text.toLowerCase().includes('проблем')) {
+      risks.push('Обнаружены проблемы');
+    }
+    return risks;
+  }
+
+  /**
+   * Extract reliability score from AI response
+   * @param {string} text - AI response text
+   * @returns {string} - Reliability assessment
+   */
+  extractReliabilityScore(text) {
+    if (text.toLowerCase().includes('высок')) return 'Высокая';
+    if (text.toLowerCase().includes('средн')) return 'Средняя';
+    if (text.toLowerCase().includes('низк')) return 'Низкая';
+    return 'Требует анализа';
+  }
+
+  /**
+   * Extract highlights from leaks response
+   * @param {string} text - AI response text
+   * @returns {Array} - Array of highlights
+   */
+  extractHighlights(text) {
+    const highlights = [];
+    const lines = text.split('\n');
+    lines.forEach(line => {
+      if (line.includes('найден') || line.includes('обнаружен') || line.includes('утечк')) {
+        highlights.push(line.trim());
+      }
+    });
+    return highlights.length > 0 ? highlights : ['AI анализ завершен'];
+  }
+
+  /**
+   * Extract recommendations from AI response
+   * @param {string} text - AI response text
+   * @returns {Array} - Array of recommendations
+   */
+  extractRecommendations(text) {
+    const recommendations = [];
+    const lines = text.split('\n');
+    lines.forEach(line => {
+      if (line.includes('рекоменд') || line.includes('совет') || line.includes('следует')) {
+        recommendations.push(line.trim());
+      }
+    });
+    return recommendations.length > 0 ? recommendations : ['Следуйте рекомендациям AI анализа'];
+  }
+
+  /**
+   * Extract risk level from leaks response
+   * @param {string} text - AI response text
+   * @returns {string} - Risk level
+   */
+  extractRiskLevel(text) {
+    if (text.toLowerCase().includes('высокий риск')) return 'Высокий';
+    if (text.toLowerCase().includes('средний риск')) return 'Средний';
+    if (text.toLowerCase().includes('низкий риск')) return 'Низкий';
+    return 'Требует оценки';
   }
 
   /**
