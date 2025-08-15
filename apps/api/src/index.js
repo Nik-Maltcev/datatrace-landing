@@ -1693,7 +1693,253 @@ app.post('/api/openai/format-company', async (req, res) => {
   }
 });
 
+// GPT-5 leak analysis endpoint (experimental)
+app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('GPT-5 leak summarize request received');
+    const { query, field, results } = req.body || {};
+    console.log('Request data:', { query, field, resultsLength: results?.length });
+
+    if (!query || !Array.isArray(results)) {
+      console.log('Missing query or results');
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        new Error('Missing query or results'), req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    // Проверяем доступность OpenAI сервиса
+    console.log('🔍 Checking OpenAI service availability for GPT-5...');
+    if (!openai) {
+      console.log('❌ OpenAI service not available, using fallback');
+      const fallbackResponse = {
+        ok: false,
+        error: 'OpenAI service not available',
+        fallback: true,
+        summary: {
+          found: results.some(r => r.ok && r.items && (Array.isArray(r.items) ? r.items.length > 0 : Object.keys(r.items).length > 0)),
+          sources: {},
+          highlights: ['OpenAI сервис недоступен', 'Отображены только сырые данные'],
+          person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
+          recommendations: ['🔧 Проверьте настройки OpenAI API', '⚠️ Обратитесь к администратору'],
+          ai_analysis: 'Анализ недоступен - OpenAI сервис не настроен',
+          risk_level: 'Неизвестно',
+          summary_stats: { total_sources: results.length, sources_with_data: 0, total_records: 0 }
+        }
+      };
+      return res.json(fallbackResponse);
+    }
+
+    // Устанавливаем общий таймаут для всего запроса
+    const requestTimeout = setTimeout(() => {
+      console.log('⏰ Request timeout reached, sending fallback');
+      if (!res.headersSent) {
+        const fallbackResponse = {
+          ok: false,
+          error: 'Request timeout',
+          fallback: true,
+          summary: {
+            found: false,
+            sources: {},
+            highlights: ['Превышено время ожидания ответа'],
+            person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
+            recommendations: ['🔄 Попробуйте повторить запрос', '⏰ Сократите объем данных'],
+            ai_analysis: 'Анализ прерван по таймауту',
+            risk_level: 'Неизвестно',
+            summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
+          }
+        };
+        res.json(fallbackResponse);
+      }
+    }, 40000); // 40 секунд общий таймаут
+
+    console.log('🚀 Starting GPT-5 leak analysis...');
+    try {
+      // Создаем специальный промпт для GPT-5
+      const prompt = buildGPT5LeakPrompt({ query, field, results });
+      
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-main-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Ты - эксперт по кибербезопасности и анализу утечек данных. Твоя задача - проанализировать результаты поиска утечек и создать красивую структурированную сводку.
+
+ВАЖНО: Ответь ТОЛЬКО валидным JSON объектом в следующем формате:
+{
+  "found": true/false,
+  "sources": {
+    "source_name": {
+      "foundCount": число_найденных_записей,
+      "notes": "описание_находок"
+    }
+  },
+  "highlights": ["ключевые находки и важные моменты"],
+  "person": {
+    "name": null,
+    "phones": ["найденные телефоны"],
+    "emails": ["найденные email"],
+    "usernames": ["найденные логины"],
+    "ids": ["найденные ID"],
+    "addresses": ["найденные адреса"]
+  },
+  "recommendations": [
+    "🔒 Конкретные рекомендации по безопасности",
+    "⚠️ Срочные действия",
+    "🛡️ Долгосрочные меры защиты"
+  ],
+  "ai_analysis": "Подробный анализ утечек с оценкой рисков и объяснением найденных данных",
+  "risk_level": "Критический/Высокий/Средний/Низкий",
+  "summary_stats": {
+    "total_sources": число_источников,
+    "sources_with_data": число_источников_с_данными,
+    "total_records": общее_количество_записей
+  }
+}
+
+Требования:
+- Отвечай ТОЛЬКО валидным JSON
+- Проанализируй все источники данных
+- Дай конкретные и практичные рекомендации
+- Оцени реальный уровень риска
+- Используй эмодзи в рекомендациях для наглядности
+- Будь точным и полезным в советах`
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 3000,
+        temperature: 0.3,
+        top_p: 0.9
+      });
+
+      const aiResponse = response.choices?.[0]?.message?.content;
+      if (!aiResponse) {
+        throw new Error('Empty response from GPT-5 API');
+      }
+
+      clearTimeout(requestTimeout);
+      console.log('✅ GPT-5 response received');
+
+      // Пытаемся распарсить JSON
+      let summary;
+      try {
+        summary = JSON.parse(aiResponse);
+      } catch (parseError) {
+        console.log('Failed to parse GPT-5 JSON, using fallback');
+        summary = {
+          found: aiResponse.toLowerCase().includes('найден'),
+          sources: {},
+          highlights: [aiResponse.substring(0, 200) + '...'],
+          person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
+          recommendations: ['Проверьте полный анализ ИИ'],
+          ai_analysis: aiResponse,
+          risk_level: 'Требует оценки',
+          summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
+        };
+      }
+
+      if (!res.headersSent) {
+        res.json({
+          ok: true,
+          summary: summary,
+          provider: 'openai',
+          model: 'gpt-5-main-mini',
+          usage: response.usage
+        });
+      }
+    } catch (aiError) {
+      console.log('❌ GPT-5 failed, using fallback:', aiError.message);
+      clearTimeout(requestTimeout);
+      
+      if (!res.headersSent) {
+        const fallbackResponse = {
+          ok: false,
+          error: aiError.message,
+          fallback: true,
+          summary: {
+            found: false,
+            sources: {},
+            highlights: ['Ошибка при анализе GPT-5: ' + aiError.message],
+            person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
+            recommendations: ['🔧 Проверьте настройки API', '🔄 Попробуйте позже'],
+            ai_analysis: 'Анализ недоступен из-за ошибки: ' + aiError.message,
+            risk_level: 'Неизвестно',
+            summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
+          }
+        };
+        res.json(fallbackResponse);
+      }
+    }
+  } catch (e) {
+    console.error('GPT-5 leak summarize error:', e.message, e.stack);
+    ErrorHandler.logError(e, { endpoint: '/api/summarize-gpt5', query, resultsCount: results?.length });
+    
+    if (!res.headersSent) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
+      res.status(statusCode).json(response);
+    }
+  }
+});
+
+// Helper function to build GPT-5 leak prompt
+function buildGPT5LeakPrompt(data) {
+  const { query, field, results } = data;
+  let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип поиска: ${field}) и верни результат в формате JSON.\n\n`;
+  
+  results.forEach((result, index) => {
+    if (result.ok && result.items) {
+      prompt += `=== Источник ${index + 1}: ${result.name} ===\n`;
+      prompt += `Статус: Успешно\n`;
+      
+      if (Array.isArray(result.items)) {
+        prompt += `Найдено записей: ${result.items.length}\n`;
+        if (result.items.length > 0) {
+          prompt += `Примеры данных: ${JSON.stringify(result.items.slice(0, 3), null, 2)}\n`;
+        }
+      } else if (typeof result.items === 'object') {
+        const totalRecords = Object.values(result.items).reduce((sum, items) => {
+          return sum + (Array.isArray(items) ? items.length : 0);
+        }, 0);
+        prompt += `Найдено записей: ${totalRecords}\n`;
+        prompt += `Категории данных: ${Object.keys(result.items).join(', ')}\n`;
+        prompt += `Примеры: ${JSON.stringify(result.items, null, 2).substring(0, 1000)}...\n`;
+      }
+      
+      if (result.meta) {
+        prompt += `Метаданные: ${JSON.stringify(result.meta)}\n`;
+      }
+    } else if (!result.ok) {
+      prompt += `=== Источник ${index + 1}: ${result.name} ===\n`;
+      prompt += `Статус: Ошибка\n`;
+      prompt += `Ошибка: ${result.error?.message || 'Неизвестная ошибка'}\n`;
+    }
+    prompt += '\n';
+  });
+  
+  prompt += `Проанализируй все данные и создай подробную сводку в формате JSON. Обязательно:
+1. Оцени реальный уровень риска на основе найденных данных
+2. Дай конкретные рекомендации по защите
+3. Выдели ключевые находки
+4. Структурируй информацию о найденных данных
+5. Предоставь статистику по источникам`;
+  
+  return prompt;
+}
+
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
+
+// GPT-5 тестовая страница
+app.get('/gpt5', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-gpt5.html'));
+});
 
 // Новый дизайн на отдельном endpoint
 app.get('/modern', (_req, res) => {

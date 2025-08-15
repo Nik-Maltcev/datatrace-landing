@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataTrace - Поиск утечек анализ GPT-5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .search-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: end;
+        }
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .results-section.show {
+            display: block;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .source-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .source-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .ai-analysis {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        .ai-analysis h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .risk-level {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .risk-critical { background: #dc3545; color: white; }
+        .risk-high { background: #fd7e14; color: white; }
+        .risk-medium { background: #ffc107; color: #212529; }
+        .risk-low { background: #28a745; color: white; }
+        .recommendations {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+        .recommendations li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .recommendations li:last-child {
+            border-bottom: none;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Поиск утечек анализ GPT-5</h1>
+            <p>Тестирование GPT-5 Main Mini для анализа утечек данных</p>
+        </div>
+        
+        <div class="search-section">
+            <form class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label for="searchQuery">Поисковый запрос</label>
+                    <input type="text" id="searchQuery" placeholder="Введите email, телефон или другие данные" required>
+                </div>
+                <div class="form-group">
+                    <label for="searchField">Тип поиска</label>
+                    <select id="searchField">
+                        <option value="email">Email</option>
+                        <option value="phone">Телефон</option>
+                        <option value="username">Логин</option>
+                        <option value="name">Имя</option>
+                        <option value="domain">Домен</option>
+                    </select>
+                </div>
+                <button type="submit" class="search-btn" id="searchBtn">
+                    🔍 Найти утечки
+                </button>
+            </form>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>Поиск утечек и анализ с помощью GPT-5 Main Mini...</p>
+            </div>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultsContent = document.getElementById('resultsContent');
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await performSearch();
+        });
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const field = document.getElementById('searchField').value;
+
+            if (!query) {
+                alert('Пожалуйста, введите поисковый запрос');
+                return;
+            }
+
+            // Показываем загрузку
+            resultsSection.classList.add('show');
+            loadingIndicator.style.display = 'block';
+            resultsContent.innerHTML = '';
+            searchBtn.disabled = true;
+            searchBtn.textContent = '🔍 Поиск...';
+
+            try {
+                // Выполняем поиск утечек
+                console.log('🔍 Starting leak search...');
+                const leakResults = await performLeakSearch(query, field);
+                
+                // Отображаем результаты
+                displayResults(leakResults, query, field);
+            } catch (error) {
+                console.error('Search error:', error);
+                displayError('Произошла ошибка при поиске: ' + error.message);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 Найти утечки';
+            }
+        }
+
+        async function performLeakSearch(query, field) {
+            console.log('🔍 Performing leak search for:', query, field);
+            
+            // Создаем тестовые данные для демонстрации
+            const mockResults = [
+                {
+                    name: 'ITP',
+                    ok: true,
+                    meta: { records: 15 },
+                    items: {
+                        'База клиентов Альфастрахование [2023]': [
+                            { phone: query, email: 'test@example.com', name: 'Тестовый пользователь' }
+                        ],
+                        'База клиентов Максавит [2024]': [
+                            { phone: query, address: 'Москва, ул. Тестовая, 1' }
+                        ]
+                    }
+                },
+                {
+                    name: 'Dyxless',
+                    ok: true,
+                    items: [
+                        { phone: query, source: 'leak_2023', date: '2023-05-15' },
+                        { phone: query, source: 'leak_2024', date: '2024-01-20' }
+                    ]
+                },
+                {
+                    name: 'LeakOsint',
+                    ok: false,
+                    error: { message: 'Сервис временно недоступен' }
+                },
+                {
+                    name: 'Usersbox',
+                    ok: true,
+                    items: [],
+                    meta: { records: 0 }
+                }
+            ];
+
+            // Запрашиваем AI анализ с GPT-5
+            console.log('🤖 Requesting GPT-5 analysis...');
+            const aiAnalysis = await requestGPT5Analysis(query, field, mockResults);
+
+            return {
+                query,
+                field,
+                results: mockResults,
+                aiAnalysis
+            };
+        }
+
+        async function requestGPT5Analysis(query, field, results) {
+            try {
+                console.log('🚀 Calling GPT-5 API...');
+                const response = await fetch('/api/summarize-gpt5', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query,
+                        field,
+                        results
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ GPT-5 analysis received:', data);
+                return data;
+            } catch (error) {
+                console.error('❌ GPT-5 analysis failed:', error);
+                return {
+                    ok: false,
+                    error: error.message,
+                    fallback: true
+                };
+            }
+        }
+
+        function displayResults(searchResults, query, field) {
+            const { results, aiAnalysis } = searchResults;
+            let html = `<h2>🔍 Результаты поиска для: "${query}"</h2>`;
+
+            // Отображаем результаты по источникам
+            results.forEach(result => {
+                html += `
+                    <div class="source-card">
+                        <div class="source-header">
+                            <div class="source-name">${result.name}</div>
+                            <div class="status-badge ${result.ok ? 'status-success' : 'status-error'}">
+                                ${result.ok ? '✅ Успешно' : '❌ Ошибка'}
+                            </div>
+                        </div>
+                `;
+
+                if (result.ok && result.items) {
+                    if (Array.isArray(result.items)) {
+                        html += `<p><strong>Найдено записей:</strong> ${result.items.length}</p>`;
+                        if (result.items.length > 0) {
+                            html += `<pre>${JSON.stringify(result.items.slice(0, 2), null, 2)}</pre>`;
+                        }
+                    } else if (typeof result.items === 'object') {
+                        const totalRecords = Object.values(result.items).reduce((sum, items) => {
+                            return sum + (Array.isArray(items) ? items.length : 0);
+                        }, 0);
+                        html += `<p><strong>Найдено записей:</strong> ${totalRecords}</p>`;
+                        html += `<p><strong>Категории:</strong> ${Object.keys(result.items).join(', ')}</p>`;
+                    }
+                } else if (!result.ok) {
+                    html += `<p class="error-message">Ошибка: ${result.error?.message || 'Неизвестная ошибка'}</p>`;
+                }
+
+                html += `</div>`;
+            });
+
+            // Отображаем AI анализ GPT-5
+            if (aiAnalysis && aiAnalysis.ok && aiAnalysis.summary) {
+                const summary = aiAnalysis.summary;
+                html += `
+                    <div class="ai-analysis">
+                        <h3>🤖 Анализ GPT-5 Main Mini</h3>
+                        <div class="risk-level risk-${summary.risk_level?.toLowerCase().replace(/[^a-z]/g, '') || 'medium'}">
+                            🚨 Уровень риска: ${summary.risk_level || 'Средний'}
+                        </div>
+                        <p><strong>Найдено данных:</strong> ${summary.found ? 'Да' : 'Нет'}</p>
+                        
+                        ${summary.highlights && summary.highlights.length > 0 ? `
+                            <h4>🔍 Ключевые находки:</h4>
+                            <ul>
+                                ${summary.highlights.map(highlight => `<li>${highlight}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+                        
+                        ${summary.recommendations && summary.recommendations.length > 0 ? `
+                            <div class="recommendations">
+                                <h4>💡 Рекомендации:</h4>
+                                <ul>
+                                    ${summary.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        ${summary.summary_stats ? `
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number">${summary.summary_stats.total_sources || 0}</div>
+                                    <div class="stat-label">Всего источников</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">${summary.summary_stats.sources_with_data || 0}</div>
+                                    <div class="stat-label">С данными</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number">${summary.summary_stats.total_records || 0}</div>
+                                    <div class="stat-label">Всего записей</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${summary.ai_analysis ? `
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                                <h4>📋 Подробный анализ:</h4>
+                                <p>${summary.ai_analysis}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            Модель: ${aiAnalysis.model} | Провайдер: ${aiAnalysis.provider}
+                            ${aiAnalysis.usage ? ` | Токены: ${aiAnalysis.usage.total_tokens}` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (aiAnalysis && !aiAnalysis.ok) {
+                html += `
+                    <div class="ai-analysis">
+                        <h3>🤖 Анализ GPT-5</h3>
+                        <div class="error-message">
+                            ❌ Не удалось получить AI анализ: ${aiAnalysis.error}
+                        </div>
+                        <p>Отображены только сырые данные поиска.</p>
+                    </div>
+                `;
+            }
+
+            resultsContent.innerHTML = html;
+        }
+
+        function displayError(message) {
+            resultsContent.innerHTML = `
+                <div class="error-message">
+                    <h3>❌ Ошибка</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
