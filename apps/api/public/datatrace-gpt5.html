@@ -235,7 +235,7 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Поиск утечек анализ GPT-5</h1>
-            <p>Тестирование GPT-5 Main Mini для анализа утечек данных</p>
+            <p>Тестирование GPT-5 Mini для анализа утечек данных</p>
         </div>
         
         <div class="search-section">
@@ -263,7 +263,7 @@
         <div class="results-section" id="resultsSection">
             <div class="loading" id="loadingIndicator">
                 <div class="spinner"></div>
-                <p>Поиск утечек и анализ с помощью GPT-5 Main Mini...</p>
+                <p>Поиск утечек и анализ с помощью GPT-5 Mini...</p>
             </div>
             <div id="resultsContent"></div>
         </div>
@@ -438,7 +438,7 @@
                 const summary = aiAnalysis.summary;
                 html += `
                     <div class="ai-analysis">
-                        <h3>🤖 Анализ GPT-5 Main Mini</h3>
+                        <h3>🤖 Анализ GPT-5 Mini</h3>
                         <div class="risk-level risk-${summary.risk_level?.toLowerCase().replace(/[^a-z]/g, '') || 'medium'}">
                             🚨 Уровень риска: ${summary.risk_level || 'Средний'}
                         </div>

@@ -1759,7 +1759,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
       const prompt = buildGPT5LeakPrompt({ query, field, results });
       
       const response = await openai.chat.completions.create({
-        model: 'gpt-5-main-mini',
+        model: 'gpt-5-mini',
         messages: [
           {
             role: 'system',
@@ -1846,7 +1846,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
           ok: true,
           summary: summary,
           provider: 'openai',
-          model: 'gpt-5-main-mini',
+          model: 'gpt-5-mini',
           usage: response.usage
         });
       }

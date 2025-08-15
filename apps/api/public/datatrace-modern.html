@@ -508,7 +508,7 @@
         passwordInput.classList.remove('hidden');
       } else if (currentMode === 'gpt5') {
         heroTitle.textContent = 'Поиск утечек анализ GPT-5';
-        heroDescription.textContent = 'Поиск утечек данных с продвинутым анализом от GPT-5 Main Mini - получите детальные рекомендации и оценку рисков';
+        heroDescription.textContent = 'Поиск утечек данных с продвинутым анализом от GPT-5 Mini - получите детальные рекомендации и оценку рисков';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
       } else {
@@ -1411,7 +1411,7 @@
       displayLeakResultsBySources(mockResults, null);
 
       // Шаг 3: Запрос к GPT-5 для анализа
-      updateProgress(75, 'Анализ через GPT-5 Main Mini...');
+      updateProgress(75, 'Анализ через GPT-5 Mini...');
       console.log('🚀 Requesting GPT-5 analysis...');
       
       try {
@@ -1458,7 +1458,7 @@
 
       let html = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 25px; margin-bottom: 20px;">
-          <h3 style="margin-bottom: 15px; font-size: 1.3rem;">🤖 Анализ GPT-5 Main Mini</h3>
+          <h3 style="margin-bottom: 15px; font-size: 1.3rem;">🤖 Анализ GPT-5 Mini</h3>
           <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: 600; margin-bottom: 15px; background: ${getRiskColor(summary.risk_level)};">
             🚨 Уровень риска: ${summary.risk_level || 'Средний'}
           </div>
@@ -2510,7 +2510,7 @@
 
       // Шаг 6: Обработка через GPT-5
       if (allResults.length > 0) {
-        updateProgress(70, 'Анализ через GPT-5 Main Mini...');
+        updateProgress(70, 'Анализ через GPT-5 Mini...');
         console.log('🤖 Processing leaks through GPT-5...');
         
         const combinedData = {
@@ -2594,7 +2594,7 @@
       let html = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
           <h3 style="margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
-            🤖 Анализ GPT-5 Main Mini
+            🤖 Анализ GPT-5 Mini
             <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 12px; font-size: 12px;">
               ${aiData.model}
             </span>
