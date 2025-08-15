@@ -30,7 +30,7 @@ class DeepSeekService {
     try {
       const prompt = this.buildPrompt(data, type);
       
-      const response = await axios.post(`${this.baseUrl}/chat/completions`, {
+      const response = await axios.post(`${this.baseUrl}/v1/chat/completions`, {
         model: 'deepseek-chat',
         messages: [
           {
@@ -108,7 +108,7 @@ class DeepSeekService {
 - Выдели ключевые факты о компании
 - Укажи потенциальные риски или проблемы, если они есть
 - Будь объективным и фактическим`;
-    } else {
+    } else if (type === 'leaks' || type === 'leak') {
       return `Ты - эксперт по кибербезопасности и анализу утечек данных. Твоя задача - проанализировать результаты поиска утечек и создать структурированную сводку.
 
 Требования к ответу:
@@ -118,6 +118,8 @@ class DeepSeekService {
 - Дай конкретные рекомендации по безопасности
 - Структурируй информацию по важности
 - Будь точным и практичным в советах`;
+    } else {
+      return `Ты - эксперт по анализу данных. Проанализируй предоставленную информацию и создай структурированную сводку на русском языке.`;
     }
   }
 
@@ -130,8 +132,10 @@ class DeepSeekService {
   buildPrompt(data, type) {
     if (type === 'company') {
       return this.buildCompanyPrompt(data);
-    } else {
+    } else if (type === 'leaks' || type === 'leak') {
       return this.buildLeakPrompt(data);
+    } else {
+      return this.buildLeakPrompt(data); // fallback
     }
   }
 

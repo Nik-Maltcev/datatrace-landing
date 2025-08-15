@@ -851,7 +851,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
     if (!primaryAIService.isAvailable()) {
       console.log('❌ AI service not available, using fallback');
       const fallbackResponse = ErrorHandler.createFallbackResponse(
-        { query, field, results }, 'leak', 'ai-unavailable'
+        { query, field, results }, 'leaks', 'ai-unavailable'
       );
       return res.json(fallbackResponse);
     }
@@ -861,7 +861,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       console.log('⏰ Request timeout reached, sending fallback');
       if (!res.headersSent) {
         const fallbackResponse = ErrorHandler.createFallbackResponse(
-          { query, field, results }, 'leak', 'timeout'
+          { query, field, results }, 'leaks', 'timeout'
         );
         res.json(fallbackResponse);
       }
@@ -873,7 +873,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
     try {
       // Используем выбранный AI сервис
       const response = await primaryAIService.generateSummary(
-        { query, field, results }, 'leak'
+        { query, field, results }, 'leaks'
       );
       
       clearTimeout(requestTimeout);
@@ -888,7 +888,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       
       if (!res.headersSent) {
         const fallbackResponse = primaryAIService.createFallbackResponse(
-          { query, field, results }, 'leak'
+          { query, field, results }, 'leaks'
         );
         res.json(fallbackResponse);
       }
