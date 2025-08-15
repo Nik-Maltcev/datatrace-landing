@@ -355,7 +355,7 @@
         <button id="modeLeaks" class="btn-secondary active">Поиск утечек</button>
         <button id="modeCompany" class="btn-secondary">Проверить компанию</button>
         <button id="modePassword" class="btn-secondary">🔐 Проверить пароль</button>
-        <button id="modeGPT4o" class="btn-secondary">🤖 Поиск утечек анализ GPT-4o-mini</button>
+        <button id="modeGPT5" class="btn-secondary">🤖 Поиск утечек анализ GPT-5</button>
       </div>
 
       <!-- Search Input -->
@@ -438,7 +438,7 @@
     const modeLeaks = document.getElementById('modeLeaks');
     const modeCompany = document.getElementById('modeCompany');
     const modePassword = document.getElementById('modePassword');
-    const modeGPT4o = document.getElementById('modeGPT4o');
+    const modeGPT5 = document.getElementById('modeGPT5');
     const results = document.getElementById('results');
     
     // Password check elements
@@ -506,9 +506,9 @@
         heroDescription.textContent = 'Проверьте, был ли ваш пароль скомпрометирован в утечках данных';
         searchInput.classList.add('hidden');
         passwordInput.classList.remove('hidden');
-      } else if (currentMode === 'gpt4o') {
-        heroTitle.textContent = 'Поиск утечек анализ GPT-4o-mini';
-        heroDescription.textContent = 'Поиск утечек данных с продвинутым анализом от GPT-4o-mini - получите детальные рекомендации и оценку рисков';
+      } else if (currentMode === 'gpt5') {
+        heroTitle.textContent = 'Поиск утечек анализ GPT-5';
+        heroDescription.textContent = 'Поиск утечек данных с продвинутым анализом от GPT-5 - получите детальные рекомендации и оценку рисков';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
       } else {
@@ -588,7 +588,7 @@
       modeLeaks.classList.remove('active');
       modeCompany.classList.remove('active');
       modePassword.classList.remove('active');
-      modeGPT4o.classList.remove('active');
+      modeGPT5.classList.remove('active');
       
       if (currentMode === 'leaks') {
         modeLeaks.classList.add('active');
@@ -611,7 +611,7 @@
       } else if (currentMode === 'password') {
         modePassword.classList.add('active');
       } else if (currentMode === 'gpt5') {
-        modeGPT4o.classList.add('active');
+        modeGPT5.classList.add('active');
         
         // Показываем все опции для поиска утечек с GPT-4o
         fieldSel.innerHTML = `

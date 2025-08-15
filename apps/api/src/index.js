@@ -413,9 +413,9 @@ try {
 const companyAIService = deepseekService.isAvailable() ? deepseekService : openaiService;
 const leaksAIService = kimiService.isAvailable() ? kimiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
 
-console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ? 
+console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ?
   (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'None (fallback mode)'}`);
-console.log(`🔍 Leaks AI service: ${leaksAIService.isAvailable() ? 
+console.log(`🔍 Leaks AI service: ${leaksAIService.isAvailable() ?
   (kimiService.isAvailable() ? 'Kimi' : (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI')) : 'None (fallback mode)'}`);
 
 // Initialize DeHashed service
@@ -438,7 +438,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const result = await authService.signUp(email, password, userData);
-    
+
     if (result.ok) {
       res.json(result);
     } else {
@@ -465,7 +465,7 @@ app.post('/api/auth/signin', async (req, res) => {
     }
 
     const result = await authService.signIn(email, password);
-    
+
     if (result.ok) {
       res.json(result);
     } else {
@@ -516,7 +516,7 @@ app.post('/api/auth/refresh', async (req, res) => {
     }
 
     const result = await authService.refreshSession(refresh_token);
-    
+
     if (result.ok) {
       res.json(result);
     } else {
@@ -604,22 +604,22 @@ app.post('/api/password-check', optionalAuth, userRateLimit(20, 15 * 60 * 1000),
     }
 
     console.log('🔐 Password check request received');
-    
+
     const result = await dehashedService.checkPassword(password);
-    
+
     // Log for monitoring (without exposing the actual password)
     console.log(`🔍 Password check completed: compromised=${result.isCompromised}, breaches=${result.breachCount}`);
-    
+
     res.json(result);
   } catch (error) {
     console.error('Password check endpoint error:', error);
-    
+
     // Don't expose detailed error information for security
     const sanitizedError = {
       name: 'ServiceError',
       message: 'Ошибка при проверке пароля. Попробуйте позже.'
     };
-    
+
     const { statusCode, response } = ErrorHandler.formatErrorResponse(sanitizedError, req);
     res.status(statusCode).json(response);
   }
@@ -632,10 +632,10 @@ app.post('/api/dehashed-debug', async (req, res) => {
     console.log('Environment variables check:');
     console.log('- DEHASHED_API_KEY exists:', !!process.env.DEHASHED_API_KEY);
     console.log('- DEHASHED_BASE_URL:', process.env.DEHASHED_BASE_URL || 'default');
-    
+
     const serviceInfo = dehashedService.getServiceInfo();
     console.log('- Service info:', serviceInfo);
-    
+
     if (!dehashedService.isAvailable()) {
       return res.json({
         ok: false,
@@ -646,14 +646,14 @@ app.post('/api/dehashed-debug', async (req, res) => {
         }
       });
     }
-    
+
     // Test with a simple known hash (password: "password" in SHA-256)
     const testHash = '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8';
     console.log('Testing with SHA-256 hash:', testHash.substring(0, 10) + '...');
-    
+
     const result = await dehashedService.searchByPasswordHash(testHash);
     console.log('Test result:', result);
-    
+
     res.json({
       ok: true,
       debug: {
@@ -707,11 +707,11 @@ app.post('/api/dehashed-search', optionalAuth, requireAuth, userRateLimit(10, 15
     }
 
     console.log(`🔍 DeHashed search request: field=${field}`);
-    
+
     const result = await dehashedService.searchByField(query, field);
-    
+
     console.log(`✅ DeHashed search completed: found=${result.found}, total=${result.total}`);
-    
+
     res.json(result);
   } catch (error) {
     console.error('DeHashed search endpoint error:', error);
@@ -724,15 +724,15 @@ app.post('/api/dehashed-search', optionalAuth, requireAuth, userRateLimit(10, 15
 app.get('/api/ai-debug', async (req, res) => {
   try {
     console.log('🔍 AI services debug endpoint called');
-    
+
     const deepseekInfo = deepseekService.getServiceInfo();
     const openaiInfo = openaiService.getServiceInfo();
     const kimiInfo = kimiService.getServiceInfo ? kimiService.getServiceInfo() : { isEnabled: false, error: 'Service not initialized' };
-    
+
     console.log('DeepSeek service info:', deepseekInfo);
     console.log('OpenAI service info:', openaiInfo);
     console.log('Kimi service info:', kimiInfo);
-    
+
     res.json({
       ok: true,
       services: {
@@ -741,11 +741,11 @@ app.get('/api/ai-debug', async (req, res) => {
         kimi: kimiInfo
       },
       assignments: {
-        company: deepseekService.isAvailable() ? 'deepseek' : 
+        company: deepseekService.isAvailable() ? 'deepseek' :
           (openaiService.isAvailable() ? 'openai' : 'none'),
-        leaks: kimiService.isAvailable() ? 'kimi' : 
-          (deepseekService.isAvailable() ? 'deepseek' : 
-          (openaiService.isAvailable() ? 'openai' : 'none'))
+        leaks: kimiService.isAvailable() ? 'kimi' :
+          (deepseekService.isAvailable() ? 'deepseek' :
+            (openaiService.isAvailable() ? 'openai' : 'none'))
       },
       environment: {
         hasDeepSeekKey: !!process.env.DEEPSEEK_API_KEY,
@@ -786,7 +786,7 @@ app.get('/api/deepseek-test', async (req, res) => {
     };
 
     const result = await deepseekService.generateSummary(testData, 'company');
-    
+
     res.json({
       ok: true,
       result: result,
@@ -831,7 +831,7 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
 
     // Проверяем доступность AI сервиса для компаний
     console.log('🔍 Checking company AI service availability...');
-    
+
     if (!companyAIService.isAvailable()) {
       console.log('❌ Company AI service not available, using fallback');
       const fallbackResponse = ErrorHandler.createFallbackResponse(
@@ -852,21 +852,21 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
     }, 40000); // 40 секунд общий таймаут для DeepSeek V3
 
     console.log('Starting AI request...');
-    
+
     try {
       console.log('🚀 Calling company AI service generateSummary...');
       // Используем DeepSeek для анализа компаний
       const response = await companyAIService.generateSummary(
         { query: inn, results }, 'company'
       );
-      
+
       clearTimeout(requestTimeout);
-      console.log('✅ AI service response received:', { 
-        ok: response.ok, 
+      console.log('✅ AI service response received:', {
+        ok: response.ok,
         provider: response.provider,
-        model: response.model 
+        model: response.model
       });
-      
+
       if (!res.headersSent) {
         res.json(response);
       }
@@ -874,7 +874,7 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
       console.log('❌ AI service failed, using fallback:', aiError.message);
       console.log('Error details:', aiError);
       clearTimeout(requestTimeout);
-      
+
       if (!res.headersSent) {
         const fallbackResponse = companyAIService.createFallbackResponse(
           { query: inn, results }, 'company'
@@ -910,7 +910,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
 
     // Проверяем доступность AI сервиса для утечек
     console.log('🔍 Checking leaks AI service availability...');
-    
+
     if (!leaksAIService.isAvailable()) {
       console.log('❌ Leaks AI service not available, using fallback');
       const fallbackResponse = ErrorHandler.createFallbackResponse(
@@ -930,25 +930,25 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       }
     }, 25000); // 25 секунд общий таймаут
 
-    console.log(`Starting AI request with ${primaryAIService.isAvailable() ? 
+    console.log(`Starting AI request with ${primaryAIService.isAvailable() ?
       (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback'}...`);
-    
+
     try {
       // Используем Kimi для анализа утечек
       const response = await leaksAIService.generateSummary(
         { query, field, results }, 'leaks'
       );
-      
+
       clearTimeout(requestTimeout);
       console.log('✅ AI service response received');
-      
+
       if (!res.headersSent) {
         res.json(response);
       }
     } catch (aiError) {
       console.log('❌ AI service failed, using fallback:', aiError.message);
       clearTimeout(requestTimeout);
-      
+
       if (!res.headersSent) {
         const fallbackResponse = leaksAIService.createFallbackResponse(
           { query, field, results }, 'leaks'
@@ -1755,13 +1755,13 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
 
     console.log('🚀 Starting GPT-4o leak analysis...');
     try {
-      // Используем gpt-4o-mini как основную модель (доступна для всех проектов)
-      const modelToUse = 'gpt-4o-mini';
+      // Используем gpt-5 как основную модель
+      const modelToUse = 'gpt-5';
       console.log('🤖 Using model:', modelToUse);
-      
-      // Создаем специальный промпт для GPT-4o-mini
-      const prompt = buildGPT4oMiniLeakPrompt({ query, field, results });
-      
+
+      // Создаем специальный промпт для GPT-5
+      const prompt = buildGPT5LeakPrompt({ query, field, results });
+
       const response = await openai.chat.completions.create({
         model: modelToUse,
         messages: [
@@ -1857,11 +1857,11 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
     } catch (aiError) {
       console.log('❌ OpenAI API failed, using fallback:', aiError.message);
       clearTimeout(requestTimeout);
-      
+
       // Определяем тип ошибки согласно OpenAI API документации
       let errorType = 'unknown';
       let errorMessage = aiError.message;
-      
+
       if (aiError.status === 401) {
         errorType = 'authentication';
         errorMessage = 'Ошибка аутентификации OpenAI API';
@@ -1875,7 +1875,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
         errorType = 'server_error';
         errorMessage = 'Ошибка сервера OpenAI API';
       }
-      
+
       if (!res.headersSent) {
         const fallbackResponse = {
           ok: false,
@@ -1899,7 +1899,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
   } catch (e) {
     console.error('GPT-5 leak summarize error:', e.message, e.stack);
     ErrorHandler.logError(e, { endpoint: '/api/summarize-gpt5', query, resultsCount: results?.length });
-    
+
     if (!res.headersSent) {
       const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
       res.status(statusCode).json(response);
@@ -1907,16 +1907,16 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
   }
 });
 
-// Helper function to build GPT-4o-mini leak prompt
-function buildGPT4oMiniLeakPrompt(data) {
+// Helper function to build GPT-5 leak prompt
+function buildGPT5LeakPrompt(data) {
   const { query, field, results } = data;
   let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип поиска: ${field}) и верни результат в формате JSON.\n\n`;
-  
+
   results.forEach((result, index) => {
     if (result.ok && result.items) {
       prompt += `=== Источник ${index + 1}: ${result.name} ===\n`;
       prompt += `Статус: Успешно\n`;
-      
+
       if (Array.isArray(result.items)) {
         prompt += `Найдено записей: ${result.items.length}\n`;
         if (result.items.length > 0) {
@@ -1930,7 +1930,7 @@ function buildGPT4oMiniLeakPrompt(data) {
         prompt += `Категории данных: ${Object.keys(result.items).join(', ')}\n`;
         prompt += `Примеры: ${JSON.stringify(result.items, null, 2).substring(0, 1000)}...\n`;
       }
-      
+
       if (result.meta) {
         prompt += `Метаданные: ${JSON.stringify(result.meta)}\n`;
       }
@@ -1941,14 +1941,14 @@ function buildGPT4oMiniLeakPrompt(data) {
     }
     prompt += '\n';
   });
-  
+
   prompt += `Проанализируй все данные и создай подробную сводку в формате JSON. Обязательно:
 1. Оцени реальный уровень риска на основе найденных данных
 2. Дай конкретные рекомендации по защите
 3. Выдели ключевые находки
 4. Структурируй информацию о найденных данных
 5. Предоставь статистику по источникам`;
-  
+
   return prompt;
 }
 
