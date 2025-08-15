@@ -639,7 +639,7 @@
       switchMode('password');
     });
 
-    modeGPT5.addEventListener('click', () => {
+    modeGPT4o.addEventListener('click', () => {
       switchMode('gpt5');
     });
 
@@ -1410,9 +1410,9 @@
       updateProgress(50, 'Анализ источников...');
       displayLeakResultsBySources(mockResults, null);
 
-      // Шаг 3: Запрос к GPT-5 для анализа
-      updateProgress(75, 'Анализ через GPT-5 Mini...');
-      console.log('🚀 Requesting GPT-5 analysis...');
+      // Шаг 3: Запрос к GPT-4o для анализа
+      updateProgress(75, 'Анализ через GPT-4o...');
+      console.log('🚀 Requesting GPT-4o analysis...');
       
       try {
         const response = await fetch('/api/summarize-gpt5', {
@@ -1458,7 +1458,7 @@
 
       let html = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 25px; margin-bottom: 20px;">
-          <h3 style="margin-bottom: 15px; font-size: 1.3rem;">🤖 Анализ GPT-5 Mini</h3>
+          <h3 style="margin-bottom: 15px; font-size: 1.3rem;">🤖 Анализ GPT-4o</h3>
           <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: 600; margin-bottom: 15px; background: ${getRiskColor(summary.risk_level)};">
             🚨 Уровень риска: ${summary.risk_level || 'Средний'}
           </div>
@@ -1531,7 +1531,7 @@
 
       summaryBody.innerHTML = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 25px;">
-          <h3>🤖 Анализ GPT-5</h3>
+          <h3>🤖 Анализ GPT-4o</h3>
           <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin: 15px 0;">
             ❌ Не удалось получить AI анализ: ${error}
           </div>
