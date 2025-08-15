@@ -722,8 +722,8 @@ app.get('/api/ai-debug', async (req, res) => {
         deepseek: deepseekInfo,
         openai: openaiInfo
       },
-      primary: primaryAIService.isAvailable() ? 
-        (deepseekService.isAvailable() ? 'deepseek' : 'openai') : 'none',
+      primary: deepseekService.isAvailable() ? 'deepseek' : 
+        (openaiService.isAvailable() ? 'openai' : 'none'),
       environment: {
         hasDeepSeekKey: !!process.env.DEEPSEEK_API_KEY,
         hasOpenAIKey: !!process.env.OPENAI_API_KEY,
@@ -739,6 +739,38 @@ app.get('/api/ai-debug', async (req, res) => {
         deepseek: deepseekService.getServiceInfo(),
         openai: openaiService.getServiceInfo()
       }
+    });
+  }
+});
+
+// Simple DeepSeek test endpoint
+app.post('/api/deepseek-test', async (req, res) => {
+  try {
+    if (!deepseekService.isAvailable()) {
+      return res.json({
+        ok: false,
+        error: 'DeepSeek service not available',
+        hasKey: !!process.env.DEEPSEEK_API_KEY
+      });
+    }
+
+    const testData = {
+      query: 'test',
+      results: [{ name: 'test', ok: true, items: ['test data'] }]
+    };
+
+    const result = await deepseekService.generateSummary(testData, 'company');
+    
+    res.json({
+      ok: true,
+      result: result,
+      service: 'deepseek'
+    });
+  } catch (error) {
+    res.json({
+      ok: false,
+      error: error.message,
+      service: 'deepseek'
     });
   }
 });
