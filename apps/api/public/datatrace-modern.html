@@ -355,7 +355,7 @@
         <button id="modeLeaks" class="btn-secondary active">Поиск утечек</button>
         <button id="modeCompany" class="btn-secondary">Проверить компанию</button>
         <button id="modePassword" class="btn-secondary">🔐 Проверить пароль</button>
-        <button id="modeGPT4o" class="btn-secondary">🤖 Поиск утечек анализ GPT-4o</button>
+        <button id="modeGPT4o" class="btn-secondary">🤖 Поиск утечек анализ GPT-4o-mini</button>
       </div>
 
       <!-- Search Input -->
@@ -507,8 +507,8 @@
         searchInput.classList.add('hidden');
         passwordInput.classList.remove('hidden');
       } else if (currentMode === 'gpt4o') {
-        heroTitle.textContent = 'Поиск утечек анализ GPT-4o';
-        heroDescription.textContent = 'Поиск утечек данных с продвинутым анализом от GPT-4o - получите детальные рекомендации и оценку рисков';
+        heroTitle.textContent = 'Поиск утечек анализ GPT-4o-mini';
+        heroDescription.textContent = 'Поиск утечек данных с продвинутым анализом от GPT-4o-mini - получите детальные рекомендации и оценку рисков';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
       } else {

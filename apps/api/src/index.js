@@ -1755,12 +1755,12 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
 
     console.log('🚀 Starting GPT-4o leak analysis...');
     try {
-      // Используем gpt-4o как основную модель
-      const modelToUse = 'gpt-4o';
+      // Используем gpt-4o-mini как основную модель (доступна для всех проектов)
+      const modelToUse = 'gpt-4o-mini';
       console.log('🤖 Using model:', modelToUse);
       
-      // Создаем специальный промпт для GPT-4o
-      const prompt = buildGPT4oLeakPrompt({ query, field, results });
+      // Создаем специальный промпт для GPT-4o-mini
+      const prompt = buildGPT4oMiniLeakPrompt({ query, field, results });
       
       const response = await openai.chat.completions.create({
         model: modelToUse,
@@ -1907,8 +1907,8 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
   }
 });
 
-// Helper function to build GPT-4o leak prompt
-function buildGPT4oLeakPrompt(data) {
+// Helper function to build GPT-4o-mini leak prompt
+function buildGPT4oMiniLeakPrompt(data) {
   const { query, field, results } = data;
   let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип поиска: ${field}) и верни результат в формате JSON.\n\n`;
   
