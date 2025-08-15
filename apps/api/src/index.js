@@ -1693,10 +1693,10 @@ app.post('/api/openai/format-company', async (req, res) => {
   }
 });
 
-// GPT-5 leak analysis endpoint (experimental)
+// GPT-4o leak analysis endpoint
 app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000), async (req, res) => {
   try {
-    console.log('GPT-5 leak summarize request received');
+    console.log('GPT-4o leak summarize request received');
     const { query, field, results } = req.body || {};
     console.log('Request data:', { query, field, resultsLength: results?.length });
 
@@ -1709,7 +1709,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
     }
 
     // Проверяем доступность OpenAI сервиса
-    console.log('🔍 Checking OpenAI service availability for GPT-5...');
+    console.log('🔍 Checking OpenAI service availability for GPT-4o...');
     if (!openai) {
       console.log('❌ OpenAI service not available, using fallback');
       const fallbackResponse = {
@@ -1753,25 +1753,14 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
       }
     }, 40000); // 40 секунд общий таймаут
 
-    console.log('🚀 Starting GPT-5 leak analysis...');
+    console.log('🚀 Starting GPT-4o leak analysis...');
     try {
-      // Проверяем доступность модели gpt-5-mini
-      let modelToUse = 'gpt-5-mini';
-      try {
-        const modelsResponse = await openai.models.list();
-        const availableModels = modelsResponse.data.map(m => m.id);
-        
-        if (!availableModels.includes('gpt-5-mini')) {
-          console.log('⚠️ gpt-5-mini not available, falling back to gpt-4o-mini');
-          modelToUse = 'gpt-4o-mini';
-        }
-      } catch (modelCheckError) {
-        console.log('⚠️ Could not check available models, using gpt-4o-mini as fallback');
-        modelToUse = 'gpt-4o-mini';
-      }
+      // Используем gpt-4o как основную модель
+      const modelToUse = 'gpt-4o';
+      console.log('🤖 Using model:', modelToUse);
       
-      // Создаем специальный промпт для GPT-5
-      const prompt = buildGPT5LeakPrompt({ query, field, results });
+      // Создаем специальный промпт для GPT-4o
+      const prompt = buildGPT4oLeakPrompt({ query, field, results });
       
       const response = await openai.chat.completions.create({
         model: modelToUse,
@@ -1832,18 +1821,18 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
 
       const aiResponse = response.choices?.[0]?.message?.content;
       if (!aiResponse) {
-        throw new Error('Empty response from GPT-5 API');
+        throw new Error('Empty response from GPT-4o API');
       }
 
       clearTimeout(requestTimeout);
-      console.log('✅ GPT-5 response received');
+      console.log('✅ GPT-4o response received');
 
       // Пытаемся распарсить JSON
       let summary;
       try {
         summary = JSON.parse(aiResponse);
       } catch (parseError) {
-        console.log('Failed to parse GPT-5 JSON, using fallback');
+        console.log('Failed to parse GPT-4o JSON, using fallback');
         summary = {
           found: aiResponse.toLowerCase().includes('найден'),
           sources: {},
@@ -1918,8 +1907,8 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
   }
 });
 
-// Helper function to build GPT-5 leak prompt
-function buildGPT5LeakPrompt(data) {
+// Helper function to build GPT-4o leak prompt
+function buildGPT4oLeakPrompt(data) {
   const { query, field, results } = data;
   let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип поиска: ${field}) и верни результат в формате JSON.\n\n`;
   
