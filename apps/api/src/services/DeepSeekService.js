@@ -23,17 +23,12 @@ class DeepSeekService {
    * @returns {Promise<Object>} - AI summary response
    */
   async generateSummary(data, type = 'leak') {
-    console.log('🤖 DeepSeek generateSummary called:', { type, hasData: !!data });
-    
     if (!this.isAvailable()) {
-      console.log('❌ DeepSeek service not available');
       throw new Error('DeepSeek service not available');
     }
 
     try {
-      console.log('🔍 Building prompt for DeepSeek...');
       const prompt = this.buildPrompt(data, type);
-      console.log('📝 Prompt length:', prompt.length);
       
       const response = await axios.post(`${this.baseUrl}/v1/chat/completions`, {
         model: 'deepseek-chat',
@@ -59,20 +54,12 @@ class DeepSeekService {
         timeout: 30000
       });
 
-      console.log('✅ DeepSeek API response received:', {
-        status: response.status,
-        hasChoices: !!response.data?.choices,
-        choicesLength: response.data?.choices?.length
-      });
-
       const aiResponse = response.data?.choices?.[0]?.message?.content;
       
       if (!aiResponse) {
-        console.log('❌ Empty response from DeepSeek API');
         throw new Error('Empty response from DeepSeek API');
       }
 
-      console.log('🎉 DeepSeek AI response generated successfully');
       return {
         ok: true,
         summary: this.parseSummaryResponse(aiResponse, type),
@@ -81,14 +68,7 @@ class DeepSeekService {
         usage: response.data?.usage
       };
     } catch (error) {
-      console.error('❌ DeepSeek API error:', error.message);
-      if (error.response) {
-        console.error('DeepSeek API response:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        });
-      }
+      console.error('DeepSeek API error:', error);
       
       if (error.response) {
         const status = error.response.status;

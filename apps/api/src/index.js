@@ -793,16 +793,7 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
       }
     }, 25000); // 25 секунд общий таймаут
 
-    const serviceName = primaryAIService.isAvailable() ? 
-      (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback';
-    console.log(`🚀 Starting company AI request with ${serviceName}...`);
-    console.log('🔧 Service details:', {
-      deepseekAvailable: deepseekService.isAvailable(),
-      openaiAvailable: openaiService.isAvailable(),
-      primaryService: serviceName,
-      hasDeepSeekKey: !!process.env.DEEPSEEK_API_KEY,
-      hasOpenAIKey: !!process.env.OPENAI_API_KEY
-    });
+    console.log('Starting AI request...');
     
     try {
       // Используем выбранный AI сервис
