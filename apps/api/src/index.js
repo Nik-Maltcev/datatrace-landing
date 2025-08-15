@@ -743,8 +743,8 @@ app.get('/api/ai-debug', async (req, res) => {
   }
 });
 
-// Simple DeepSeek test endpoint
-app.post('/api/deepseek-test', async (req, res) => {
+// Simple DeepSeek test endpoint (GET version for browser)
+app.get('/api/deepseek-test', async (req, res) => {
   try {
     if (!deepseekService.isAvailable()) {
       return res.json({
