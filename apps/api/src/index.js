@@ -390,18 +390,26 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 
 // Initialize AI services
 const DeepSeekService = require('./services/DeepSeekService');
+const KimiService = require('./services/KimiService');
 
 const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4');
 const deepseekService = new DeepSeekService(
   process.env.DEEPSEEK_API_KEY,
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
 );
+const kimiService = new KimiService(
+  process.env.KIMI_API_KEY,
+  process.env.KIMI_BASE_URL || 'https://platform.moonshot.ai'
+);
 
-// Choose primary AI service (prefer DeepSeek if available, fallback to OpenAI)
-const primaryAIService = deepseekService.isAvailable() ? deepseekService : openaiService;
+// Choose AI services by use case
+const companyAIService = deepseekService.isAvailable() ? deepseekService : openaiService;
+const leaksAIService = kimiService.isAvailable() ? kimiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
 
-console.log(`🤖 Primary AI service: ${primaryAIService.isAvailable() ? 
+console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ? 
   (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'None (fallback mode)'}`);
+console.log(`🔍 Leaks AI service: ${leaksAIService.isAvailable() ? 
+  (kimiService.isAvailable() ? 'Kimi' : (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI')) : 'None (fallback mode)'}`);
 
 // Initialize DeHashed service
 const dehashedService = new DeHashedService(
@@ -712,22 +720,32 @@ app.get('/api/ai-debug', async (req, res) => {
     
     const deepseekInfo = deepseekService.getServiceInfo();
     const openaiInfo = openaiService.getServiceInfo();
+    const kimiInfo = kimiService.getServiceInfo();
     
     console.log('DeepSeek service info:', deepseekInfo);
     console.log('OpenAI service info:', openaiInfo);
+    console.log('Kimi service info:', kimiInfo);
     
     res.json({
       ok: true,
       services: {
         deepseek: deepseekInfo,
-        openai: openaiInfo
+        openai: openaiInfo,
+        kimi: kimiInfo
       },
-      primary: deepseekService.isAvailable() ? 'deepseek' : 
-        (openaiService.isAvailable() ? 'openai' : 'none'),
+      assignments: {
+        company: deepseekService.isAvailable() ? 'deepseek' : 
+          (openaiService.isAvailable() ? 'openai' : 'none'),
+        leaks: kimiService.isAvailable() ? 'kimi' : 
+          (deepseekService.isAvailable() ? 'deepseek' : 
+          (openaiService.isAvailable() ? 'openai' : 'none'))
+      },
       environment: {
         hasDeepSeekKey: !!process.env.DEEPSEEK_API_KEY,
         hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-        deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL || 'default'
+        hasKimiKey: !!process.env.KIMI_API_KEY,
+        deepseekBaseUrl: process.env.DEEPSEEK_BASE_URL || 'default',
+        kimiBaseUrl: process.env.KIMI_BASE_URL || 'default'
       }
     });
   } catch (error) {
@@ -737,7 +755,8 @@ app.get('/api/ai-debug', async (req, res) => {
       error: error.message,
       services: {
         deepseek: deepseekService.getServiceInfo(),
-        openai: openaiService.getServiceInfo()
+        openai: openaiService.getServiceInfo(),
+        kimi: kimiService.getServiceInfo()
       }
     });
   }
@@ -803,11 +822,11 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
       return res.status(statusCode).json(response);
     }
 
-    // Проверяем доступность AI сервиса
-    console.log('🔍 Checking AI service availability...');
+    // Проверяем доступность AI сервиса для компаний
+    console.log('🔍 Checking company AI service availability...');
     
-    if (!primaryAIService.isAvailable()) {
-      console.log('❌ AI service not available, using fallback');
+    if (!companyAIService.isAvailable()) {
+      console.log('❌ Company AI service not available, using fallback');
       const fallbackResponse = ErrorHandler.createFallbackResponse(
         { query: inn, results }, 'company', 'ai-unavailable'
       );
@@ -828,9 +847,9 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
     console.log('Starting AI request...');
     
     try {
-      console.log('🚀 Calling AI service generateSummary...');
-      // Используем выбранный AI сервис
-      const response = await primaryAIService.generateSummary(
+      console.log('🚀 Calling company AI service generateSummary...');
+      // Используем DeepSeek для анализа компаний
+      const response = await companyAIService.generateSummary(
         { query: inn, results }, 'company'
       );
       
@@ -850,7 +869,7 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
       clearTimeout(requestTimeout);
       
       if (!res.headersSent) {
-        const fallbackResponse = primaryAIService.createFallbackResponse(
+        const fallbackResponse = companyAIService.createFallbackResponse(
           { query: inn, results }, 'company'
         );
         res.json(fallbackResponse);
@@ -882,11 +901,11 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       return res.status(statusCode).json(response);
     }
 
-    // Проверяем доступность AI сервиса
-    console.log('🔍 Checking AI service availability...');
+    // Проверяем доступность AI сервиса для утечек
+    console.log('🔍 Checking leaks AI service availability...');
     
-    if (!primaryAIService.isAvailable()) {
-      console.log('❌ AI service not available, using fallback');
+    if (!leaksAIService.isAvailable()) {
+      console.log('❌ Leaks AI service not available, using fallback');
       const fallbackResponse = ErrorHandler.createFallbackResponse(
         { query, field, results }, 'leaks', 'ai-unavailable'
       );
@@ -908,8 +927,8 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback'}...`);
     
     try {
-      // Используем выбранный AI сервис
-      const response = await primaryAIService.generateSummary(
+      // Используем Kimi для анализа утечек
+      const response = await leaksAIService.generateSummary(
         { query, field, results }, 'leaks'
       );
       
@@ -924,7 +943,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       clearTimeout(requestTimeout);
       
       if (!res.headersSent) {
-        const fallbackResponse = primaryAIService.createFallbackResponse(
+        const fallbackResponse = leaksAIService.createFallbackResponse(
           { query, field, results }, 'leaks'
         );
         res.json(fallbackResponse);
