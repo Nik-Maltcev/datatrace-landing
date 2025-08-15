@@ -397,10 +397,17 @@ const deepseekService = new DeepSeekService(
   process.env.DEEPSEEK_API_KEY,
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
 );
-const kimiService = new KimiService(
-  process.env.KIMI_API_KEY,
-  process.env.KIMI_BASE_URL || 'https://platform.moonshot.ai'
-);
+// Initialize Kimi service safely
+let kimiService;
+try {
+  kimiService = new KimiService(
+    process.env.KIMI_API_KEY,
+    process.env.KIMI_BASE_URL || 'https://platform.moonshot.ai'
+  );
+} catch (error) {
+  console.warn('⚠️ Failed to initialize Kimi service:', error.message);
+  kimiService = { isAvailable: () => false, createFallbackResponse: () => ({}) };
+}
 
 // Choose AI services by use case
 const companyAIService = deepseekService.isAvailable() ? deepseekService : openaiService;
@@ -720,7 +727,7 @@ app.get('/api/ai-debug', async (req, res) => {
     
     const deepseekInfo = deepseekService.getServiceInfo();
     const openaiInfo = openaiService.getServiceInfo();
-    const kimiInfo = kimiService.getServiceInfo();
+    const kimiInfo = kimiService.getServiceInfo ? kimiService.getServiceInfo() : { isEnabled: false, error: 'Service not initialized' };
     
     console.log('DeepSeek service info:', deepseekInfo);
     console.log('OpenAI service info:', openaiInfo);
@@ -756,7 +763,7 @@ app.get('/api/ai-debug', async (req, res) => {
       services: {
         deepseek: deepseekService.getServiceInfo(),
         openai: openaiService.getServiceInfo(),
-        kimi: kimiService.getServiceInfo()
+        kimi: kimiService.getServiceInfo ? kimiService.getServiceInfo() : { isEnabled: false, error: 'Service not initialized' }
       }
     });
   }
