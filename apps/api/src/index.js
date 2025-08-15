@@ -828,19 +828,25 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
     console.log('Starting AI request...');
     
     try {
+      console.log('🚀 Calling AI service generateSummary...');
       // Используем выбранный AI сервис
       const response = await primaryAIService.generateSummary(
         { query: inn, results }, 'company'
       );
       
       clearTimeout(requestTimeout);
-      console.log('✅ AI service response received');
+      console.log('✅ AI service response received:', { 
+        ok: response.ok, 
+        provider: response.provider,
+        model: response.model 
+      });
       
       if (!res.headersSent) {
         res.json(response);
       }
     } catch (aiError) {
       console.log('❌ AI service failed, using fallback:', aiError.message);
+      console.log('Error details:', aiError);
       clearTimeout(requestTimeout);
       
       if (!res.headersSent) {
