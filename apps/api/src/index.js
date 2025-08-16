@@ -854,10 +854,13 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
     console.log('Starting AI request...');
 
     try {
-      console.log('🚀 Calling company AI service generateSummary...');
-      // Используем DeepSeek для анализа компаний
+      console.log('🚀 Optimizing company data before sending to AI...');
+      const optimizedData = optimizeCompanyDataForAI(results);
+
+      console.log('🚀 Calling company AI service generateSummary with optimized data...');
+      // Используем AI сервис для анализа компаний
       const response = await companyAIService.generateSummary(
-        { query: inn, results }, 'company'
+        { query: inn, summary: optimizedData }, 'company'
       );
 
       clearTimeout(requestTimeout);
@@ -930,13 +933,17 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       }
     }, 25000); // 25 секунд общий таймаут
 
-    console.log(`Starting AI request with ${primaryAIService.isAvailable() ?
-      (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback'}...`);
+      console.log(`Starting AI request with ${leaksAIService.isAvailable() ?
+        (kimiService.isAvailable() ? 'Kimi' : (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI'))
+        : 'fallback'}...`);
 
     try {
+      const compact = compactResults(results);
+      const optimizedData = optimizeDataForAI(compact);
+
       // Используем Kimi для анализа утечек
       const response = await leaksAIService.generateSummary(
-        { query, field, results }, 'leaks'
+        { query, field, results: optimizedData }, 'leaks'
       );
 
       clearTimeout(requestTimeout);
@@ -1032,6 +1039,94 @@ function createFallbackSummary(inn, results, companyData) {
 }
 
 // Функция для создания fallback сводки поиска утечек без OpenAI
+function compactResults(results) {
+  const out = {};
+  for (const r of results || []) {
+    if (!r || !r.name) continue;
+    if (r.name === 'ITP') {
+      const groups = r.items || {};
+      const obj = {};
+      const names = Object.keys(groups).slice(0, 3);
+      for (const key of names) {
+        const arr = Array.isArray(groups[key]?.data) ? groups[key].data.slice(0, 3) : [];
+        obj[key] = arr;
+      }
+      out.ITP = { ok: r.ok, meta: r.meta, data: obj };
+    } else if (r.name === 'Dyxless') {
+      const arr = Array.isArray(r.items) ? r.items.slice(0, 8) : [];
+      out.Dyxless = { ok: r.ok, meta: r.meta, data: arr };
+    } else if (r.name === 'LeakOsint') {
+      const arr = Array.isArray(r.items) ? r.items.slice(0, 3).map(g => ({ db: g.db, info: g.info, data: Array.isArray(g.data) ? g.data.slice(0, 3) : [] })) : [];
+      out.LeakOsint = { ok: r.ok, data: arr };
+    } else if (r.name === 'Usersbox') {
+      const arr = Array.isArray(r.items) ? r.items.slice(0, 10) : [];
+      out.Usersbox = { ok: r.ok, meta: r.meta, data: arr };
+    } else if (r.name === 'Vektor') {
+      out.Vektor = { ok: r.ok, data: r.items };
+    }
+  }
+  return out;
+}
+
+function optimizeDataForAI(compact) {
+  const optimized = {};
+
+  for (const [sourceName, sourceData] of Object.entries(compact)) {
+    if (!sourceData.ok || !sourceData.data) {
+      optimized[sourceName] = { ok: false, count: 0 };
+      continue;
+    }
+
+    const summary = { ok: true, count: 0, samples: [], databases: [] };
+
+    if (sourceName === 'ITP') {
+      for (const [groupName, records] of Object.entries(sourceData.data)) {
+        if (Array.isArray(records)) {
+          summary.count += records.length;
+          summary.samples.push(...records.slice(0, 2)); // Только первые 2 записи
+          summary.databases.push(groupName);
+        }
+      }
+    } else if (sourceName === 'Dyxless') {
+      if (Array.isArray(sourceData.data)) {
+        summary.count = sourceData.data.length;
+        summary.samples = sourceData.data.slice(0, 3); // Только первые 3 записи
+        // Извлекаем уникальные базы данных
+        const dbs = [...new Set(sourceData.data.map(r => r.database).filter(Boolean))];
+        summary.databases = dbs.slice(0, 5); // Максимум 5 баз
+      }
+    } else if (sourceName === 'LeakOsint') {
+      if (Array.isArray(sourceData.data)) {
+        summary.databases = sourceData.data.map(leak => leak.db).filter(Boolean);
+        summary.count = sourceData.data.reduce((sum, leak) => sum + (leak.data?.length || 0), 0);
+        // Берем по одной записи из каждой базы
+        sourceData.data.forEach(leak => {
+          if (leak.data && leak.data.length > 0) {
+            summary.samples.push(leak.data[0]);
+          }
+        });
+      }
+    } else if (sourceName === 'Usersbox') {
+      if (Array.isArray(sourceData.data)) {
+        summary.count = sourceData.data.length;
+        summary.samples = sourceData.data.slice(0, 3);
+      }
+    } else if (sourceName === 'Vektor') {
+      if (Array.isArray(sourceData.data)) {
+        summary.count = sourceData.data.length;
+        summary.samples = sourceData.data.slice(0, 3);
+      } else if (sourceData.data) {
+        summary.count = 1;
+        summary.samples = [sourceData.data];
+      }
+    }
+
+    optimized[sourceName] = summary;
+  }
+
+  return optimized;
+}
+
 function createLeakFallbackSummary(query, field, compact) {
   let found = false;
   let sources = {};
@@ -1696,219 +1791,34 @@ app.post('/api/openai/format-company', async (req, res) => {
 // GPT-4o leak analysis endpoint
 app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000), async (req, res) => {
   try {
-    console.log('GPT-4o leak summarize request received');
+    console.log('GPT-5 leak summarize request received');
     const { query, field, results } = req.body || {};
-    console.log('Request data:', { query, field, resultsLength: results?.length });
 
     if (!query || !Array.isArray(results)) {
-      console.log('Missing query or results');
-      const { statusCode, response } = ErrorHandler.formatErrorResponse(
-        new Error('Missing query or results'), req
-      );
-      return res.status(statusCode).json(response);
+      return res.status(400).json({ error: 'Missing query or results' });
     }
 
-    // Проверяем доступность OpenAI сервиса
-    console.log('🔍 Checking OpenAI service availability for GPT-4o...');
-    if (!openai) {
-      console.log('❌ OpenAI service not available, using fallback');
-      const fallbackResponse = {
-        ok: false,
-        error: 'OpenAI service not available',
-        fallback: true,
-        summary: {
-          found: results.some(r => r.ok && r.items && (Array.isArray(r.items) ? r.items.length > 0 : Object.keys(r.items).length > 0)),
-          sources: {},
-          highlights: ['OpenAI сервис недоступен', 'Отображены только сырые данные'],
-          person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
-          recommendations: ['🔧 Проверьте настройки OpenAI API', '⚠️ Обратитесь к администратору'],
-          ai_analysis: 'Анализ недоступен - OpenAI сервис не настроен',
-          risk_level: 'Неизвестно',
-          summary_stats: { total_sources: results.length, sources_with_data: 0, total_records: 0 }
-        }
-      };
-      return res.json(fallbackResponse);
-    }
+    // Use the same robust pre-processing pipeline
+    const compact = compactResults(results);
+    const optimizedData = optimizeDataForAI(compact);
 
-    // Устанавливаем общий таймаут для всего запроса
-    const requestTimeout = setTimeout(() => {
-      console.log('⏰ Request timeout reached, sending fallback');
-      if (!res.headersSent) {
-        const fallbackResponse = {
-          ok: false,
-          error: 'Request timeout',
-          fallback: true,
-          summary: {
-            found: false,
-            sources: {},
-            highlights: ['Превышено время ожидания ответа'],
-            person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
-            recommendations: ['🔄 Попробуйте повторить запрос', '⏰ Сократите объем данных'],
-            ai_analysis: 'Анализ прерван по таймауту',
-            risk_level: 'Неизвестно',
-            summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
-          }
-        };
-        res.json(fallbackResponse);
-      }
-    }, 40000); // 40 секунд общий таймаут
+    // Pass the pre-processed data to the AI service
+    // We can reuse the leaksAIService which is configured to use the best available AI
+    const response = await leaksAIService.generateSummary(
+      { query, field, results: optimizedData }, 'leaks'
+    );
 
-    console.log('🚀 Starting GPT-4o leak analysis...');
-    try {
-      // Используем gpt-5 как основную модель
-      const modelToUse = 'gpt-5';
-      console.log('🤖 Using model:', modelToUse);
+    res.json(response);
 
-      // Создаем специальный промпт для GPT-5
-      const prompt = buildGPT5LeakPrompt({ query, field, results });
-
-      const response = await openai.chat.completions.create({
-        model: modelToUse,
-        messages: [
-          {
-            role: 'system',
-            content: `Ты - эксперт по кибербезопасности и анализу утечек данных. Твоя задача - проанализировать результаты поиска утечек и создать красивую структурированную сводку.
-
-ВАЖНО: Ответь ТОЛЬКО валидным JSON объектом в следующем формате:
-{
-  "found": true/false,
-  "sources": {
-    "source_name": {
-      "foundCount": число_найденных_записей,
-      "notes": "описание_находок"
-    }
-  },
-  "highlights": ["ключевые находки и важные моменты"],
-  "person": {
-    "name": null,
-    "phones": ["найденные телефоны"],
-    "emails": ["найденные email"],
-    "usernames": ["найденные логины"],
-    "ids": ["найденные ID"],
-    "addresses": ["найденные адреса"]
-  },
-  "recommendations": [
-    "🔒 Конкретные рекомендации по безопасности",
-    "⚠️ Срочные действия",
-    "🛡️ Долгосрочные меры защиты"
-  ],
-  "ai_analysis": "Подробный анализ утечек с оценкой рисков и объяснением найденных данных",
-  "risk_level": "Критический/Высокий/Средний/Низкий",
-  "summary_stats": {
-    "total_sources": число_источников,
-    "sources_with_data": число_источников_с_данными,
-    "total_records": общее_количество_записей
-  }
-}
-
-Требования:
-- Отвечай ТОЛЬКО валидным JSON
-- Проанализируй все источники данных
-- Дай конкретные и практичные рекомендации
-- Оцени реальный уровень риска
-- Используй эмодзи в рекомендациях для наглядности
-- Будь точным и полезным в советах`
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 3000,
-        temperature: 0.3,
-        top_p: 0.9
-      });
-
-      const aiResponse = response.choices?.[0]?.message?.content;
-      if (!aiResponse) {
-        throw new Error('Empty response from GPT-4o API');
-      }
-
-      clearTimeout(requestTimeout);
-      console.log('✅ GPT-4o response received');
-
-      // Пытаемся распарсить JSON
-      let summary;
-      try {
-        summary = JSON.parse(aiResponse);
-      } catch (parseError) {
-        console.log('Failed to parse GPT-4o JSON, using fallback');
-        summary = {
-          found: aiResponse.toLowerCase().includes('найден'),
-          sources: {},
-          highlights: [aiResponse.substring(0, 200) + '...'],
-          person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
-          recommendations: ['Проверьте полный анализ ИИ'],
-          ai_analysis: aiResponse,
-          risk_level: 'Требует оценки',
-          summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
-        };
-      }
-
-      if (!res.headersSent) {
-        res.json({
-          ok: true,
-          summary: summary,
-          provider: 'openai',
-          model: modelToUse,
-          usage: response.usage
-        });
-      }
-    } catch (aiError) {
-      console.log('❌ OpenAI API failed, using fallback:', aiError.message);
-      clearTimeout(requestTimeout);
-
-      // Определяем тип ошибки согласно OpenAI API документации
-      let errorType = 'unknown';
-      let errorMessage = aiError.message;
-
-      if (aiError.status === 401) {
-        errorType = 'authentication';
-        errorMessage = 'Ошибка аутентификации OpenAI API';
-      } else if (aiError.status === 429) {
-        errorType = 'rate_limit';
-        errorMessage = 'Превышен лимит запросов OpenAI API';
-      } else if (aiError.status === 400) {
-        errorType = 'invalid_request';
-        errorMessage = 'Некорректный запрос к OpenAI API';
-      } else if (aiError.status >= 500) {
-        errorType = 'server_error';
-        errorMessage = 'Ошибка сервера OpenAI API';
-      }
-
-      if (!res.headersSent) {
-        const fallbackResponse = {
-          ok: false,
-          error: errorMessage,
-          error_type: errorType,
-          fallback: true,
-          summary: {
-            found: false,
-            sources: {},
-            highlights: [`Ошибка при анализе: ${errorMessage}`],
-            person: { name: null, phones: [], emails: [], usernames: [], ids: [], addresses: [] },
-            recommendations: ['🔧 Проверьте настройки API', '🔄 Попробуйте позже'],
-            ai_analysis: `Анализ недоступен из-за ошибки: ${errorMessage}`,
-            risk_level: 'Неизвестно',
-            summary_stats: { total_sources: 0, sources_with_data: 0, total_records: 0 }
-          }
-        };
-        res.json(fallbackResponse);
-      }
-    }
   } catch (e) {
     console.error('GPT-5 leak summarize error:', e.message, e.stack);
-    ErrorHandler.logError(e, { endpoint: '/api/summarize-gpt5', query, resultsCount: results?.length });
-
-    if (!res.headersSent) {
-      const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
-      res.status(statusCode).json(response);
-    }
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(e, req);
+    res.status(statusCode).json(response);
   }
 });
 
-// Helper function to build GPT-5 leak prompt
-function buildGPT5LeakPrompt(data) {
+// Helper function to build GPT-5 leak prompt - NO LONGER NEEDED
+/* function buildGPT5LeakPrompt(data) {
   const { query, field, results } = data;
   let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип поиска: ${field}) и верни результат в формате JSON.\n\n`;
 
@@ -1953,6 +1863,101 @@ function buildGPT5LeakPrompt(data) {
 }
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
+
+// Helper function to optimize company data before sending to AI
+function optimizeCompanyDataForAI(results) {
+  const summary = {
+    company: {
+      name: null,
+      fullName: null,
+      inn: null,
+      ogrn: null,
+      status: null,
+      address: null,
+      registration_date: null,
+      charter_capital: null,
+      contacts: { phones: [], emails: [], sites: [] },
+    },
+    ceo: { name: null, position: 'Генеральный директор' },
+    okved: { main: null, additional: [] },
+    risk_flags: [],
+    notes: [],
+  };
+
+  if (!Array.isArray(results)) {
+    return summary;
+  }
+
+  // Helper to add unique items to an array
+  const addUnique = (arr, item) => {
+    if (item && !arr.includes(item)) {
+      arr.push(item);
+    }
+  };
+
+  for (const result of results) {
+    if (!result.ok || !result.items) continue;
+
+    const items = result.items.data || result.items; // Handle Datanewton's "data" wrapper
+
+    if (result.name === 'Datanewton') {
+      const companyData = items.counterparty || items;
+      if (!companyData) continue;
+
+      summary.company.inn = summary.company.inn || companyData.inn;
+      summary.company.ogrn = summary.company.ogrn || companyData.ogrn;
+      summary.company.name = summary.company.name || companyData.short_name;
+      summary.company.fullName = summary.company.fullName || companyData.full_name;
+      summary.company.status = summary.company.status || companyData.status_string;
+
+      if (companyData.address_block) {
+        summary.company.address = summary.company.address || companyData.address_block.line_address;
+      }
+      if (companyData.okved_block) {
+        summary.okved.main = summary.okved.main || companyData.okved_block.main_okved.value;
+      }
+      if (companyData.manager_block) {
+        summary.ceo.name = summary.ceo.name || companyData.manager_block.manager_name;
+        summary.ceo.position = summary.ceo.position || companyData.manager_block.manager_position;
+      }
+       if (companyData.contact_block) {
+        companyData.contact_block.phones?.forEach(p => addUnique(summary.company.contacts.phones, p));
+        companyData.contact_block.emails?.forEach(e => addUnique(summary.company.contacts.emails, e));
+        companyData.contact_block.sites?.forEach(s => addUnique(summary.company.contacts.sites, s));
+      }
+      if(companyData.negative_lists_block?.negative_factors) {
+         companyData.negative_lists_block.negative_factors.forEach(f => addUnique(summary.risk_flags, f.factor_description));
+      }
+    } else if (result.name === 'Checko') {
+        if (!items) continue;
+        summary.company.inn = summary.company.inn || items.inn;
+        summary.company.ogrn = summary.company.ogrn || items.ogrn;
+        summary.company.name = summary.company.name || items.name?.short;
+        summary.company.fullName = summary.company.fullName || items.name?.full;
+        summary.company.status = summary.company.status || items.status?.name;
+        summary.company.address = summary.company.address || items.address?.value;
+        summary.company.charter_capital = summary.company.charter_capital || items.charterCapital?.value;
+
+        if (items.okved?.main?.value) {
+            summary.okved.main = summary.okved.main || items.okved.main.value;
+        }
+        if (items.director?.name) {
+            summary.ceo.name = summary.ceo.name || items.director.name;
+        }
+    }
+  }
+
+  // Final cleanup
+  if (summary.ceo.name) {
+      summary.notes.push(`Руководитель: ${summary.ceo.name}`);
+  }
+  if (summary.okved.main) {
+      summary.notes.push(`Основная деятельность: ${summary.okved.main}`);
+  }
+
+  return summary;
+}
+
 
 // GPT-5 тестовая страница
 app.get('/gpt5', (req, res) => {
