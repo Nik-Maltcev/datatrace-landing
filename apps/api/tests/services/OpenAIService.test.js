@@ -1,223 +1,134 @@
 const OpenAIService = require('../../src/services/OpenAIService');
 
-// Mock OpenAI module
+// Mock the OpenAI module itself.
+// When new OpenAI() is called, it returns our mock object.
 jest.mock('openai', () => {
   return jest.fn().mockImplementation(() => ({
-    responses: {
-      create: jest.fn()
-    },
     chat: {
       completions: {
-        create: jest.fn()
-      }
-    }
+        create: jest.fn(),
+      },
+    },
   }));
 });
 
 describe('OpenAIService', () => {
   let openaiService;
-  let mockOpenAI;
 
   beforeEach(() => {
+    // Clear all mocks before each test to ensure test isolation
     jest.clearAllMocks();
+    // Create a new service instance for each test
     openaiService = new OpenAIService('test-api-key', 'gpt-4');
-    mockOpenAI = openaiService.client;
   });
 
   describe('constructor', () => {
-    it('should initialize with valid API key', () => {
+    it('should initialize with a valid API key', () => {
       expect(openaiService.isAvailable()).toBe(true);
       expect(openaiService.apiKey).toBe('test-api-key');
       expect(openaiService.model).toBe('gpt-4');
     });
 
-    it('should not initialize without API key', () => {
+    it('should not initialize without an API key', () => {
       const service = new OpenAIService('');
       expect(service.isAvailable()).toBe(false);
-    });
-
-    it('should not initialize with null API key', () => {
-      const service = new OpenAIService(null);
-      expect(service.isAvailable()).toBe(false);
-    });
-  });
-
-  describe('isGPT5Model', () => {
-    it('should detect GPT-5 model', () => {
-      const service = new OpenAIService('test-key', 'gpt-5');
-      expect(service.isGPT5Model()).toBe(true);
-    });
-
-    it('should detect GPT-5 model case insensitive', () => {
-      const service = new OpenAIService('test-key', 'GPT-5-turbo');
-      expect(service.isGPT5Model()).toBe(true);
-    });
-
-    it('should not detect GPT-4 as GPT-5', () => {
-      const service = new OpenAIService('test-key', 'gpt-4');
-      expect(service.isGPT5Model()).toBe(false);
     });
   });
 
   describe('generateSummary', () => {
-    it('should throw error when service not available', async () => {
-      const service = new OpenAIService('');
+    it('should return a fallback response when the service is not available', async () => {
+      const service = new OpenAIService(''); // Service without a key
+      const result = await service.generateSummary({ summary: {} }, 'company');
       
-      await expect(service.generateSummary({}, 'company'))
-        .rejects.toThrow('OpenAI service not available');
+      expect(result.model).toBe('fallback');
+      expect(result.summary.notes).toBeDefined();
     });
 
-    it('should use Responses API for GPT-5', async () => {
-      const gpt5Service = new OpenAIService('test-key', 'gpt-5');
+    it('should call chat.completions.create with the correct parameters and return the summary', async () => {
       const mockResponse = {
-        output: [{
-          type: 'message',
-          content: [{ type: 'output_text', text: '{"test": "data"}' }]
-        }]
+        choices: [{ message: { content: '{"analysis":"good"}' } }],
+        usage: { total_tokens: 123 },
       };
+      // Mock the resolved value for this specific test
+      openaiService.client.chat.completions.create.mockResolvedValue(mockResponse);
 
-      gpt5Service.client.responses.create.mockResolvedValue(mockResponse);
-
-      const result = await gpt5Service.generateSummary({ query: 'test', results: [] }, 'company');
-
-      expect(gpt5Service.client.responses.create).toHaveBeenCalled();
-      expect(result.ok).toBe(true);
-      expect(result.model).toBe('gpt-5');
-      expect(result.summary).toEqual({ test: 'data' });
-    });
-
-    it('should use Chat Completions API for GPT-4', async () => {
-      const mockResponse = {
-        choices: [{
-          message: {
-            content: '{"test": "data"}'
-          }
-        }]
-      };
-
-      mockOpenAI.chat.completions.create.mockResolvedValue(mockResponse);
-
-      const result = await openaiService.generateSummary({ query: 'test', results: [] }, 'company');
-
-      expect(mockOpenAI.chat.completions.create).toHaveBeenCalled();
-      expect(result.ok).toBe(true);
-      expect(result.model).toBe('gpt-4');
-      expect(result.summary).toEqual({ test: 'data' });
-    });
-
-    it('should fallback to Chat Completions when Responses API fails', async () => {
-      const gpt5Service = new OpenAIService('test-key', 'gpt-5');
-      
-      // Mock Responses API failure
-      gpt5Service.client.responses.create.mockRejectedValue(new Error('Responses API failed'));
-      
-      // Mock Chat Completions success
-      const mockChatResponse = {
-        choices: [{
-          message: {
-            content: '{"fallback": "data"}'
-          }
-        }]
-      };
-      gpt5Service.client.chat.completions.create.mockResolvedValue(mockChatResponse);
-
-      const result = await gpt5Service.generateSummary({ query: 'test', results: [] }, 'company');
-
-      expect(gpt5Service.client.responses.create).toHaveBeenCalled();
-      expect(gpt5Service.client.chat.completions.create).toHaveBeenCalled();
-      expect(result.ok).toBe(true);
-      expect(result.model).toBe('gpt-4-fallback');
-    });
-
-    it('should handle invalid JSON response gracefully', async () => {
-      const mockResponse = {
-        choices: [{
-          message: {
-            content: 'invalid json'
-          }
-        }]
-      };
-
-      mockOpenAI.chat.completions.create.mockResolvedValue(mockResponse);
-
-      const result = await openaiService.generateSummary({ query: 'test', results: [] }, 'company');
-
-      expect(result.ok).toBe(true);
-      expect(result.summary).toEqual({ raw: 'invalid json' });
-    });
-  });
-
-  describe('createFallbackResponse', () => {
-    it('should create company fallback response', () => {
       const data = {
-        query: '1234567890',
-        results: [{
-          ok: true,
-          items: {
-            company_names: { short_name: 'Test Company' },
-            address: { line_address: 'Test Address' },
-            status: 'Active'
-          }
-        }]
+        query: '123',
+        summary: { company: { name: 'Test Co' }, ceo: {}, okved: {}, risk_flags: [] },
       };
+      const result = await openaiService.generateSummary(data, 'company');
 
-      const result = openaiService.createFallbackResponse(data, 'company');
+      // Verify that the mock was called correctly
+      expect(openaiService.client.chat.completions.create).toHaveBeenCalledTimes(1);
+      expect(openaiService.client.chat.completions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'gpt-4',
+          messages: expect.any(Array),
+        })
+      );
 
+      // Verify the result
       expect(result.ok).toBe(true);
-      expect(result.model).toBe('fallback');
-      expect(result.summary.company.name).toBe('Test Company');
-      expect(result.summary.company.address).toBe('Test Address');
-      expect(result.summary.company.status).toBe('Active');
+      expect(result.provider).toBe('openai');
+      expect(result.summary).toEqual({ analysis: 'good' });
+      expect(result.usage.total_tokens).toBe(123);
     });
 
-    it('should create leaks fallback response', () => {
-      const data = {
-        query: 'test@email.com',
-        field: 'email',
-        results: [{
-          name: 'TestSource',
-          ok: true,
-          items: ['data1', 'data2']
-        }]
-      };
+    it('should handle non-JSON responses gracefully', async () => {
+      const mockResponse = { choices: [{ message: { content: 'this is not valid json' } }] };
+      openaiService.client.chat.completions.create.mockResolvedValue(mockResponse);
 
-      const result = openaiService.createFallbackResponse(data, 'leaks');
+      const result = await openaiService.generateSummary({ summary: {} }, 'company');
 
       expect(result.ok).toBe(true);
-      expect(result.model).toBe('fallback');
-      expect(result.summary.found).toBe(true);
-      expect(result.summary.sources.TestSource.foundCount).toBe(2);
+      expect(result.summary.error).toBe('Failed to parse AI response');
+      expect(result.summary.raw).toBe('this is not valid json');
     });
 
-    it('should handle unknown type', () => {
-      const result = openaiService.createFallbackResponse({}, 'unknown');
+    it('should return a fallback response on API failure', async () => {
+      openaiService.client.chat.completions.create.mockRejectedValue(new Error('API Error'));
 
-      expect(result.ok).toBe(true);
+      const result = await openaiService.generateSummary({ summary: {} }, 'company');
+
       expect(result.model).toBe('fallback');
-      expect(result.summary.error).toBe('Unknown type for fallback response');
+      expect(result.summary.notes).toBeDefined();
     });
   });
 
   describe('createPrompt', () => {
-    it('should create company prompt', () => {
-      const data = { query: 'test', results: [] };
-      const prompt = openaiService.createPrompt(data, 'company');
+    it('should create a valid company prompt using the summary data', () => {
+      const data = {
+        summary: {
+          company: { name: 'Prompt Company' },
+          ceo: { name: 'CEO Name' },
+          okved: { main: 'Main Activity' },
+          risk_flags: ['A risk flag'],
+        },
+      };
+      const { system, user } = openaiService.createPrompt(data, 'company');
 
-      expect(prompt.system).toContain('эксперт-аналитик корпоративных данных');
-      expect(prompt.instruction.inn).toBe('test');
-      expect(prompt.instruction.sources).toEqual([]);
+      expect(system).toContain('эксперт-аналитик по корпоративным данным');
+      expect(user).toContain('"name": "Prompt Company"');
+      expect(user).toContain('"ai_analysis"');
     });
 
-    it('should create leaks prompt', () => {
-      const data = { query: 'test', field: 'email', results: [] };
-      const prompt = openaiService.createPrompt(data, 'leaks');
+    it('should create a valid leaks prompt with optimized results', () => {
+      const data = {
+        query: 'leak@example.com',
+        field: 'email',
+        results: { // This should be the optimized data structure
+          ITP: { ok: true, count: 2, samples: [], databases: ['db1'] },
+        },
+      };
+      const { system, user } = openaiService.createPrompt(data, 'leaks');
 
-      expect(prompt.system).toContain('эксперт по кибербезопасности');
-      expect(prompt.instruction.query).toBe('test');
-      expect(prompt.instruction.field).toBe('email');
+      expect(system).toContain('эксперт по кибербезопасности');
+      expect(user).toContain('leak@example.com');
+      expect(user).toContain('"ITP"');
+      expect(user).toContain('"risk_level"');
     });
 
-    it('should throw error for unknown type', () => {
+    it('should throw an error for an unknown prompt type', () => {
       expect(() => openaiService.createPrompt({}, 'unknown'))
         .toThrow('Unknown prompt type: unknown');
     });
