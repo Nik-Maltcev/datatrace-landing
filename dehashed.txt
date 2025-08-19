@@ -1,0 +1,1170 @@
+logo
+Tools
+Search
+Monitoring
+WHOIS
+Documentation
+Search Guide
+API
+FAQ
+Other
+Data Wells
+Support
+Profile
+Notifications
+Subscriptions
+Profile Settings
+Log Out
+API
+Documentation
+Dark Mode Off
+API Documentation
+API Key
+6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+
+
+Updated April 23, 2025
+
+Table of Contents
+Introduction
+Authentication
+Rate Limiting
+Common Error Responses
+Search API
+Checklist
+Deduplication
+General Search
+Password Search
+Monitoring API
+Tasks
+Reports
+Notification Channels
+Domains
+Webhooks
+WHOIS API
+Search
+Credits
+Introduction
+Welcome to the DeHashed API documentation. This API provides comprehensive capabilities for search, monitoring, WHOIS lookups, and other information services.
+
+Authentication
+All API requests require authentication using an API key. Include the API key in the request header as follows:
+
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Important Notes
+You will need to refresh your API key atleast once to use the updated API - (if you haven't since the update)
+The old API has been entirely deprecated and replaced.
+API Security
+DeHashed uses Cloudflare and other technologies to keep the site safe from malicious attacks. That being said, expect some functions that would be enabled on a normal API to be limited/not get past Filters. Stick to the allowed functions and you will be OK.
+
+If you're having issues with our security measures whilst integrating the API into your application, please contact support.
+
+Restrictions & Misuse
+DeHashed has a sliding window algorithm in place to prevent the scraping of our site for any purpose. To use the DeHashed API, You must agree to our TOS available on our website. Any misuse or abuse of the API will result in an immediate ban. There is a Rate limiter in place, Sending more than 10 Requests / 1s (1000MS) will result in a timeout.
+
+Rate Limiting
+The DeHashed API enforces rate limits to ensure fair usage and prevent abuse:
+
+Maximum of 10 requests per second from a single IP and API credential
+Exceeding this limit will result in a temporary API restriction (HTTP 429 response)
+Consistent rate-limit violations or attempts to bypass rate limiting (using proxies or malicious code) may result in account suspension
+Rate Limit Response Example:
+{"error": "too many requests"}
+Common Error Responses
+Status Code	Description	Example Response
+400	Bad Request	
+{"error": "issue with authentication"}
+401	Unauthorized	
+{"error": "You need a search subscription and API credits to use the API, please purchase a search subscription."}
+403	Forbidden	
+{"error": "Insufficient Credits"}
+429	Too Many Requests	
+{"error": "too many requests"}
+Search API
+The Search API allows you to search for information across DeHashed's databases.
+
+API Checklist 2/3
+API V2 Key is valid
+API Key
+6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+
+
+You do not have access to our search
+Your account does not currently have access to our search or search API. To purchase access, please click here.
+
+You have 34 Search Credits
+Your account has search credits. 1 search = 1 credit.
+
+Noise-Free Insights with Deduplication
+At DeHashed, our deduplication feature doesn’t imply our datasets contain internal duplicates. Instead, it intelligently filters out repeated data across multiple sources to ensure cleaner, more actionable results.
+
+For example, if one dataset lists a username and IP address, and another entirely separate dataset contains the same information, our system will recognize the overlap and present it just once. This reduces redundancy in your search results—giving you clearer, more actionable intelligence.
+
+General Search
+Search across the database with various filtering options
+
+Endpoint:
+POST https://api.dehashed.com/v2/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Default	Description
+query	string	Yes	-	Search Query. See the Search Guide for syntax
+page	integer	No	1	Page number for results pagination.
+size	integer	No	100	Number of results per page (max: 10,000).
+regex	boolean	No	false	Whether to use regex matching.
+wildcard	boolean	No	false	Whether to use wildcard matching.
+de_dupe	boolean	No	false	Whether to remove duplicate results.
+Notes:
+Maximum pagination depth is 10,000 (e.g., page:3 and size:5000 would be invalid)
+Regex and Wildcard cannot both be true simultaneously
+Response:
+The response includes an array of entries with available information. Attributes will be omitted if they are empty.
+
+{
+    "balance": 100,
+    "entries": [
+        {
+            "id": "5603802198", 
+            "email": ["test@example.com"],
+            "ip_address": ["127.0.0.1"],
+            "username": ["username@example.com"], 
+            "password": ["examplepassword"],
+            "hashed_password": ["password:salt||passwordhash"],
+            "name": ["name"],
+            "dob": ["01/02/60"],
+            "license_plate": ["123456"],
+            "address": ["example address"],
+            "phone": ["+18005551234"],
+            "company": ["example company"],
+            "url": ["url.com"],
+            "social": ["social username"],
+            "cryptocurrency_address": ["0xcryptocurrencyaddress"],
+            "database_name": "Example Database Name",
+            "raw_record": {
+                "le_only": true,
+                "unstructured": true
+            }
+        }
+    ],
+    "took": "179µs",
+    "total": 5
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const v2Search = async (page,query,size,wildcard,regex,deDupe) => {
+    const res = await fetch("https://api.dehashed.com/v2/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            page: page,
+            query: query,
+            size: size,
+            wildcard: wildcard,
+            regex: regex,
+            de_dupe: deDupe,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await v2Search(
+        1,"testing",1,false,false,true,
+    )
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Password Search
+Search for records associated with a specific password hash.
+
+Password search does not require credits or a subscription to use, it's completely free.
+
+Endpoint:
+POST https://api.dehashed.com/v2/search-password
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+sha256_hashed_password	string	Yes	SHA-256 hash of the password you're searching for. See the Search Guide for a tool to generate SHA-256 hashes.
+Response:
+{
+  "results_found": 1
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const crypto = require("crypto")
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+
+const GetSHA256Hash = (password) => {
+    return crypto.createHash('sha256').update(password).digest('hex')
+}
+
+const v2HashedPasswordSearch = async (password) => {
+    const hash = GetSHA256Hash(password)
+    const res = await fetch("https://api.dehashed.com/v2/search-password", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            sha256_hashed_password: hash,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await v2HashedPasswordSearch("Password12345")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Monitoring API
+The Monitoring API allows you to set up and manage monitoring tasks for different types of data (emails, usernames, phone numbers, etc.) and receive notifications when new information is found.
+
+Tasks
+Create Task
+Create a new monitoring task.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/create-task
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+type	string	Yes	Type of task: `email`, `username`, `phone`, or `name`
+value	string	Yes	The value to monitor (e.g., an email address)
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const createTask = async (taskType,taskValue) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/create-task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            type: taskType,
+            value: taskValue,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await createTask("email", "example@example.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Update Task
+Update an existing monitoring task.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/update-task
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the task to update
+type	string	Yes	Type of task: `email`, `username`, `phone`, or `name`
+value	string	Yes	The value to monitor (e.g., an email address)
+active	boolean	No	Task status (active or inactive)
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const updateTask = async (taskID,taskType,taskValue) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/update-task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: taskID,
+            type: taskType,
+            value: taskValue,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await updateTask("task_id", "email", "example@example.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Update Task Active Status
+Update whether a task is active or inactive.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/update-task
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the task to update
+active	boolean	Yes	New active status (true/false)
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const updateTaskActive = async (taskID,taskActive) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/update-task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: taskID,
+            active: taskActive,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await updateTaskActive("task_id", false)
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Delete Task
+Delete a monitoring task.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/delete-task
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the task to update
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const deleteTask = async (taskID) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/delete-task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: taskID,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await deleteTask("task_id")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Get Tasks
+Retrieve a list of your monitoring tasks.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/get-tasks
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+page	integer	No	Page number for pagination (default: 1)
+Response:
+{
+  "tasks": [
+    {
+      "id": "task_id",
+      "type": "email",
+      "value": "example@example.com",
+      "active": true,
+      "created": "2023-01-01T12:00:00.000000Z",
+      "updated": "2023-01-01T12:00:00.000000Z"
+    }
+  ],
+  "total": 1,
+  "active": 1,
+  "inactive": 0,
+  "max": 10,
+  "next_page": false
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getTasks = async (page) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/get-tasks", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            page: page,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getTasks(1)
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Get Task
+Retrieve details of a specific monitoring task.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/get-task
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the task to retrieve
+Response:
+{
+  "type": "email",
+  "value": "example@example.com",
+  "active": true,
+  "created": "2023-01-01T12:00:00.000000Z",
+  "updated": "2023-01-01T12:00:00.000000Z"
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getTask = async (taskID) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/get-task", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: taskID,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getTask("task_id")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Reports
+Get Reports
+Retrieve a list of monitoring reports.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/get-task
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+page	int	No	Page number for pagination (default: 1)
+Response:
+{
+  "reports": [
+    {
+      "id": "report_id",
+      "timestamp": "2023-01-01T12:00:00.000000Z"
+    }
+  ],
+  "next_page": false
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getReports = async (page) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/get-reports", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            page: page,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getReports(1)
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Get Report
+Retrieve details of a specific monitoring report.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/get-report
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the report to retrieve
+Response:
+{
+  "tasks": [
+    {
+      "id": "reference_id",
+      "key": "task-key",
+      "value": "task-value",
+      "results_count": 1,
+      "timestamp": "2023-01-01T12:00:00.000000Z",
+      "results": [
+        {
+            "id": "result_id", 
+            "email": ["test@example.com"],
+            "ip_address": ["127.0.0.1"],
+            "username": ["username@example.com"], 
+            "password": ["examplepassword"],
+            "hashed_password": ["password:salt||passwordhash"],
+            "name": ["name"],
+            "dob": ["01/02/60"],
+            "license_plate": ["123456"],
+            "address": ["example address"],
+            "phone": ["+18005551234"],
+            "company": ["example company"],
+            "url": ["url.com"],
+            "social": ["social username"],
+            "cryptocurrency_address": ["0xcryptocurrencyaddress"],
+            "database_name": "Example Database Name",
+            "raw_record": {
+                "le_only": true,
+                "unstructured": true
+            }
+        }
+      ]
+    }
+  ]
+}
+Note: Result fields will be omitted from the response if they are null.
+
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getReport = async (reportID) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/get-report", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: reportID,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getReport("report_id")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Notification Channels
+Get Channels
+Retrieve your notification channels.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/get-channels
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Response:
+{
+  "channels": [
+    {
+      "id": "channel_id",
+      "type": "webhook",
+      "value": "https://example.com/webhook",
+      "updated_at": "2023-01-01T12:00:00.000000Z"
+    }
+  ]
+}
+Note: The response will be empty if you have no active notification channels. Currently available notification channel types are: `webhook` and `email`.
+
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getChannels = async () => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/get-channels", {
+        method: "GET",
+        headers: {
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        }
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getChannels()
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Update Channel
+Update a notification channel.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/update-channel
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+type	string	Yes	Channel type: `webhook` or `email`.
+value	string	Yes	Channel value (URL for webhook, email address for email)
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const updateChannel = async (channelType,channelValue) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/update-channel", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            type: channelType,
+            value: channelValue,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await updateChannel("webhook", "https://example.com/webhook")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Delete Channel
+Remove a notification channel.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/delete-channel
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+channel	string	Yes	Channel type to delete: `webhook` or `email`
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const deleteChannel = async (channelType) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/delete-channel", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            channel: channelType,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await deleteChannel("webhook")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Domains
+Get Domains
+Retrieve your monitoring domains.
+
+Endpoint:
+GET https://api.dehashed.com/v2/monitoring/get-domains
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Response:
+{
+  "domains": [
+    {
+      "id": "domain_id",
+      "domain": "example.com",
+      "updated": "2023-01-01T12:00:00.000000Z"
+    }
+  ]
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getDomains = async () => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/get-domains", {
+        method: "GET",
+        headers: {
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        }
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getDomains()
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Update Domain
+Update a monitoring domain
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/update-domain
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the domain to update
+domain	string	Yes	New domain value (in format example.com, no http or https)
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const updateDomain = async (domainID,domainValue) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/update-domain", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: domainID,
+            domain: domainValue,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await updateDomain("domain_id", "example.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Clear Domain
+Reset a domain task.
+
+Endpoint:
+POST https://api.dehashed.com/v2/monitoring/clear-domain
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+id	string	Yes	ID of the domain to clear
+Note: To unsubscribe from a domain or reduce your subscribed domain count, you need to use the subscriptions page.
+
+Response:
+{
+  "success": true
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const clearDomain = async (domainID) => {
+    const res = await fetch("https://api.dehashed.com/v2/monitoring/clear-domain", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            id: domainID,
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await clearDomain("domain_id")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Webhooks
+The monitoring service can send webhooks to notify you of new reports.
+
+Webhook Format
+When a new report is generated, the monitoring service will send a POST request to your webhook URL with the following payload:
+
+{
+  "id": "report_id"
+}
+WHOIS API
+The WHOIS API allows you to look up domain registration information.
+
+WHOIS Search
+Look up WHOIS information for a domain
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "whois"
+domain	string	Yes	Domain to look up (e.g., example.com)
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisSearch = async (domain) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            domain: domain,
+            search_type: "whois",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisSearch("google.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+WHOIS History
+Look up WHOIS History for a domain
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "whois-history"
+domain	string	Yes	Domain to look up (e.g., example.com)
+Search Cost is 25 credits
+
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisHistory = async (domain) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            domain: domain,
+            search_type: "whois-history",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisHistory("google.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+Reverse WHOIS
+Look up WHOIS information based on parameters
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "reverse-whois"
+include	string array	No	Terms you want included in your search (max: 4)
+exclude	string array	No	Terms you want excluded from your search (max: 4)
+reverse_type	string	No	`current` or `historic`, default: `current`
+Include AND Exclude cannot be empty, you must atleast have one term in one of them.
+
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisReverse = async (include,exclude,reverseType) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            include: include,
+            exclude: exclude,
+            reverse_type: reverseType,
+            search_type: "reverse-whois",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisReverse(["include-list"], ["exclude-list"], "historic")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+WHOIS IP Search
+Look up WHOIS information for an IP Address
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "reverse-ip"
+domain	string	Yes	IP Address to look up (e.g. 8.8.8.8)
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisIP = async (ipAddress) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            domain: ipAddress,
+            search_type: "reverse-ip",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisIP("8.8.8.8")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+WHOIS MX Search
+Look up WHOIS information for a mx server
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "reverse-mx"
+domain	string	Yes	MX Address to look up (e.g. mx.google.com)
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisMX = async (mxAddress) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            domain: mxAddress,
+            search_type: "reverse-mx",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisMX("mx.google.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+WHOIS NS Search
+Look up WHOIS information for a ns server
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "reverse-ns"
+domain	string	Yes	NS Address to look up (e.g. ns.google.com)
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisNS = async (nsAddress) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            domain: nsAddress,
+            search_type: "reverse-ns",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisNS("mx.google.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+WHOIS Subdomain Scan
+Use WHOIS to find subdomains
+
+Endpoint:
+POST https://api.dehashed.com/v2/whois/search
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Request Parameters:
+Parameter	Type	Required	Description
+search_type	string	Yes	Must be set to "subdomain-scan"
+domain	string	Yes	Domain to look up (e.g. google.com)
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const whoisSubdomainScan = async (domain) => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        },
+        body: JSON.stringify({
+            domain: domain,
+            search_type: "subdomain-scan",
+        })
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await whoisSubdomainScan("google.com")
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()
+WHOIS Credits
+Check your remaining WHOIS credits.
+
+Endpoint:
+GET https://api.dehashed.com/v2/whois/credits
+Headers:
+Dehashed-Api-Key: 6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM=
+Content-Type: application/json
+Response:
+{
+    "whois_credits": 1
+}
+Code Examples:
+python-logopythongolang-logogolangnodejs-logonodejscurl-logocurl
+const DEHASHED_API_KEY = "6AO90MaytDhzivSa7iJSfaln20+TOd4LH5lCkiNApgyWDk7DwEAgnMM="
+
+const getWHOISCredits = async () => {
+    const res = await fetch("https://api.dehashed.com/v2/whois/credits", {
+        method: "GET",
+        headers: {
+            "Dehashed-Api-Key": DEHASHED_API_KEY,
+        }
+    })
+    return await res.json()
+}
+
+const main = async () => {
+    const testResult = await getWHOISCredits()
+    console.log(JSON.stringify(testResult, null, 2))
+}
+
+main()

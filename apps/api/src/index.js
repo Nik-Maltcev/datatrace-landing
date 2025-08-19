@@ -392,7 +392,7 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 const DeepSeekService = require('./services/DeepSeekService');
 const KimiService = require('./services/KimiService');
 
-const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4');
+const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-5');
 const deepseekService = new DeepSeekService(
   process.env.DEEPSEEK_API_KEY,
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
@@ -410,7 +410,12 @@ try {
 }
 
 // Choose AI services by use case
-const companyAIService = deepseekService.isAvailable() ? deepseekService : openaiService;
+// Prefer GPT-5 (OpenAI) for company summaries if available; otherwise fall back
+const companyAIService = (
+  openaiService.isAvailable() &&
+  typeof openaiService.isGPT5Model === 'function' &&
+  openaiService.isGPT5Model()
+) ? openaiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
 const leaksAIService = kimiService.isAvailable() ? kimiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
 
 console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ?

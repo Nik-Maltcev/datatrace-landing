@@ -1364,55 +1364,63 @@
       }, 500);
     }
 
-    // GPT-5 поиск утечек
+    // GPT-5 поиск утечек с реальными данными
     async function performGPT5Search(query) {
       console.log('🤖 Starting GPT-5 leak search for:', query);
       
-      // Шаг 1: Создаем тестовые данные для демонстрации
-      updateProgress(20, 'Подготовка данных...');
-      
-      const mockResults = [
-        {
-          name: 'ITP',
-          ok: true,
-          meta: { records: 15 },
-          items: {
-            'База клиентов Альфастрахование [2023]': [
-              { phone: query, email: 'test@example.com', name: 'Тестовый пользователь' }
-            ],
-            'База клиентов Максавит [2024]': [
-              { phone: query, address: 'Москва, ул. Тестовая, 1' }
-            ]
-          }
-        },
-        {
-          name: 'Dyxless',
-          ok: true,
-          items: [
-            { phone: query, source: 'leak_2023', date: '2023-05-15' },
-            { phone: query, source: 'leak_2024', date: '2024-01-20' }
-          ]
-        },
-        {
-          name: 'LeakOsint',
-          ok: false,
-          error: { message: 'Сервис временно недоступен' }
-        },
-        {
-          name: 'Usersbox',
-          ok: true,
-          items: [],
-          meta: { records: 0 }
-        }
+      const allResults = [];
+      const sources = [
+        { name: 'ITP', step: 1 },
+        { name: 'Dyxless', step: 2 },
+        { name: 'LeakOsint', step: 3 },
+        { name: 'Usersbox', step: 4 },
+        { name: 'Vektor', step: 5 }
       ];
 
-      // Шаг 2: Отображаем результаты по источникам
-      updateProgress(50, 'Анализ источников...');
-      displayLeakResultsBySources(mockResults, null);
+      // Шаг 1-5: Последовательный поиск по источникам
+      for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        const progress = 10 + (i * 12); // 10%, 22%, 34%, 46%, 58%
+        
+        updateProgress(progress, `Поиск в ${source.name}...`);
+        console.log(`🔍 Step ${source.step}: Searching ${source.name}...`);
+        
+        try {
+          const response = await fetch('/api/leak-search-step', {
+            method: 'POST',
+            headers: createAuthHeaders(),
+            body: JSON.stringify({ 
+              query: query, 
+              field: fieldSel.value,
+              step: source.step 
+            })
+          });
 
-      // Шаг 3: Запрос к GPT-4o для анализа
-      updateProgress(75, 'Анализ через GPT-4o...');
-      console.log('🚀 Requesting GPT-4o analysis...');
+          const stepData = await response.json();
+          
+          if (response.ok && stepData.result) {
+            allResults.push(stepData.result);
+            console.log(`✅ ${source.name} completed:`, stepData.result);
+          } else {
+            console.log(`❌ ${source.name} failed:`, stepData.error);
+            allResults.push({ name: source.name, ok: false, error: stepData.error });
+          }
+        } catch (error) {
+          console.error(`💥 Error in ${source.name}:`, error);
+          allResults.push({ name: source.name, ok: false, error: error.message });
+        }
+        
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      // Шаг 6: Отображаем результаты по источникам
+      updateProgress(70, 'Анализ источников...');
+      displayLeakResultsBySources(allResults, null);
+
+      // Шаг 7: Запрос к GPT-5 для анализа
+      updateProgress(85, 'Анализ через GPT-5...');
+      console.log('🚀 Requesting GPT-5 analysis...');
       
       try {
         const response = await fetch('/api/summarize-gpt5', {
@@ -1421,7 +1429,7 @@
           body: JSON.stringify({
             query: query,
             field: fieldSel.value,
-            results: mockResults
+            results: allResults
           })
         });
 
@@ -1432,7 +1440,7 @@
         const aiData = await response.json();
         console.log('✅ GPT-5 analysis received:', aiData);
 
-        // Шаг 4: Отображаем AI анализ
+        // Шаг 8: Отображаем AI анализ
         if (aiData.ok && aiData.summary) {
           displayGPT5Summary(aiData);
         } else {
@@ -1444,10 +1452,13 @@
         displayGPT5Error(error.message);
       }
 
-      // Шаг 5: Завершение
+      // Шаг 9: Завершение
       updateProgress(100, 'Завершено');
       setTimeout(() => {
         hideProgress();
+        if (allResults.length === 0) {
+          results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
+        }
       }, 500);
     }
 
@@ -1457,29 +1468,80 @@
       const summary = aiData.summary;
 
       let html = `
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 25px; margin-bottom: 20px;">
-          <h3 style="margin-bottom: 15px; font-size: 1.3rem;">🤖 Анализ GPT-4o</h3>
-          <div style="display: inline-block; padding: 6px 15px; border-radius: 20px; font-weight: 600; margin-bottom: 15px; background: ${getRiskColor(summary.risk_level)};">
-            🚨 Уровень риска: ${summary.risk_level || 'Средний'}
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+          <h3 style="margin-bottom: 20px; font-size: 1.4rem; display: flex; align-items: center; gap: 10px;">
+            🤖 Анализ GPT-5
+            <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: normal;">
+              ${aiData.model || 'gpt-5'}
+            </span>
+          </h3>
+          
+          <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="display: inline-block; padding: 8px 16px; border-radius: 25px; font-weight: 600; background: ${getRiskColor(summary.risk_level)}; color: white;">
+              🚨 Уровень риска: ${summary.risk_level || 'Средний'}
+            </div>
+            <div style="display: inline-block; padding: 8px 16px; border-radius: 25px; font-weight: 600; background: ${summary.found ? 'rgba(40, 167, 69, 0.9)' : 'rgba(108, 117, 125, 0.9)'}; color: white;">
+              ${summary.found ? '✅ Данные найдены' : '❌ Данные не найдены'}
+            </div>
           </div>
-          <p style="margin-bottom: 15px;"><strong>Найдено данных:</strong> ${summary.found ? 'Да' : 'Нет'}</p>
       `;
+
+      // Информация о найденной персоне
+      if (summary.person && (summary.person.phones?.length > 0 || summary.person.emails?.length > 0 || summary.person.usernames?.length > 0)) {
+        html += `
+          <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h4 style="margin-bottom: 15px; font-size: 1.1rem;">👤 Найденная информация о персоне:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              ${summary.person.phones?.length > 0 ? `
+                <div>
+                  <div style="font-weight: 600; margin-bottom: 5px;">📞 Телефоны:</div>
+                  <div style="opacity: 0.9;">${summary.person.phones.join(', ')}</div>
+                </div>
+              ` : ''}
+              ${summary.person.emails?.length > 0 ? `
+                <div>
+                  <div style="font-weight: 600; margin-bottom: 5px;">📧 Email:</div>
+                  <div style="opacity: 0.9;">${summary.person.emails.join(', ')}</div>
+                </div>
+              ` : ''}
+              ${summary.person.usernames?.length > 0 ? `
+                <div>
+                  <div style="font-weight: 600; margin-bottom: 5px;">👤 Логины:</div>
+                  <div style="opacity: 0.9;">${summary.person.usernames.join(', ')}</div>
+                </div>
+              ` : ''}
+              ${summary.person.addresses?.length > 0 ? `
+                <div>
+                  <div style="font-weight: 600; margin-bottom: 5px;">🏠 Адреса:</div>
+                  <div style="opacity: 0.9;">${summary.person.addresses.join(', ')}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
 
       if (summary.highlights && summary.highlights.length > 0) {
         html += `
-          <h4 style="margin-bottom: 10px;">🔍 Ключевые находки:</h4>
-          <ul style="margin-bottom: 15px; padding-left: 20px;">
-            ${summary.highlights.map(highlight => `<li style="margin-bottom: 5px;">${highlight}</li>`).join('')}
-          </ul>
+          <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 12px; font-size: 1.1rem;">🔍 Ключевые находки:</h4>
+            <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+              ${summary.highlights.map(highlight => `<li style="margin-bottom: 8px;">${highlight}</li>`).join('')}
+            </ul>
+          </div>
         `;
       }
 
       if (summary.recommendations && summary.recommendations.length > 0) {
         html += `
-          <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin-top: 15px;">
-            <h4 style="margin-bottom: 10px;">💡 Рекомендации:</h4>
-            <ul style="list-style: none; padding: 0;">
-              ${summary.recommendations.map(rec => `<li style="padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">${rec}</li>`).join('')}
+          <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h4 style="margin-bottom: 12px; font-size: 1.1rem;">💡 Рекомендации по безопасности:</h4>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              ${summary.recommendations.map(rec => `
+                <li style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); line-height: 1.5;">
+                  ${rec}
+                </li>
+              `).join('')}
             </ul>
           </div>
         `;
@@ -1487,17 +1549,17 @@
 
       if (summary.summary_stats) {
         html += `
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
-            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;">
-              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 5px;">${summary.summary_stats.total_sources || 0}</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
+              <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px; color: #fff;">${summary.summary_stats.total_sources || 0}</div>
               <div style="font-size: 0.9rem; opacity: 0.8;">Всего источников</div>
             </div>
-            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;">
-              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 5px;">${summary.summary_stats.sources_with_data || 0}</div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
+              <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px; color: #4ade80;">${summary.summary_stats.sources_with_data || 0}</div>
               <div style="font-size: 0.9rem; opacity: 0.8;">С данными</div>
             </div>
-            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;">
-              <div style="font-size: 2rem; font-weight: bold; margin-bottom: 5px;">${summary.summary_stats.total_records || 0}</div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
+              <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px; color: #fbbf24;">${summary.summary_stats.total_records || 0}</div>
               <div style="font-size: 0.9rem; opacity: 0.8;">Всего записей</div>
             </div>
           </div>
@@ -1506,17 +1568,19 @@
 
       if (summary.ai_analysis) {
         html += `
-          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
-            <h4 style="margin-bottom: 10px;">📋 Подробный анализ:</h4>
-            <p>${summary.ai_analysis}</p>
+          <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; margin-top: 20px;">
+            <h4 style="margin-bottom: 12px; font-size: 1.1rem;">📋 Подробный анализ:</h4>
+            <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; line-height: 1.6;">
+              ${summary.ai_analysis}
+            </div>
           </div>
         `;
       }
 
       html += `
-        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
-          Модель: ${aiData.model} | Провайдер: ${aiData.provider}
-          ${aiData.usage ? ` | Токены: ${aiData.usage.total_tokens}` : ''}
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem; opacity: 0.8; text-align: center;">
+          <div>Модель: ${aiData.model || 'gpt-5'} | Провайдер: ${aiData.provider || 'OpenAI'}</div>
+          ${aiData.usage ? `<div style="margin-top: 5px;">Использовано токенов: ${aiData.usage.total_tokens}</div>` : ''}
         </div>
       </div>
       `;
@@ -1791,8 +1855,8 @@
         
         if (aiData.ok && aiData.summary) {
           console.log('✅ Displaying AI processed company results');
-          // Показываем результаты по источникам
-          displayCompanyResultsBySources(data.results);
+          // Показываем результаты по источникам с учетом AI-обработки
+          displayCompanyResultsBySources(data.results, aiData.summary);
           
           // Показываем ИИ анализ
           const summaryEl = document.getElementById('summary');
@@ -1852,11 +1916,11 @@
       }
       
       // Руководство
-      if (summary.ceo && summary.ceo.name) {
+      if (summary.ceo && (summary.ceo.name || summary.ceo.fio)) {
         html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">👤 Руководство</div>';
-        html += `<div style="margin-bottom: 8px;"><strong>Руководитель:</strong> ${summary.ceo.name}`;
-        if (summary.ceo.position) {
-          html += ` (${summary.ceo.position})`;
+        html += `<div style="margin-bottom: 8px;"><strong>Руководитель:</strong> ${summary.ceo.name || summary.ceo.fio}`;
+        if (summary.ceo.position || summary.ceo.post) {
+          html += ` (${summary.ceo.position || summary.ceo.post})`;
         }
         html += '</div>';
       }
@@ -1882,8 +1946,9 @@
       }
       
       // Если есть общая сводка
-      if (summary.summary) {
-        html += `<div style="margin-top: 16px; padding: 12px; background: #f3f4f6; border-left: 4px solid #6b7280;">${summary.summary}</div>`;
+      if (summary.summary || summary.ai_analysis) {
+        const text = summary.summary || summary.ai_analysis;
+        html += `<div style="margin-top: 16px; padding: 12px; background: #f3f4f6; border-left: 4px solid #6b7280;">${text}</div>`;
       }
       
       html += '</div>';
