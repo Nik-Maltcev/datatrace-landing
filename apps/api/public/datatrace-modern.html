@@ -369,6 +369,10 @@
           <option value="inn">ИНН</option>
           <option value="snils">СНИЛС</option>
         </select>
+        <select id="companySource" class="select-field hidden">
+          <option value="datanewton">Datanewton</option>
+          <option value="checko">Checko</option>
+        </select>
         <input id="q" type="text" placeholder="Например: +79990000000" class="input-field" />
         <button id="btn" class="btn-primary">Проверить</button>
       </div>
@@ -435,6 +439,7 @@
     // Основные элементы
     const q = document.getElementById('q');
     const fieldSel = document.getElementById('field');
+    const companySourceSel = document.getElementById('companySource');
     const btn = document.getElementById('btn');
     const modeLeaks = document.getElementById('modeLeaks');
     const modeCompany = document.getElementById('modeCompany');
@@ -502,6 +507,7 @@
         heroDescription.textContent = 'Получите детальную информацию о компании по ИНН из официальных источников';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
+        companySourceSel.classList.remove('hidden');
       } else if (currentMode === 'password') {
         heroTitle.textContent = 'Проверка пароля';
         heroDescription.textContent = 'Проверьте, был ли ваш пароль скомпрометирован в утечках данных';
@@ -517,6 +523,7 @@
         heroDescription.textContent = 'Проверим ваши персональные данные по всем доступным источникам утечек и предоставим детальный анализ';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
+        companySourceSel.classList.add('hidden');
       }
     }
 
@@ -1298,6 +1305,46 @@
         { name: 'Datanewton', step: 1 },
         { name: 'Checko', step: 2 }
       ];
+
+      // Если выбран конкретный источник, запрашиваем только его и показываем сырой JSON
+      const selected = companySourceSel && !companySourceSel.classList.contains('hidden') ? companySourceSel.value : null;
+
+      if (selected) {
+        const one = selected === 'datanewton' ? sources[0] : sources[1];
+        updateProgress(35, `Поиск в ${one.name}...`);
+        try {
+          const response = await fetch('/api/company-search-step', {
+            method: 'POST',
+            headers: createAuthHeaders(),
+            body: JSON.stringify({ inn: query, step: one.step })
+          });
+          const stepData = await response.json();
+          if (response.ok && stepData.result) {
+            const resObj = stepData.result;
+            results.innerHTML = `
+              <div class="result-card open">
+                <div class="result-header" onclick="toggleResult(this)">
+                  <div class="result-title">${resObj.name || one.name}</div>
+                  <span class="caret">▶</span>
+                </div>
+                <div class="result-body" style="display:block;">
+                  <pre style="white-space:pre-wrap; font-size:12px;">${escapeHtml(JSON.stringify(resObj.items || resObj.error || {}, null, 2))}</pre>
+                </div>
+              </div>`;
+            updateProgress(100, 'Готово');
+            hideProgress();
+            return; // не идём в ИИ и другие источники
+          } else {
+            results.innerHTML = `<div class="result-card"><div class="result-body" style="display:block; color:#dc2626;">Ошибка: ${escapeHtml(JSON.stringify(stepData.error || 'Неизвестная ошибка'))}</div></div>`;
+            hideProgress();
+            return;
+          }
+        } catch (e) {
+          results.innerHTML = `<div class="result-card"><div class="result-body" style="display:block; color:#dc2626;">Ошибка запроса: ${escapeHtml(e.message)}</div></div>`;
+          hideProgress();
+          return;
+        }
+      }
 
       // Шаг 1-2: Последовательный поиск по источникам
       for (let i = 0; i < sources.length; i++) {
