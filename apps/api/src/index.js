@@ -1068,6 +1068,7 @@ function compactResults(results) {
   return out;
 }
 
+<<<<<<< fix/openai-json-requests
 function optimizeDataForAI(compact) {
   const optimized = {};
 
@@ -1127,147 +1128,8 @@ function optimizeDataForAI(compact) {
   return optimized;
 }
 
-function createLeakFallbackSummary(query, field, compact) {
-  let found = false;
-  let sources = {};
-  let highlights = [];
-  let person = {
-    name: null,
-    phones: [],
-    emails: [],
-    usernames: [],
-    ids: [],
-    addresses: []
-  };
-
-  // Анализируем результаты каждого источника
-  for (const [sourceName, sourceData] of Object.entries(compact)) {
-    if (sourceData.ok && sourceData.data) {
-      found = true;
-      let foundCount = 0;
-
-      if (sourceName === 'ITP' && typeof sourceData.data === 'object') {
-        for (const [category, items] of Object.entries(sourceData.data)) {
-          if (Array.isArray(items) && items.length > 0) {
-            foundCount += items.length;
-            highlights.push(`${category}: ${items.length} записей`);
-          }
-        }
-      } else if (Array.isArray(sourceData.data)) {
-        foundCount = sourceData.data.length;
-        if (foundCount > 0) {
-          highlights.push(`${sourceName}: ${foundCount} записей`);
-        }
-      }
-
-      sources[sourceName] = { foundCount, notes: foundCount > 0 ? 'Данные найдены' : 'Нет данных' };
-    } else {
-      sources[sourceName] = { foundCount: 0, notes: 'Источник недоступен или нет данных' };
-    }
-  }
-
-  // Если ничего не найдено
-  if (!found) {
-    highlights.push('Информация по запросу не найдена');
-  }
-
-  return {
-    found,
-    sources,
-    highlights,
-    person
-  };
-}
-
-function compactResults(results) {
-  const out = {};
-  for (const r of results || []) {
-    if (!r || !r.name) continue;
-    if (r.name === 'ITP') {
-      const groups = r.items || {};
-      const obj = {};
-      const names = Object.keys(groups).slice(0, 3);
-      for (const key of names) {
-        const arr = Array.isArray(groups[key]?.data) ? groups[key].data.slice(0, 3) : [];
-        obj[key] = arr;
-      }
-      out.ITP = { ok: r.ok, meta: r.meta, data: obj };
-    } else if (r.name === 'Dyxless') {
-      const arr = Array.isArray(r.items) ? r.items.slice(0, 8) : [];
-      out.Dyxless = { ok: r.ok, meta: r.meta, data: arr };
-    } else if (r.name === 'LeakOsint') {
-      const arr = Array.isArray(r.items) ? r.items.slice(0, 3).map(g => ({ db: g.db, info: g.info, data: Array.isArray(g.data) ? g.data.slice(0, 3) : [] })) : [];
-      out.LeakOsint = { ok: r.ok, data: arr };
-    } else if (r.name === 'Usersbox') {
-      const arr = Array.isArray(r.items) ? r.items.slice(0, 10) : [];
-      out.Usersbox = { ok: r.ok, meta: r.meta, data: arr };
-    } else if (r.name === 'Vektor') {
-      out.Vektor = { ok: r.ok, data: r.items };
-    }
-  }
-  return out;
-}
-
-function optimizeDataForAI(compact) {
-  const optimized = {};
-
-  for (const [sourceName, sourceData] of Object.entries(compact)) {
-    if (!sourceData.ok || !sourceData.data) {
-      optimized[sourceName] = { ok: false, count: 0 };
-      continue;
-    }
-
-    const summary = { ok: true, count: 0, samples: [], databases: [] };
-
-    if (sourceName === 'ITP') {
-      for (const [groupName, records] of Object.entries(sourceData.data)) {
-        if (Array.isArray(records)) {
-          summary.count += records.length;
-          summary.samples.push(...records.slice(0, 2)); // Только первые 2 записи
-          summary.databases.push(groupName);
-        }
-      }
-    } else if (sourceName === 'Dyxless') {
-      if (Array.isArray(sourceData.data)) {
-        summary.count = sourceData.data.length;
-        summary.samples = sourceData.data.slice(0, 3); // Только первые 3 записи
-        // Извлекаем уникальные базы данных
-        const dbs = [...new Set(sourceData.data.map(r => r.database).filter(Boolean))];
-        summary.databases = dbs.slice(0, 5); // Максимум 5 баз
-      }
-    } else if (sourceName === 'LeakOsint') {
-      if (Array.isArray(sourceData.data)) {
-        summary.databases = sourceData.data.map(leak => leak.db).filter(Boolean);
-        summary.count = sourceData.data.reduce((sum, leak) => sum + (leak.data?.length || 0), 0);
-        // Берем по одной записи из каждой базы
-        sourceData.data.forEach(leak => {
-          if (leak.data && leak.data.length > 0) {
-            summary.samples.push(leak.data[0]);
-          }
-        });
-      }
-    } else if (sourceName === 'Usersbox') {
-      if (Array.isArray(sourceData.data)) {
-        summary.count = sourceData.data.length;
-        summary.samples = sourceData.data.slice(0, 3);
-      }
-    } else if (sourceName === 'Vektor') {
-      if (Array.isArray(sourceData.data)) {
-        summary.count = sourceData.data.length;
-        summary.samples = sourceData.data.slice(0, 3);
-      } else if (sourceData.data) {
-        summary.count = 1;
-        summary.samples = [sourceData.data];
-      }
-    }
-
-    optimized[sourceName] = summary;
-  }
-
-  return optimized;
-}
-
-// Функция для создания fallback сводки поиска утечек без OpenAI
+=======
+>>>>>>> main
 function createLeakFallbackSummary(query, field, compact) {
   let found = false;
   let sources = {};
@@ -1998,5 +1860,3 @@ app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`Server listening on http://localhost:${PORT}`);
 });
-
-
