@@ -1859,10 +1859,13 @@
           if (processed) {
             // Есть нормальные данные от ИИ
             displayCompanyAIResult(processed, 'Обработано ИИ');
+            // Покажем источники в структурированном виде по данным AI
+            displayCompanyResultsBySources(data.results, processed);
           } else {
             console.log('ℹ️ AI returned placeholder; building summary from sources');
             const built = buildCompanySummaryFromSources(data.results);
             displayCompanyAIResult(built, 'Собрано из источников');
+            displayCompanyResultsBySources(data.results, built);
           }
           
           // Дополнительно выводим текстовый анализ
