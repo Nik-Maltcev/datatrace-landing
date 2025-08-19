@@ -1855,8 +1855,15 @@
         
         if (aiData.ok && aiData.summary) {
           console.log('✅ Displaying AI processed company card');
-          // Показываем только красиво структурированную карточку компании после обработки ИИ
-          displayCompanyAIResult(aiData.summary);
+          const processed = hasRealCompanyData(aiData.summary) ? aiData.summary : null;
+          if (processed) {
+            // Есть нормальные данные от ИИ
+            displayCompanyAIResult(processed, 'Обработано ИИ');
+          } else {
+            console.log('ℹ️ AI returned placeholder; building summary from sources');
+            const built = buildCompanySummaryFromSources(data.results);
+            displayCompanyAIResult(built, 'Собрано из источников');
+          }
           
           // Дополнительно выводим текстовый анализ
           const summaryEl = document.getElementById('summary');
@@ -2045,7 +2052,7 @@
       }
     }
 
-    function displayCompanyAIResult(summary) {
+    function displayCompanyAIResult(summary, processedLabel = 'Обработано ИИ') {
       if (!summary || !summary.company) {
         results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных о компании</div></div>';
         return;
@@ -2059,7 +2066,7 @@
         <div class="result-header" onclick="toggleResult(this)">
           <div class="result-title">
             <strong>${company.name || company.shortName || 'Неизвестная компания'}</strong>
-            <span class="status-badge success">Обработано ИИ</span>
+            <span class="status-badge success">${processedLabel}</span>
             <span class="caret">▼</span>
           </div>
         </div>
@@ -2140,6 +2147,116 @@
 
       html += '</div></div>';
       results.innerHTML = html;
+    }
+
+    function hasRealCompanyData(summary) {
+      if (!summary || !summary.company) return false;
+      const c = summary.company;
+      const hasCore = !!(c.name || c.inn || c.status || c.address || c.activity || c.ogrn || c.kpp);
+      if (!hasCore) return false;
+      // treat explicit placeholder as not real
+      if ((c.name || '').toLowerCase().includes('информация недоступна')) return false;
+      return true;
+    }
+
+    function buildCompanySummaryFromSources(sourceResults) {
+      const out = {
+        company: {
+          name: null,
+          fullName: null,
+          shortName: null,
+          inn: null,
+          ogrn: null,
+          kpp: null,
+          opf: null,
+          registration_date: null,
+          years_from_registration: null,
+          status: null,
+          address: null,
+          activity: null,
+          charter_capital: null,
+          contacts: { phones: [], emails: [], sites: [] }
+        },
+        ceo: { name: null, fio: null, position: null, post: null },
+        okved: { main: {}, additional: [] },
+        risk_flags: [],
+        notes: []
+      };
+
+      try {
+        (sourceResults || []).forEach((res) => {
+          if (!res || !res.ok || !res.items) return;
+          const items = res.items;
+
+          if ((res.name || '').toLowerCase().includes('datanewton')) {
+            const c = items.counterparty || items;
+            if (!c) return;
+            out.company.inn = out.company.inn || c.inn || null;
+            out.company.ogrn = out.company.ogrn || c.ogrn || null;
+            out.company.name = out.company.name || c.short_name || null;
+            out.company.fullName = out.company.fullName || c.full_name || null;
+            out.company.status = out.company.status || c.status_string || null;
+            if (c.address_block) {
+              out.company.address = out.company.address || c.address_block.line_address || null;
+            }
+            if (c.okved_block && c.okved_block.main_okved) {
+              out.okved.main = out.okved.main.code || out.okved.main.text ? out.okved.main : {
+                code: c.okved_block.main_okved.code,
+                text: c.okved_block.main_okved.value || c.okved_block.main_okved.text,
+                title: c.okved_block.main_okved.title
+              };
+              out.company.activity = out.company.activity || c.okved_block.main_okved.value || c.okved_block.main_okved.text || null;
+            }
+            if (c.manager_block) {
+              out.ceo.name = out.ceo.name || c.manager_block.manager_name || null;
+              out.ceo.position = out.ceo.position || c.manager_block.manager_position || null;
+            }
+            if (c.contact_block) {
+              (c.contact_block.phones || []).forEach(p => { if (!out.company.contacts.phones.includes(p)) out.company.contacts.phones.push(p); });
+              (c.contact_block.emails || []).forEach(e => { if (!out.company.contacts.emails.includes(e)) out.company.contacts.emails.push(e); });
+              (c.contact_block.sites || []).forEach(s => { if (!out.company.contacts.sites.includes(s)) out.company.contacts.sites.push(s); });
+            }
+            if (c.negative_lists_block && Array.isArray(c.negative_lists_block.negative_factors)) {
+              c.negative_lists_block.negative_factors.forEach(f => {
+                const text = f && (f.factor_description || f.text || f.name);
+                if (text && !out.risk_flags.includes(text)) out.risk_flags.push(text);
+              });
+            }
+          }
+
+          if ((res.name || '').toLowerCase().includes('checko')) {
+            const c = items;
+            out.company.inn = out.company.inn || c.inn || null;
+            out.company.ogrn = out.company.ogrn || c.ogrn || null;
+            out.company.name = out.company.name || c.name?.short || null;
+            out.company.fullName = out.company.fullName || c.name?.full || null;
+            out.company.status = out.company.status || c.status?.name || null;
+            out.company.address = out.company.address || c.address?.value || null;
+            out.company.charter_capital = out.company.charter_capital || c.charterCapital?.value || null;
+            if (c.okved?.main) {
+              out.okved.main = out.okved.main.code || out.okved.main.text ? out.okved.main : {
+                code: c.okved.main.code,
+                text: c.okved.main.value || c.okved.main.text,
+                title: c.okved.main.title
+              };
+              out.company.activity = out.company.activity || c.okved.main.value || c.okved.main.text || null;
+            }
+            if (c.director?.name) {
+              out.ceo.name = out.ceo.name || c.director.name;
+            }
+          }
+        });
+      } catch (e) {
+        console.warn('buildCompanySummaryFromSources error:', e.message);
+      }
+
+      // Небольшие заметки
+      if (out.ceo.name) out.notes.push(`Руководитель: ${out.ceo.name}`);
+      if (out.okved.main && (out.okved.main.text || out.okved.main.title)) out.notes.push(`Основная деятельность: ${out.okved.main.text || out.okved.main.title}`);
+
+      // Фоллбек имени
+      if (!out.company.name) out.company.name = out.company.fullName || out.company.shortName || 'Информация недоступна';
+      return out;
     }
 
     function displayCompanyResultsBySources(sourceResults, aiSummary) {
