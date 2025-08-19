@@ -354,7 +354,6 @@
       <div class="flex gap-3 mb-8 justify-center flex-wrap">
         <button id="modeLeaks" class="btn-secondary active">Поиск утечек</button>
         <button id="modeCompany" class="btn-secondary">Проверить компанию</button>
-        <button id="toggleCompanyView" class="btn-secondary" title="Переключение карточка/JSON">JSON</button>
         <button id="modePassword" class="btn-secondary">🔐 Проверить пароль</button>
         <button id="modeGPT5" class="btn-secondary">🤖 Поиск утечек анализ GPT-5</button>
       </div>
@@ -1100,14 +1099,7 @@
     }
 
     // Создание элементов результатов
-    let companyRenderMode = 'json'; // 'json' | 'ui'
-
-    const toggleCompanyView = document.getElementById('toggleCompanyView');
-    toggleCompanyView.addEventListener('click', (e) => {
-      companyRenderMode = companyRenderMode === 'json' ? 'ui' : 'json';
-      e.currentTarget.classList.toggle('active', companyRenderMode === 'json');
-      e.currentTarget.textContent = companyRenderMode === 'json' ? 'JSON' : 'КАРТОЧКА';
-    });
+    // Company results render mode is per-source (Card|JSON) inside each card; no global toggle
     function createResultItem(title, status, data, isOpen = false) {
       const item = document.createElement('div');
       item.className = `result-card ${isOpen ? 'open' : ''}`;
@@ -1846,12 +1838,7 @@
         
         if (!response || !response.ok) {
           console.error('❌ All company endpoints failed or returned errors');
-          // Показываем результаты в выбранном режиме
-          if (companyRenderMode === 'json') {
-            renderCompanyJSON(null, data.results);
-          } else {
-            displayCompanyResultsBySources(data.results);
-          }
+          displayCompanyResultsBySources(data.results);
           
           // Показываем уведомление пользователю
           const summaryEl = document.getElementById('summary');
@@ -1870,12 +1857,8 @@
           console.log('✅ Displaying AI processed company card');
           const processed = hasRealCompanyData(aiData.summary) ? aiData.summary : null;
           const built = processed || buildCompanySummaryFromSources(data.results);
-          if (companyRenderMode === 'json') {
-            renderCompanyJSON({ ...aiData, summary: built }, data.results);
-          } else {
-            displayCompanyAIResult(built, processed ? 'Обработано ИИ' : 'Собрано из источников');
-            displayCompanyResultsBySources(data.results, built);
-          }
+          displayCompanyAIResult(built, processed ? 'Обработано ИИ' : 'Собрано из источников');
+          displayCompanyResultsBySources(data.results, built);
           
           // Дополнительно выводим текстовый анализ
           const summaryEl = document.getElementById('summary');
@@ -1884,12 +1867,8 @@
           summaryEl.style.display = 'block';
         } else {
           console.error('❌ AI processing failed:', aiData);
-          // Если OpenAI не сработал, показываем результаты в выбранном режиме
-          if (companyRenderMode === 'json') {
-            renderCompanyJSON(null, data.results);
-          } else {
-            displayCompanyResultsBySources(data.results);
-          }
+          // Если OpenAI не сработал, показываем результаты по источникам
+          displayCompanyResultsBySources(data.results);
           
           // Показываем уведомление пользователю
           const summaryEl = document.getElementById('summary');
@@ -1899,12 +1878,8 @@
         }
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа компании:', error);
-        // Показываем результаты без ИИ анализа в выбранном режиме
-        if (companyRenderMode === 'json') {
-          renderCompanyJSON(null, data.results);
-        } else {
-          displayCompanyResultsBySources(data.results);
-        }
+        // Показываем результаты без ИИ анализа
+        displayCompanyResultsBySources(data.results);
         
         // Показываем уведомление об ошибке
         const summaryEl = document.getElementById('summary');
@@ -1914,30 +1889,7 @@
       }
     }
 
-    function renderCompanyJSON(aiData, sourceResults) {
-      const payload = {
-        ok: !!(aiData && aiData.ok),
-        provider: aiData?.provider || undefined,
-        model: aiData?.model || undefined,
-        summary: aiData?.summary || buildCompanySummaryFromSources(sourceResults || []),
-        sources: {}
-      };
-      (sourceResults || []).forEach(r => {
-        if (!r || !r.name) return;
-        payload.sources[r.name] = r.ok ? (r.items || null) : { error: r.error || 'Источник недоступен' };
-      });
-      const pretty = JSON.stringify(payload, null, 2);
-      results.innerHTML = `
-        <div class="result-card open">
-          <div class="result-header" onclick="toggleResult(this)">
-            <div class="result-title">JSON результат (компания)</div>
-            <span class="caret">▶</span>
-          </div>
-          <div class="result-body">
-            <pre style="white-space:pre-wrap; font-size:12px;">${escapeHtml(pretty)}</pre>
-          </div>
-        </div>`;
-    }
+    // No global company JSON card; each source card has its own JSON view
 
     function escapeHtml(s) {
       return String(s)
