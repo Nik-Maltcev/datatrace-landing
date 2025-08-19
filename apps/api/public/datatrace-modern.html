@@ -2401,19 +2401,7 @@
           if (filter === 'checko' && !lname.includes('checko')) return;
 
           const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
-          let displayData = result.items || result.error;
-
-          if (result.ok && result.items) {
-            if (lname.includes('datanewton')) {
-              displayData = renderDatanewtonFull(result.items, aiSummary);
-            } else if (lname.includes('checko')) {
-              displayData = renderCheckoFull(result.items, aiSummary);
-            } else if (aiSummary) {
-              displayData = formatAIDataForSource(aiSummary, name);
-            }
-          }
-
-          const item = createResultItem(name, status, displayData);
+          const item = createCompanySourceItem(name, status, result.items || result.error, lname, aiSummary);
           content.appendChild(item);
         });
       };
@@ -2432,6 +2420,75 @@
       // Initial render
       setActive(dn ? 'datanewton' : (ck ? 'checko' : 'all'));
       render(dn ? 'datanewton' : (ck ? 'checko' : 'all'));
+    }
+
+    function createCompanySourceItem(title, status, data, lname, aiSummary) {
+      const item = document.createElement('div');
+      item.className = 'result-card open';
+
+      const statusClass = status === 'success' ? 'status-found' :
+        status === 'clean' ? 'status-clean' :
+        status === 'danger' ? 'status-found' : 'status-error';
+      const statusText = status === 'success' ? 'Найдено' :
+        status === 'clean' ? 'Чисто' :
+        status === 'danger' ? 'Найдено' : 'Ошибка';
+
+      const selectorId = `view-${Math.random().toString(36).slice(2)}`;
+      const bodyId = `body-${Math.random().toString(36).slice(2)}`;
+
+      item.innerHTML = `
+        <div class="result-header">
+          <div class="result-title">${title}</div>
+          <div class="flex items-center gap-3">
+            <select id="${selectorId}" class="select-field" style="min-width: 150px;">
+              <option value="card">Карточка</option>
+              <option value="json">JSON</option>
+            </select>
+            <span class="status-badge ${statusClass}">${statusText}</span>
+            <span class="caret">▶</span>
+          </div>
+        </div>
+        <div class="result-body" id="${bodyId}" style="display: block;"></div>
+      `;
+
+      const bodyEl = item.querySelector(`#${bodyId}`);
+      const selectEl = item.querySelector(`#${selectorId}`);
+
+      const renderView = (mode) => {
+        if (mode === 'json') {
+          const raw = typeof data === 'object' ? data : { error: String(data || 'Нет данных') };
+          bodyEl.innerHTML = `<pre style="white-space:pre-wrap; font-size:12px;">${escapeHtml(JSON.stringify(raw, null, 2))}</pre>`;
+          return;
+        }
+        // card view
+        if (lname && lname.includes('datanewton') && typeof data === 'object') {
+          bodyEl.innerHTML = renderDatanewtonFull(data, aiSummary);
+          return;
+        }
+        if (lname && lname.includes('checko') && typeof data === 'object') {
+          bodyEl.innerHTML = renderCheckoFull(data, aiSummary);
+          return;
+        }
+        if (aiSummary) {
+          const mapped = formatAIDataForSource(aiSummary, title);
+          bodyEl.innerHTML = formatResultData(mapped);
+        } else {
+          bodyEl.innerHTML = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
+        }
+      };
+
+      renderView('card');
+      selectEl.addEventListener('change', (e) => renderView(e.target.value));
+
+      // expand/collapse on header click
+      item.querySelector('.result-header').addEventListener('click', (ev) => {
+        if (ev.target === selectEl) return; // don't toggle on select clicks
+        item.classList.toggle('open');
+        const body = item.querySelector('.result-body');
+        body.style.display = item.classList.contains('open') ? 'block' : 'none';
+      });
+
+      return item;
     }
 
     function formatAIDataForSource(aiSummary, sourceName) {
