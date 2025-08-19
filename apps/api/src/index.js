@@ -1211,6 +1211,93 @@ function optimizeDataForAI(compact) {
   return optimized;
 }
 
+// Нормализация данных компании для передачи в AI (до GPT)
+function optimizeCompanyDataForAI(results) {
+  const summary = {
+    company: {
+      name: null,
+      fullName: null,
+      shortName: null,
+      inn: null,
+      ogrn: null,
+      kpp: null,
+      opf: null,
+      registration_date: null,
+      years_from_registration: null,
+      status: null,
+      address: null,
+      activity: null,
+      charter_capital: null,
+      contacts: { phones: [], emails: [], sites: [] }
+    },
+    ceo: { name: null, fio: null, position: null, post: null },
+    managers: [],
+    owners: [],
+    okved: { main: {}, additional: [] },
+    risk_flags: [],
+    notes: []
+  };
+
+  try {
+    for (const r of results || []) {
+      if (!r || !r.ok || !r.items) continue;
+      const it = r.items;
+
+      // Название / ИНН / базовые поля (варианты ключей в разных источниках)
+      summary.company.shortName = summary.company.shortName || it?.company_names?.short_name || it?.short_name || it?.shortName || null;
+      summary.company.fullName = summary.company.fullName || it?.company_names?.full_name || it?.full_name || it?.fullName || null;
+      summary.company.name = summary.company.name || it?.name || summary.company.shortName || summary.company.fullName || null;
+      summary.company.inn = summary.company.inn || it?.inn || it?.ИНН || null;
+      summary.company.ogrn = summary.company.ogrn || it?.ogrn || it?.ОГРН || null;
+      summary.company.kpp = summary.company.kpp || it?.kpp || it?.КПП || null;
+      summary.company.opf = summary.company.opf || it?.opf || it?.OPF || it?."ОПФ" || null;
+      summary.company.status = summary.company.status || it?.status || it?.state || null;
+
+      // Адрес
+      summary.company.address = summary.company.address || it?.address?.line_address || it?.address || null;
+
+      // Деятельность
+      summary.company.activity = summary.company.activity || it?.okved_main?.value || it?.activity || null;
+
+      // Контакты
+      if (Array.isArray(it?.phones)) summary.company.contacts.phones = it.phones;
+      if (Array.isArray(it?.emails)) summary.company.contacts.emails = it.emails;
+      if (Array.isArray(it?.sites)) summary.company.contacts.sites = it.sites;
+
+      // Руководство
+      if (it?.ceo?.name || it?.manager?.name) {
+        summary.ceo.name = summary.ceo.name || it?.ceo?.name || it?.manager?.name || null;
+        summary.ceo.fio = summary.ceo.fio || it?.ceo?.fio || it?.manager?.fio || null;
+        summary.ceo.position = summary.ceo.position || it?.ceo?.position || it?.manager?.position || null;
+        summary.ceo.post = summary.ceo.post || it?.ceo?.post || it?.manager?.post || null;
+      }
+
+      // ОКВЭД
+      if (it?.okved_main) {
+        summary.okved.main = summary.okved.main || {
+          code: it?.okved_main?.code,
+          text: it?.okved_main?.value || it?.okved_main?.text,
+          title: it?.okved_main?.title
+        };
+      }
+      if (Array.isArray(it?.okveds)) {
+        summary.okved.additional = it.okveds.slice(0, 10).map(x => ({ code: x.code, text: x.value || x.text, title: x.title }));
+      }
+
+      // Негативные списки / риски
+      if (Array.isArray(it?.negative_lists)) {
+        for (const flag of it.negative_lists) {
+          if (flag && typeof flag === 'string') summary.risk_flags.push(flag);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('optimizeCompanyDataForAI error:', e.message);
+  }
+
+  return summary;
+}
+
 // Функция для создания fallback сводки поиска утечек без OpenAI
 function createLeakFallbackSummary(query, field, compact) {
   let found = false;
