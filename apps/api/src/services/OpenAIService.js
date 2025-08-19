@@ -1,7 +1,7 @@
 const OpenAI = require('openai');
 
 class OpenAIService {
-  constructor(apiKey, model = 'gpt-4') {
+  constructor(apiKey, model = 'gpt-5') {
     this.apiKey = apiKey;
     this.model = model;
     this.client = null;
@@ -36,7 +36,8 @@ class OpenAIService {
 
   async generateSummary(data, type = 'company') {
     if (!this.isAvailable()) {
-      throw new Error('OpenAI service not available');
+      // Provide a structured fallback immediately to avoid breaking flows
+      return this.createFallbackResponse(data, type);
     }
 
     const prompt = this.createPrompt(data, type);

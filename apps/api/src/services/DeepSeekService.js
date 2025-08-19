@@ -73,9 +73,16 @@ class DeepSeekService {
       }
 
       console.log('🎉 DeepSeek response generated successfully');
+      let parsedSummary;
+      try {
+        parsedSummary = this.parseSummaryResponse(aiResponse, type);
+      } catch (parseErr) {
+        parsedSummary = { text: aiResponse, note: 'Parse error, returning raw text' };
+      }
+
       return {
         ok: true,
-        summary: this.parseSummaryResponse(aiResponse, type),
+        summary: parsedSummary,
         provider: 'deepseek',
         model: 'deepseek-chat',
         usage: response.data?.usage
@@ -215,7 +222,7 @@ class DeepSeekService {
     
     let prompt = `Проанализируй информацию о компании с ИНН: ${query} и верни результат в формате JSON.\n\n`;
     
-    results.forEach((result, index) => {
+    (results || []).forEach((result, index) => {
       if (result.ok && result.items) {
         prompt += `=== Источник ${index + 1}: ${result.name} ===\n`;
         // Сокращаем данные для уменьшения размера промпта
@@ -255,7 +262,7 @@ class DeepSeekService {
     
     let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип: ${field})\n\n`;
     
-    results.forEach((result, index) => {
+    (results || []).forEach((result, index) => {
       if (result.ok && result.items) {
         prompt += `=== Источник ${index + 1}: ${result.name} ===\n`;
         if (Array.isArray(result.items)) {
