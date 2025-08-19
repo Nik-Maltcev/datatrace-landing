@@ -1250,7 +1250,7 @@ function optimizeCompanyDataForAI(results) {
       summary.company.inn = summary.company.inn || it?.inn || it?.ИНН || null;
       summary.company.ogrn = summary.company.ogrn || it?.ogrn || it?.ОГРН || null;
       summary.company.kpp = summary.company.kpp || it?.kpp || it?.КПП || null;
-      summary.company.opf = summary.company.opf || it?.opf || it?.OPF || it?."ОПФ" || null;
+      summary.company.opf = summary.company.opf || it?.opf || it?.OPF || it?.["ОПФ"] || null;
       summary.company.status = summary.company.status || it?.status || it?.state || null;
 
       // Адрес
