@@ -2309,8 +2309,12 @@
           const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
           let displayData = result.items || result.error;
 
-          if (aiSummary && result.ok && result.items) {
-            if (lname.includes('datanewton') || lname.includes('checko')) {
+          if (result.ok && result.items) {
+            if (lname.includes('datanewton')) {
+              displayData = renderDatanewtonFull(result.items, aiSummary);
+            } else if (lname.includes('checko')) {
+              displayData = renderCheckoFull(result.items, aiSummary);
+            } else if (aiSummary) {
               displayData = formatAIDataForSource(aiSummary, name);
             }
           }
@@ -2397,6 +2401,145 @@
       }
 
       return formattedData;
+    }
+
+    // Полное форматирование Checko (расширенный набор полей)
+    function renderCheckoFull(items, aiSummary) {
+      const company = (aiSummary && aiSummary.company) || {};
+      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
+      let html = '<div class="data-grid">';
+      html += htmlRow('Название', company.name || items?.name?.short || items?.name?.full);
+      if (items?.name?.full && items?.name?.short && items.name.full !== items.name.short) {
+        html += htmlRow('Полное название', items.name.full);
+      }
+      html += htmlRow('ИНН', company.inn || items?.inn);
+      html += htmlRow('ОГРН', company.ogrn || items?.ogrn);
+      html += htmlRow('КПП', company.kpp || items?.kpp);
+      html += htmlRow('Статус', company.status || items?.status?.name);
+      html += htmlRow('Адрес', company.address || items?.address?.value);
+      html += htmlRow('Уставной капитал', company.charter_capital || items?.charterCapital?.value);
+      const mainOkvedText = company.activity || items?.okved?.main?.value || items?.okved?.main?.text;
+      const mainOkvedCode = items?.okved?.main?.code;
+      html += htmlRow('Основная деятельность', mainOkvedText ? `${mainOkvedText}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
+      html += '</div>';
+
+      // Руководитель
+      const ceoName = (aiSummary && aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio)) || items?.director?.name;
+      const ceoPost = (aiSummary && aiSummary.ceo && (aiSummary.ceo.position || aiSummary.ceo.post)) || items?.director?.position;
+      if (ceoName || ceoPost) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Руководство</h4>';
+        html += '<div class="data-grid">';
+        html += htmlRow('Руководитель', ceoName);
+        html += htmlRow('Должность', ceoPost);
+        html += '</div>';
+      }
+
+      // Учредители
+      if (Array.isArray(items?.founders) && items.founders.length > 0) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Учредители</h4>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px;">';
+        items.founders.slice(0, 25).forEach(f => {
+          const parts = [];
+          if (f?.name) parts.push(f.name);
+          if (f?.inn) parts.push(`ИНН ${f.inn}`);
+          if (f?.shareText) parts.push(f.shareText);
+          if (typeof f?.sharePercent === 'number') parts.push(`${f.sharePercent}%`);
+          html += `<li style="margin-bottom: 4px;">${parts.join(' — ')}</li>`;
+        });
+        if (items.founders.length > 25) {
+          html += `<li style="color:#6b7280;">и еще ${items.founders.length - 25}…</li>`;
+        }
+        html += '</ul>';
+      }
+
+      // Контакты
+      const contacts = items?.contacts || {};
+      const phones = contacts?.phones || company?.contacts?.phones || [];
+      const emails = contacts?.emails || company?.contacts?.emails || [];
+      const sites = contacts?.sites || company?.contacts?.sites || [];
+      if ((phones && phones.length) || (emails && emails.length) || (sites && sites.length)) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Контакты</h4>';
+        html += '<div class="data-grid">';
+        html += htmlRow('Телефоны', phones && phones.length ? phones.join(', ') : null);
+        html += htmlRow('Email', emails && emails.length ? emails.join(', ') : null);
+        html += htmlRow('Сайты', sites && sites.length ? sites.join(', ') : null);
+        html += '</div>';
+      }
+
+      // Лицензии/товарные знаки/подразделения, если есть
+      const licenses = items?.licenses || items?.Лиценз || [];
+      const trademarks = items?.trademarks || items?.ТоварЗнак || [];
+      const branches = items?.branches || items?.Подразд?.Филиал || [];
+      if ((licenses && licenses.length) || (trademarks && trademarks.length) || (branches && branches.length)) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Реестры и активы</h4>';
+        html += '<div class="data-grid">';
+        html += htmlRow('Лицензии', licenses && licenses.length ? `${licenses.length}` : null);
+        html += htmlRow('Товарные знаки', trademarks && trademarks.length ? `${trademarks.length}` : null);
+        html += htmlRow('Филиалы', branches && branches.length ? `${branches.length}` : null);
+        html += '</div>';
+      }
+
+      return html;
+    }
+
+    // Полное форматирование Datanewton (расширенный набор полей)
+    function renderDatanewtonFull(items, aiSummary) {
+      const c = items?.counterparty || items || {};
+      const company = (aiSummary && aiSummary.company) || {};
+      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
+      let html = '<div class="data-grid">';
+      html += htmlRow('Название', company.name || c.short_name || c.full_name);
+      if (c.full_name && c.short_name && c.full_name !== c.short_name) {
+        html += htmlRow('Полное название', c.full_name);
+      }
+      html += htmlRow('ИНН', company.inn || c.inn);
+      html += htmlRow('ОГРН', company.ogrn || c.ogrn);
+      html += htmlRow('Статус', company.status || c.status_string);
+      const addr = company.address || c?.address_block?.line_address;
+      html += htmlRow('Адрес', addr);
+      const mainOkved = company.activity || c?.okved_block?.main_okved?.value || c?.okved_block?.main_okved?.text;
+      const mainOkvedCode = c?.okved_block?.main_okved?.code;
+      html += htmlRow('Основная деятельность', mainOkved ? `${mainOkved}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
+      html += '</div>';
+
+      // Руководитель
+      const ceoName = (aiSummary && aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio)) || c?.manager_block?.manager_name;
+      const ceoPost = (aiSummary && aiSummary.ceo && (aiSummary.ceo.position || aiSummary.ceo.post)) || c?.manager_block?.manager_position;
+      if (ceoName || ceoPost) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Руководство</h4>';
+        html += '<div class="data-grid">';
+        html += htmlRow('Руководитель', ceoName);
+        html += htmlRow('Должность', ceoPost);
+        html += '</div>';
+      }
+
+      // Контакты
+      const phones = c?.contact_block?.phones || company?.contacts?.phones || [];
+      const emails = c?.contact_block?.emails || company?.contacts?.emails || [];
+      const sites = c?.contact_block?.sites || company?.contacts?.sites || [];
+      if ((phones && phones.length) || (emails && emails.length) || (sites && sites.length)) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Контакты</h4>';
+        html += '<div class="data-grid">';
+        html += htmlRow('Телефоны', phones && phones.length ? phones.join(', ') : null);
+        html += htmlRow('Email', emails && emails.length ? emails.join(', ') : null);
+        html += htmlRow('Сайты', sites && sites.length ? sites.join(', ') : null);
+        html += '</div>';
+      }
+
+      // Негативные факторы
+      const negFactors = c?.negative_lists_block?.negative_factors || [];
+      if (negFactors.length > 0) {
+        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600; color:#dc2626;">Негативные факторы</h4>';
+        html += '<ul style="list-style-type: disc; padding-left: 20px; color:#dc2626;">';
+        negFactors.slice(0, 25).forEach(f => {
+          const text = f?.factor_description || f?.name || f?.text;
+          if (text) html += `<li style="margin-bottom: 4px;">${text}</li>`;
+        });
+        if (negFactors.length > 25) html += `<li style="color:#6b7280;">и еще ${negFactors.length - 25}…</li>`;
+        html += '</ul>';
+      }
+
+      return html;
     }
 
     function displayLeakResultsBySources(sourceResults, aiSummary) {
