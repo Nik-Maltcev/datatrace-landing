@@ -857,10 +857,13 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
     console.log('Starting AI request...');
 
     try {
-      console.log('🚀 Calling company AI service generateSummary...');
-      // Используем DeepSeek для анализа компаний
+      console.log('🚀 Optimizing company data before sending to AI...');
+      const optimizedData = optimizeCompanyDataForAI(results);
+
+      console.log('🚀 Calling company AI service generateSummary with optimized data...');
+      // Используем AI сервис для анализа компаний
       const response = await companyAIService.generateSummary(
-        { query: inn, results }, 'company'
+        { query: inn, summary: optimizedData }, 'company'
       );
 
       clearTimeout(requestTimeout);
@@ -933,13 +936,17 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       }
     }, 25000); // 25 секунд общий таймаут
 
-    console.log(`Starting AI request with ${primaryAIService.isAvailable() ?
-      (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'fallback'}...`);
+      console.log(`Starting AI request with ${leaksAIService.isAvailable() ?
+        (kimiService.isAvailable() ? 'Kimi' : (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI'))
+        : 'fallback'}...`);
 
     try {
+      const compact = compactResults(results);
+      const optimizedData = optimizeDataForAI(compact);
+
       // Используем Kimi для анализа утечек
       const response = await leaksAIService.generateSummary(
-        { query, field, results }, 'leaks'
+        { query, field, results: optimizedData }, 'leaks'
       );
 
       clearTimeout(requestTimeout);
@@ -1035,6 +1042,35 @@ function createFallbackSummary(inn, results, companyData) {
 }
 
 // Функция для создания fallback сводки поиска утечек без OpenAI
+function compactResults(results) {
+  const out = {};
+  for (const r of results || []) {
+    if (!r || !r.name) continue;
+    if (r.name === 'ITP') {
+      const groups = r.items || {};
+      const obj = {};
+      const names = Object.keys(groups).slice(0, 3);
+      for (const key of names) {
+        const arr = Array.isArray(groups[key]?.data) ? groups[key].data.slice(0, 3) : [];
+        obj[key] = arr;
+      }
+      out.ITP = { ok: r.ok, meta: r.meta, data: obj };
+    } else if (r.name === 'Dyxless') {
+      const arr = Array.isArray(r.items) ? r.items.slice(0, 8) : [];
+      out.Dyxless = { ok: r.ok, meta: r.meta, data: arr };
+    } else if (r.name === 'LeakOsint') {
+      const arr = Array.isArray(r.items) ? r.items.slice(0, 3).map(g => ({ db: g.db, info: g.info, data: Array.isArray(g.data) ? g.data.slice(0, 3) : [] })) : [];
+      out.LeakOsint = { ok: r.ok, data: arr };
+    } else if (r.name === 'Usersbox') {
+      const arr = Array.isArray(r.items) ? r.items.slice(0, 10) : [];
+      out.Usersbox = { ok: r.ok, meta: r.meta, data: arr };
+    } else if (r.name === 'Vektor') {
+      out.Vektor = { ok: r.ok, data: r.items };
+    }
+  }
+  return out;
+}
+
 function createLeakFallbackSummary(query, field, compact) {
   let found = false;
   let sources = {};
@@ -1956,6 +1992,101 @@ function buildGPT5LeakPrompt(data) {
 }
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
+
+// Helper function to optimize company data before sending to AI
+function optimizeCompanyDataForAI(results) {
+  const summary = {
+    company: {
+      name: null,
+      fullName: null,
+      inn: null,
+      ogrn: null,
+      status: null,
+      address: null,
+      registration_date: null,
+      charter_capital: null,
+      contacts: { phones: [], emails: [], sites: [] },
+    },
+    ceo: { name: null, position: 'Генеральный директор' },
+    okved: { main: null, additional: [] },
+    risk_flags: [],
+    notes: [],
+  };
+
+  if (!Array.isArray(results)) {
+    return summary;
+  }
+
+  // Helper to add unique items to an array
+  const addUnique = (arr, item) => {
+    if (item && !arr.includes(item)) {
+      arr.push(item);
+    }
+  };
+
+  for (const result of results) {
+    if (!result.ok || !result.items) continue;
+
+    const items = result.items.data || result.items; // Handle Datanewton's "data" wrapper
+
+    if (result.name === 'Datanewton') {
+      const companyData = items.counterparty || items;
+      if (!companyData) continue;
+
+      summary.company.inn = summary.company.inn || companyData.inn;
+      summary.company.ogrn = summary.company.ogrn || companyData.ogrn;
+      summary.company.name = summary.company.name || companyData.short_name;
+      summary.company.fullName = summary.company.fullName || companyData.full_name;
+      summary.company.status = summary.company.status || companyData.status_string;
+
+      if (companyData.address_block) {
+        summary.company.address = summary.company.address || companyData.address_block.line_address;
+      }
+      if (companyData.okved_block) {
+        summary.okved.main = summary.okved.main || companyData.okved_block.main_okved.value;
+      }
+      if (companyData.manager_block) {
+        summary.ceo.name = summary.ceo.name || companyData.manager_block.manager_name;
+        summary.ceo.position = summary.ceo.position || companyData.manager_block.manager_position;
+      }
+       if (companyData.contact_block) {
+        companyData.contact_block.phones?.forEach(p => addUnique(summary.company.contacts.phones, p));
+        companyData.contact_block.emails?.forEach(e => addUnique(summary.company.contacts.emails, e));
+        companyData.contact_block.sites?.forEach(s => addUnique(summary.company.contacts.sites, s));
+      }
+      if(companyData.negative_lists_block?.negative_factors) {
+         companyData.negative_lists_block.negative_factors.forEach(f => addUnique(summary.risk_flags, f.factor_description));
+      }
+    } else if (result.name === 'Checko') {
+        if (!items) continue;
+        summary.company.inn = summary.company.inn || items.inn;
+        summary.company.ogrn = summary.company.ogrn || items.ogrn;
+        summary.company.name = summary.company.name || items.name?.short;
+        summary.company.fullName = summary.company.fullName || items.name?.full;
+        summary.company.status = summary.company.status || items.status?.name;
+        summary.company.address = summary.company.address || items.address?.value;
+        summary.company.charter_capital = summary.company.charter_capital || items.charterCapital?.value;
+
+        if (items.okved?.main?.value) {
+            summary.okved.main = summary.okved.main || items.okved.main.value;
+        }
+        if (items.director?.name) {
+            summary.ceo.name = summary.ceo.name || items.director.name;
+        }
+    }
+  }
+
+  // Final cleanup
+  if (summary.ceo.name) {
+      summary.notes.push(`Руководитель: ${summary.ceo.name}`);
+  }
+  if (summary.okved.main) {
+      summary.notes.push(`Основная деятельность: ${summary.okved.main}`);
+  }
+
+  return summary;
+}
+
 
 // GPT-5 тестовая страница
 app.get('/gpt5', (req, res) => {
