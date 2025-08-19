@@ -1837,7 +1837,7 @@
         
         if (!response || !response.ok) {
           console.error('❌ All company endpoints failed or returned errors');
-          // Показываем результаты без ИИ анализа
+          // Показываем результаты без ИИ анализа (не скрываем сырые данные)
           displayCompanyResultsBySources(data.results);
           
           // Показываем уведомление пользователю
@@ -1865,7 +1865,7 @@
           summaryEl.style.display = 'block';
         } else {
           console.error('❌ AI processing failed:', aiData);
-          // Если OpenAI не сработал, показываем fallback по источникам
+          // Если OpenAI не сработал, показываем результаты без AI
           displayCompanyResultsBySources(data.results);
           
           // Показываем уведомление пользователю
