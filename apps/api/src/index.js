@@ -410,12 +410,10 @@ try {
 }
 
 // Choose AI services by use case
-// Prefer GPT-5 (OpenAI) for company summaries if available; otherwise fall back
-const companyAIService = (
-  openaiService.isAvailable() &&
-  typeof openaiService.isGPT5Model === 'function' &&
-  openaiService.isGPT5Model()
-) ? openaiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
+// Company summaries: prefer OpenAI if available (GPT-5 or GPT-4), fallback to DeepSeek, then fallback
+const companyAIService = openaiService.isAvailable()
+  ? openaiService
+  : (deepseekService.isAvailable() ? deepseekService : openaiService);
 const leaksAIService = kimiService.isAvailable() ? kimiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
 
 console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ?

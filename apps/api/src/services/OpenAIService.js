@@ -1,7 +1,7 @@
 const OpenAI = require('openai');
 
 class OpenAIService {
-  constructor(apiKey, model = 'gpt-4') {
+  constructor(apiKey, model = 'gpt-5') {
     this.apiKey = apiKey;
     this.model = model;
     this.client = null;
