@@ -1859,10 +1859,13 @@
           if (processed) {
             // Есть нормальные данные от ИИ
             displayCompanyAIResult(processed, 'Обработано ИИ');
+            // Покажем источники в структурированном виде по данным AI
+            displayCompanyResultsBySources(data.results, processed);
           } else {
             console.log('ℹ️ AI returned placeholder; building summary from sources');
             const built = buildCompanySummaryFromSources(data.results);
             displayCompanyAIResult(built, 'Собрано из источников');
+            displayCompanyResultsBySources(data.results, built);
           }
           
           // Дополнительно выводим текстовый анализ
@@ -2261,29 +2264,76 @@
 
     function displayCompanyResultsBySources(sourceResults, aiSummary) {
       results.innerHTML = '';
-      
+
       if (!sourceResults || sourceResults.length === 0) {
         results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
         return;
       }
 
-      sourceResults.forEach((result, index) => {
-        const sourceName = result.name || `Источник ${index + 1}`;
-        const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
-        
-        let displayData = result.items || result.error;
-        
-        // Если есть обработанные данные от AI, используем их для соответствующего источника
-        if (aiSummary && result.ok && result.items) {
-          // Для Datanewton и Checko показываем обработанные данные
-          if (sourceName.toLowerCase().includes('datanewton') || sourceName.toLowerCase().includes('checko')) {
-            displayData = formatAIDataForSource(aiSummary, sourceName);
+      const lower = (s) => (s || '').toLowerCase();
+      const byName = (name) => (sourceResults || []).find(r => lower(r?.name).includes(name));
+      const dn = byName('datanewton');
+      const ck = byName('checko');
+
+      // Tabs header
+      const tabs = document.createElement('div');
+      tabs.className = 'flex gap-3 mb-4';
+
+      const makeTab = (id, label) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-secondary';
+        btn.textContent = label;
+        btn.dataset.tab = id;
+        return btn;
+      };
+
+      const tabAll = makeTab('all', 'Все');
+      const tabDn = makeTab('datanewton', 'Datanewton');
+      const tabCk = makeTab('checko', 'Checko');
+      tabs.appendChild(tabAll);
+      if (dn) tabs.appendChild(tabDn);
+      if (ck) tabs.appendChild(tabCk);
+      results.appendChild(tabs);
+
+      const content = document.createElement('div');
+      results.appendChild(content);
+
+      const render = (filter) => {
+        content.innerHTML = '';
+        (sourceResults || []).forEach((result, index) => {
+          const name = result.name || `Источник ${index + 1}`;
+          const lname = lower(name);
+          if (filter === 'datanewton' && !lname.includes('datanewton')) return;
+          if (filter === 'checko' && !lname.includes('checko')) return;
+
+          const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
+          let displayData = result.items || result.error;
+
+          if (aiSummary && result.ok && result.items) {
+            if (lname.includes('datanewton') || lname.includes('checko')) {
+              displayData = formatAIDataForSource(aiSummary, name);
+            }
           }
-        }
-        
-        const item = createResultItem(sourceName, status, displayData);
-        results.appendChild(item);
-      });
+
+          const item = createResultItem(name, status, displayData);
+          content.appendChild(item);
+        });
+      };
+
+      const setActive = (id) => {
+        [tabAll, tabDn, tabCk].forEach(btn => {
+          if (!btn) return;
+          btn.classList.toggle('active', btn.dataset.tab === id);
+        });
+      };
+
+      tabAll.addEventListener('click', () => { setActive('all'); render('all'); });
+      if (dn) tabDn.addEventListener('click', () => { setActive('datanewton'); render('datanewton'); });
+      if (ck) tabCk.addEventListener('click', () => { setActive('checko'); render('checko'); });
+
+      // Initial render
+      setActive(dn ? 'datanewton' : (ck ? 'checko' : 'all'));
+      render(dn ? 'datanewton' : (ck ? 'checko' : 'all'));
     }
 
     function formatAIDataForSource(aiSummary, sourceName) {
