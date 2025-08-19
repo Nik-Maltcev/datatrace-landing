@@ -94,31 +94,53 @@ class OpenAIService {
   }
 
   createCompanyPrompt(data) {
-    const system = `Ты — эксперт-аналитик по корпоративным данным. Твоя задача — на основе предоставленных структурированных данных о компании, написать краткий, но емкий аналитический отчет.
-Ответ должен быть строго в формате JSON по указанной схеме.`;
+    const system = `Ты — эксперт-аналитик корпоративных данных (GPT-5 класс). Тебе передают уже сгруппированные структурированные сведения о компании из разных источников.
+Задача: собрать из этого аккуратную, нормализованную сводку и ответить ТОЛЬКО валидным JSON по схеме ниже.`;
 
-    const user = `Проанализируй следующие данные о компании и верни JSON.
+    const user = `Входные данные (сводка по компании для ИНН: ${data.query || 'unknown'}):
 
-**Данные для анализа:**
 \`\`\`json
 ${JSON.stringify(data.summary, null, 2)}
 \`\`\`
 
-**Твоя задача:**
-1.  На основе поля \`risk_flags\` и других данных, сформируй текстовое поле \`ai_analysis\`. Это должен быть аналитический вывод о надежности компании, ее ключевых рисках и сильных сторонах.
-2.  На основе своего анализа, выставь \`reliability_score\` со значением "Высокая", "Средняя", или "Низкая".
-3.  Верни JSON строго в формате:
-    \`\`\`json
-    {
-      "company": ${JSON.stringify(data.summary.company)},
-      "ceo": ${JSON.stringify(data.summary.ceo)},
-      "okved": ${JSON.stringify(data.summary.okved)},
-      "risk_flags": ${JSON.stringify(data.summary.risk_flags)},
-      "ai_analysis": "Твой детальный текстовый анализ здесь...",
-      "reliability_score": "Высокая | Средняя | Низкая"
+Требования:
+- Нормализуй телефоны (формат +7(XXX)XXX-XX-XX), даты (YYYY-MM-DD), убери дубликаты, не выдумывай поля.
+- Если чего-то нет — ставь null или пустой массив.
+- В \"years_from_registration\" посчитай количество полных лет от даты регистрации до сегодня, если есть дата.
+- Верни ТОЛЬКО валидный JSON без пояснений, строго по схеме.
+
+Схема ответа:
+{
+  "company": {
+    "name": "string|null",
+    "fullName": "string|null",
+    "shortName": "string|null",
+    "inn": "string|null",
+    "ogrn": "string|null",
+    "kpp": "string|null",
+    "opf": "string|null",
+    "registration_date": "string|null",
+    "years_from_registration": "number|null",
+    "status": "string|null",
+    "address": "string|null",
+    "activity": "string|null",
+    "charter_capital": "string|null",
+    "contacts": {
+      "phones": ["string"],
+      "emails": ["string"],
+      "sites": ["string"]
     }
-    \`\`\`
-`;
+  },
+  "ceo": { "name": "string|null", "fio": "string|null", "position": "string|null", "post": "string|null" },
+  "managers": [{ "name": "string", "fio": "string|optional", "position": "string|optional", "post": "string|optional" }],
+  "owners": [{ "name": "string", "type": "string|optional", "inn": "string|optional", "share_text": "string|optional", "share_percent": "number|optional" }],
+  "okved": { "main": { "code": "string|optional", "text": "string|optional", "title": "string|optional" }, "additional": [{ "code": "string|optional", "text": "string|optional", "title": "string|optional" }] },
+  "risk_flags": ["string"],
+  "notes": ["string"],
+  "highlights": ["string"],
+  "ai_analysis": "string",
+  "reliability_score": "Высокая|Средняя|Низкая|Требует оценки"
+}`;
     return { system, user };
   }
 
