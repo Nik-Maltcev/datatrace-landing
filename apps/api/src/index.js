@@ -1940,7 +1940,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
             content: prompt
           }
         ],
-        max_tokens: 3000,
+        max_completion_tokens: 3000,
         temperature: 0.3,
         top_p: 0.9
       });

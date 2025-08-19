@@ -40,36 +40,37 @@ class OpenAIService {
 
     try {
       console.log(`🚀 Calling OpenAI Chat Completions API with model ${this.model}...`);
-
-      const timeoutPromise = new Promise((_, reject) => {
+    
+    const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('OpenAI request timed out after 30 seconds')), 30000);
-      });
+    });
 
-      const chatPromise = this.client.chat.completions.create({
+    const chatPromise = this.client.chat.completions.create({
         model: this.model,
-        response_format: { type: 'json_object' },
-        messages: [
+      response_format: { type: 'json_object' },
+      messages: [
           { role: 'system', content: system },
           { role: 'user', content: user }
-        ],
+      ],
         temperature: 0.5,
-        max_tokens: 2048,
-      });
+        // gpt-5 не поддерживает max_tokens, используем max_completion_tokens
+        max_completion_tokens: 2048,
+    });
 
-      const completion = await Promise.race([chatPromise, timeoutPromise]);
+    const completion = await Promise.race([chatPromise, timeoutPromise]);
       console.log('✅ OpenAI Chat Completions response received.');
-
-      const messageContent = completion.choices?.[0]?.message?.content || '{}';
+    
+    const messageContent = completion.choices?.[0]?.message?.content || '{}';
       let parsedSummary;
       try {
         parsedSummary = JSON.parse(messageContent);
       } catch (e) {
         console.error('❌ Failed to parse JSON response from OpenAI:', e);
         parsedSummary = { error: 'Failed to parse AI response', raw: messageContent };
-      }
+    }
 
-      return {
-        ok: true,
+    return {
+      ok: true,
         summary: parsedSummary,
         provider: 'openai',
         model: this.model,
@@ -202,7 +203,9 @@ ${JSON.stringify(data.results, null, 2)}
   }
 
   createCompanyFallback(data) {
-    const { query: inn, results } = data;
+    const { query: inn } = data || {};
+    // results может отсутствовать, в новом потоке мы передаем summary; поддержим оба варианта
+    const results = Array.isArray(data?.results) ? data.results : [];
     
     let fallbackSummary = {
       company: {
@@ -224,7 +227,7 @@ ${JSON.stringify(data.results, null, 2)}
 
     // Извлекаем базовую информацию из результатов
     try {
-      for (const result of results) {
+      for (const result of results || []) {
         if (result.ok && result.items) {
           const items = result.items;
 
