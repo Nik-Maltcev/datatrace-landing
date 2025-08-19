@@ -1854,11 +1854,11 @@
         console.log('🤖 AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
-          console.log('✅ Displaying AI processed company results');
-          // Показываем результаты по источникам с учетом AI-обработки
-          displayCompanyResultsBySources(data.results, aiData.summary);
+          console.log('✅ Displaying AI processed company card');
+          // Показываем только красиво структурированную карточку компании после обработки ИИ
+          displayCompanyAIResult(aiData.summary);
           
-          // Показываем ИИ анализ
+          // Дополнительно выводим текстовый анализ
           const summaryEl = document.getElementById('summary');
           const summaryBody = document.getElementById('summaryBody');
           summaryBody.innerHTML = formatCompanySummary(aiData.summary);

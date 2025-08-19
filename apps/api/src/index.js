@@ -263,7 +263,9 @@ async function searchDatanewton(inn) {
       },
       timeout: 15000
     });
-    console.log('Datanewton response:', JSON.stringify(res.data, null, 2));
+    // Avoid flooding logs with full payloads in production
+    const dnKeys = res.data ? Object.keys(res.data) : [];
+    console.log('Datanewton response ok. Top-level keys:', dnKeys.slice(0, 10));
     return { name: 'Datanewton', ok: true, items: res.data };
   } catch (err) {
     console.error('Datanewton error:', err.response?.data || err.message);
@@ -280,7 +282,9 @@ async function searchChecko(inn) {
       params: { key: CHECKO_KEY, inn },
       timeout: 15000
     });
-    console.log('Checko response:', res.data);
+    // Avoid printing full Checko payload
+    const ckKeys = res.data ? Object.keys(res.data) : [];
+    console.log('Checko response ok. Top-level keys:', ckKeys.slice(0, 10));
     return { name: 'Checko', ok: true, items: res.data };
   } catch (err) {
     console.error('Checko error:', err.response?.data || err.message);
