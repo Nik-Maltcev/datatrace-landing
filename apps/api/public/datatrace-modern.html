@@ -1571,13 +1571,7 @@
       updateProgress(75, 'Нормализация данных...');
       console.log('🔧 Normalizing company data locally...');
       
-      try {
-        const normalizedData = normalizeCompanyDataFromSources(allResults, query);
-        displayCompanyResultsBySources(allResults);
-      } catch (error) {
-        console.error('🚨 Data normalization failed:', error);
-        displayCompanyResultsBySources(allResults);
-      }
+      displayCompanyResultsBySources(allResults);
 
       // Шаг 4: Завершение
       updateProgress(100, 'Завершено');
@@ -2553,7 +2547,7 @@
 
     function createCompanySourceItem(title, status, data, lname, aiSummary) {
       const item = document.createElement('div');
-      item.className = 'result-card open';
+      item.className = 'result-card';
 
       const statusClass = status === 'success' ? 'status-found' :
         status === 'clean' ? 'status-clean' :
@@ -2562,60 +2556,31 @@
         status === 'clean' ? 'Чисто' :
         status === 'danger' ? 'Найдено' : 'Ошибка';
 
-      const selectorId = `view-${Math.random().toString(36).slice(2)}`;
       const bodyId = `body-${Math.random().toString(36).slice(2)}`;
 
       item.innerHTML = `
-        <div class="result-header">
+        <div class="result-header" onclick="toggleResult(this)">
           <div class="result-title">${title}</div>
           <div class="flex items-center gap-3">
-            <select id="${selectorId}" class="select-field" style="min-width: 150px;">
-              <option value="card">Карточка</option>
-              <option value="json">JSON</option>
-            </select>
             <span class="status-badge ${statusClass}">${statusText}</span>
             <span class="caret">▶</span>
           </div>
         </div>
-        <div class="result-body" id="${bodyId}" style="display: block;"></div>
+        <div class="result-body" id="${bodyId}">Загрузка...</div>
       `;
 
       const bodyEl = item.querySelector(`#${bodyId}`);
-      const selectEl = item.querySelector(`#${selectorId}`);
 
-      const renderView = (mode) => {
-        if (mode === 'json') {
-          const raw = typeof data === 'object' ? data : { error: String(data || 'Нет данных') };
-          bodyEl.innerHTML = `<pre style="white-space:pre-wrap; font-size:12px;">${escapeHtml(JSON.stringify(raw, null, 2))}</pre>`;
-          return;
-        }
-        // card view
+      // Рендерим красивую карточку
+      setTimeout(() => {
         if (lname && lname.includes('datanewton') && typeof data === 'object') {
           bodyEl.innerHTML = renderDatanewtonFull(data, aiSummary);
-          return;
-        }
-        if (lname && lname.includes('checko') && typeof data === 'object') {
+        } else if (lname && lname.includes('checko') && typeof data === 'object') {
           bodyEl.innerHTML = renderCheckoFull(data, aiSummary);
-          return;
-        }
-        if (aiSummary) {
-          const mapped = formatAIDataForSource(aiSummary, title);
-          bodyEl.innerHTML = formatResultData(mapped);
         } else {
           bodyEl.innerHTML = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
         }
-      };
-
-      renderView('card');
-      selectEl.addEventListener('change', (e) => renderView(e.target.value));
-
-      // expand/collapse on header click
-      item.querySelector('.result-header').addEventListener('click', (ev) => {
-        if (ev.target === selectEl) return; // don't toggle on select clicks
-        item.classList.toggle('open');
-        const body = item.querySelector('.result-body');
-        body.style.display = item.classList.contains('open') ? 'block' : 'none';
-      });
+      }, 100);
 
       return item;
     }
@@ -3448,7 +3413,88 @@
       return normalized;
     }
 
-    // Функция отображения нормализованных данных
+    // Функция отображения красивой карточки компании
+    function displayNormalizedCompanyCard(data) {
+      const item = document.createElement('div');
+      item.className = 'result-card open';
+      
+      const company = data.company;
+      const ceo = data.ceo;
+      const okved = data.okved;
+      
+      let html = `
+        <div class="result-header">
+          <div class="result-title">🏢 ${company.name || 'Компания'}</div>
+          <span class="status-badge status-found">Нормализовано</span>
+        </div>
+        <div class="result-body" style="display: block;">
+          <div class="data-grid">
+      `;
+      
+      // Основная информация
+      if (company.name) html += `<div class="data-label">Название</div><div class="data-value"><strong>${company.name}</strong></div>`;
+      if (company.fullName && company.fullName !== company.name) html += `<div class="data-label">Полное название</div><div class="data-value">${company.fullName}</div>`;
+      if (company.inn) html += `<div class="data-label">ИНН</div><div class="data-value">${company.inn}</div>`;
+      if (company.ogrn) html += `<div class="data-label">ОГРН</div><div class="data-value">${company.ogrn}</div>`;
+      if (company.kpp) html += `<div class="data-label">КПП</div><div class="data-value">${company.kpp}</div>`;
+      if (company.status) {
+        const statusColor = company.status.toLowerCase().includes('действ') ? 'color: #16a34a; font-weight: bold;' : 'color: #dc2626; font-weight: bold;';
+        html += `<div class="data-label">Статус</div><div class="data-value" style="${statusColor}">${company.status}</div>`;
+      }
+      if (company.address) html += `<div class="data-label">Адрес</div><div class="data-value">📍 ${company.address}</div>`;
+      if (company.registrationDate) html += `<div class="data-label">Дата регистрации</div><div class="data-value">${company.registrationDate}</div>`;
+      
+      // Деятельность
+      if (okved.main && okved.main.text) {
+        html += `<div class="data-label">Основная деятельность</div><div class="data-value">`;
+        if (okved.main.code) html += `<div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">Код ОКВЭД: ${okved.main.code}</div>`;
+        html += `${okved.main.text}</div>`;
+      }
+      
+      // Руководство
+      if (ceo.name) {
+        html += `<div class="data-label">Руководитель</div><div class="data-value">👤 <strong>${ceo.name}</strong>`;
+        if (ceo.position) html += `<br><span style="color: #6b7280;">${ceo.position}</span>`;
+        html += `</div>`;
+      }
+      
+      // Контакты
+      if (company.contacts.phones.length > 0) {
+        html += `<div class="data-label">Телефоны</div><div class="data-value">`;
+        company.contacts.phones.forEach(phone => {
+          html += `📞 <a href="tel:${phone}" style="color: #2563eb; text-decoration: none;">${phone}</a><br>`;
+        });
+        html += `</div>`;
+      }
+      
+      if (company.contacts.emails.length > 0) {
+        html += `<div class="data-label">Email</div><div class="data-value">`;
+        company.contacts.emails.forEach(email => {
+          html += `📧 <a href="mailto:${email}" style="color: #2563eb; text-decoration: none;">${email}</a><br>`;
+        });
+        html += `</div>`;
+      }
+      
+      if (company.contacts.sites.length > 0) {
+        html += `<div class="data-label">Сайты</div><div class="data-value">`;
+        company.contacts.sites.forEach(site => {
+          const url = site.startsWith('http') ? site : `https://${site}`;
+          html += `🌐 <a href="${url}" target="_blank" style="color: #2563eb; text-decoration: none;">${site}</a><br>`;
+        });
+        html += `</div>`;
+      }
+      
+      if (company.charterCapital) html += `<div class="data-label">Уставный капитал</div><div class="data-value">💰 ${company.charterCapital}</div>`;
+      
+      html += `</div></div>`;
+      
+      item.innerHTML = html;
+      results.insertBefore(item, results.firstChild);
+      
+      console.log('✅ Beautiful company card displayed');
+    }
+
+    // Удаленная старая функция
     function displayNormalizedCompanyData(data) {
       const summaryEl = document.getElementById('summary');
       const summaryBody = document.getElementById('summaryBody');
