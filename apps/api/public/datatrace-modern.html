@@ -2657,22 +2657,29 @@
 
     // Полное форматирование Checko (расширенный набор полей)
     function renderCheckoFull(items, aiSummary) {
-      const company = (aiSummary && aiSummary.company) || {};
+      console.log('renderCheckoFull called with items:', items);
+      const checkoData = items.data || items;
+      console.log('checkoData extracted:', checkoData);
+      
       const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
       let html = '<div class="data-grid">';
-      html += htmlRow('Название', company.name || items?.name?.short || items?.name?.full);
-      if (items?.name?.full && items?.name?.short && items.name.full !== items.name.short) {
-        html += htmlRow('Полное название', items.name.full);
+      
+      // Используем русские ключи
+      html += htmlRow('Название', checkoData['НаимСокр'] || checkoData['НаимПолн']);
+      if (checkoData['НаимПолн'] && checkoData['НаимСокр'] && checkoData['НаимПолн'] !== checkoData['НаимСокр']) {
+        html += htmlRow('Полное название', checkoData['НаимПолн']);
       }
-      html += htmlRow('ИНН', company.inn || items?.inn);
-      html += htmlRow('ОГРН', company.ogrn || items?.ogrn);
-      html += htmlRow('КПП', company.kpp || items?.kpp);
-      html += htmlRow('Статус', company.status || items?.status?.name);
-      html += htmlRow('Адрес', company.address || items?.address?.value);
-      html += htmlRow('Уставной капитал', company.charter_capital || items?.charterCapital?.value);
-      const mainOkvedText = company.activity || items?.okved?.main?.value || items?.okved?.main?.text;
-      const mainOkvedCode = items?.okved?.main?.code;
+      html += htmlRow('ИНН', checkoData['ИНН']);
+      html += htmlRow('ОГРН', checkoData['ОГРН']);
+      html += htmlRow('КПП', checkoData['КПП']);
+      html += htmlRow('Статус', checkoData['Статус']?.['Наим']);
+      html += htmlRow('Адрес', checkoData['ЮрАдрес']?.['АдресРФ']);
+      html += htmlRow('Уставной капитал', checkoData['УстКап']?.['Сумма']);
+      
+      const mainOkvedText = checkoData['ОКВЭД']?.['Наим'];
+      const mainOkvedCode = checkoData['ОКВЭД']?.['Код'];
       html += htmlRow('Основная деятельность', mainOkvedText ? `${mainOkvedText}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
+      
       html += '</div>';
 
       // Руководитель
