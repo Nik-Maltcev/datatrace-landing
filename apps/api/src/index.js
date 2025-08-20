@@ -1068,7 +1068,6 @@ function compactResults(results) {
   return out;
 }
 
-<<<<<<< fix/openai-json-requests
 function optimizeDataForAI(compact) {
   const optimized = {};
 
@@ -1127,9 +1126,6 @@ function optimizeDataForAI(compact) {
 
   return optimized;
 }
-
-=======
->>>>>>> main
 function createLeakFallbackSummary(query, field, compact) {
   let found = false;
   let sources = {};
@@ -1660,17 +1656,26 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
       return res.status(400).json({ error: 'Missing query or results' });
     }
 
-    // Use the same robust pre-processing pipeline
-    const compact = compactResults(results);
-    const optimizedData = optimizeDataForAI(compact);
+    if (!openai) {
+      return res.status(503).json({ ok: false, error: 'OpenAI service not available' });
+    }
 
-    // Pass the pre-processed data to the AI service
-    // We can reuse the leaksAIService which is configured to use the best available AI
-    const response = await leaksAIService.generateSummary(
-      { query, field, results: optimizedData }, 'leaks'
-    );
+    const prompt = `
+      Это JSON-ответ о компании. Извлеки все данные.
+      Сформируй ответ в виде чистого текста. Каждое поле должно быть на новой строке, начинаться с названия поля, а затем через двоеточие — его значение.
+      Если какого-то поля нет, не упоминай его. Не добавляй ничего лишнего.
 
-    res.json(response);
+      Входящий JSON:
+      ${JSON.stringify(results, null, 2)}
+    `;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const textResponse = completion.choices[0].message.content;
+    res.json({ ok: true, summary: textResponse, provider: 'openai', model: 'gpt-4o' });
 
   } catch (e) {
     console.error('GPT-5 leak summarize error:', e.message, e.stack);
@@ -1723,7 +1728,7 @@ app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000),
 
   return prompt;
 }
-
+*/
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
 
 // Helper function to optimize company data before sending to AI
