@@ -1573,7 +1573,6 @@
       
       try {
         const normalizedData = normalizeCompanyDataFromSources(allResults, query);
-        displayNormalizedCompanyData(normalizedData);
         displayCompanyResultsBySources(allResults);
       } catch (error) {
         console.error('🚨 Data normalization failed:', error);
