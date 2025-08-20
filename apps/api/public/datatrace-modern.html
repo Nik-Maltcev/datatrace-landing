@@ -3378,6 +3378,7 @@
       };
 
       for (const result of sourceResults || []) {
+        console.log('Processing source:', result.name, 'ok:', result.ok, 'items:', result.items);
         if (!result.ok || !result.items) {
           normalized.sources.push({ name: result.name, status: 'error', error: result.error });
           continue;
@@ -3387,7 +3388,8 @@
         const items = result.items;
 
         if (result.name === 'Datanewton') {
-          const data = items.data?.counterparty || items;
+          const data = items.counterparty || items.data?.counterparty || items;
+          console.log('Datanewton data structure:', data);
           if (data) {
             normalized.company.shortName = normalized.company.shortName || data.short_name;
             normalized.company.fullName = normalized.company.fullName || data.full_name;
@@ -3418,6 +3420,7 @@
             }
           }
         } else if (result.name === 'Checko') {
+          console.log('Checko data structure:', items);
           normalized.company.name = normalized.company.name || items.name?.short || items.name?.full;
           normalized.company.fullName = normalized.company.fullName || items.name?.full;
           normalized.company.shortName = normalized.company.shortName || items.name?.short;
