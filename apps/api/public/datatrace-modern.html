@@ -3420,8 +3420,10 @@
             }
           }
         } else if (result.name === 'Checko') {
-          console.log('Checko data structure:', items);
+          console.log('Checko full items:', items);
           const checkoData = items.data || items;
+          console.log('Checko extracted data:', checkoData);
+          console.log('Checko name field:', checkoData.name);
           normalized.company.name = normalized.company.name || checkoData.name?.short || checkoData.name?.full;
           normalized.company.fullName = normalized.company.fullName || checkoData.name?.full;
           normalized.company.shortName = normalized.company.shortName || checkoData.name?.short;
