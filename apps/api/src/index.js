@@ -861,17 +861,17 @@ app.post('/api/company-summarize', optionalAuth, userRateLimit(50, 15 * 60 * 100
     console.log('Starting AI request...');
 
     try {
-      console.log('🚀 Optimizing company data before sending to AI...');
-      const optimizedData = optimizeCompanyDataForAI(results);
+      console.log('🚀 Normalizing company data...');
+      const normalizedData = optimizeCompanyDataForAI(results);
 
-      console.log('🚀 Calling company AI service generateSummary with optimized data...');
-      // Используем AI сервис для анализа компаний
+      console.log('🚀 Using AI service for company analysis...');
+      // Используем AI сервис для анализа компаний (если доступен)
       const response = await companyAIService.generateSummary(
-        { query: inn, summary: optimizedData }, 'company'
+        { query: inn, summary: normalizedData }, 'company'
       );
 
       clearTimeout(requestTimeout);
-      console.log('✅ AI service response received:', {
+      console.log('✅ Company data normalized successfully:', {
         ok: response.ok,
         provider: response.provider,
         model: response.model
@@ -1732,96 +1732,7 @@ app.get('/api/company', async (req, res) => {
   }
 });
 
-// Новый эндпоинт для форматирования через OpenAI
-app.post('/api/openai/format-company', async (req, res) => {
-  try {
-    console.log('Received OpenAI format request:', req.body);
-    const { prompt, model = 'gpt-5' } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
-    }
 
-    // Проверяем доступность OpenAI
-    if (!openai) {
-      console.log('OpenAI not available for formatting, using fallback HTML');
-      return res.json({
-        html: '<div class="p-4 bg-yellow-100 border border-yellow-400 rounded"><p class="text-yellow-800">OpenAI недоступен. Показаны базовые данные.</p></div>',
-        model: 'fallback',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    console.log('Sending request to OpenAI with model:', process.env.OPENAI_MODEL || model);
-
-    // Используем новый API для GPT-5
-    if ((process.env.OPENAI_MODEL || model) === 'gpt-5') {
-      try {
-        const response = await openai.responses.create({
-          model: 'gpt-5',
-          input: `Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.\n\n${prompt}`
-        });
-
-        const htmlContent = response.output_text || '';
-        console.log('OpenAI GPT-5 response received, HTML length:', htmlContent.length);
-
-        res.json({
-          html: htmlContent,
-          model: 'gpt-5',
-          timestamp: new Date().toISOString()
-        });
-      } catch (gpt5Error) {
-        console.log('GPT-5 API failed, falling back to chat completions:', gpt5Error.message);
-        // Fallback to chat completions API
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.'
-            },
-            { role: 'user', content: prompt }
-          ]
-        });
-
-        const htmlContent = completion.choices?.[0]?.message?.content || '';
-        res.json({
-          html: htmlContent,
-          model: 'gpt-4-fallback',
-          timestamp: new Date().toISOString()
-        });
-      }
-    } else {
-      // Для других моделей используем старый API
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || model,
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты — ассистент для визуализации данных компаний. Превращай JSON с информацией о компании в структурированное и красиво оформленное HTML-описание с классами Tailwind CSS. Используй только безопасный HTML без script тегов.'
-          },
-          { role: 'user', content: prompt }
-        ]
-      });
-
-      const htmlContent = completion.choices?.[0]?.message?.content || '';
-      console.log('OpenAI response received, HTML length:', htmlContent.length);
-
-      res.json({
-        html: htmlContent,
-        model: process.env.OPENAI_MODEL || model,
-        timestamp: new Date().toISOString()
-      });
-    }
-  } catch (e) {
-    console.error('OpenAI formatting error:', e);
-    // Fallback HTML при ошибке
-    res.json({
-      html: '<div class="p-4 bg-red-100 border border-red-400 rounded"><p class="text-red-800">Ошибка форматирования данных. Попробуйте позже.</p></div>',
-      model: 'fallback',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
 
 // GPT-4o leak analysis endpoint
 app.post('/api/summarize-gpt5', optionalAuth, userRateLimit(30, 15 * 60 * 1000), async (req, res) => {
