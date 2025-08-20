@@ -1554,8 +1554,6 @@
           if (response.ok && stepData.result) {
             allResults.push(stepData.result);
             console.log(`✅ ${source.name} completed:`, stepData.result);
-            
-            // Результат получен, продолжаем обработку
           } else {
             console.log(`❌ ${source.name} failed:`, stepData.error);
             allResults.push({ name: source.name, ok: false, error: stepData.error });
@@ -1569,32 +1567,16 @@
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Шаг 3: Обработка через OpenAI
-      if (allResults.length > 0) {
-        updateProgress(75, 'Обработка через ИИ...');
-        console.log('🤖 Processing through OpenAI with improved error handling...');
-        
-        const combinedData = {
-          query: query,
-          field: 'inn',
-          results: allResults
-        };
-        
-        try {
-          await requestAISummaryForCompany(combinedData);
-        } catch (error) {
-          console.error('🚨 AI processing failed, showing results without AI:', error);
-          // Если ИИ не сработал, показываем результаты без него
-          displayCompanyResultsBySources(allResults);
-          
-          // Показываем уведомление пользователю
-          const summaryEl = document.getElementById('summary');
-          const summaryBody = document.getElementById('summaryBody');
-          summaryBody.innerHTML = '<div style="color: #dc2626;">ИИ анализ недоступен. Показаны базовые результаты по источникам.</div>';
-          summaryEl.style.display = 'block';
-        }
-      } else {
-        // Показываем результаты без ИИ анализа
+      // Шаг 3: Нормализация данных (без AI)
+      updateProgress(75, 'Нормализация данных...');
+      console.log('🔧 Normalizing company data locally...');
+      
+      try {
+        const normalizedData = normalizeCompanyDataFromSources(allResults, query);
+        displayNormalizedCompanyData(normalizedData);
+        displayCompanyResultsBySources(allResults);
+      } catch (error) {
+        console.error('🚨 Data normalization failed:', error);
         displayCompanyResultsBySources(allResults);
       }
 
@@ -3370,6 +3352,202 @@
       if (level.includes('средний')) return '#d97706';
       if (level.includes('низкий')) return '#16a34a';
       return '#6b7280';
+    }
+
+    // Функция нормализации данных компании
+    function normalizeCompanyDataFromSources(sourceResults, inn) {
+      const normalized = {
+        company: {
+          name: null,
+          fullName: null,
+          shortName: null,
+          inn: inn,
+          ogrn: null,
+          kpp: null,
+          status: null,
+          address: null,
+          activity: null,
+          registrationDate: null,
+          charterCapital: null,
+          contacts: { phones: [], emails: [], sites: [] }
+        },
+        ceo: { name: null, position: null },
+        okved: { main: null, additional: [] },
+        riskFlags: [],
+        sources: []
+      };
+
+      for (const result of sourceResults || []) {
+        if (!result.ok || !result.items) {
+          normalized.sources.push({ name: result.name, status: 'error', error: result.error });
+          continue;
+        }
+
+        normalized.sources.push({ name: result.name, status: 'success' });
+        const items = result.items;
+
+        if (result.name === 'Datanewton') {
+          const data = items.data?.counterparty || items;
+          if (data) {
+            normalized.company.shortName = normalized.company.shortName || data.short_name;
+            normalized.company.fullName = normalized.company.fullName || data.full_name;
+            normalized.company.name = normalized.company.name || data.short_name || data.full_name;
+            normalized.company.ogrn = normalized.company.ogrn || data.ogrn;
+            normalized.company.kpp = normalized.company.kpp || data.kpp;
+            normalized.company.status = normalized.company.status || data.status_string;
+            normalized.company.registrationDate = normalized.company.registrationDate || data.registration_date;
+            
+            if (data.address_block?.line_address) {
+              normalized.company.address = data.address_block.line_address;
+            }
+            if (data.okved_block?.main_okved) {
+              normalized.okved.main = {
+                code: data.okved_block.main_okved.code,
+                text: data.okved_block.main_okved.value
+              };
+              normalized.company.activity = data.okved_block.main_okved.value;
+            }
+            if (data.manager_block) {
+              normalized.ceo.name = data.manager_block.manager_name;
+              normalized.ceo.position = data.manager_block.manager_position;
+            }
+            if (data.contact_block) {
+              normalized.company.contacts.phones = data.contact_block.phones || [];
+              normalized.company.contacts.emails = data.contact_block.emails || [];
+              normalized.company.contacts.sites = data.contact_block.sites || [];
+            }
+          }
+        } else if (result.name === 'Checko') {
+          normalized.company.name = normalized.company.name || items.name?.short || items.name?.full;
+          normalized.company.fullName = normalized.company.fullName || items.name?.full;
+          normalized.company.shortName = normalized.company.shortName || items.name?.short;
+          normalized.company.ogrn = normalized.company.ogrn || items.ogrn;
+          normalized.company.status = normalized.company.status || items.status?.name;
+          normalized.company.address = normalized.company.address || items.address?.value;
+          normalized.company.charterCapital = normalized.company.charterCapital || items.charterCapital?.value;
+          
+          if (items.okved?.main) {
+            normalized.okved.main = {
+              code: items.okved.main.code,
+              text: items.okved.main.value
+            };
+            normalized.company.activity = items.okved.main.value;
+          }
+          if (items.director?.name) {
+            normalized.ceo.name = items.director.name;
+            normalized.ceo.position = 'Генеральный директор';
+          }
+        }
+      }
+
+      return normalized;
+    }
+
+    // Функция отображения нормализованных данных
+    function displayNormalizedCompanyData(data) {
+      const summaryEl = document.getElementById('summary');
+      const summaryBody = document.getElementById('summaryBody');
+      
+      const company = data.company;
+      const ceo = data.ceo;
+      const okved = data.okved;
+      
+      let html = `
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 20px;">
+          <h3 style="margin: 0 0 20px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+            🏢 Информация о компании
+            <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: normal;">
+              Нормализовано
+            </span>
+          </h3>
+          
+          <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 15px 0; font-size: 1.2rem;">${company.name || 'Название не найдено'}</h4>
+            ${company.fullName && company.fullName !== company.name ? `<p style="margin: 0 0 15px 0; opacity: 0.9;">${company.fullName}</p>` : ''}
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+              <div><strong>ИНН:</strong> ${company.inn}</div>
+              ${company.ogrn ? `<div><strong>ОГРН:</strong> ${company.ogrn}</div>` : ''}
+              ${company.kpp ? `<div><strong>КПП:</strong> ${company.kpp}</div>` : ''}
+              ${company.status ? `<div><strong>Статус:</strong> <span style="color: ${company.status.toLowerCase().includes('действ') ? '#4ade80' : '#fbbf24'}">${company.status}</span></div>` : ''}
+            </div>
+          </div>
+          
+          ${company.address ? `
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0;">📍 Адрес:</h4>
+              <p style="margin: 0;">${company.address}</p>
+            </div>
+          ` : ''}
+          
+          ${okved.main ? `
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0;">🏢 Основная деятельность:</h4>
+              ${okved.main.code ? `<div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 5px;">Код ОКВЭД: ${okved.main.code}</div>` : ''}
+              <p style="margin: 0;">${okved.main.text}</p>
+            </div>
+          ` : ''}
+          
+          ${ceo.name ? `
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0;">👤 Руководство:</h4>
+              <div><strong>${ceo.name}</strong></div>
+              ${ceo.position ? `<div style="opacity: 0.8;">${ceo.position}</div>` : ''}
+            </div>
+          ` : ''}
+          
+          ${(company.contacts.phones.length > 0 || company.contacts.emails.length > 0 || company.contacts.sites.length > 0) ? `
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 15px 0;">📞 Контакты:</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                ${company.contacts.phones.length > 0 ? `
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">📞 Телефоны:</div>
+                    ${company.contacts.phones.map(phone => `<div><a href="tel:${phone}" style="color: #93c5fd;">${phone}</a></div>`).join('')}
+                  </div>
+                ` : ''}
+                ${company.contacts.emails.length > 0 ? `
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">📧 Email:</div>
+                    ${company.contacts.emails.map(email => `<div><a href="mailto:${email}" style="color: #93c5fd;">${email}</a></div>`).join('')}
+                  </div>
+                ` : ''}
+                ${company.contacts.sites.length > 0 ? `
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">🌐 Сайты:</div>
+                    ${company.contacts.sites.map(site => {
+                      const url = site.startsWith('http') ? site : `https://${site}`;
+                      return `<div><a href="${url}" target="_blank" style="color: #93c5fd;">${site}</a></div>`;
+                    }).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          ${company.charterCapital ? `
+            <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0;">💰 Уставный капитал:</h4>
+              <p style="margin: 0;">${company.charterCapital}</p>
+            </div>
+          ` : ''}
+          
+          <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; margin-top: 20px;">
+            <h4 style="margin: 0 0 10px 0;">📈 Источники данных:</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+              ${data.sources.map(source => {
+                const statusColor = source.status === 'success' ? '#4ade80' : '#fbbf24';
+                return `<span style="background: ${statusColor}; color: black; padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600;">${source.name}</span>`;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      summaryBody.innerHTML = html;
+      summaryEl.style.display = 'block';
+      
+      console.log('✅ Normalized company data displayed');
     }
 
     // Глобальная функция для переключения результатов

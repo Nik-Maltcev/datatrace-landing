@@ -60,47 +60,17 @@
 
               const companyData = await companyResponse.json();
 
-              // Этап 2: Обработка через OpenAI
+              // Этап 2: Нормализация данных
               setLoadingStage('processing');
 
-              const openaiResponse = await fetch('/api/openai/format-company', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  prompt: `Ты — ассистент для визуализации данных компаний. На вход ты получаешь JSON-ответ с информацией о компании (ИНН, ОГРН, название, адрес, ОКВЭДы, контакты и др.).
-
-Задача: превратить этот JSON в структурированное и красиво оформленное описание компании.
-
-Формат ответа — HTML с минимальными инлайн-стилями, но с классами Tailwind CSS (например, <div class="p-4 bg-white rounded-lg shadow">).
-
-Требования:
-1. Первая секция — название компании (полное + сокращенное) крупным шрифтом, ниже ИНН, ОГРН, дата регистрации, возраст компании.
-2. Вторая секция — адрес с иконкой 📍, форматировать одной строкой.
-3. Третья секция — статус компании, выделить цветом (зелёный для "Действует", красный для "Ликвидирована").
-4. Четвёртая секция — Основной ОКВЭД (показать код и расшифровку), дополнительные — в сворачиваемом списке.
-5. Пятая секция — руководители (ФИО, должность).
-6. Шестая секция — контакты (email — кликабельный mailto:, телефон — tel:, сайт — ссылка).
-7. Седьмая секция — капитал и владельцы.
-8. Если данных нет — пропускать секцию.
-9. Использовать только безопасный HTML (никаких script).
-
-Ответь только HTML-кодом.
-
-Вот JSON: ${JSON.stringify(companyData)}`,
-                  model: 'gpt-5'
-                }),
-              });
-
-              if (!openaiResponse.ok) {
-                throw new Error(`Ошибка OpenAI API: ${openaiResponse.status}`);
-              }
-
-              const openaiData = await openaiResponse.json();
+              console.log('Нормализация данных компании...');
+              const normalizedData = normalizeCompanyData(companyData.results || []);
+              console.log('Нормализованные данные:', normalizedData);
               
               // Этап 3: Отображение результата
-              setResultHTML(openaiData.html || openaiData.content || '');
+              const generatedHTML = generateCompanyHTML(normalizedData, inn);
+              console.log('HTML сгенерирован, длина:', generatedHTML.length);
+              setResultHTML(generatedHTML);
               setLoadingStage('done');
 
             } catch (error) {
@@ -130,7 +100,7 @@
               case 'searching':
                 return 'Идёт поиск информации...';
               case 'processing':
-                return 'Информация обрабатывается...';
+                return 'Нормализация данных...';
               case 'error':
                 return errorMessage;
               default:
@@ -190,6 +160,219 @@
               default:
                 return null;
             }
+          };
+
+          // Функция нормализации данных компании
+          const normalizeCompanyData = (results) => {
+            const normalized = {
+              company: {
+                name: null,
+                fullName: null,
+                shortName: null,
+                inn: inn,
+                ogrn: null,
+                kpp: null,
+                status: null,
+                address: null,
+                activity: null,
+                registrationDate: null,
+                charterCapital: null,
+                contacts: { phones: [], emails: [], sites: [] }
+              },
+              ceo: { name: null, position: null },
+              okved: { main: null, additional: [] },
+              riskFlags: [],
+              sources: []
+            };
+
+            for (const result of results || []) {
+              if (!result.ok || !result.items) {
+                normalized.sources.push({ name: result.name, status: 'error', error: result.error });
+                continue;
+              }
+
+              normalized.sources.push({ name: result.name, status: 'success' });
+              const items = result.items;
+
+              if (result.name === 'Datanewton') {
+                const data = items.data?.counterparty || items;
+                if (data) {
+                  normalized.company.shortName = normalized.company.shortName || data.short_name;
+                  normalized.company.fullName = normalized.company.fullName || data.full_name;
+                  normalized.company.name = normalized.company.name || data.short_name || data.full_name;
+                  normalized.company.ogrn = normalized.company.ogrn || data.ogrn;
+                  normalized.company.kpp = normalized.company.kpp || data.kpp;
+                  normalized.company.status = normalized.company.status || data.status_string;
+                  normalized.company.registrationDate = normalized.company.registrationDate || data.registration_date;
+                  
+                  if (data.address_block?.line_address) {
+                    normalized.company.address = data.address_block.line_address;
+                  }
+                  if (data.okved_block?.main_okved) {
+                    normalized.okved.main = {
+                      code: data.okved_block.main_okved.code,
+                      text: data.okved_block.main_okved.value
+                    };
+                  }
+                  if (data.manager_block) {
+                    normalized.ceo.name = data.manager_block.manager_name;
+                    normalized.ceo.position = data.manager_block.manager_position;
+                  }
+                  if (data.contact_block) {
+                    normalized.company.contacts.phones = data.contact_block.phones || [];
+                    normalized.company.contacts.emails = data.contact_block.emails || [];
+                    normalized.company.contacts.sites = data.contact_block.sites || [];
+                  }
+                }
+              } else if (result.name === 'Checko') {
+                normalized.company.name = normalized.company.name || items.name?.short || items.name?.full;
+                normalized.company.fullName = normalized.company.fullName || items.name?.full;
+                normalized.company.shortName = normalized.company.shortName || items.name?.short;
+                normalized.company.ogrn = normalized.company.ogrn || items.ogrn;
+                normalized.company.status = normalized.company.status || items.status?.name;
+                normalized.company.address = normalized.company.address || items.address?.value;
+                normalized.company.charterCapital = normalized.company.charterCapital || items.charterCapital?.value;
+                
+                if (items.okved?.main) {
+                  normalized.okved.main = {
+                    code: items.okved.main.code,
+                    text: items.okved.main.value
+                  };
+                }
+                if (items.director?.name) {
+                  normalized.ceo.name = items.director.name;
+                  normalized.ceo.position = 'Генеральный директор';
+                }
+              }
+            }
+
+            return normalized;
+          };
+
+          // Функция генерации HTML
+          const generateCompanyHTML = (data, searchInn) => {
+            const company = data.company;
+            const ceo = data.ceo;
+            const okved = data.okved;
+            
+            let html = '<div class="space-y-6">';
+            
+            // Заголовок компании
+            html += '<div class="border-b pb-4">';
+            html += `<h1 class="text-2xl font-bold text-gray-900 mb-2">${company.name || 'Название не найдено'}</h1>`;
+            if (company.fullName && company.fullName !== company.name) {
+              html += `<p class="text-lg text-gray-600 mb-3">${company.fullName}</p>`;
+            }
+            
+            html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">';
+            html += `<div><span class="font-medium text-gray-700">ИНН:</span> <span class="text-gray-900">${company.inn || searchInn}</span></div>`;
+            if (company.ogrn) {
+              html += `<div><span class="font-medium text-gray-700">ОГРН:</span> <span class="text-gray-900">${company.ogrn}</span></div>`;
+            }
+            if (company.kpp) {
+              html += `<div><span class="font-medium text-gray-700">КПП:</span> <span class="text-gray-900">${company.kpp}</span></div>`;
+            }
+            if (company.registrationDate) {
+              html += `<div><span class="font-medium text-gray-700">Дата регистрации:</span> <span class="text-gray-900">${company.registrationDate}</span></div>`;
+            }
+            html += '</div></div>';
+            
+            // Статус
+            if (company.status) {
+              const isActive = company.status.toLowerCase().includes('действ');
+              const statusColor = isActive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100';
+              html += `<div class="flex items-center space-x-2">`;
+              html += `<span class="px-3 py-1 rounded-full text-sm font-medium ${statusColor}">${company.status}</span>`;
+              html += '</div>';
+            }
+            
+            // Адрес
+            if (company.address) {
+              html += '<div class="flex items-start space-x-2">';
+              html += '<span class="text-lg">📍</span>';
+              html += `<div><span class="font-medium text-gray-700">Адрес:</span><br><span class="text-gray-900">${company.address}</span></div>`;
+              html += '</div>';
+            }
+            
+            // Деятельность
+            if (okved.main) {
+              html += '<div>';
+              html += '<h3 class="font-medium text-gray-700 mb-2">Основная деятельность:</h3>';
+              html += `<div class="bg-gray-50 p-3 rounded">`;
+              if (okved.main.code) {
+                html += `<div class="text-sm text-gray-600 mb-1">Код ОКВЭД: ${okved.main.code}</div>`;
+              }
+              html += `<div class="text-gray-900">${okved.main.text}</div>`;
+              html += '</div></div>';
+            }
+            
+            // Руководитель
+            if (ceo.name) {
+              html += '<div>';
+              html += '<h3 class="font-medium text-gray-700 mb-2">Руководство:</h3>';
+              html += '<div class="bg-gray-50 p-3 rounded">';
+              html += `<div class="font-medium text-gray-900">${ceo.name}</div>`;
+              if (ceo.position) {
+                html += `<div class="text-sm text-gray-600">${ceo.position}</div>`;
+              }
+              html += '</div></div>';
+            }
+            
+            // Контакты
+            const contacts = company.contacts;
+            if (contacts.phones.length > 0 || contacts.emails.length > 0 || contacts.sites.length > 0) {
+              html += '<div>';
+              html += '<h3 class="font-medium text-gray-700 mb-2">Контакты:</h3>';
+              html += '<div class="bg-gray-50 p-3 rounded space-y-2">';
+              
+              if (contacts.phones.length > 0) {
+                html += '<div><span class="text-sm text-gray-600">Телефоны:</span><br>';
+                contacts.phones.forEach(phone => {
+                  html += `<a href="tel:${phone}" class="text-blue-600 hover:text-blue-800 mr-3">${phone}</a>`;
+                });
+                html += '</div>';
+              }
+              
+              if (contacts.emails.length > 0) {
+                html += '<div><span class="text-sm text-gray-600">Email:</span><br>';
+                contacts.emails.forEach(email => {
+                  html += `<a href="mailto:${email}" class="text-blue-600 hover:text-blue-800 mr-3">${email}</a>`;
+                });
+                html += '</div>';
+              }
+              
+              if (contacts.sites.length > 0) {
+                html += '<div><span class="text-sm text-gray-600">Сайты:</span><br>';
+                contacts.sites.forEach(site => {
+                  const url = site.startsWith('http') ? site : `https://${site}`;
+                  html += `<a href="${url}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-3">${site}</a>`;
+                });
+                html += '</div>';
+              }
+              
+              html += '</div></div>';
+            }
+            
+            // Капитал
+            if (company.charterCapital) {
+              html += '<div>';
+              html += '<h3 class="font-medium text-gray-700 mb-2">Уставный капитал:</h3>';
+              html += `<div class="bg-gray-50 p-3 rounded text-gray-900">${company.charterCapital}</div>`;
+              html += '</div>';
+            }
+            
+            // Источники данных
+            html += '<div class="border-t pt-4">';
+            html += '<h3 class="font-medium text-gray-700 mb-2">Источники данных:</h3>';
+            html += '<div class="flex flex-wrap gap-2">';
+            data.sources.forEach(source => {
+              const statusColor = source.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+              html += `<span class="px-2 py-1 rounded text-xs ${statusColor}">${source.name}</span>`;
+            });
+            html += '</div></div>';
+            
+            html += '</div>';
+            return html;
           };
 
           return React.createElement('div', {

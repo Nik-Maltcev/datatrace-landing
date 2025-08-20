@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест поиска компаний - DataTrace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Тест поиска компаний</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">Быстрый тест</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">ИНН для тестирования:</label>
+                    <input type="text" id="testInn" value="7707083893" class="w-full p-2 border rounded">
+                </div>
+                <button onclick="testCompanySearch()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Тестировать поиск
+                </button>
+            </div>
+        </div>
+
+        <div id="results" class="bg-white p-6 rounded-lg shadow hidden">
+            <h2 class="text-xl font-semibold mb-4">Результаты теста</h2>
+            <div id="resultsContent"></div>
+        </div>
+
+        <div id="logs" class="bg-gray-800 text-green-400 p-4 rounded-lg mt-6 hidden">
+            <h3 class="text-lg font-semibold mb-2">Логи выполнения:</h3>
+            <pre id="logsContent" class="text-sm overflow-auto max-h-96"></pre>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            document.getElementById('logsContent').textContent = logs.join('\n');
+            document.getElementById('logs').classList.remove('hidden');
+        }
+
+        async function testCompanySearch() {
+            const inn = document.getElementById('testInn').value;
+            const resultsDiv = document.getElementById('results');
+            const contentDiv = document.getElementById('resultsContent');
+            
+            logs = [];
+            addLog(`Начинаем тест поиска для ИНН: ${inn}`);
+            
+            try {
+                // Этап 1: Получение данных
+                addLog('Этап 1: Запрос данных о компании...');
+                const response = await fetch(`/api/company?inn=${inn}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                addLog(`Получены данные от ${data.results?.length || 0} источников`);
+                
+                // Показываем результаты
+                resultsDiv.classList.remove('hidden');
+                
+                let html = '<div class="space-y-4">';
+                
+                // Информация о запросе
+                html += `<div class="border-b pb-4">
+                    <h3 class="font-semibold">Информация о запросе:</h3>
+                    <p>ИНН: ${data.inn}</p>
+                    <p>Время: ${data.timestamp}</p>
+                    <p>Источников: ${data.results?.length || 0}</p>
+                </div>`;
+                
+                // Результаты по источникам
+                if (data.results && data.results.length > 0) {
+                    html += '<div><h3 class="font-semibold mb-2">Результаты по источникам:</h3>';
+                    
+                    data.results.forEach((result, index) => {
+                        const statusColor = result.ok ? 'text-green-600' : 'text-red-600';
+                        const statusText = result.ok ? 'Успешно' : 'Ошибка';
+                        
+                        html += `<div class="border rounded p-3 mb-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">${result.name}</span>
+                                <span class="${statusColor}">${statusText}</span>
+                            </div>`;
+                        
+                        if (result.ok && result.items) {
+                            addLog(`${result.name}: Данные получены успешно`);
+                            html += '<div class="text-sm text-gray-600">Данные получены ✓</div>';
+                            
+                            // Показываем ключевые поля
+                            const items = result.items;
+                            if (items.data?.counterparty) {
+                                const company = items.data.counterparty;
+                                html += `<div class="mt-2 text-sm">
+                                    ${company.short_name ? `<div>Название: ${company.short_name}</div>` : ''}
+                                    ${company.status_string ? `<div>Статус: ${company.status_string}</div>` : ''}
+                                </div>`;
+                            } else if (items.name) {
+                                html += `<div class="mt-2 text-sm">
+                                    ${items.name.short ? `<div>Название: ${items.name.short}</div>` : ''}
+                                    ${items.status?.name ? `<div>Статус: ${items.status.name}</div>` : ''}
+                                </div>`;
+                            }
+                        } else {
+                            addLog(`${result.name}: Ошибка - ${result.error?.message || 'Неизвестная ошибка'}`);
+                            html += `<div class="text-sm text-red-600">Ошибка: ${result.error?.message || 'Неизвестная ошибка'}</div>`;
+                        }
+                        
+                        html += '</div>';
+                    });
+                    
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                contentDiv.innerHTML = html;
+                
+                addLog('Тест завершен успешно');
+                
+            } catch (error) {
+                addLog(`Ошибка: ${error.message}`);
+                resultsDiv.classList.remove('hidden');
+                contentDiv.innerHTML = `<div class="text-red-600">Ошибка: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
