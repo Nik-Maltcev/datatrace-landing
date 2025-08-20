@@ -1110,19 +1110,66 @@
       const statusText = status === 'success' ? 'Найдено' : 
                         status === 'clean' ? 'Чисто' :
                         status === 'danger' ? 'Найдено' : 'Ошибка';
-      
+
+      const isCompanyCard = (typeof currentMode !== 'undefined' && currentMode === 'company' && data && typeof data === 'object');
+
+      const headerControls = isCompanyCard ? `
+            <select class="btn-secondary view-selector" onclick="event.stopPropagation()">
+              <option value="card">Карточка</option>
+              <option value="json">JSON</option>
+            </select>
+      ` : '';
+
+      const bodyInner = isCompanyCard
+        ? `
+          <div class="card-view"></div>
+          <pre class="json-view" style="display:none; white-space:pre-wrap; font-size:12px;"></pre>
+        `
+        : `${typeof data === 'string' ? data : formatResultData(data)}`;
+
       item.innerHTML = `
         <div class="result-header" onclick="toggleResult(this)">
           <div class="result-title">${title}</div>
           <div class="flex items-center gap-3">
             <span class="status-badge ${statusClass}">${statusText}</span>
+            ${headerControls}
             <span class="caret">▶</span>
           </div>
         </div>
         <div class="result-body">
-          ${typeof data === 'string' ? data : formatResultData(data)}
+          ${bodyInner}
         </div>
       `;
+
+      // Wire company Card|JSON toggle and normalized card rendering
+      if (isCompanyCard) {
+        const cardView = item.querySelector('.card-view');
+        const jsonView = item.querySelector('.json-view');
+        const selector = item.querySelector('.view-selector');
+
+        // Render normalized card for known sources
+        try {
+          const normalized = normalizeCompany(title || '', data);
+          cardView.innerHTML = renderCompanyCard(normalized);
+        } catch (e) {
+          console.error('Company card normalize/render error:', e);
+          cardView.innerHTML = typeof data === 'string' ? data : formatResultData(data);
+        }
+        jsonView.textContent = JSON.stringify(data, null, 2);
+
+        if (selector) {
+          selector.addEventListener('click', function(ev) { ev.stopPropagation(); });
+          selector.addEventListener('change', function() {
+            if (selector.value === 'json') {
+              cardView.style.display = 'none';
+              jsonView.style.display = 'block';
+            } else {
+              jsonView.style.display = 'none';
+              cardView.style.display = 'block';
+            }
+          });
+        }
+      }
       
       return item;
     }
@@ -1154,6 +1201,196 @@
         return JSON.stringify(value, null, 2);
       }
       return String(value);
+    }
+
+    // =======================
+    // Company normalizer utils
+    // =======================
+    function normPhone(p) {
+      if (!p) return null;
+      const digits = String(p).replace(/\D+/g, '');
+      let d = digits;
+      if (d.length === 11 && d.startsWith('8')) d = '7' + d.slice(1);
+      if (d.length === 10) d = '7' + d;
+      if (d.length !== 11 || !d.startsWith('7')) return p;
+      return `+7(${d.slice(1,4)})${d.slice(4,7)}-${d.slice(7,9)}-${d.slice(9,11)}`;
+    }
+    function normDate(x) {
+      if (!x) return null;
+      const d = new Date(x);
+      if (isNaN(d.getTime())) return x;
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+    function yearsFromDate(x) {
+      if (!x) return null;
+      const d = new Date(x);
+      if (isNaN(d.getTime())) return null;
+      const t = new Date();
+      let y = t.getFullYear() - d.getFullYear();
+      const m = t.getMonth() - d.getMonth();
+      if (m < 0 || (m === 0 && t.getDate() < d.getDate())) y--;
+      return y;
+    }
+    function asArray(x) { return Array.isArray(x) ? x : (x == null ? [] : [x]); }
+    function dedupe(arr) { return [...new Set((arr || []).filter(Boolean))]; }
+
+    function normalizeFromDatanewton(raw) {
+      const c = raw?.company ?? {};
+      const name = c?.company_names?.short_name ?? c?.company_names?.full_name ?? null;
+      const inn = raw?.inn ?? null;
+      const ogrn = raw?.ogrn ?? null;
+      const kpp = c?.kpp ?? null;
+      const opf = c?.opf ?? null;
+      const address = c?.address?.line_address ?? null;
+      const reg_date_raw = c?.registration_date ?? null;
+      const reg_date = normDate(reg_date_raw);
+      const years_from_registration = c?.years_from_registration ?? yearsFromDate(reg_date_raw);
+      const status = c?.status?.status_rus_short ?? (c?.status?.active_status ? 'Действует' : null);
+
+      const okveds = Array.isArray(c?.okveds) ? c.okveds : [];
+      const mainOkvedObj = okveds.find(x => x?.main) || null;
+      const okvedMain = mainOkvedObj ? { code: mainOkvedObj.code ?? null, text: mainOkvedObj.value ?? null } : null;
+      const additionalOkveds = okveds.filter(x => !x?.main).map(x => ({ code: x?.code ?? null, text: x?.value ?? null }))
+        .filter(x => x.code || x.text);
+
+      const ceo_name = c?.managers?.[0]?.fio ?? null;
+      const ceo_post = c?.managers?.[0]?.position ?? null;
+
+      const emails = dedupe((c?.contacts?.emails || []).map(e => e?.value).filter(Boolean));
+      const phones = dedupe((c?.contacts?.phones || []).map(p => normPhone(p?.value)).filter(Boolean));
+      const sites = dedupe((c?.contacts?.websites || []).map(w => w?.value).filter(Boolean));
+
+      const founders = [];
+      const charter_capital = c?.charter_capital ? String(c.charter_capital) : null;
+
+      return {
+        title: name,
+        ids: { inn, kpp, ogrn },
+        status,
+        opf,
+        address,
+        reg_date,
+        years_from_registration,
+        okved: { main: okvedMain, additional: additionalOkveds },
+        ceo: { name: ceo_name, post: ceo_post },
+        founders,
+        contacts: { phones, emails, sites },
+        charter_capital
+      };
+    }
+
+    function normalizeFromChecko(raw) {
+      const d = raw?.data ?? {};
+      const name = d?.['НаимСокр'] ?? d?.['НаимПолн'] ?? null;
+      const inn = d?.['ИНН'] ?? null;
+      const ogrn = d?.['ОГРН'] ?? null;
+      const kpp = d?.['КПП'] ?? null;
+      const opf = d?.['ОКОПФ']?.['Наим'] ?? null;
+      const address = d?.['ЮрАдрес']?.['АдресРФ'] ?? null;
+
+      const reg_date_raw = d?.['ДатаРег'] ?? null;
+      const reg_date = normDate(reg_date_raw);
+      const years_from_registration = yearsFromDate(reg_date_raw);
+      const status = d?.['Статус']?.['Наим'] ?? null;
+
+      const okvedMain = d?.['ОКВЭД'] ? { code: d?.['ОКВЭД']?.['Код'] ?? null, text: d?.['ОКВЭД']?.['Наим'] ?? null } : null;
+      const additionalOkveds = (d?.['ОКВЭДДоп'] || [])
+        .map(x => ({ code: x?.['Код'] ?? null, text: x?.['Наим'] ?? null }))
+        .filter(x => x.code || x.text);
+
+      const ceo_name = d?.['Руковод']?.[0]?.['ФИО'] ?? null;
+      const ceo_post = d?.['Руковод']?.[0]?.['НаимДолжн'] ?? null;
+
+      const phones = dedupe((d?.['Контакты']?.['Тел'] || []).map(normPhone));
+      const emails = dedupe(d?.['Контакты']?.['Емэйл'] || []);
+      const sites = dedupe(asArray(d?.['Контакты']?.['ВебСайт']));
+
+      const foundersRosOrg = (d?.['Учред']?.['РосОрг'] || []).map(u => ({
+        name: u?.['НаимПолн'] ?? u?.['НаимСокр'] ?? null,
+        share: u?.['Доля']?.['Процент'] ?? u?.['Доля']?.['ДоляПроц'] ?? null
+      })).filter(f => f.name || f.share);
+      const foundersInOrg = (d?.['Учред']?.['ИнОрг'] || []).map(u => ({
+        name: u?.['НаимПолн'] ?? null,
+        share: u?.['Доля']?.['Процент'] ?? null
+      })).filter(f => f.name || f.share);
+      const founders = [...foundersRosOrg, ...foundersInOrg];
+
+      const charter_capital = d?.['УстКап']?.['Сумма'] != null ? String(d?.['УстКап']?.['Сумма']) : null;
+
+      return {
+        title: name,
+        ids: { inn, kpp, ogrn },
+        status,
+        opf,
+        address,
+        reg_date,
+        years_from_registration,
+        okved: { main: okvedMain, additional: additionalOkveds },
+        ceo: { name: ceo_name, post: ceo_post },
+        founders,
+        contacts: { phones, emails, sites },
+        charter_capital
+      };
+    }
+
+    function normalizeCompany(sourceName, raw) {
+      const s = (sourceName || '').toLowerCase();
+      if (s.includes('datanewton') || s.includes('datanewon')) return normalizeFromDatanewton(raw);
+      if (s.includes('checko')) return normalizeFromChecko(raw);
+      return {
+        title: raw?.name ?? null,
+        ids: { inn: raw?.inn ?? null, kpp: raw?.kpp ?? null, ogrn: raw?.ogrn ?? null },
+        status: raw?.status ?? null,
+        opf: raw?.opf ?? null,
+        address: raw?.address ?? null,
+        reg_date: normDate(raw?.registration_date ?? null),
+        years_from_registration: yearsFromDate(raw?.registration_date ?? null),
+        okved: { main: null, additional: [] },
+        ceo: { name: null, post: null },
+        founders: [],
+        contacts: { phones: [], emails: [], sites: [] },
+        charter_capital: null
+      };
+    }
+
+    function renderCompanyCard(m) {
+      const okvedMainStr = m.okved?.main ? [m.okved.main.code, m.okved.main.text].filter(Boolean).join(' — ') : '—';
+      const okvedAddStr = (m.okved?.additional || [])
+        .map(x => [x.code, x.text].filter(Boolean).join(' — '))
+        .join('; ');
+      return `
+        <div class="grid gap-2 text-sm">
+          <div><span class="text-gray-500">Название:</span> <strong>${m.title ?? '—'}</strong></div>
+          <div class="grid grid-cols-3 gap-4">
+            <div><span class="text-gray-500">ИНН:</span> ${m.ids.inn ?? '—'}</div>
+            <div><span class="text-gray-500">КПП:</span> ${m.ids.kpp ?? '—'}</div>
+            <div><span class="text-gray-500">ОГРН:</span> ${m.ids.ogrn ?? '—'}</div>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div><span class="text-gray-500">Статус:</span> ${m.status ?? '—'}</div>
+            <div><span class="text-gray-500">ОПФ:</span> ${m.opf ?? '—'}</div>
+            <div><span class="text-gray-500">Регистрация:</span> ${m.reg_date ?? '—'}${m.years_from_registration != null ? ` (${m.years_from_registration} лет)` : ''}</div>
+          </div>
+          <div><span class="text-gray-500">Адрес:</span> ${m.address ?? '—'}</div>
+          <div><span class="text-gray-500">ОКВЭД (осн.):</span> ${okvedMainStr}</div>
+          ${okvedAddStr ? `<div><span class="text-gray-500">ОКВЭД (доп.):</span> ${okvedAddStr}</div>` : ''}
+          <div><span class="text-gray-500">Руководитель:</span> ${[m.ceo?.name, m.ceo?.post].filter(Boolean).join(' — ') || '—'}</div>
+          <div class="grid grid-cols-3 gap-4">
+            <div><span class="text-gray-500">Телефоны:</span> ${m.contacts.phones.join(', ') || '—'}</div>
+            <div><span class="text-gray-500">Email:</span> ${m.contacts.emails.join(', ') || '—'}</div>
+            <div><span class="text-gray-500">Сайты:</span> ${m.contacts.sites.join(', ') || '—'}</div>
+          </div>
+          ${m.charter_capital ? `<div><span class="text-gray-500">Уставной капитал:</span> ${m.charter_capital}</div>` : ''}
+          ${m.founders?.length ? `
+            <div>
+              <span class="text-gray-500">Учредители:</span>
+              <ul class="list-disc pl-5">
+                ${m.founders.map(f => `<li>${[f.name, f.share].filter(Boolean).join(' — ')}</li>`).join('')}
+              </ul>
+            </div>` : ''}
+        </div>
+      `;
     }
 
     function toggleResult(header) {
