@@ -2573,11 +2573,15 @@
 
       // Рендерим красивую карточку
       setTimeout(() => {
+        console.log('Rendering card for:', title, 'lname:', lname, 'data:', data);
         if (lname && lname.includes('datanewton') && typeof data === 'object') {
+          console.log('Rendering Datanewton card');
           bodyEl.innerHTML = renderDatanewtonFull(data, aiSummary);
         } else if (lname && lname.includes('checko') && typeof data === 'object') {
+          console.log('Rendering Checko card');
           bodyEl.innerHTML = renderCheckoFull(data, aiSummary);
         } else {
+          console.log('Rendering fallback card');
           bodyEl.innerHTML = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
         }
       }, 100);
