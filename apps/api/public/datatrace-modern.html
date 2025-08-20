@@ -1110,8 +1110,11 @@
       const statusText = status === 'success' ? 'Найдено' : 
                         status === 'clean' ? 'Чисто' :
                         status === 'danger' ? 'Найдено' : 'Ошибка';
-
-      const isCompanyCard = (typeof currentMode !== 'undefined' && currentMode === 'company' && data && typeof data === 'object');
+      
+      // Treat known company source cards as structured Card|JSON, regardless of global mode
+      const lowerTitle = String(title || '').toLowerCase();
+      const isCompanySource = lowerTitle.includes('datanewton') || lowerTitle.includes('datanewon') || lowerTitle.includes('checko');
+      const isCompanyCard = (isCompanySource && data && typeof data === 'object');
 
       const headerControls = isCompanyCard ? `
             <select class="btn-secondary view-selector" onclick="event.stopPropagation()">
@@ -1359,6 +1362,19 @@
       const okvedAddStr = (m.okved?.additional || [])
         .map(x => [x.code, x.text].filter(Boolean).join(' — '))
         .join('; ');
+      const contactsBlock = `
+        <div class="grid grid-cols-3 gap-4">
+          <div><span class="text-gray-500">Телефоны:</span> ${m.contacts.phones.join(', ') || '—'}</div>
+          <div><span class="text-gray-500">Email:</span> ${m.contacts.emails.join(', ') || '—'}</div>
+          <div><span class="text-gray-500">Сайты:</span> ${m.contacts.sites.join(', ') || '—'}</div>
+        </div>`;
+      const foundersBlock = (m.founders?.length ? `
+        <div>
+          <span class="text-gray-500">Учредители:</span>
+          <ul class="list-disc pl-5">
+            ${m.founders.map(f => `<li>${[f.name, f.share].filter(Boolean).join(' — ')}</li>`).join('')}
+          </ul>
+        </div>` : '');
       return `
         <div class="grid gap-2 text-sm">
           <div><span class="text-gray-500">Название:</span> <strong>${m.title ?? '—'}</strong></div>
@@ -1376,19 +1392,9 @@
           <div><span class="text-gray-500">ОКВЭД (осн.):</span> ${okvedMainStr}</div>
           ${okvedAddStr ? `<div><span class="text-gray-500">ОКВЭД (доп.):</span> ${okvedAddStr}</div>` : ''}
           <div><span class="text-gray-500">Руководитель:</span> ${[m.ceo?.name, m.ceo?.post].filter(Boolean).join(' — ') || '—'}</div>
-          <div class="grid grid-cols-3 gap-4">
-            <div><span class="text-gray-500">Телефоны:</span> ${m.contacts.phones.join(', ') || '—'}</div>
-            <div><span class="text-gray-500">Email:</span> ${m.contacts.emails.join(', ') || '—'}</div>
-            <div><span class="text-gray-500">Сайты:</span> ${m.contacts.sites.join(', ') || '—'}</div>
-          </div>
+          ${contactsBlock}
           ${m.charter_capital ? `<div><span class="text-gray-500">Уставной капитал:</span> ${m.charter_capital}</div>` : ''}
-          ${m.founders?.length ? `
-            <div>
-              <span class="text-gray-500">Учредители:</span>
-              <ul class="list-disc pl-5">
-                ${m.founders.map(f => `<li>${[f.name, f.share].filter(Boolean).join(' — ')}</li>`).join('')}
-              </ul>
-            </div>` : ''}
+          ${foundersBlock}
         </div>
       `;
     }
@@ -2500,7 +2506,7 @@
 
     function displayCompanyResultsBySources(sourceResults, aiSummary) {
       results.innerHTML = '';
-
+      
       if (!sourceResults || sourceResults.length === 0) {
         results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
         return;
@@ -2542,7 +2548,7 @@
           if (filter === 'datanewton' && !lname.includes('datanewton')) return;
           if (filter === 'checko' && !lname.includes('checko')) return;
 
-          const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
+        const status = result.error ? 'warning' : result.ok ? 'success' : 'danger';
           const item = createCompanySourceItem(name, status, result.items || result.error, lname, aiSummary);
           content.appendChild(item);
         });
