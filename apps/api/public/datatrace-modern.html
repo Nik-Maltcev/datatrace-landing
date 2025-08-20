@@ -2659,6 +2659,7 @@
 
     // Полное форматирование Checko (расширенный набор полей)
     function renderCheckoFull(items, aiSummary) {
+      console.log('renderCheckoFull START');
       console.log('renderCheckoFull called with items:', items);
       const checkoData = items.data || items;
       console.log('checkoData extracted:', checkoData);
@@ -2683,6 +2684,9 @@
       html += htmlRow('Основная деятельность', mainOkvedText ? `${mainOkvedText}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
       
       html += '</div>';
+      
+      console.log('renderCheckoFull FINAL HTML:', html);
+      return html;
 
       // Руководитель
       const ceoName = (aiSummary && aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio)) || items?.director?.name;
