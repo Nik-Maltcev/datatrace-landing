@@ -1567,12 +1567,26 @@
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Шаг 3: Нормализация данных (без AI)
-      updateProgress(75, 'Нормализация данных...');
-      console.log('🔧 Normalizing company data locally...');
-      
-      console.log('Calling displayCompanyResultsBySources with:', allResults);
-      displayCompanyResultsBySources(allResults);
+      // Шаг 3: Обработка данных через ИИ
+      if (allResults.length > 0) {
+        updateProgress(75, 'Обработка через ИИ...');
+        console.log('🤖 Processing company data through AI...');
+        
+        const combinedData = {
+          inn: query,
+          results: allResults
+        };
+        
+        try {
+          await requestAISummaryForCompany(combinedData);
+        } catch (error) {
+          console.error('🚨 AI processing completely failed, showing raw results');
+          displayCompanyResultsBySources(allResults);
+        }
+      } else {
+        // Показываем результаты по источникам без AI
+        displayCompanyResultsBySources(allResults);
+      }
 
       // Шаг 4: Завершение
       updateProgress(100, 'Завершено');
