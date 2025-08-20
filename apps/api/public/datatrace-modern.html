@@ -2588,21 +2588,27 @@
 
       const bodyEl = item.querySelector(`#${bodyId}`);
 
-      // Рендерим красивую карточку
+      // Отображаем структурированные данные от GPT или нормализованные данные
       setTimeout(() => {
-        console.log('Rendering card for:', title, 'lname:', lname, 'data:', data);
-        if (lname && lname.includes('datanewton') && typeof data === 'object') {
-          console.log('Rendering Datanewton card');
-          bodyEl.innerHTML = renderDatanewtonFull(data, aiSummary);
-        } else if (lname && lname.includes('checko') && typeof data === 'object') {
-          console.log('Rendering Checko card');
-          const checkoHtml = renderCheckoFull(data, aiSummary);
-          console.log('Checko HTML result:', checkoHtml);
-          bodyEl.innerHTML = checkoHtml;
+        let displayContent = '';
+        
+        if (typeof data === 'object' && data !== null) {
+          // Пытаемся извлечь структурированные данные от GPT
+          const structuredData = extractStructuredDataForSource(title, data, aiSummary);
+          
+          if (structuredData && Object.keys(structuredData).length > 0) {
+            // Показываем структурированные данные от GPT
+            displayContent = renderStructuredCompanyData(structuredData, title);
+          } else {
+            // Fallback - показываем нормализованные данные
+            const normalized = normalizeCompanyDataForDisplay(title, data);
+            displayContent = renderStructuredCompanyData(normalized, title);
+          }
         } else {
-          console.log('Rendering fallback card');
-          bodyEl.innerHTML = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
+          displayContent = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
         }
+        
+        bodyEl.innerHTML = displayContent;
       }, 100);
 
       return item;
@@ -3633,6 +3639,127 @@
       summaryEl.style.display = 'block';
       
       console.log('✅ Normalized company data displayed');
+    }
+
+    // Функции для извлечения и рендеринга структурированных данных компаний
+    function extractStructuredDataForSource(title, rawData, aiSummary) {
+      // Сначала пытаемся извлечь данные из AI Summary
+      if (aiSummary && aiSummary.company) {
+        return formatAIDataForSource(aiSummary, title);
+      }
+      
+      // Если нет AI данных, используем нормализованные данные
+      return null;
+    }
+    
+    function normalizeCompanyDataForDisplay(title, rawData) {
+      const sourceName = title.toLowerCase();
+      
+      if (sourceName.includes('datanewton')) {
+        return normalizeFromDatanewton(rawData);
+      } else if (sourceName.includes('checko')) {
+        return normalizeFromChecko(rawData);
+      } else {
+        // Fallback для других источников
+        return {
+          title: rawData?.name || 'Информация недоступна',
+          ids: { inn: rawData?.inn || null, kpp: rawData?.kpp || null, ogrn: rawData?.ogrn || null },
+          status: rawData?.status || null,
+          opf: null,
+          address: rawData?.address || null,
+          reg_date: null,
+          years_from_registration: null,
+          okved: { main: null, additional: [] },
+          ceo: { name: null, post: null },
+          founders: [],
+          contacts: { phones: [], emails: [], sites: [] },
+          charter_capital: null
+        };
+      }
+    }
+    
+    function renderStructuredCompanyData(companyData, sourceName) {
+      if (!companyData || typeof companyData !== 'object') {
+        return '<div style="color: #dc2626;">Нет структурированных данных</div>';
+      }
+      
+      // Если это простые key-value пары (от AI)
+      if (!companyData.title && !companyData.ids) {
+        return formatSimpleKeyValueData(companyData);
+      }
+      
+      // Если это нормализованные данные компании
+      return renderNormalizedCompanyCard(companyData, sourceName);
+    }
+    
+    function formatSimpleKeyValueData(data) {
+      let html = '<div class="data-grid">';
+      
+      for (const [key, value] of Object.entries(data)) {
+        if (value && value !== 'null' && value !== 'undefined') {
+          html += `
+            <div class="data-label">${key}</div>
+            <div class="data-value">${formatValue(value)}</div>
+          `;
+        }
+      }
+      
+      html += '</div>';
+      return html || '<div style="color: #6b7280;">Нет данных</div>';
+    }
+    
+    function renderNormalizedCompanyCard(companyData, sourceName) {
+      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
+      let html = '<div class="data-grid">';
+      
+      // Основная информация
+      html += htmlRow('Название', companyData.title);
+      html += htmlRow('ИНН', companyData.ids?.inn);
+      html += htmlRow('КПП', companyData.ids?.kpp);
+      html += htmlRow('ОГРН', companyData.ids?.ogrn);
+      html += htmlRow('Статус', companyData.status);
+      html += htmlRow('ОПФ', companyData.opf);
+      html += htmlRow('Адрес', companyData.address);
+      html += htmlRow('Дата регистрации', companyData.reg_date);
+      html += htmlRow('Лет с регистрации', companyData.years_from_registration);
+      html += htmlRow('Уставный капитал', companyData.charter_capital);
+      
+      // ОКВЭД
+      if (companyData.okved?.main) {
+        const okvedText = companyData.okved.main.text || companyData.okved.main.title;
+        const okvedCode = companyData.okved.main.code;
+        const okvedDisplay = okvedCode ? `${okvedText} (${okvedCode})` : okvedText;
+        html += htmlRow('Основная деятельность', okvedDisplay);
+      }
+      
+      // Руководство
+      if (companyData.ceo?.name) {
+        const ceoDisplay = companyData.ceo.post ? `${companyData.ceo.name} (${companyData.ceo.post})` : companyData.ceo.name;
+        html += htmlRow('Руководитель', ceoDisplay);
+      }
+      
+      // Контакты
+      if (companyData.contacts?.phones?.length > 0) {
+        html += htmlRow('Телефоны', companyData.contacts.phones.join(', '));
+      }
+      if (companyData.contacts?.emails?.length > 0) {
+        html += htmlRow('Email', companyData.contacts.emails.join(', '));
+      }
+      if (companyData.contacts?.sites?.length > 0) {
+        html += htmlRow('Сайты', companyData.contacts.sites.join(', '));
+      }
+      
+      html += '</div>';
+      
+      // Добавляем raw data в details
+      html += `
+        <details style="margin-top: 15px;">
+          <summary style="cursor: pointer; color: #2563eb; font-size: 12px;">Показать сырые данные (для разработчиков)</summary>
+          <pre style="background: #f1f5f9; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 11px; overflow: auto; max-height: 200px;">${JSON.stringify(companyData, null, 2)}</pre>
+        </details>
+      `;
+      
+      return html;
     }
 
     // Глобальная функция для переключения результатов
