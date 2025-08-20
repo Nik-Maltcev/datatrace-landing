@@ -1571,6 +1571,7 @@
       updateProgress(75, 'Нормализация данных...');
       console.log('🔧 Normalizing company data locally...');
       
+      console.log('Calling displayCompanyResultsBySources with:', allResults);
       displayCompanyResultsBySources(allResults);
 
       // Шаг 4: Завершение
@@ -2480,9 +2481,11 @@
     }
 
     function displayCompanyResultsBySources(sourceResults, aiSummary) {
+      console.log('displayCompanyResultsBySources called with:', sourceResults);
       results.innerHTML = '';
       
       if (!sourceResults || sourceResults.length === 0) {
+        console.log('No source results to display');
         results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
         return;
       }
