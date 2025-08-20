@@ -3421,23 +3421,24 @@
           }
         } else if (result.name === 'Checko') {
           console.log('Checko data structure:', items);
-          normalized.company.name = normalized.company.name || items.name?.short || items.name?.full;
-          normalized.company.fullName = normalized.company.fullName || items.name?.full;
-          normalized.company.shortName = normalized.company.shortName || items.name?.short;
-          normalized.company.ogrn = normalized.company.ogrn || items.ogrn;
-          normalized.company.status = normalized.company.status || items.status?.name;
-          normalized.company.address = normalized.company.address || items.address?.value;
-          normalized.company.charterCapital = normalized.company.charterCapital || items.charterCapital?.value;
+          const checkoData = items.data || items;
+          normalized.company.name = normalized.company.name || checkoData.name?.short || checkoData.name?.full;
+          normalized.company.fullName = normalized.company.fullName || checkoData.name?.full;
+          normalized.company.shortName = normalized.company.shortName || checkoData.name?.short;
+          normalized.company.ogrn = normalized.company.ogrn || checkoData.ogrn;
+          normalized.company.status = normalized.company.status || checkoData.status?.name;
+          normalized.company.address = normalized.company.address || checkoData.address?.value;
+          normalized.company.charterCapital = normalized.company.charterCapital || checkoData.charterCapital?.value;
           
-          if (items.okved?.main) {
+          if (checkoData.okved?.main) {
             normalized.okved.main = {
-              code: items.okved.main.code,
-              text: items.okved.main.value
+              code: checkoData.okved.main.code,
+              text: checkoData.okved.main.value
             };
-            normalized.company.activity = items.okved.main.value;
+            normalized.company.activity = checkoData.okved.main.value;
           }
-          if (items.director?.name) {
-            normalized.ceo.name = items.director.name;
+          if (checkoData.director?.name) {
+            normalized.ceo.name = checkoData.director.name;
             normalized.ceo.position = 'Генеральный директор';
           }
         }
