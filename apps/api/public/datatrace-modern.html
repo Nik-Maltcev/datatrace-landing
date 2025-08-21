@@ -2648,6 +2648,117 @@
           normalized['КПП'] = data.company.kpp;
         }
         
+        // Уставной капитал
+        if (data.company && data.company.authorized_capital) {
+          const capital = data.company.authorized_capital;
+          if (capital.value) {
+            normalized['Уставной капитал'] = `${capital.value} ${capital.currency || 'руб.'}`;
+          }
+        }
+        
+        // Контакты (emails, phones, websites)
+        if (data.company && data.company.contacts) {
+          const contacts = data.company.contacts;
+          
+          // Email
+          if (contacts.emails && contacts.emails.length > 0) {
+            const emails = contacts.emails.map(e => e.value).filter(Boolean);
+            if (emails.length > 0) {
+              normalized['Email'] = emails.join(', ');
+            }
+          }
+          
+          // Телефоны
+          if (contacts.phones && contacts.phones.length > 0) {
+            const phones = contacts.phones.map(p => p.value).filter(Boolean);
+            if (phones.length > 0) {
+              normalized['Телефон'] = phones.join(', ');
+            }
+          }
+          
+          // Веб-сайты
+          if (contacts.websites && contacts.websites.length > 0) {
+            const websites = contacts.websites.map(w => w.value).filter(Boolean);
+            if (websites.length > 0) {
+              normalized['Веб-сайт'] = websites.join(', ');
+            }
+          }
+        }
+        
+        // Численность сотрудников (последний год)
+        if (data.company && data.company.workers_count) {
+          const years = Object.keys(data.company.workers_count).sort((a, b) => b - a);
+          if (years.length > 0) {
+            const latestYear = years[0];
+            const count = data.company.workers_count[latestYear];
+            normalized['Численность сотрудников'] = `${count} чел. (${latestYear} г.)`;
+          }
+        }
+        
+        // Коды Росстата
+        if (data.company && data.company.ros_stat_codes) {
+          const codes = data.company.ros_stat_codes;
+          const statCodes = [];
+          if (codes.okpo) statCodes.push(`ОКПО: ${codes.okpo}`);
+          if (codes.okato) statCodes.push(`ОКАТО: ${codes.okato}`);
+          if (codes.oktmo) statCodes.push(`ОКТМО: ${codes.oktmo}`);
+          if (codes.okfs) statCodes.push(`ОКФС: ${codes.okfs}`);
+          if (codes.okogu) statCodes.push(`ОКОГУ: ${codes.okogu}`);
+          if (codes.okopf) statCodes.push(`ОКОПФ: ${codes.okopf}`);
+          
+          if (statCodes.length > 0) {
+            normalized['Коды Росстата'] = statCodes.join(', ');
+          }
+        }
+        
+        // Дополнительные ОКВЭД (если есть несколько)
+        if (data.company && data.company.okveds && data.company.okveds.length > 1) {
+          const additionalOkveds = data.company.okveds
+            .filter(okved => !okved.main) // Исключаем основной
+            .slice(0, 3) // Берем первые 3 дополнительных
+            .map(okved => okved.value || okved.name)
+            .filter(Boolean);
+          
+          if (additionalOkveds.length > 0) {
+            normalized['Дополнительные виды деятельности'] = additionalOkveds.join('; ');
+          }
+        }
+        
+        // Негативные списки (если есть проблемы)
+        if (data.company && data.company.negative_lists) {
+          const negatives = data.company.negative_lists;
+          const issues = [];
+          
+          if (negatives.false_info === true) issues.push('Недостоверные сведения');
+          if (negatives.disqualified === true) issues.push('Дисквалификация');
+          if (negatives.rnp === true) issues.push('РНП');
+          if (negatives.bankruptcy === true) issues.push('Банкротство');
+          
+          if (issues.length > 0) {
+            normalized['⚠️ Негативные отметки'] = issues.join(', ');
+          }
+        }
+        
+        // Статус детально
+        if (data.company && data.company.status) {
+          const status = data.company.status;
+          if (status.status_rus_short) {
+            normalized['Статус'] = status.status_rus_short;
+          } else if (status.status_egr) {
+            normalized['Статус'] = status.status_egr;
+          }
+          
+          // Дата окончания деятельности
+          if (status.date_end) {
+            normalized['Дата изменения статуса'] = status.date_end;
+          }
+        }
+        
+        // Лет с регистрации
+        if (data.company && data.company.years_from_registration) {
+          normalized['Лет с регистрации'] = `${data.company.years_from_registration} лет`;
+        }
+        
       } catch (e) {
         console.warn('Error normalizing Datanewton data:', e);
       }
