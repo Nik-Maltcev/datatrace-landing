@@ -505,7 +505,7 @@
         console.log('💰 Finance data received:', data);
         
         if (data.result && data.result.ok) {
-          displayFinanceData(bodyId, data.result.items);
+          window.displayFinanceData(bodyId, data.result.items);
         } else {
           throw new Error(data.result.error?.message || 'Не удалось получить финансовые данные');
         }
@@ -523,6 +523,114 @@
       } finally {
         button.textContent = originalText;
         button.disabled = false;
+      }
+    };
+
+    // Функция отображения финансовых данных (определяем сразу после getFinanceData)
+    window.displayFinanceData = function(bodyId, financeData) {
+      const bodyEl = document.getElementById(bodyId);
+      if (!bodyEl || !financeData) return;
+      
+      console.log('📊 Displaying finance data:', financeData);
+      
+      let financeHtml = '<div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">';
+      financeHtml += '<h4 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">💰 Финансовая информация</h4>';
+      
+      // Информация о компании
+      if (financeData.company) {
+        financeHtml += '<div style="margin-bottom: 16px;">';
+        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Компания</h5>';
+        financeHtml += '<div class="data-grid">';
+        
+        if (financeData.company.name) {
+          financeHtml += `<div class="data-label">Название</div><div class="data-value">${financeData.company.name}</div>`;
+        }
+        if (financeData.company.inn) {
+          financeHtml += `<div class="data-label">ИНН</div><div class="data-value">${financeData.company.inn}</div>`;
+        }
+        if (financeData.company.status) {
+          financeHtml += `<div class="data-label">Статус</div><div class="data-value">${financeData.company.status}</div>`;
+        }
+        
+        financeHtml += '</div></div>';
+      }
+      
+      // Финансовые данные по годам
+      if (financeData.data && typeof financeData.data === 'object') {
+        const years = Object.keys(financeData.data).sort((a, b) => b - a);
+        
+        years.forEach(year => {
+          const yearData = financeData.data[year];
+          if (yearData && typeof yearData === 'object') {
+            financeHtml += `<div style="margin-bottom: 16px;">`;
+            financeHtml += `<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Данные за ${year} год</h5>`;
+            financeHtml += '<div class="data-grid">';
+            
+            const formatted = window.formatFinancialIndicators(yearData);
+            for (const [label, value] of Object.entries(formatted)) {
+              financeHtml += `<div class="data-label">${label}</div><div class="data-value">${value}</div>`;
+            }
+            
+            financeHtml += '</div></div>';
+          }
+        });
+      }
+      
+      // Ссылки на официальные отчеты
+      if (financeData['bo.nalog.ru'] && financeData['bo.nalog.ru']['Отчет']) {
+        financeHtml += '<div style="margin-bottom: 16px;">';
+        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">📋 Официальные отчеты</h5>';
+        
+        const reports = financeData['bo.nalog.ru']['Отчет'];
+        if (Array.isArray(reports)) {
+          reports.forEach(report => {
+            if (report.url) {
+              financeHtml += `<div style="margin-bottom: 4px;"><a href="${report.url}" target="_blank" style="color: #2563eb; text-decoration: underline;">Отчет за ${report.year || 'неизвестный год'}</a></div>`;
+            }
+          });
+        }
+        
+        financeHtml += '</div>';
+      }
+      
+      financeHtml += '</div>';
+      
+      bodyEl.innerHTML += financeHtml;
+    };
+
+    // Функция форматирования финансовых показателей
+    window.formatFinancialIndicators = function(yearData) {
+      const formatted = {};
+      
+      // Основные показатели с расшифровкой кодов
+      const indicators = {
+        '1600': 'Баланс (тыс. руб.)',
+        '2110': 'Выручка (тыс. руб.)',
+        '2400': 'Чистая прибыль (тыс. руб.)',
+        '1170': 'Основные средства (тыс. руб.)',
+        '1230': 'Дебиторская задолженность (тыс. руб.)',
+        '1510': 'Уставный капитал (тыс. руб.)',
+        '1700': 'Обязательства (тыс. руб.)'
+      };
+      
+      Object.entries(indicators).forEach(([code, description]) => {
+        if (yearData[code] !== undefined && yearData[code] !== null) {
+          const value = parseInt(yearData[code]) || 0;
+          formatted[description] = window.formatCurrency(value * 1000); // переводим из тыс. в рубли
+        }
+      });
+      
+      return formatted;
+    };
+    
+    // Функция форматирования валюты
+    window.formatCurrency = function(value) {
+      if (Math.abs(value) >= 1000000) {
+        return `${(value / 1000000).toFixed(1)} млн руб.`;
+      } else if (Math.abs(value) >= 1000) {
+        return `${(value / 1000).toFixed(0)} тыс. руб.`;
+      } else {
+        return `${value} руб.`;
       }
     };
 
