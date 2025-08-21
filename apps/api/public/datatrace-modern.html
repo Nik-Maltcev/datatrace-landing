@@ -2431,12 +2431,22 @@
         
         // Название компании - проверяем разные возможные структуры
         if (data.company && data.company.company_names) {
+          console.log('Company names object:', data.company.company_names);
           if (data.company.company_names.short) normalized['Краткое название'] = data.company.company_names.short;
           if (data.company.company_names.full) normalized['Полное название'] = data.company.company_names.full;
         } else if (data.short_name || data.full_name) {
           // Старая структура (для обратной совместимости)
           if (data.short_name) normalized['Краткое название'] = data.short_name;
           if (data.full_name) normalized['Полное название'] = data.full_name;
+        }
+        
+        // Дополнительная проверка - если нет названий, попробуем другие поля
+        if (!normalized['Краткое название'] && !normalized['Полное название']) {
+          console.log('No company names found, checking other fields...');
+          console.log('Full company object:', data.company);
+          if (data.company && data.company.opf) {
+            normalized['Организационно-правовая форма'] = data.company.opf;
+          }
         }
         
         // Статус
@@ -2448,7 +2458,13 @@
         
         // Адрес
         if (data.company && data.company.address) {
-          normalized['Адрес'] = data.company.address;
+          let address = data.company.address;
+          // Если адрес - объект, пытаемся извлечь строку
+          if (typeof address === 'object') {
+            console.log('Address object:', address);
+            address = address.full_address || address.address || address.value || JSON.stringify(address);
+          }
+          normalized['Адрес'] = address;
         } else if (data.address_block && data.address_block.line_address) {
           normalized['Адрес'] = data.address_block.line_address;
         }
@@ -2481,19 +2497,15 @@
     }
 
     function renderStructuredCompanyData(structuredData, sourceName) {
+      console.log(`renderStructuredCompanyData called for ${sourceName} with:`, structuredData);
+      
       if (!structuredData || Object.keys(structuredData).length === 0) {
         return '<div style="color: #6b7280;">Нет структурированных данных</div>';
       }
 
       const lowerName = sourceName.toLowerCase();
       
-      if (lowerName.includes('checko')) {
-        return renderCheckoFull(structuredData, null);
-      } else if (lowerName.includes('datanewton')) {
-        return renderDatanewtonFull(structuredData, null);
-      }
-      
-      // Обычное отображение как key-value
+      // Для нормализованных данных используем простое отображение key-value
       return formatResultData(structuredData);
     }
 
