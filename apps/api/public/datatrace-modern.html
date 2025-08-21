@@ -2300,22 +2300,17 @@
 
       const bodyEl = item.querySelector(`#${bodyId}`);
 
-      // Отображаем структурированные данные от GPT или нормализованные данные
+      // Отображаем ТОЛЬКО сырые данные от API, без обработки через AI
       setTimeout(() => {
         let displayContent = '';
         
         if (typeof data === 'object' && data !== null) {
-          // Пытаемся извлечь структурированные данные от GPT
-          const structuredData = extractStructuredDataForSource(title, data, aiSummary);
+          console.log(`Raw data from ${title}:`, data);
           
-          if (structuredData && Object.keys(structuredData).length > 0) {
-            // Показываем структурированные данные от GPT
-            displayContent = renderStructuredCompanyData(structuredData, title);
-          } else {
-            // Fallback - показываем нормализованные данные
-            const normalized = normalizeCompanyDataForDisplay(title, data);
-            displayContent = renderStructuredCompanyData(normalized, title);
-          }
+          // Показываем нормализованные данные напрямую без AI
+          const normalized = normalizeCompanyDataForDisplay(title, data);
+          console.log(`Normalized data for ${title}:`, normalized);
+          displayContent = renderStructuredCompanyData(normalized, title);
         } else {
           displayContent = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
         }
@@ -2344,14 +2339,22 @@
     }
 
     function normalizeCompanyDataForDisplay(sourceName, rawData) {
+      console.log(`normalizeCompanyDataForDisplay called for ${sourceName} with:`, rawData);
       const lowerName = sourceName.toLowerCase();
       
       if (lowerName.includes('checko')) {
-        return normalizeCheckoData(rawData);
+        console.log('Processing as Checko data');
+        const result = normalizeCheckoData(rawData);
+        console.log('Checko normalized result:', result);
+        return result;
       } else if (lowerName.includes('datanewton')) {
-        return normalizeDatanewtonData(rawData);
+        console.log('Processing as Datanewton data');
+        const result = normalizeDatanewtonData(rawData);
+        console.log('Datanewton normalized result:', result);
+        return result;
       }
       
+      console.log('Processing as raw data');
       return { 'Сырые данные': JSON.stringify(rawData) };
     }
 
