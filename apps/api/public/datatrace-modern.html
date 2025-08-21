@@ -598,6 +598,16 @@
       }
     };
 
+    // Функция форматирования валюты для Checko (данные уже в тысячах)
+    window.formatCheckoCurrency = function(value) {
+      // value уже в тысячах рублей, не умножаем на 1000
+      if (Math.abs(value) >= 1000) {
+        return `${(value / 1000).toFixed(1)} млн руб.`;
+      } else {
+        return `${value.toFixed(0)} тыс. руб.`;
+      }
+    };
+
     // Форматирование финансовых данных Checko
     window.formatCheckoFinanceData = function(financeData) {
       let html = '';
@@ -714,7 +724,7 @@
             const years = Object.keys(yearValues).sort((a, b) => b - a);
             const yearText = years.map(year => {
               const value = yearValues[year];
-              return `${year} - ${window.formatCurrency(value * 1000)}`;
+              return `${year} - ${window.formatCheckoCurrency(value)}`;
             }).join('<br>');
             
             html += `<div class="data-label">${description}</div><div class="data-value">${yearText}</div>`;
@@ -751,6 +761,9 @@
       let html = '';
       
       console.log('Formatting Datanewton finance data:', financeData);
+      console.log('Balances:', financeData.balances);
+      console.log('Fin results:', financeData.fin_results);
+      console.log('Money flow:', financeData.money_flow);
       
       // Балансы (если есть)
       if (financeData.balances) {
@@ -765,16 +778,24 @@
           html += '<div class="data-grid">';
           
           // Показываем ВСЕ показатели баланса с разбивкой по годам
-          financeData.balances.indicators.forEach(indicator => {
+          financeData.balances.indicators.forEach((indicator, index) => {
+            console.log(`Balance indicator ${index}:`, indicator);
             if (indicator.name && indicator.values) {
+              console.log(`Processing ${indicator.name}:`, indicator.values);
               const years = Object.keys(indicator.values).sort((a, b) => b - a);
               const yearValues = years.map(year => {
                 const value = indicator.values[year];
-                if (value && value !== '0' && value !== 0) {
-                  return `${year} - ${window.formatCurrency(parseInt(value) * 1000)}`;
+                console.log(`Year ${year}, value:`, value, typeof value);
+                if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
+                  const numValue = parseFloat(value) || 0;
+                  if (numValue !== 0) {
+                    return `${year} - ${window.formatCurrency(numValue * 1000)}`;
+                  }
                 }
                 return null;
               }).filter(Boolean);
+              
+              console.log(`Year values for ${indicator.name}:`, yearValues);
               
               if (yearValues.length > 0) {
                 html += `<div class="data-label">${indicator.name}</div><div class="data-value">${yearValues.join('<br>')}</div>`;
@@ -807,8 +828,11 @@
               const years = Object.keys(indicator.values).sort((a, b) => b - a);
               const yearValues = years.map(year => {
                 const value = indicator.values[year];
-                if (value && value !== '0' && value !== 0) {
-                  return `${year} - ${window.formatCurrency(parseInt(value) * 1000)}`;
+                if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
+                  const numValue = parseFloat(value) || 0;
+                  if (numValue !== 0) {
+                    return `${year} - ${window.formatCurrency(numValue * 1000)}`;
+                  }
                 }
                 return null;
               }).filter(Boolean);
@@ -844,8 +868,11 @@
               const years = Object.keys(indicator.values).sort((a, b) => b - a);
               const yearValues = years.map(year => {
                 const value = indicator.values[year];
-                if (value && value !== '0' && value !== 0) {
-                  return `${year} - ${window.formatCurrency(parseInt(value) * 1000)}`;
+                if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
+                  const numValue = parseFloat(value) || 0;
+                  if (numValue !== 0) {
+                    return `${year} - ${window.formatCurrency(numValue * 1000)}`;
+                  }
                 }
                 return null;
               }).filter(Boolean);
