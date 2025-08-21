@@ -2759,6 +2759,290 @@
           normalized['Лет с регистрации'] = `${data.company.years_from_registration} лет`;
         }
         
+        // Учредители (если есть)
+        if (data.company && data.company.founders && data.company.founders.length > 0) {
+          const founders = data.company.founders.slice(0, 3) // Берем первых 3
+            .map(founder => {
+              if (founder.name) return founder.name;
+              if (founder.full_name) return founder.full_name;
+              if (founder.fio) return founder.fio;
+              return null;
+            })
+            .filter(Boolean);
+          
+          if (founders.length > 0) {
+            const foundersText = founders.join(', ');
+            const total = data.company.founders.length;
+            normalized['Учредители'] = total > 3 ? `${foundersText} и ещё ${total - 3}` : foundersText;
+          }
+        }
+        
+        // Владельцы (если есть блок OWNER_BLOCK)
+        if (data.company && data.company.owners && data.company.owners.length > 0) {
+          const owners = data.company.owners.slice(0, 2) // Берем первых 2
+            .map(owner => {
+              const parts = [];
+              if (owner.name || owner.full_name || owner.fio) {
+                parts.push(owner.name || owner.full_name || owner.fio);
+              }
+              if (owner.share && owner.share.percent) {
+                parts.push(`(${owner.share.percent}%)`);
+              }
+              return parts.length > 0 ? parts.join(' ') : null;
+            })
+            .filter(Boolean);
+          
+          if (owners.length > 0) {
+            const total = data.company.owners.length;
+            const ownersText = owners.join(', ');
+            normalized['Владельцы'] = total > 2 ? `${ownersText} и ещё ${total - 2}` : ownersText;
+          }
+        }
+        
+        // Численность работников по годам (несколько последних лет)
+        if (data.company && data.company.workers_count && Object.keys(data.company.workers_count).length > 1) {
+          const years = Object.keys(data.company.workers_count).sort((a, b) => b - a).slice(0, 3);
+          const workersHistory = years.map(year => `${year}: ${data.company.workers_count[year]} чел.`);
+          normalized['История численности'] = workersHistory.join(', ');
+        }
+        
+        // Филиалы (если есть)
+        if (data.company && data.company.branches && data.company.branches.length > 0) {
+          const branchCount = data.company.branches.length;
+          const branches = data.company.branches.slice(0, 2)
+            .map(branch => branch.name || branch.full_name)
+            .filter(Boolean);
+          
+          if (branches.length > 0) {
+            const branchesText = branches.join(', ');
+            normalized['Филиалы'] = branchCount > 2 ? `${branchesText} и ещё ${branchCount - 2}` : branchesText;
+          } else {
+            normalized['Количество филиалов'] = `${branchCount} филиалов`;
+          }
+        }
+        
+        // Лицензии (если есть)
+        if (data.company && data.company.licenses && data.company.licenses.length > 0) {
+          const licenses = data.company.licenses.slice(0, 2)
+            .map(license => {
+              const parts = [];
+              if (license.activity) parts.push(license.activity);
+              if (license.number) parts.push(`№${license.number}`);
+              if (license.status) parts.push(`(${license.status})`);
+              return parts.length > 0 ? parts.join(' ') : null;
+            })
+            .filter(Boolean);
+          
+          if (licenses.length > 0) {
+            const total = data.company.licenses.length;
+            const licensesText = licenses.join('; ');
+            normalized['Лицензии'] = total > 2 ? `${licensesText} и ещё ${total - 2}` : licensesText;
+          }
+        }
+        
+        // Изменения в ЕГРЮЛ (если есть свежие)
+        if (data.company && data.company.egrul_changes && data.company.egrul_changes.length > 0) {
+          const recentChanges = data.company.egrul_changes
+            .filter(change => change.date)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 1) // Последнее изменение
+            .map(change => `${change.date}: ${change.description || 'изменение'}`)
+            .filter(Boolean);
+          
+          if (recentChanges.length > 0) {
+            normalized['Последние изменения ЕГРЮЛ'] = recentChanges[0];
+          }
+        }
+        
+        // ОГРН индивидуального предпринимателя (если ИП)
+        if (data.ogrnip) {
+          normalized['ОГРНИП'] = data.ogrnip;
+        }
+        
+        // Вид ИП (если индивидуальный предприниматель)
+        if (data.company && data.company.vid_iptext) {
+          normalized['Вид ИП'] = data.company.vid_iptext;
+        }
+        
+        // Дополнительная обработка блочных данных (если используются фильтры)
+        
+        // Контакты из contact_block
+        if (data.contact_block && !normalized['Email'] && !normalized['Телефон']) {
+          if (data.contact_block.emails && data.contact_block.emails.length > 0) {
+            normalized['Email'] = data.contact_block.emails.join(', ');
+          }
+          if (data.contact_block.phones && data.contact_block.phones.length > 0) {
+            normalized['Телефон'] = data.contact_block.phones.join(', ');
+          }
+          if (data.contact_block.websites && data.contact_block.websites.length > 0) {
+            normalized['Веб-сайт'] = data.contact_block.websites.join(', ');
+          }
+        }
+        
+        // Менеджеры из manager_block
+        if (data.manager_block && !normalized['Руководитель']) {
+          if (data.manager_block.managers && data.manager_block.managers.length > 0) {
+            const manager = data.manager_block.managers[0];
+            if (manager.fio || manager.name) {
+              normalized['Руководитель'] = manager.fio || manager.name;
+            }
+          } else if (data.manager_block.manager_name) {
+            normalized['Руководитель'] = data.manager_block.manager_name;
+          }
+        }
+        
+        // Владельцы из owner_block
+        if (data.owner_block && !normalized['Владельцы'] && !normalized['Учредители']) {
+          if (data.owner_block.owners && data.owner_block.owners.length > 0) {
+            const owners = data.owner_block.owners.slice(0, 3)
+              .map(owner => {
+                const parts = [];
+                if (owner.name || owner.full_name) {
+                  parts.push(owner.name || owner.full_name);
+                }
+                if (owner.share) {
+                  parts.push(`(${owner.share}%)`);
+                }
+                return parts.length > 0 ? parts.join(' ') : null;
+              })
+              .filter(Boolean);
+            
+            if (owners.length > 0) {
+              const total = data.owner_block.owners.length;
+              normalized['Учредители/Владельцы'] = total > 3 ? `${owners.join(', ')} и ещё ${total - 3}` : owners.join(', ');
+            }
+          }
+        }
+        
+        // ОКВЭД из okved_block
+        if (data.okved_block && !normalized['Основная деятельность']) {
+          if (data.okved_block.main_okved) {
+            normalized['Основная деятельность'] = data.okved_block.main_okved.value || data.okved_block.main_okved.name;
+          }
+          
+          if (data.okved_block.additional_okveds && data.okved_block.additional_okveds.length > 0) {
+            const additional = data.okved_block.additional_okveds.slice(0, 3)
+              .map(okved => okved.value || okved.name)
+              .filter(Boolean);
+            
+            if (additional.length > 0) {
+              normalized['Дополнительные ОКВЭД'] = additional.join('; ');
+            }
+          }
+        }
+        
+        // Негативные списки из negative_lists_block
+        if (data.negative_lists_block && !normalized['⚠️ Негативные отметки']) {
+          const negatives = data.negative_lists_block;
+          const issues = [];
+          
+          if (negatives.false_info) issues.push('Недостоверные сведения');
+          if (negatives.disqualified) issues.push('Дисквалификация');
+          if (negatives.rnp) issues.push('РНП');
+          if (negatives.bankruptcy) issues.push('Банкротство');
+          if (negatives.sanctions) issues.push('Санкции');
+          
+          if (issues.length > 0) {
+            normalized['⚠️ Негативные списки'] = issues.join(', ');
+          }
+        }
+        
+        // Численность из workers_count_block
+        if (data.workers_count_block && !normalized['Численность сотрудников']) {
+          const years = Object.keys(data.workers_count_block).sort((a, b) => b - a);
+          if (years.length > 0) {
+            const latestYear = years[0];
+            const count = data.workers_count_block[latestYear];
+            normalized['Численность сотрудников'] = `${count} чел. (${latestYear} г.)`;
+            
+            if (years.length > 1) {
+              const history = years.slice(0, 3).map(year => `${year}: ${data.workers_count_block[year]}`);
+              normalized['Динамика численности'] = history.join(', ');
+            }
+          }
+        }
+        
+        // Статистические данные из statistics_block
+        if (data.statistics_block) {
+          const stats = data.statistics_block;
+          
+          if (stats.revenue && stats.revenue.value) {
+            normalized['💰 Выручка'] = `${stats.revenue.value.toLocaleString()} руб. (${stats.revenue.year || 'н/д'})`;
+          }
+          
+          if (stats.profit && stats.profit.value) {
+            normalized['📈 Прибыль'] = `${stats.profit.value.toLocaleString()} руб. (${stats.profit.year || 'н/д'})`;
+          }
+          
+          if (stats.assets && stats.assets.value) {
+            normalized['🏢 Активы'] = `${stats.assets.value.toLocaleString()} руб. (${stats.assets.year || 'н/д'})`;
+          }
+        }
+        
+        // Лицензии из licenses_block
+        if (data.licenses_block && data.licenses_block.length > 0) {
+          const activeLicenses = data.licenses_block
+            .filter(license => license.status === 'active' || license.active)
+            .slice(0, 3);
+          
+          if (activeLicenses.length > 0) {
+            const licenseTexts = activeLicenses.map(license => {
+              const parts = [];
+              if (license.activity_type || license.type) {
+                parts.push(license.activity_type || license.type);
+              }
+              if (license.series && license.number) {
+                parts.push(`№${license.series}-${license.number}`);
+              }
+              return parts.join(' ');
+            });
+            
+            normalized['📋 Лицензии'] = licenseTexts.join('; ');
+          }
+        }
+        
+        // Филиалы из branch_block
+        if (data.branch_block && data.branch_block.length > 0) {
+          const branchCount = data.branch_block.length;
+          const firstBranches = data.branch_block.slice(0, 2)
+            .map(branch => {
+              const parts = [];
+              if (branch.name) parts.push(branch.name);
+              if (branch.region) parts.push(branch.region);
+              return parts.join(' - ');
+            })
+            .filter(Boolean);
+          
+          if (firstBranches.length > 0) {
+            normalized['🏪 Филиалы'] = branchCount > 2 
+              ? `${firstBranches.join('; ')} и ещё ${branchCount - 2}`
+              : firstBranches.join('; ');
+          }
+        }
+        
+        // Последние изменения ЕГРЮЛ из egrul_changes_block
+        if (data.egrul_changes_block && data.egrul_changes_block.length > 0) {
+          const recentChanges = data.egrul_changes_block
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 2);
+          
+          const changeTexts = recentChanges.map(change => {
+            const parts = [];
+            if (change.date) {
+              const date = new Date(change.date).toLocaleDateString('ru-RU');
+              parts.push(date);
+            }
+            if (change.type || change.description) {
+              parts.push(change.type || change.description);
+            }
+            return parts.join(': ');
+          });
+          
+          if (changeTexts.length > 0) {
+            normalized['📝 Последние изменения ЕГРЮЛ'] = changeTexts.join('; ');
+          }
+        }
+        
       } catch (e) {
         console.warn('Error normalizing Datanewton data:', e);
       }
