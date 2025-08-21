@@ -2395,7 +2395,28 @@
           if (data['ЮрАдрес']) normalized['Юридический адрес'] = data['ЮрАдрес'];
           if (data['ОКВЭД']) normalized['Основная деятельность'] = data['ОКВЭД'];
           if (data['УстКап']) normalized['Уставной капитал'] = data['УстКап'];
-          if (data['Руковод']) normalized['Руководитель'] = data['Руковод'];
+          
+          // Обработка руководителя - может быть массивом объектов
+          if (data['Руковод']) {
+            console.log('Processing Руковод field:', data['Руковод']);
+            if (Array.isArray(data['Руковод']) && data['Руковод'].length > 0) {
+              const manager = data['Руковод'][0]; // Берем первого руководителя
+              if (manager && typeof manager === 'object') {
+                const managerInfo = [];
+                if (manager['ФИО']) managerInfo.push(manager['ФИО']);
+                if (manager['НаимДолжн']) managerInfo.push(manager['НаимДолжн']);
+                if (manager['ИНН']) managerInfo.push(`ИНН: ${manager['ИНН']}`);
+                normalized['Руководитель'] = managerInfo.join(', ');
+              } else {
+                normalized['Руководитель'] = String(data['Руковод'][0]);
+              }
+            } else if (typeof data['Руковод'] === 'string') {
+              normalized['Руководитель'] = data['Руковод'];
+            } else {
+              normalized['Руководитель'] = JSON.stringify(data['Руковод']);
+            }
+          }
+          
           if (data['Регион']) normalized['Регион'] = data['Регион'];
           
         } else {
@@ -2437,7 +2458,32 @@
             normalized['Основная деятельность'] = data['ОКВЭД'];
           }
           
-          if (data['Руковод']) normalized['Руководитель'] = data['Руковод'];
+          // Обработка руководителя - может быть массивом объектов или сложной структурой
+          if (data['Руковод']) {
+            console.log('Processing Руковод field (fallback):', data['Руковод']);
+            if (Array.isArray(data['Руковод']) && data['Руковод'].length > 0) {
+              const manager = data['Руковод'][0]; // Берем первого руководителя
+              if (manager && typeof manager === 'object') {
+                const managerInfo = [];
+                if (manager['ФИО']) managerInfo.push(manager['ФИО']);
+                if (manager['НаимДолжн']) managerInfo.push(manager['НаимДолжн']);
+                if (manager['ИНН']) managerInfo.push(`ИНН: ${manager['ИНН']}`);
+                normalized['Руководитель'] = managerInfo.join(', ');
+              } else {
+                normalized['Руководитель'] = String(data['Руковод'][0]);
+              }
+            } else if (typeof data['Руковод'] === 'string') {
+              normalized['Руководитель'] = data['Руковод'];
+            } else if (data['Руковод']['ФИО']) {
+              // Если это объект с ФИО
+              const managerInfo = [];
+              if (data['Руковод']['ФИО']) managerInfo.push(data['Руковод']['ФИО']);
+              if (data['Руковод']['НаимДолжн']) managerInfo.push(data['Руковод']['НаимДолжн']);
+              normalized['Руководитель'] = managerInfo.join(', ');
+            } else {
+              normalized['Руководитель'] = JSON.stringify(data['Руковод']);
+            }
+          }
         }
       } catch (e) {
         console.warn('Error normalizing Checko data:', e);
