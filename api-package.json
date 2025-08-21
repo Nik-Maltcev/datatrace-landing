@@ -1,9 +1,0 @@
-{
-  "name": "datatrace-api-deploy",
-  "version": "1.0.0",
-  "scripts": {
-    "build": "cd apps/api && npm install",
-    "start": "cd apps/api && npm start",
-    "dev": "cd apps/api && npm run dev"
-  }
-}
