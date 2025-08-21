@@ -2305,16 +2305,25 @@
         let displayContent = '';
         
         if (typeof data === 'object' && data !== null) {
-          // Пытаемся извлечь структурированные данные от GPT
-          const structuredData = extractStructuredDataForSource(title, data, aiSummary);
+          // Определяем тип источника и отображаем соответствующие данные
+          const lowerTitle = title.toLowerCase();
           
-          if (structuredData && Object.keys(structuredData).length > 0) {
-            // Показываем структурированные данные от GPT
-            displayContent = renderStructuredCompanyData(structuredData, title);
+          if (lowerTitle.includes('checko')) {
+            // Для Checko отображаем сырые данные от API
+            displayContent = renderCheckoRaw(data);
+          } else if (lowerTitle.includes('datanewton')) {
+            // Для Datanewton отображаем сырые данные от API
+            displayContent = renderDatanewtonRaw(data);
           } else {
-            // Fallback - показываем нормализованные данные
-            const normalized = normalizeCompanyDataForDisplay(title, data);
-            displayContent = renderStructuredCompanyData(normalized, title);
+            // Для других источников или обработанных GPT данных
+            const structuredData = extractStructuredDataForSource(title, data, aiSummary);
+            
+            if (structuredData && Object.keys(structuredData).length > 0) {
+              displayContent = renderStructuredCompanyData(structuredData, title);
+            } else {
+              const normalized = normalizeCompanyDataForDisplay(title, data);
+              displayContent = renderStructuredCompanyData(normalized, title);
+            }
           }
         } else {
           displayContent = formatResultData(typeof data === 'object' ? data : { message: String(data || 'Нет данных') });
@@ -2324,6 +2333,176 @@
       }, 100);
 
       return item;
+    }
+
+    // Функции для отображения сырых данных API
+    function renderCheckoRaw(data) {
+      console.log('renderCheckoRaw called with:', data);
+      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
+      let html = '<div class="data-grid">';
+      
+      if (data && typeof data === 'object') {
+        // Отображаем основные поля из Checko API
+        html += htmlRow('Название (сокращенное)', data.НаимСокр);
+        html += htmlRow('Название (полное)', data.НаимПолн);
+        html += htmlRow('ИНН', data.ИНН);
+        html += htmlRow('ОГРН', data.ОГРН);
+        html += htmlRow('КПП', data.КПП);
+        html += htmlRow('Статус', data.Статус?.Наим);
+        html += htmlRow('Дата регистрации', data.ДатаРег);
+        html += htmlRow('Юридический адрес', data.ЮрАдрес?.АдресРФ);
+        html += htmlRow('Уставной капитал', data.УстКап?.Сумма ? `${data.УстКап.Сумма} руб.` : null);
+        
+        // ОКВЭД
+        if (data.ОКВЭД) {
+          const okvedText = data.ОКВЭД.Наим;
+          const okvedCode = data.ОКВЭД.Код;
+          html += htmlRow('Основная деятельность (ОКВЭД)', okvedText ? `${okvedText}${okvedCode ? ` (${okvedCode})` : ''}` : null);
+        }
+        
+        // Руководитель
+        if (data.Руковод) {
+          html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Руководство</h4>';
+          html += '<div class="data-grid">';
+          html += htmlRow('ФИО', data.Руковод.ФИО);
+          html += htmlRow('Должность', data.Руковод.Должн);
+          html += '</div>';
+        }
+        
+        // Учредители
+        if (data.Учред && Array.isArray(data.Учред) && data.Учред.length > 0) {
+          html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Учредители</h4>';
+          html += '<div class="data-grid">';
+          data.Учред.slice(0, 5).forEach((founder, index) => {
+            if (founder.НаимПолн || founder.ФИО) {
+              const name = founder.НаимПолн || founder.ФИО;
+              const share = founder.ДоляУстКап ? ` (${founder.ДоляУстКап})` : '';
+              html += htmlRow(`Учредитель ${index + 1}`, `${name}${share}`);
+            }
+          });
+          if (data.Учред.length > 5) {
+            html += htmlRow('...', `и еще ${data.Учред.length - 5} учредителей`);
+          }
+          html += '</div>';
+        }
+      }
+      
+      html += '</div>';
+      console.log('renderCheckoRaw result:', html);
+      return html;
+    }
+
+    function renderDatanewtonRaw(data) {
+      console.log('renderDatanewtonRaw called with:', data);
+      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
+      let html = '<div class="data-grid">';
+      
+      if (data && typeof data === 'object') {
+        // Основная информация
+        html += htmlRow('ИНН', data.inn);
+        html += htmlRow('ОГРН', data.ogrn);
+        
+        // Информация о компании
+        if (data.company) {
+          const company = data.company;
+          
+          // Названия
+          if (company.company_names) {
+            html += htmlRow('Название (сокращенное)', company.company_names.short);
+            html += htmlRow('Название (полное)', company.company_names.full);
+          }
+          
+          html += htmlRow('КПП', company.kpp);
+          html += htmlRow('ОПФ', company.opf);
+          html += htmlRow('Дата регистрации', company.registration_date);
+          html += htmlRow('Лет с регистрации', company.years_from_registration);
+          html += htmlRow('Уставной капитал', company.charter_capital);
+          
+          // Статус
+          if (company.status) {
+            html += htmlRow('Статус', company.status.vid_iptext || company.status.name);
+          }
+          
+          // Адрес
+          if (company.address) {
+            const address = typeof company.address === 'string' ? company.address : 
+                           company.address.full_address || company.address.value;
+            html += htmlRow('Адрес', address);
+          }
+          
+          // ОКВЭД
+          if (company.okveds && company.okveds.length > 0) {
+            html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Виды деятельности</h4>';
+            html += '<div class="data-grid">';
+            company.okveds.slice(0, 3).forEach((okved, index) => {
+              const name = okved.name || okved.text;
+              const code = okved.code;
+              if (name) {
+                html += htmlRow(`ОКВЭД ${index + 1}`, `${name}${code ? ` (${code})` : ''}`);
+              }
+            });
+            if (company.okveds.length > 3) {
+              html += htmlRow('...', `и еще ${company.okveds.length - 3} видов деятельности`);
+            }
+            html += '</div>';
+          }
+          
+          // Руководители
+          if (company.managers && company.managers.length > 0) {
+            html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Руководство</h4>';
+            html += '<div class="data-grid">';
+            company.managers.forEach((manager, index) => {
+              const name = manager.fio || manager.name;
+              const position = manager.position || manager.post;
+              if (name) {
+                html += htmlRow(`Руководитель ${index + 1}`, name);
+                if (position) html += htmlRow('Должность', position);
+              }
+            });
+            html += '</div>';
+          }
+        }
+        
+        // Контакты
+        if (data.contacts) {
+          const contacts = data.contacts;
+          if ((contacts.phones && contacts.phones.length) || 
+              (contacts.emails && contacts.emails.length) || 
+              (contacts.sites && contacts.sites.length)) {
+            html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Контакты</h4>';
+            html += '<div class="data-grid">';
+            if (contacts.phones && contacts.phones.length) {
+              html += htmlRow('Телефоны', contacts.phones.join(', '));
+            }
+            if (contacts.emails && contacts.emails.length) {
+              html += htmlRow('Email', contacts.emails.join(', '));
+            }
+            if (contacts.sites && contacts.sites.length) {
+              html += htmlRow('Сайты', contacts.sites.join(', '));
+            }
+            html += '</div>';
+          }
+        }
+        
+        // Негативные факторы
+        if (data.negative_lists && data.negative_lists.negative_factors && data.negative_lists.negative_factors.length > 0) {
+          const factors = data.negative_lists.negative_factors;
+          html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600; color:#dc2626;">Негативные факторы</h4>';
+          html += '<ul style="list-style-type: disc; padding-left: 20px; color:#dc2626;">';
+          factors.slice(0, 10).forEach(factor => {
+            const text = factor.factor_description || factor.name || factor.text;
+            if (text) html += `<li style="margin-bottom: 4px;">${text}</li>`;
+          });
+          if (factors.length > 10) {
+            html += `<li style="color:#6b7280;">и еще ${factors.length - 10} факторов</li>`;
+          }
+          html += '</ul>';
+        }
+      }
+      
+      html += '</div>';
+      console.log('renderDatanewtonRaw result:', html);
+      return html;
     }
 
     function extractStructuredDataForSource(sourceName, rawData, aiSummary) {
