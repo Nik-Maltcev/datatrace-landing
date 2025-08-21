@@ -2363,10 +2363,31 @@
       const normalized = {};
       
       try {
-        // Согласно документации Checko API, данные приходят с русскими ключами
-        if (rawData && typeof rawData === 'object') {
+        // Согласно документации Checko API, данные находятся в data.Записи[0]
+        if (rawData && rawData.data && rawData.data.Записи && rawData.data.Записи.length > 0) {
+          const data = rawData.data.Записи[0]; // Берем первую запись
+          console.log('Checko processing first record:', data);
+          console.log('Available keys:', Object.keys(data));
+          
+          // Русские ключи как в документации Checko
+          if (data['НаимСокр']) normalized['Краткое название'] = data['НаимСокр'];
+          if (data['НаимПолн']) normalized['Полное название'] = data['НаимПолн'];
+          if (data['ИНН']) normalized['ИНН'] = data['ИНН'];
+          if (data['ОГРН']) normalized['ОГРН'] = data['ОГРН'];
+          if (data['КПП']) normalized['КПП'] = data['КПП'];
+          if (data['ОКПО']) normalized['ОКПО'] = data['ОКПО'];
+          if (data['ДатаРег']) normalized['Дата регистрации'] = data['ДатаРег'];
+          if (data['Статус']) normalized['Статус'] = data['Статус'];
+          if (data['ЮрАдрес']) normalized['Юридический адрес'] = data['ЮрАдрес'];
+          if (data['ОКВЭД']) normalized['Основная деятельность'] = data['ОКВЭД'];
+          if (data['УстКап']) normalized['Уставной капитал'] = data['УстКап'];
+          if (data['Руковод']) normalized['Руководитель'] = data['Руковод'];
+          if (data['Регион']) normalized['Регион'] = data['Регион'];
+          
+        } else {
+          console.log('No Записи found in Checko data, trying direct access');
           const data = rawData.data || rawData;
-          console.log('Checko processing data:', data);
+          console.log('Checko processing data (direct):', data);
           console.log('Available keys:', Object.keys(data));
           
           // Русские ключи как в документации Checko
@@ -2378,31 +2399,31 @@
           
           if (data['Статус'] && data['Статус']['Наим']) {
             normalized['Статус'] = data['Статус']['Наим'];
+          } else if (data['Статус']) {
+            normalized['Статус'] = data['Статус'];
           }
           
           if (data['ЮрАдрес'] && data['ЮрАдрес']['АдресРФ']) {
             normalized['Юридический адрес'] = data['ЮрАдрес']['АдресРФ'];
+          } else if (data['ЮрАдрес']) {
+            normalized['Юридический адрес'] = data['ЮрАдрес'];
           }
           
           if (data['УстКап'] && data['УстКап']['Сумма']) {
             normalized['Уставной капитал'] = data['УстКап']['Сумма'];
+          } else if (data['УстКап']) {
+            normalized['Уставной капитал'] = data['УстКап'];
           }
           
           if (data['ОКВЭД'] && data['ОКВЭД']['Наим']) {
             const okvedText = data['ОКВЭД']['Наим'];
             const okvedCode = data['ОКВЭД']['Код'];
             normalized['Основная деятельность'] = okvedCode ? `${okvedText} (${okvedCode})` : okvedText;
+          } else if (data['ОКВЭД']) {
+            normalized['Основная деятельность'] = data['ОКВЭД'];
           }
           
-          // Fallback для английских ключей (если API изменится)
-          if (!normalized['Краткое название'] && data.name) {
-            if (data.name.short) normalized['Краткое название'] = data.name.short;
-            if (data.name.full) normalized['Полное название'] = data.name.full;
-          }
-          if (!normalized['ИНН'] && data.inn) normalized['ИНН'] = data.inn;
-          if (!normalized['ОГРН'] && data.ogrn) normalized['ОГРН'] = data.ogrn;
-          if (!normalized['Статус'] && data.status && data.status.name) normalized['Статус'] = data.status.name;
-          if (!normalized['Юридический адрес'] && data.address && data.address.value) normalized['Юридический адрес'] = data.address.value;
+          if (data['Руковод']) normalized['Руководитель'] = data['Руковод'];
         }
       } catch (e) {
         console.warn('Error normalizing Checko data:', e);
@@ -2432,21 +2453,23 @@
         // Название компании - проверяем разные возможные структуры
         if (data.company && data.company.company_names) {
           console.log('Company names object:', data.company.company_names);
-          if (data.company.company_names.short) normalized['Краткое название'] = data.company.company_names.short;
-          if (data.company.company_names.full) normalized['Полное название'] = data.company.company_names.full;
+          if (data.company.company_names.short_name) normalized['Краткое название'] = data.company.company_names.short_name;
+          if (data.company.company_names.full_name) normalized['Полное название'] = data.company.company_names.full_name;
         } else if (data.short_name || data.full_name) {
           // Старая структура (для обратной совместимости)
           if (data.short_name) normalized['Краткое название'] = data.short_name;
           if (data.full_name) normalized['Полное название'] = data.full_name;
         }
         
+        // Организационно-правовая форма
+        if (data.company && data.company.opf) {
+          normalized['Организационно-правовая форма'] = data.company.opf;
+        }
+        
         // Дополнительная проверка - если нет названий, попробуем другие поля
         if (!normalized['Краткое название'] && !normalized['Полное название']) {
           console.log('No company names found, checking other fields...');
           console.log('Full company object:', data.company);
-          if (data.company && data.company.opf) {
-            normalized['Организационно-правовая форма'] = data.company.opf;
-          }
         }
         
         // Статус
@@ -2456,15 +2479,24 @@
           normalized['Статус'] = data.status_string;
         }
         
-        // Адрес
+        // Адрес - правильная обработка объекта адреса
         if (data.company && data.company.address) {
           let address = data.company.address;
-          // Если адрес - объект, пытаемся извлечь строку
+          console.log('Address object:', address);
+          // Если адрес - объект, извлекаем нужное поле
           if (typeof address === 'object') {
-            console.log('Address object:', address);
-            address = address.full_address || address.address || address.value || JSON.stringify(address);
+            if (address.line_address) {
+              normalized['Адрес'] = address.line_address;
+            } else if (address.full_address) {
+              normalized['Адрес'] = address.full_address;
+            } else if (address.address) {
+              normalized['Адрес'] = address.address;
+            } else if (address.value) {
+              normalized['Адрес'] = address.value;
+            }
+          } else {
+            normalized['Адрес'] = address;
           }
-          normalized['Адрес'] = address;
         } else if (data.address_block && data.address_block.line_address) {
           normalized['Адрес'] = data.address_block.line_address;
         }
@@ -2487,6 +2519,16 @@
           }
         } else if (data.manager_block && data.manager_block.manager_name) {
           normalized['Руководитель'] = data.manager_block.manager_name;
+        }
+        
+        // Дата регистрации
+        if (data.company && data.company.registration_date) {
+          normalized['Дата регистрации'] = data.company.registration_date;
+        }
+        
+        // КПП
+        if (data.company && data.company.kpp) {
+          normalized['КПП'] = data.company.kpp;
         }
         
       } catch (e) {
