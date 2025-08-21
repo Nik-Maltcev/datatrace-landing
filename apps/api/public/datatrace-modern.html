@@ -3260,6 +3260,9 @@
       }
     }
     
+    // Делаем функцию глобальной сразу после определения
+    window.getFinanceData = getFinanceData;
+    
     function displayFinanceData(bodyId, financeData) {
       const bodyEl = document.getElementById(bodyId);
       if (!bodyEl || !financeData) return;
@@ -3393,7 +3396,14 @@
 
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
-    window.getFinanceData = getFinanceData;
+    
+    // Объявляем getFinanceData глобально сразу после определения
+    if (typeof getFinanceData !== 'undefined') {
+      window.getFinanceData = getFinanceData;
+      console.log('getFinanceData assigned to window');
+    } else {
+      console.error('getFinanceData is not defined!');
+    }
   </script>
 </body>
 </html>
