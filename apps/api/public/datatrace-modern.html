@@ -2294,12 +2294,18 @@
         status === 'danger' ? 'Найдено' : 'Ошибка';
 
       const bodyId = `body-${Math.random().toString(36).slice(2)}`;
+      const isChecko = lname.includes('checko');
+
+      // Добавляем кнопку финансов только для Checko
+      const financeButton = isChecko && status === 'success' ? 
+        `<button class="btn-secondary" onclick="getFinanceData(event, '${bodyId}')" style="margin-left: 8px; font-size: 12px; padding: 4px 8px;">💰 Финансы</button>` : '';
 
       item.innerHTML = `
         <div class="result-header" onclick="toggleResult(this)">
           <div class="result-title">${title}</div>
           <div class="flex items-center gap-3">
             <span class="status-badge ${statusClass}">${statusText}</span>
+            ${financeButton}
             <span class="caret">▶</span>
           </div>
         </div>
@@ -3151,6 +3157,177 @@
       }
     }
 
+    // Функции для работы с финансовой информацией Checko
+    async function getFinanceData(event, bodyId) {
+      event.stopPropagation(); // Предотвращаем сворачивание карточки
+      
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '⏳ Загрузка...';
+      button.disabled = true;
+      
+      try {
+        // Извлекаем ИНН и ОГРН из последнего поиска компании
+        const lastQuery = q.value.trim();
+        if (!lastQuery) {
+          throw new Error('Не найден ИНН для запроса финансов');
+        }
+        
+        console.log('🏦 Requesting finance data for INN:', lastQuery);
+        
+        const response = await fetch('/api/company-finances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            inn: lastQuery,
+            extended: false // можно сделать опцию для расширенной версии
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('💰 Finance data received:', data);
+        
+        if (data.result && data.result.ok) {
+          displayFinanceData(bodyId, data.result.items);
+        } else {
+          throw new Error(data.result.error?.message || 'Не удалось получить финансовые данные');
+        }
+        
+      } catch (error) {
+        console.error('Finance data error:', error);
+        const bodyEl = document.getElementById(bodyId);
+        if (bodyEl) {
+          bodyEl.innerHTML += `
+            <div style="margin-top: 16px; padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626;">
+              <strong>Ошибка загрузки финансов:</strong> ${error.message}
+            </div>
+          `;
+        }
+      } finally {
+        button.textContent = originalText;
+        button.disabled = false;
+      }
+    }
+    
+    function displayFinanceData(bodyId, financeData) {
+      const bodyEl = document.getElementById(bodyId);
+      if (!bodyEl || !financeData) return;
+      
+      console.log('📊 Displaying finance data:', financeData);
+      
+      let financeHtml = '<div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">';
+      financeHtml += '<h4 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">💰 Финансовая информация</h4>';
+      
+      // Информация о компании
+      if (financeData.company) {
+        financeHtml += '<div style="margin-bottom: 16px;">';
+        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Компания</h5>';
+        financeHtml += formatResultData(financeData.company);
+        financeHtml += '</div>';
+      }
+      
+      // Финансовые данные по годам
+      if (financeData.data && typeof financeData.data === 'object') {
+        financeHtml += '<div style="margin-bottom: 16px;">';
+        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Финансовые показатели</h5>';
+        
+        const years = Object.keys(financeData.data).sort((a, b) => b - a); // Сортируем по убыванию
+        
+        if (years.length > 0) {
+          // Показываем последние 3 года
+          const recentYears = years.slice(0, 3);
+          
+          recentYears.forEach(year => {
+            const yearData = financeData.data[year];
+            if (yearData && typeof yearData === 'object') {
+              financeHtml += `<div style="margin-bottom: 12px; padding: 8px; background: #f9fafb; border-radius: 4px;">`;
+              financeHtml += `<h6 style="color: #1f2937; font-weight: 600; margin-bottom: 8px;">📅 ${year} год</h6>`;
+              
+              // Форматируем основные финансовые показатели
+              const formattedYearData = formatFinancialIndicators(yearData);
+              financeHtml += formatResultData(formattedYearData);
+              
+              financeHtml += '</div>';
+            }
+          });
+          
+          if (years.length > 3) {
+            financeHtml += `<div style="color: #6b7280; font-style: italic;">И еще данные за ${years.length - 3} лет(а)</div>`;
+          }
+        } else {
+          financeHtml += '<div style="color: #6b7280;">Нет доступных финансовых данных</div>';
+        }
+        
+        financeHtml += '</div>';
+      }
+      
+      // Ссылки на официальные отчеты
+      if (financeData['bo.nalog.ru'] && financeData['bo.nalog.ru']['Отчет']) {
+        const reports = financeData['bo.nalog.ru']['Отчет'];
+        financeHtml += '<div style="margin-bottom: 16px;">';
+        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">📋 Официальные отчеты ФНС</h5>';
+        
+        Object.entries(reports).forEach(([year, url]) => {
+          financeHtml += `<div style="margin-bottom: 4px;">`;
+          financeHtml += `<a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">`;
+          financeHtml += `📄 Отчет за ${year} год</a>`;
+          financeHtml += `</div>`;
+        });
+        
+        financeHtml += '</div>';
+      }
+      
+      financeHtml += '</div>';
+      
+      bodyEl.innerHTML += financeHtml;
+    }
+    
+    function formatFinancialIndicators(yearData) {
+      const formatted = {};
+      
+      // Основные показатели с расшифровкой кодов
+      const indicators = {
+        '1100': 'Итого по разделу I (внеоборотные активы)',
+        '1200': 'Итого по разделу II (оборотные активы)', 
+        '1600': 'БАЛАНС (актив)',
+        '1300': 'Итого по разделу III (капитал и резервы)',
+        '1400': 'Итого по разделу IV (долгосрочные обязательства)',
+        '1500': 'Итого по разделу V (краткосрочные обязательства)',
+        '1700': 'БАЛАНС (пассив)',
+        '2110': 'Выручка',
+        '2200': 'Прибыль (убыток) от продаж',
+        '2300': 'Прибыль (убыток) до налогообложения',
+        '2400': 'Чистая прибыль (убыток)'
+      };
+      
+      Object.entries(indicators).forEach(([code, description]) => {
+        if (yearData[code] !== undefined && yearData[code] !== null) {
+          const value = Number(yearData[code]);
+          if (!isNaN(value)) {
+            // Форматируем крупные суммы
+            formatted[description] = formatCurrency(value);
+          }
+        }
+      });
+      
+      return formatted;
+    }
+    
+    function formatCurrency(value) {
+      if (Math.abs(value) >= 1000000) {
+        return `${(value / 1000000).toFixed(1)} млн руб.`;
+      } else if (Math.abs(value) >= 1000) {
+        return `${(value / 1000).toFixed(0)} тыс. руб.`;
+      } else {
+        return `${value} руб.`;
+      }
+    }
+
     } // Дополнительная закрывающая скобка на случай незакрытой функции
 
     // Обработчики событий
@@ -3170,6 +3347,7 @@
 
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
+    window.getFinanceData = getFinanceData;
   </script>
 </body>
 </html>

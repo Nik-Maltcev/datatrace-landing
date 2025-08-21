@@ -292,6 +292,44 @@ async function searchChecko(inn) {
   }
 }
 
+async function getCheckoFinances(inn, ogrn, kpp, extended = false) {
+  if (!CHECKO_KEY || CHECKO_KEY.trim() === '') {
+    return { name: 'Checko Finances', ok: false, error: { message: 'Отсутствует CHECKO_KEY в .env файле' } };
+  }
+  try {
+    const params = { key: CHECKO_KEY };
+    
+    // Предпочтительно использовать ОГРН, если он есть
+    if (ogrn) {
+      params.ogrn = ogrn;
+    } else if (inn) {
+      params.inn = inn;
+      // Добавляем КПП если указан для точной идентификации
+      if (kpp) {
+        params.kpp = kpp;
+      }
+    } else {
+      return { name: 'Checko Finances', ok: false, error: { message: 'Необходимо указать ИНН или ОГРН' } };
+    }
+    
+    // Добавляем расширенную версию если запрошена
+    if (extended) {
+      params.extended = 'true';
+    }
+
+    const res = await axios.get(`${CHECKO_BASE}/finances`, {
+      params,
+      timeout: 20000 // Увеличиваем таймаут для финансовых данных
+    });
+    
+    console.log('Checko Finances response ok. Data available:', !!res.data);
+    return { name: 'Checko Finances', ok: true, items: res.data };
+  } catch (err) {
+    console.error('Checko Finances error:', err.response?.data || err.message);
+    return { name: 'Checko Finances', ok: false, error: normalizeError(err) };
+  }
+}
+
 app.post('/api/company-search', optionalAuth, userRateLimit(20, 15 * 60 * 1000), async (req, res) => {
   try {
     const { inn } = req.body || {};
@@ -430,6 +468,41 @@ const dehashedService = new DeHashedService(
   process.env.DEHASHED_API_KEY,
   process.env.DEHASHED_BASE_URL || 'https://api.dehashed.com'
 );
+
+// Company finances endpoint - только для Checko API
+app.post('/api/company-finances', optionalAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { inn, ogrn, kpp, extended } = req.body || {};
+    
+    // Проверяем, что указан хотя бы ИНН или ОГРН
+    if (!inn && !ogrn) {
+      return res.status(400).json({ error: 'Необходимо указать ИНН или ОГРН компании' });
+    }
+    
+    // Валидация ИНН если указан
+    if (inn && !/^\d{10,12}$/.test(String(inn).trim())) {
+      return res.status(400).json({ error: 'Введите корректный ИНН (10 или 12 цифр)' });
+    }
+    
+    // Валидация ОГРН если указан
+    if (ogrn && !/^\d{13,15}$/.test(String(ogrn).trim())) {
+      return res.status(400).json({ error: 'Введите корректный ОГРН (13-15 цифр)' });
+    }
+    
+    console.log('🏦 Requesting financial data for:', { inn, ogrn, kpp, extended });
+    
+    const result = await getCheckoFinances(inn, ogrn, kpp, !!extended);
+    
+    res.json({
+      query: { inn, ogrn, kpp, extended: !!extended },
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Company finances error:', e);
+    res.status(500).json({ error: normalizeError(e) });
+  }
+});
 
 // Authentication endpoints
 app.post('/api/auth/signup', async (req, res) => {
