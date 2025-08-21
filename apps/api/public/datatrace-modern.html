@@ -1383,8 +1383,13 @@
 
     // Основная функция поиска
     async function performSearch() {
+      console.log('performSearch called with mode:', currentMode);
+      console.log('q.value:', q.value);
+      console.log('btn element:', btn);
+      
       if (currentMode === 'password') {
         // Password mode uses its own button and logic
+        console.log('Password mode detected, returning');
         return;
       }
       
@@ -3043,6 +3048,21 @@
     }
 
     } // Дополнительная закрывающая скобка на случай незакрытой функции
+
+    // Обработчики событий
+    btn.addEventListener('click', () => {
+      console.log('Button clicked! Current mode:', currentMode);
+      console.log('Button element:', btn);
+      console.log('Query input:', q);
+      performSearch();
+    });
+    
+    q.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        console.log('Enter pressed! Current mode:', currentMode);
+        performSearch();
+      }
+    });
 
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
