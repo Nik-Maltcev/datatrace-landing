@@ -1155,13 +1155,20 @@
     }
 
     function formatResultData(data) {
+      console.log('formatResultData called with:', data);
+      console.log('Data keys:', Object.keys(data || {}));
+      
       if (!data || typeof data !== 'object') {
+        console.log('No data or invalid data type');
         return '<div style="color: #6b7280;">Нет данных</div>';
       }
       
       let html = '<div class="data-grid">';
+      let itemCount = 0;
       for (const [key, value] of Object.entries(data)) {
+        console.log(`Processing field: ${key} = ${value}`);
         if (value && value !== 'null' && value !== 'undefined') {
+          itemCount++;
           html += `
             <div class="data-label">${key}</div>
             <div class="data-value">${formatValue(value)}</div>
@@ -1170,6 +1177,7 @@
       }
       html += '</div>';
       
+      console.log(`formatResultData generated ${itemCount} items, HTML length: ${html.length}`);
       return html || '<div style="color: #6b7280;">Нет данных</div>';
     }
 
@@ -2540,6 +2548,8 @@
 
     function renderStructuredCompanyData(structuredData, sourceName) {
       console.log(`renderStructuredCompanyData called for ${sourceName} with:`, structuredData);
+      console.log(`Structured data keys: ${Object.keys(structuredData)}`);
+      console.log(`Structured data values:`, Object.values(structuredData));
       
       if (!structuredData || Object.keys(structuredData).length === 0) {
         return '<div style="color: #6b7280;">Нет структурированных данных</div>';
@@ -2548,7 +2558,9 @@
       const lowerName = sourceName.toLowerCase();
       
       // Для нормализованных данных используем простое отображение key-value
-      return formatResultData(structuredData);
+      const result = formatResultData(structuredData);
+      console.log(`formatResultData result length: ${result.length}`);
+      return result;
     }
 
     function formatAIDataForSource(aiSummary, sourceName) {
