@@ -469,6 +469,63 @@
     // Переключение режимов
     let currentMode = 'leaks';
 
+    // Глобальная функция для работы с финансами (определяем в начале)
+    window.getFinanceData = async function(event, bodyId) {
+      event.stopPropagation(); // Предотвращаем сворачивание карточки
+      
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '⏳ Загрузка...';
+      button.disabled = true;
+      
+      try {
+        // Извлекаем ИНН и ОГРН из последнего поиска компании
+        const lastQuery = q.value.trim();
+        if (!lastQuery) {
+          throw new Error('Не найден ИНН для запроса финансов');
+        }
+        
+        console.log('🏦 Requesting finance data for INN:', lastQuery);
+        
+        const response = await fetch('/api/company-finances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            inn: lastQuery,
+            extended: false // можно сделать опцию для расширенной версии
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('💰 Finance data received:', data);
+        
+        if (data.result && data.result.ok) {
+          displayFinanceData(bodyId, data.result.items);
+        } else {
+          throw new Error(data.result.error?.message || 'Не удалось получить финансовые данные');
+        }
+        
+      } catch (error) {
+        console.error('Finance data error:', error);
+        const bodyEl = document.getElementById(bodyId);
+        if (bodyEl) {
+          bodyEl.innerHTML += `
+            <div style="margin-top: 16px; padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626;">
+              <strong>Ошибка загрузки финансов:</strong> ${error.message}
+            </div>
+          `;
+        }
+      } finally {
+        button.textContent = originalText;
+        button.disabled = false;
+      }
+    };
+
     // Обновление плейсхолдера
     function updatePlaceholder() {
       const f = fieldSel.value;
@@ -3203,66 +3260,6 @@
       }
     }
 
-    // Функции для работы с финансовой информацией Checko
-    async function getFinanceData(event, bodyId) {
-      event.stopPropagation(); // Предотвращаем сворачивание карточки
-      
-      const button = event.target;
-      const originalText = button.textContent;
-      button.textContent = '⏳ Загрузка...';
-      button.disabled = true;
-      
-      try {
-        // Извлекаем ИНН и ОГРН из последнего поиска компании
-        const lastQuery = q.value.trim();
-        if (!lastQuery) {
-          throw new Error('Не найден ИНН для запроса финансов');
-        }
-        
-        console.log('🏦 Requesting finance data for INN:', lastQuery);
-        
-        const response = await fetch('/api/company-finances', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            inn: lastQuery,
-            extended: false // можно сделать опцию для расширенной версии
-          })
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || `HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('💰 Finance data received:', data);
-        
-        if (data.result && data.result.ok) {
-          displayFinanceData(bodyId, data.result.items);
-        } else {
-          throw new Error(data.result.error?.message || 'Не удалось получить финансовые данные');
-        }
-        
-      } catch (error) {
-        console.error('Finance data error:', error);
-        const bodyEl = document.getElementById(bodyId);
-        if (bodyEl) {
-          bodyEl.innerHTML += `
-            <div style="margin-top: 16px; padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626;">
-              <strong>Ошибка загрузки финансов:</strong> ${error.message}
-            </div>
-          `;
-        }
-      } finally {
-        button.textContent = originalText;
-        button.disabled = false;
-      }
-    }
-    
-    // Делаем функцию глобальной сразу после определения
-    window.getFinanceData = getFinanceData;
-    
     function displayFinanceData(bodyId, financeData) {
       const bodyEl = document.getElementById(bodyId);
       if (!bodyEl || !financeData) return;
@@ -3396,14 +3393,6 @@
 
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
-    
-    // Объявляем getFinanceData глобально сразу после определения
-    if (typeof getFinanceData !== 'undefined') {
-      window.getFinanceData = getFinanceData;
-      console.log('getFinanceData assigned to window');
-    } else {
-      console.error('getFinanceData is not defined!');
-    }
   </script>
 </body>
 </html>
