@@ -2402,27 +2402,60 @@
       const normalized = {};
       
       try {
+        // Поддерживаем как старую структуру (counterparty), так и новую структуру API
+        let data = rawData;
         if (rawData && rawData.counterparty) {
-          const c = rawData.counterparty;
-          
-          if (c.short_name) normalized['Краткое название'] = c.short_name;
-          if (c.full_name) normalized['Полное название'] = c.full_name;
-          if (c.inn) normalized['ИНН'] = c.inn;
-          if (c.ogrn) normalized['ОГРН'] = c.ogrn;
-          if (c.status_string) normalized['Статус'] = c.status_string;
-          
-          if (c.address_block && c.address_block.line_address) {
-            normalized['Адрес'] = c.address_block.line_address;
-          }
-          
-          if (c.okved_block && c.okved_block.main_okved && c.okved_block.main_okved.value) {
-            normalized['Основная деятельность'] = c.okved_block.main_okved.value;
-          }
-          
-          if (c.manager_block && c.manager_block.manager_name) {
-            normalized['Руководитель'] = c.manager_block.manager_name;
-          }
+          data = rawData.counterparty;
         }
+        
+        // Основная информация
+        if (data.inn) normalized['ИНН'] = data.inn;
+        if (data.ogrn) normalized['ОГРН'] = data.ogrn;
+        
+        // Название компании - проверяем разные возможные структуры
+        if (data.company && data.company.company_names) {
+          if (data.company.company_names.short) normalized['Краткое название'] = data.company.company_names.short;
+          if (data.company.company_names.full) normalized['Полное название'] = data.company.company_names.full;
+        } else if (data.short_name || data.full_name) {
+          // Старая структура (для обратной совместимости)
+          if (data.short_name) normalized['Краткое название'] = data.short_name;
+          if (data.full_name) normalized['Полное название'] = data.full_name;
+        }
+        
+        // Статус
+        if (data.company && data.company.status && data.company.status.vid_iptext) {
+          normalized['Статус'] = data.company.status.vid_iptext;
+        } else if (data.status_string) {
+          normalized['Статус'] = data.status_string;
+        }
+        
+        // Адрес
+        if (data.company && data.company.address) {
+          normalized['Адрес'] = data.company.address;
+        } else if (data.address_block && data.address_block.line_address) {
+          normalized['Адрес'] = data.address_block.line_address;
+        }
+        
+        // ОКВЭД - основная деятельность
+        if (data.company && data.company.okveds && data.company.okveds[0]) {
+          const mainOkved = data.company.okveds[0];
+          if (mainOkved.name || mainOkved.text) {
+            normalized['Основная деятельность'] = mainOkved.name || mainOkved.text;
+          }
+        } else if (data.okved_block && data.okved_block.main_okved) {
+          normalized['Основная деятельность'] = data.okved_block.main_okved.value || data.okved_block.main_okved.text;
+        }
+        
+        // Руководитель
+        if (data.company && data.company.managers && data.company.managers[0]) {
+          const manager = data.company.managers[0];
+          if (manager.fio || manager.name) {
+            normalized['Руководитель'] = manager.fio || manager.name;
+          }
+        } else if (data.manager_block && data.manager_block.manager_name) {
+          normalized['Руководитель'] = data.manager_block.manager_name;
+        }
+        
       } catch (e) {
         console.warn('Error normalizing Datanewton data:', e);
       }
@@ -2445,95 +2478,6 @@
       
       // Обычное отображение как key-value
       return formatResultData(structuredData);
-    }
-
-    function renderCheckoFull(items, aiSummary) {
-      console.log('renderCheckoFull called with items:', items);
-      const checkoData = items.data || items;
-      console.log('checkoData extracted:', checkoData);
-      
-      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
-      let html = '<div class="data-grid">';
-      
-      // Используем русские ключи
-      html += htmlRow('Название', checkoData['НаимСокр'] || checkoData['НаимПолн']);
-      if (checkoData['НаимПолн'] && checkoData['НаимСокр'] && checkoData['НаимПолн'] !== checkoData['НаимСокр']) {
-        html += htmlRow('Полное название', checkoData['НаимПолн']);
-      }
-      html += htmlRow('ИНН', checkoData['ИНН']);
-      html += htmlRow('ОГРН', checkoData['ОГРН']);
-      html += htmlRow('КПП', checkoData['КПП']);
-      html += htmlRow('Статус', checkoData['Статус']?.['Наим']);
-      html += htmlRow('Адрес', checkoData['ЮрАдрес']?.['АдресРФ']);
-      html += htmlRow('Уставной капитал', checkoData['УстКап']?.['Сумма']);
-      
-      const mainOkvedText = checkoData['ОКВЭД']?.['Наим'];
-      const mainOkvedCode = checkoData['ОКВЭД']?.['Код'];
-      html += htmlRow('Основная деятельность', mainOkvedText ? `${mainOkvedText}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
-      
-      html += '</div>';
-      
-      console.log('renderCheckoFull FINAL HTML:', html);
-      return html;
-    }
-
-    function renderDatanewtonFull(items, aiSummary) {
-      const c = items?.counterparty || items || {};
-      const company = (aiSummary && aiSummary.company) || {};
-      const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
-      let html = '<div class="data-grid">';
-      html += htmlRow('Название', company.name || c.short_name || c.full_name);
-      if (c.full_name && c.short_name && c.full_name !== c.short_name) {
-        html += htmlRow('Полное название', c.full_name);
-      }
-      html += htmlRow('ИНН', company.inn || c.inn);
-      html += htmlRow('ОГРН', company.ogrn || c.ogrn);
-      html += htmlRow('Статус', company.status || c.status_string);
-      const addr = company.address || c?.address_block?.line_address;
-      html += htmlRow('Адрес', addr);
-      const mainOkved = company.activity || c?.okved_block?.main_okved?.value || c?.okved_block?.main_okved?.text;
-      const mainOkvedCode = c?.okved_block?.main_okved?.code;
-      html += htmlRow('Основная деятельность', mainOkved ? `${mainOkved}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
-      html += '</div>';
-
-      // Руководитель
-      const ceoName = (aiSummary && aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio)) || c?.manager_block?.manager_name;
-      const ceoPost = (aiSummary && aiSummary.ceo && (aiSummary.ceo.position || aiSummary.ceo.post)) || c?.manager_block?.manager_position;
-      if (ceoName || ceoPost) {
-        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Руководство</h4>';
-        html += '<div class="data-grid">';
-        html += htmlRow('Руководитель', ceoName);
-        html += htmlRow('Должность', ceoPost);
-        html += '</div>';
-      }
-
-      // Контакты
-      const phones = c?.contact_block?.phones || company?.contacts?.phones || [];
-      const emails = c?.contact_block?.emails || company?.contacts?.emails || [];
-      const sites = c?.contact_block?.sites || company?.contacts?.sites || [];
-      if ((phones && phones.length) || (emails && emails.length) || (sites && sites.length)) {
-        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Контакты</h4>';
-        html += '<div class="data-grid">';
-        html += htmlRow('Телефоны', phones && phones.length ? phones.join(', ') : null);
-        html += htmlRow('Email', emails && emails.length ? emails.join(', ') : null);
-        html += htmlRow('Сайты', sites && sites.length ? sites.join(', ') : null);
-        html += '</div>';
-      }
-
-      // Негативные факторы
-      const negFactors = c?.negative_lists_block?.negative_factors || [];
-      if (negFactors.length > 0) {
-        html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600; color:#dc2626;">Негативные факторы</h4>';
-        html += '<ul style="list-style-type: disc; padding-left: 20px; color:#dc2626;">';
-        negFactors.slice(0, 25).forEach(f => {
-          const text = f?.factor_description || f?.name || f?.text;
-          if (text) html += `<li style="margin-bottom: 4px;">${text}</li>`;
-        });
-        if (negFactors.length > 25) html += `<li style="color:#6b7280;">и еще ${negFactors.length - 25}…</li>`;
-        html += '</ul>';
-      }
-
-      return html;
     }
 
     function formatAIDataForSource(aiSummary, sourceName) {
@@ -2691,27 +2635,101 @@
 
     // Полное форматирование Datanewton (расширенный набор полей)
     function renderDatanewtonFull(items, aiSummary) {
-      const c = items?.counterparty || items || {};
+      // Поддерживаем разные структуры данных Datanewton API
+      let data = items;
+      if (items && items.counterparty) {
+        data = items.counterparty;
+      }
+      
       const company = (aiSummary && aiSummary.company) || {};
       const htmlRow = (label, value) => value ? `<div class="data-label">${label}</div><div class="data-value">${value}</div>` : '';
       let html = '<div class="data-grid">';
-      html += htmlRow('Название', company.name || c.short_name || c.full_name);
-      if (c.full_name && c.short_name && c.full_name !== c.short_name) {
-        html += htmlRow('Полное название', c.full_name);
+      
+      // Название - поддерживаем новую и старую структуры
+      let companyName = company.name;
+      if (!companyName) {
+        if (data.company && data.company.company_names) {
+          companyName = data.company.company_names.short || data.company.company_names.full;
+        } else {
+          companyName = data.short_name || data.full_name;
+        }
       }
-      html += htmlRow('ИНН', company.inn || c.inn);
-      html += htmlRow('ОГРН', company.ogrn || c.ogrn);
-      html += htmlRow('Статус', company.status || c.status_string);
-      const addr = company.address || c?.address_block?.line_address;
-      html += htmlRow('Адрес', addr);
-      const mainOkved = company.activity || c?.okved_block?.main_okved?.value || c?.okved_block?.main_okved?.text;
-      const mainOkvedCode = c?.okved_block?.main_okved?.code;
-      html += htmlRow('Основная деятельность', mainOkved ? `${mainOkved}${mainOkvedCode ? ` (${mainOkvedCode})` : ''}` : null);
+      html += htmlRow('Название', companyName);
+      
+      // Полное название
+      let fullName = company.fullName;
+      if (!fullName) {
+        if (data.company && data.company.company_names) {
+          fullName = data.company.company_names.full;
+        } else {
+          fullName = data.full_name;
+        }
+      }
+      if (fullName && fullName !== companyName) {
+        html += htmlRow('Полное название', fullName);
+      }
+      
+      html += htmlRow('ИНН', company.inn || data.inn);
+      html += htmlRow('ОГРН', company.ogrn || data.ogrn);
+      
+      // Статус
+      let status = company.status;
+      if (!status) {
+        if (data.company && data.company.status) {
+          status = data.company.status.vid_iptext || data.company.status.name;
+        } else {
+          status = data.status_string;
+        }
+      }
+      html += htmlRow('Статус', status);
+      
+      // Адрес
+      let address = company.address;
+      if (!address) {
+        if (data.company && data.company.address) {
+          if (typeof data.company.address === 'string') {
+            address = data.company.address;
+          } else if (data.company.address.full_address) {
+            address = data.company.address.full_address;
+          }
+        } else if (data.address_block && data.address_block.line_address) {
+          address = data.address_block.line_address;
+        }
+      }
+      html += htmlRow('Адрес', address);
+      
+      // Основная деятельность (ОКВЭД)
+      let mainActivity = company.activity;
+      let activityCode = null;
+      if (!mainActivity) {
+        if (data.company && data.company.okveds && data.company.okveds[0]) {
+          const okved = data.company.okveds[0];
+          mainActivity = okved.name || okved.text;
+          activityCode = okved.code;
+        } else if (data.okved_block && data.okved_block.main_okved) {
+          mainActivity = data.okved_block.main_okved.value || data.okved_block.main_okved.text;
+          activityCode = data.okved_block.main_okved.code;
+        }
+      }
+      html += htmlRow('Основная деятельность', mainActivity ? `${mainActivity}${activityCode ? ` (${activityCode})` : ''}` : null);
+      
       html += '</div>';
 
       // Руководитель
-      const ceoName = (aiSummary && aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio)) || c?.manager_block?.manager_name;
-      const ceoPost = (aiSummary && aiSummary.ceo && (aiSummary.ceo.position || aiSummary.ceo.post)) || c?.manager_block?.manager_position;
+      let ceoName = (aiSummary && aiSummary.ceo && (aiSummary.ceo.name || aiSummary.ceo.fio));
+      let ceoPost = (aiSummary && aiSummary.ceo && (aiSummary.ceo.position || aiSummary.ceo.post));
+      
+      if (!ceoName) {
+        if (data.company && data.company.managers && data.company.managers[0]) {
+          const manager = data.company.managers[0];
+          ceoName = manager.fio || manager.name;
+          if (!ceoPost) ceoPost = manager.position || manager.post;
+        } else if (data.manager_block) {
+          ceoName = data.manager_block.manager_name;
+          ceoPost = data.manager_block.manager_position;
+        }
+      }
+      
       if (ceoName || ceoPost) {
         html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Руководство</h4>';
         html += '<div class="data-grid">';
@@ -2721,9 +2739,21 @@
       }
 
       // Контакты
-      const phones = c?.contact_block?.phones || company?.contacts?.phones || [];
-      const emails = c?.contact_block?.emails || company?.contacts?.emails || [];
-      const sites = c?.contact_block?.sites || company?.contacts?.sites || [];
+      let phones = company?.contacts?.phones || [];
+      let emails = company?.contacts?.emails || [];
+      let sites = company?.contacts?.sites || [];
+      
+      if (!phones.length && !emails.length && !sites.length) {
+        if (data.contacts) {
+          phones = data.contacts.phones || [];
+          emails = data.contacts.emails || [];
+          sites = data.contacts.sites || [];
+        } else if (data.contact_block) {
+          phones = data.contact_block.phones || [];
+          emails = data.contact_block.emails || [];
+          sites = data.contact_block.sites || [];
+        }
+      
       if ((phones && phones.length) || (emails && emails.length) || (sites && sites.length)) {
         html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600;">Контакты</h4>';
         html += '<div class="data-grid">';
@@ -2734,7 +2764,13 @@
       }
 
       // Негативные факторы
-      const negFactors = c?.negative_lists_block?.negative_factors || [];
+      let negFactors = [];
+      if (data.negative_lists && data.negative_lists.negative_factors) {
+        negFactors = data.negative_lists.negative_factors;
+      } else if (data.negative_lists_block && data.negative_lists_block.negative_factors) {
+        negFactors = data.negative_lists_block.negative_factors;
+      }
+      
       if (negFactors.length > 0) {
         html += '<h4 style="margin: 16px 0 8px 0; font-weight: 600; color:#dc2626;">Негативные факторы</h4>';
         html += '<ul style="list-style-type: disc; padding-left: 20px; color:#dc2626;">';
