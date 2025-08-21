@@ -470,7 +470,7 @@
     let currentMode = 'leaks';
 
     // Глобальная функция для работы с финансами (определяем в начале)
-    window.getFinanceData = async function(event, bodyId) {
+    window.getFinanceData = async function(event, bodyId, sourceName) {
       event.stopPropagation(); // Предотвращаем сворачивание карточки
       
       const button = event.target;
@@ -485,15 +485,28 @@
           throw new Error('Не найден ИНН для запроса финансов');
         }
         
-        console.log('🏦 Requesting finance data for INN:', lastQuery);
+        // Определяем какой API использовать
+        let endpoint, requestBody;
+        const lowerSourceName = (sourceName || '').toLowerCase();
         
-        const response = await fetch('/api/company-finances', {
+        if (lowerSourceName.includes('datanewton')) {
+          console.log('📊 Requesting Datanewton finance data for INN:', lastQuery);
+          endpoint = '/api/datanewton-finances';
+          requestBody = { inn: lastQuery };
+        } else {
+          // По умолчанию используем Checko (для обратной совместимости)
+          console.log('🏦 Requesting Checko finance data for INN:', lastQuery);
+          endpoint = '/api/company-finances';
+          requestBody = { 
+            inn: lastQuery,
+            extended: false
+          };
+        }
+        
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            inn: lastQuery,
-            extended: false // можно сделать опцию для расширенной версии
-          })
+          body: JSON.stringify(requestBody)
         });
         
         if (!response.ok) {
@@ -505,7 +518,7 @@
         console.log('💰 Finance data received:', data);
         
         if (data.result && data.result.ok) {
-          window.displayFinanceData(bodyId, data.result.items);
+          window.displayFinanceData(bodyId, data.result.items, sourceName);
         } else {
           throw new Error(data.result.error?.message || 'Не удалось получить финансовые данные');
         }
@@ -527,74 +540,25 @@
     };
 
     // Функция отображения финансовых данных (определяем сразу после getFinanceData)
-    window.displayFinanceData = function(bodyId, financeData) {
+    window.displayFinanceData = function(bodyId, financeData, sourceName) {
       const bodyEl = document.getElementById(bodyId);
       if (!bodyEl || !financeData) return;
       
       console.log('📊 Displaying finance data:', financeData);
+      console.log('📊 Source:', sourceName);
       
+      const lowerSourceName = (sourceName || '').toLowerCase();
       let financeHtml = '<div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">';
-      financeHtml += '<h4 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">💰 Финансовая информация</h4>';
       
-      // Информация о компании
-      if (financeData.company) {
-        financeHtml += '<div style="margin-bottom: 16px;">';
-        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Компания</h5>';
-        financeHtml += '<div class="data-grid">';
-        
-        if (financeData.company.name) {
-          financeHtml += `<div class="data-label">Название</div><div class="data-value">${financeData.company.name}</div>`;
-        }
-        if (financeData.company.inn) {
-          financeHtml += `<div class="data-label">ИНН</div><div class="data-value">${financeData.company.inn}</div>`;
-        }
-        if (financeData.company.status) {
-          financeHtml += `<div class="data-label">Статус</div><div class="data-value">${financeData.company.status}</div>`;
-        }
-        
-        financeHtml += '</div></div>';
-      }
-      
-      // Финансовые данные по годам
-      if (financeData.data && typeof financeData.data === 'object') {
-        const years = Object.keys(financeData.data).sort((a, b) => b - a);
-        
-        years.forEach(year => {
-          const yearData = financeData.data[year];
-          if (yearData && typeof yearData === 'object') {
-            financeHtml += `<div style="margin-bottom: 16px;">`;
-            financeHtml += `<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Данные за ${year} год</h5>`;
-            financeHtml += '<div class="data-grid">';
-            
-            const formatted = window.formatFinancialIndicators(yearData);
-            for (const [label, value] of Object.entries(formatted)) {
-              financeHtml += `<div class="data-label">${label}</div><div class="data-value">${value}</div>`;
-            }
-            
-            financeHtml += '</div></div>';
-          }
-        });
-      }
-      
-      // Ссылки на официальные отчеты
-      if (financeData['bo.nalog.ru'] && financeData['bo.nalog.ru']['Отчет']) {
-        financeHtml += '<div style="margin-bottom: 16px;">';
-        financeHtml += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">📋 Официальные отчеты</h5>';
-        
-        const reports = financeData['bo.nalog.ru']['Отчет'];
-        if (Array.isArray(reports)) {
-          reports.forEach(report => {
-            if (report.url) {
-              financeHtml += `<div style="margin-bottom: 4px;"><a href="${report.url}" target="_blank" style="color: #2563eb; text-decoration: underline;">Отчет за ${report.year || 'неизвестный год'}</a></div>`;
-            }
-          });
-        }
-        
-        financeHtml += '</div>';
+      if (lowerSourceName.includes('datanewton')) {
+        financeHtml += '<h4 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">📊 Финансовая информация (Datanewton)</h4>';
+        financeHtml += window.formatDatanewtonFinanceData(financeData);
+      } else {
+        financeHtml += '<h4 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">� Финансовая информация (Checko)</h4>';
+        financeHtml += window.formatCheckoFinanceData(financeData);
       }
       
       financeHtml += '</div>';
-      
       bodyEl.innerHTML += financeHtml;
     };
 
@@ -632,6 +596,190 @@
       } else {
         return `${value} руб.`;
       }
+    };
+
+    // Форматирование финансовых данных Checko
+    window.formatCheckoFinanceData = function(financeData) {
+      let html = '';
+      
+      // Информация о компании
+      if (financeData.company) {
+        html += '<div style="margin-bottom: 16px;">';
+        html += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Компания</h5>';
+        html += '<div class="data-grid">';
+        
+        if (financeData.company.name) {
+          html += `<div class="data-label">Название</div><div class="data-value">${financeData.company.name}</div>`;
+        }
+        if (financeData.company.inn) {
+          html += `<div class="data-label">ИНН</div><div class="data-value">${financeData.company.inn}</div>`;
+        }
+        if (financeData.company.status) {
+          html += `<div class="data-label">Статус</div><div class="data-value">${financeData.company.status}</div>`;
+        }
+        
+        html += '</div></div>';
+      }
+      
+      // Финансовые данные по годам
+      if (financeData.data && typeof financeData.data === 'object') {
+        const years = Object.keys(financeData.data).sort((a, b) => b - a);
+        
+        years.forEach(year => {
+          const yearData = financeData.data[year];
+          if (yearData && typeof yearData === 'object') {
+            html += `<div style="margin-bottom: 16px;">`;
+            html += `<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Данные за ${year} год</h5>`;
+            html += '<div class="data-grid">';
+            
+            const formatted = window.formatFinancialIndicators(yearData);
+            for (const [label, value] of Object.entries(formatted)) {
+              html += `<div class="data-label">${label}</div><div class="data-value">${value}</div>`;
+            }
+            
+            html += '</div></div>';
+          }
+        });
+      }
+      
+      // Ссылки на официальные отчеты
+      if (financeData['bo.nalog.ru'] && financeData['bo.nalog.ru']['Отчет']) {
+        html += '<div style="margin-bottom: 16px;">';
+        html += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">📋 Официальные отчеты</h5>';
+        
+        const reports = financeData['bo.nalog.ru']['Отчет'];
+        if (Array.isArray(reports)) {
+          reports.forEach(report => {
+            if (report.url) {
+              html += `<div style="margin-bottom: 4px;"><a href="${report.url}" target="_blank" style="color: #2563eb; text-decoration: underline;">Отчет за ${report.year || 'неизвестный год'}</a></div>`;
+            }
+          });
+        }
+        
+        html += '</div>';
+      }
+      
+      return html;
+    };
+
+    // Форматирование финансовых данных Datanewton
+    window.formatDatanewtonFinanceData = function(financeData) {
+      let html = '';
+      
+      console.log('Formatting Datanewton finance data:', financeData);
+      
+      // Балансы (если есть)
+      if (financeData.balances) {
+        html += '<div style="margin-bottom: 16px;">';
+        html += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">📊 Бухгалтерский баланс</h5>';
+        
+        if (financeData.balances.years && financeData.balances.years.length > 0) {
+          html += `<div style="margin-bottom: 8px; color: #6b7280;">Отчетные периоды: ${financeData.balances.years.join(', ')}</div>`;
+        }
+        
+        if (financeData.balances.indicators && financeData.balances.indicators.length > 0) {
+          html += '<div class="data-grid">';
+          
+          // Показываем основные показатели баланса
+          financeData.balances.indicators.slice(0, 10).forEach(indicator => {
+            if (indicator.name && indicator.values) {
+              const latestYear = Object.keys(indicator.values).sort((a, b) => b - a)[0];
+              const value = indicator.values[latestYear];
+              if (value) {
+                html += `<div class="data-label">${indicator.name}</div><div class="data-value">${window.formatCurrency(parseInt(value) * 1000)}</div>`;
+              }
+            }
+          });
+          
+          html += '</div>';
+          
+          if (financeData.balances.indicators.length > 10) {
+            html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">и еще ${financeData.balances.indicators.length - 10} показателей...</div>`;
+          }
+        }
+        
+        html += '</div>';
+      }
+      
+      // Финансовые результаты (если есть)
+      if (financeData.fin_results) {
+        html += '<div style="margin-bottom: 16px;">';
+        html += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">💰 Финансовые результаты</h5>';
+        
+        if (financeData.fin_results.years && financeData.fin_results.years.length > 0) {
+          html += `<div style="margin-bottom: 8px; color: #6b7280;">Отчетные периоды: ${financeData.fin_results.years.join(', ')}</div>`;
+        }
+        
+        if (financeData.fin_results.indicators && financeData.fin_results.indicators.length > 0) {
+          html += '<div class="data-grid">';
+          
+          // Показываем основные показатели прибыли и убытков
+          financeData.fin_results.indicators.slice(0, 8).forEach(indicator => {
+            if (indicator.name && indicator.values) {
+              const latestYear = Object.keys(indicator.values).sort((a, b) => b - a)[0];
+              const value = indicator.values[latestYear];
+              if (value) {
+                html += `<div class="data-label">${indicator.name}</div><div class="data-value">${window.formatCurrency(parseInt(value) * 1000)}</div>`;
+              }
+            }
+          });
+          
+          html += '</div>';
+          
+          if (financeData.fin_results.indicators.length > 8) {
+            html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">и еще ${financeData.fin_results.indicators.length - 8} показателей...</div>`;
+          }
+        }
+        
+        html += '</div>';
+      }
+      
+      // Движение денежных средств (если есть)
+      if (financeData.money_flow) {
+        html += '<div style="margin-bottom: 16px;">';
+        html += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">💸 Движение денежных средств</h5>';
+        
+        if (financeData.money_flow.years && financeData.money_flow.years.length > 0) {
+          html += `<div style="margin-bottom: 8px; color: #6b7280;">Отчетные периоды: ${financeData.money_flow.years.join(', ')}</div>`;
+        }
+        
+        if (financeData.money_flow.indicators && financeData.money_flow.indicators.length > 0) {
+          html += '<div class="data-grid">';
+          
+          // Показываем основные показатели движения денежных средств
+          financeData.money_flow.indicators.slice(0, 6).forEach(indicator => {
+            if (indicator.name && indicator.values) {
+              const latestYear = Object.keys(indicator.values).sort((a, b) => b - a)[0];
+              const value = indicator.values[latestYear];
+              if (value) {
+                html += `<div class="data-label">${indicator.name}</div><div class="data-value">${window.formatCurrency(parseInt(value) * 1000)}</div>`;
+              }
+            }
+          });
+          
+          html += '</div>';
+          
+          if (financeData.money_flow.indicators.length > 6) {
+            html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">и еще ${financeData.money_flow.indicators.length - 6} показателей...</div>`;
+          }
+        }
+        
+        html += '</div>';
+      }
+      
+      // Информация о доступных запросах
+      if (financeData.available_count !== undefined) {
+        html += '<div style="margin-top: 12px; padding: 8px; background: #f3f4f6; border-radius: 4px; font-size: 12px; color: #6b7280;">';
+        html += `Осталось запросов: ${financeData.available_count}`;
+        html += '</div>';
+      }
+      
+      // Если нет данных, показываем сообщение
+      if (!financeData.balances && !financeData.fin_results && !financeData.money_flow) {
+        html += '<div style="color: #6b7280; font-style: italic;">Финансовые данные недоступны для данной компании</div>';
+      }
+      
+      return html;
     };
 
     // Обновление плейсхолдера
@@ -2460,10 +2608,13 @@
 
       const bodyId = `body-${Math.random().toString(36).slice(2)}`;
       const isChecko = lname.includes('checko');
+      const isDatanewton = lname.includes('datanewton');
 
-      // Добавляем кнопку финансов только для Checko
-      const financeButton = isChecko && status === 'success' ? 
-        `<button class="btn-secondary" onclick="getFinanceData(event, '${bodyId}')" style="margin-left: 8px; font-size: 12px; padding: 4px 8px;">💰 Финансы</button>` : '';
+      // Добавляем кнопку финансов для Checko и Datanewton
+      let financeButton = '';
+      if ((isChecko || isDatanewton) && status === 'success') {
+        financeButton = `<button class="btn-secondary" onclick="getFinanceData(event, '${bodyId}', '${title}')" style="margin-left: 8px; font-size: 12px; padding: 4px 8px;">💰 Финансы</button>`;
+      }
 
       item.innerHTML = `
         <div class="result-header" onclick="toggleResult(this)">
