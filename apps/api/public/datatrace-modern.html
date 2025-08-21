@@ -621,7 +621,7 @@
         html += '</div></div>';
       }
       
-      // Финансовые данные по годам
+      // Финансовые данные по годам - показываем все доступные поля
       if (financeData.data && typeof financeData.data === 'object') {
         const years = Object.keys(financeData.data).sort((a, b) => b - a);
         
@@ -632,10 +632,75 @@
             html += `<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">Данные за ${year} год</h5>`;
             html += '<div class="data-grid">';
             
-            const formatted = window.formatFinancialIndicators(yearData);
-            for (const [label, value] of Object.entries(formatted)) {
-              html += `<div class="data-label">${label}</div><div class="data-value">${value}</div>`;
-            }
+            // Показываем ВСЕ поля данных, не только основные показатели
+            Object.entries(yearData).forEach(([code, value]) => {
+              if (value !== undefined && value !== null && value !== '0' && value !== 0) {
+                const numValue = parseInt(value) || 0;
+                if (numValue !== 0) {
+                  // Получаем описание показателя или используем код
+                  const indicators = {
+                    '1100': 'Внеоборотные активы (тыс. руб.)',
+                    '1110': 'Нематериальные активы (тыс. руб.)',
+                    '1120': 'Результаты исследований и разработок (тыс. руб.)',
+                    '1130': 'Нематериальные поисковые активы (тыс. руб.)',
+                    '1140': 'Материальные поисковые активы (тыс. руб.)',
+                    '1150': 'Основные средства (тыс. руб.)',
+                    '1160': 'Доходные вложения в материальные ценности (тыс. руб.)',
+                    '1170': 'Финансовые вложения (тыс. руб.)',
+                    '1180': 'Отложенные налоговые активы (тыс. руб.)',
+                    '1190': 'Прочие внеоборотные активы (тыс. руб.)',
+                    '1200': 'Оборотные активы (тыс. руб.)',
+                    '1210': 'Запасы (тыс. руб.)',
+                    '1220': 'НДС по приобретенным ценностям (тыс. руб.)',
+                    '1230': 'Дебиторская задолженность (тыс. руб.)',
+                    '1240': 'Финансовые вложения (краткосрочные) (тыс. руб.)',
+                    '1250': 'Денежные средства и денежные эквиваленты (тыс. руб.)',
+                    '1260': 'Прочие оборотные активы (тыс. руб.)',
+                    '1300': 'Капитал и резервы (тыс. руб.)',
+                    '1310': 'Уставный капитал (тыс. руб.)',
+                    '1320': 'Собственные акции, выкупленные у акционеров (тыс. руб.)',
+                    '1340': 'Переоценка внеоборотных активов (тыс. руб.)',
+                    '1350': 'Добавочный капитал (тыс. руб.)',
+                    '1360': 'Резервный капитал (тыс. руб.)',
+                    '1370': 'Нераспределенная прибыль (тыс. руб.)',
+                    '1400': 'Долгосрочные обязательства (тыс. руб.)',
+                    '1410': 'Заемные средства (долгосрочные) (тыс. руб.)',
+                    '1420': 'Отложенные налоговые обязательства (тыс. руб.)',
+                    '1430': 'Оценочные обязательства (тыс. руб.)',
+                    '1450': 'Прочие обязательства (долгосрочные) (тыс. руб.)',
+                    '1500': 'Краткосрочные обязательства (тыс. руб.)',
+                    '1510': 'Заемные средства (краткосрочные) (тыс. руб.)',
+                    '1520': 'Кредиторская задолженность (тыс. руб.)',
+                    '1530': 'Доходы будущих периодов (тыс. руб.)',
+                    '1540': 'Оценочные обязательства (краткосрочные) (тыс. руб.)',
+                    '1550': 'Прочие обязательства (краткосрочные) (тыс. руб.)',
+                    '1600': 'Баланс (тыс. руб.)',
+                    '1700': 'Баланс (тыс. руб.)',
+                    '2110': 'Выручка (тыс. руб.)',
+                    '2120': 'Себестоимость продаж (тыс. руб.)',
+                    '2100': 'Валовая прибыль (убыток) (тыс. руб.)',
+                    '2210': 'Коммерческие расходы (тыс. руб.)',
+                    '2220': 'Управленческие расходы (тыс. руб.)',
+                    '2200': 'Прибыль (убыток) от продаж (тыс. руб.)',
+                    '2310': 'Доходы от участия в других организациях (тыс. руб.)',
+                    '2320': 'Проценты к получению (тыс. руб.)',
+                    '2330': 'Проценты к уплате (тыс. руб.)',
+                    '2340': 'Прочие доходы (тыс. руб.)',
+                    '2350': 'Прочие расходы (тыс. руб.)',
+                    '2300': 'Прибыль (убыток) до налогообложения (тыс. руб.)',
+                    '2410': 'Текущий налог на прибыль (тыс. руб.)',
+                    '2421': 'Постоянные налоговые обязательства (активы) (тыс. руб.)',
+                    '2430': 'Изменение отложенных налоговых обязательств (тыс. руб.)',
+                    '2450': 'Изменение отложенных налоговых активов (тыс. руб.)',
+                    '2460': 'Прочее (тыс. руб.)',
+                    '2400': 'Чистая прибыль (убыток) (тыс. руб.)'
+                  };
+                  
+                  const description = indicators[code] || `Показатель ${code} (тыс. руб.)`;
+                  html += `<div class="data-label">${description}</div><div class="data-value">${window.formatCurrency(numValue * 1000)}</div>`;
+                }
+              }
+            });
             
             html += '</div></div>';
           }
@@ -680,22 +745,19 @@
         if (financeData.balances.indicators && financeData.balances.indicators.length > 0) {
           html += '<div class="data-grid">';
           
-          // Показываем основные показатели баланса
-          financeData.balances.indicators.slice(0, 10).forEach(indicator => {
+          // Показываем ВСЕ показатели баланса
+          financeData.balances.indicators.forEach(indicator => {
             if (indicator.name && indicator.values) {
               const latestYear = Object.keys(indicator.values).sort((a, b) => b - a)[0];
               const value = indicator.values[latestYear];
-              if (value) {
+              if (value && value !== '0' && value !== 0) {
                 html += `<div class="data-label">${indicator.name}</div><div class="data-value">${window.formatCurrency(parseInt(value) * 1000)}</div>`;
               }
             }
           });
           
           html += '</div>';
-          
-          if (financeData.balances.indicators.length > 10) {
-            html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">и еще ${financeData.balances.indicators.length - 10} показателей...</div>`;
-          }
+          html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">Всего показателей: ${financeData.balances.indicators.length}</div>`;
         }
         
         html += '</div>';
@@ -713,22 +775,19 @@
         if (financeData.fin_results.indicators && financeData.fin_results.indicators.length > 0) {
           html += '<div class="data-grid">';
           
-          // Показываем основные показатели прибыли и убытков
-          financeData.fin_results.indicators.slice(0, 8).forEach(indicator => {
+          // Показываем ВСЕ показатели прибыли и убытков
+          financeData.fin_results.indicators.forEach(indicator => {
             if (indicator.name && indicator.values) {
               const latestYear = Object.keys(indicator.values).sort((a, b) => b - a)[0];
               const value = indicator.values[latestYear];
-              if (value) {
+              if (value && value !== '0' && value !== 0) {
                 html += `<div class="data-label">${indicator.name}</div><div class="data-value">${window.formatCurrency(parseInt(value) * 1000)}</div>`;
               }
             }
           });
           
           html += '</div>';
-          
-          if (financeData.fin_results.indicators.length > 8) {
-            html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">и еще ${financeData.fin_results.indicators.length - 8} показателей...</div>`;
-          }
+          html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">Всего показателей: ${financeData.fin_results.indicators.length}</div>`;
         }
         
         html += '</div>';
@@ -746,22 +805,19 @@
         if (financeData.money_flow.indicators && financeData.money_flow.indicators.length > 0) {
           html += '<div class="data-grid">';
           
-          // Показываем основные показатели движения денежных средств
-          financeData.money_flow.indicators.slice(0, 6).forEach(indicator => {
+          // Показываем ВСЕ показатели движения денежных средств
+          financeData.money_flow.indicators.forEach(indicator => {
             if (indicator.name && indicator.values) {
               const latestYear = Object.keys(indicator.values).sort((a, b) => b - a)[0];
               const value = indicator.values[latestYear];
-              if (value) {
+              if (value && value !== '0' && value !== 0) {
                 html += `<div class="data-label">${indicator.name}</div><div class="data-value">${window.formatCurrency(parseInt(value) * 1000)}</div>`;
               }
             }
           });
           
           html += '</div>';
-          
-          if (financeData.money_flow.indicators.length > 6) {
-            html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">и еще ${financeData.money_flow.indicators.length - 6} показателей...</div>`;
-          }
+          html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">Всего показателей: ${financeData.money_flow.indicators.length}</div>`;
         }
         
         html += '</div>';
