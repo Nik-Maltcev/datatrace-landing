@@ -1428,8 +1428,22 @@ ${truncatedData}
 
       const formattedProfile = completion.choices[0]?.message?.content;
       
-      if (!formattedProfile) {
-        throw new Error('Пустой ответ от OpenAI');
+      if (!formattedProfile || formattedProfile.trim() === '') {
+        console.log('⚠️ Empty response from OpenAI, trying next model...');
+        if (model === modelsToTry[modelsToTry.length - 1]) {
+          // Если это последняя модель, возвращаем базовый ответ
+          console.log('📋 All models returned empty responses, providing basic summary');
+          const fallbackProfile = `📊 Анализ данных по запросу "${truncatedData.substring(0, 100)}..."\n\nК сожалению, детальный анализ временно недоступен. Показаны базовые результаты поиска.`;
+          
+          res.json({
+            ok: true,
+            model: 'fallback',
+            profile: fallbackProfile
+          });
+          return;
+        }
+        // Если не последняя модель, пропускаем к следующей итерации
+        continue;
       }
 
       console.log('✅ OpenAI profile formatting completed');
