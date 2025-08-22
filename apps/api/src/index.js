@@ -1258,22 +1258,35 @@ app.post('/api/format-leak-profile', optionalAuth, userRateLimit(10, 15 * 60 * 1
         Object.entries(source.items).forEach(([category, items]) => {
           if (Array.isArray(items) && items.length > 0) {
             text += `${category}:\n`;
-            items.forEach(item => {
+            // Ограничиваем количество записей для уменьшения размера
+            items.slice(0, 3).forEach(item => {
               text += `${JSON.stringify(item, null, 2)}\n`;
             });
+            if (items.length > 3) {
+              text += `... и еще ${items.length - 3} записей\n`;
+            }
           }
         });
       } else if (Array.isArray(source.items)) {
-        // Другие источники
-        source.items.forEach(item => {
+        // Другие источники - ограничиваем до 5 записей
+        source.items.slice(0, 5).forEach(item => {
           text += `${JSON.stringify(item, null, 2)}\n`;
         });
+        if (source.items.length > 5) {
+          text += `... и еще ${source.items.length - 5} записей\n`;
+        }
       }
       
       return text;
     }).filter(Boolean).join('\n\n');
 
-    console.log('📝 Prepared data length:', rawDataText.length);
+    // Ограничиваем размер данных для отправки в OpenAI
+    const maxDataLength = 8000; // Ограничение на размер данных
+    const truncatedData = rawDataText.length > maxDataLength 
+      ? rawDataText.substring(0, maxDataLength) + '\n\n[ДАННЫЕ ОБРЕЗАНЫ ДЛЯ ОБРАБОТКИ]'
+      : rawDataText;
+
+    console.log('📝 Prepared data length:', truncatedData.length);
 
     const prompt = `Ты - эксперт по анализу данных утечек. Твоя задача - создать красивый структурированный профиль пользователя на основе данных из различных баз данных утечек.
 
@@ -1321,7 +1334,7 @@ app.post('/api/format-leak-profile', optionalAuth, userRateLimit(10, 15 * 60 * 1
 - VIP статусы, деятельность, география
 
 ИСХОДНЫЕ ДАННЫЕ:
-${rawDataText}
+${truncatedData}
 
 Создай красивый профиль на основе этих данных:`;
 
@@ -1349,7 +1362,7 @@ ${rawDataText}
                 content: prompt
               }
             ],
-            max_tokens: 3000,
+            max_tokens: 2500, // Уменьшаем лимит токенов
             temperature: 0.3
           });
           
@@ -1359,6 +1372,42 @@ ${rawDataText}
           
         } catch (modelError) {
           console.log(`❌ Model ${model} failed: ${modelError.message}`);
+          
+          // Если это ошибка контекста, попробуем с меньшим количеством данных
+          if (modelError.message.includes('context_length_exceeded') || 
+              modelError.message.includes('too long')) {
+            console.log('🔄 Context too long, trying with less data...');
+            
+            // Урезаем данные еще больше
+            const smallerData = truncatedData.substring(0, 4000) + '\n\n[ДАННЫЕ СИЛЬНО ОБРЕЗАНЫ]';
+            const smallerPrompt = prompt.replace(truncatedData, smallerData);
+            
+            try {
+              completion = await openai.chat.completions.create({
+                model: model,
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
+                  },
+                  {
+                    role: 'user',
+                    content: smallerPrompt
+                  }
+                ],
+                max_tokens: 2000,
+                temperature: 0.3
+              });
+              
+              usedModel = model + ' (сокращенные данные)';
+              console.log(`✅ Successfully used model with smaller data: ${model}`);
+              break;
+              
+            } catch (smallDataError) {
+              console.log(`❌ Model ${model} failed even with smaller data: ${smallDataError.message}`);
+            }
+          }
+          
           if (model === modelsToTry[modelsToTry.length - 1]) {
             throw modelError; // Если это последняя модель, пробрасываем ошибку
           }
@@ -1382,7 +1431,8 @@ ${rawDataText}
         profile: formattedProfile,
         meta: {
           sources_processed: leakData.length,
-          data_length: rawDataText.length,
+          data_length: truncatedData.length,
+          original_data_length: rawDataText.length,
           response_length: formattedProfile.length
         }
       });

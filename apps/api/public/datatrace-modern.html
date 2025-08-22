@@ -641,7 +641,7 @@
         
         // Если есть обработанные данные от AI, используем их
         if (aiSummary && result.ok && result.items) {
-          displayData = formatAIDataForLeakSource(result.items, sourceName, aiSummary);
+          displayData = window.formatAIDataForLeakSource(result.items, sourceName, aiSummary);
         }
         
         const item = createResultItem(sourceName, status, displayData);
@@ -667,6 +667,64 @@
         default:
           return false;
       }
+    };
+
+    // ===== ФУНКЦИЯ ДЛЯ ФОРМАТИРОВАНИЯ ДАННЫХ ИИ =====
+    window.formatAIDataForLeakSource = function(originalData, sourceName, aiSummary) {
+      const formattedData = {};
+      
+      // Если есть обработанные ИИ данные для этого источника, используем их
+      if (aiSummary && aiSummary.sources && aiSummary.sources[sourceName]) {
+        const sourceInfo = aiSummary.sources[sourceName];
+        
+        // Показываем количество записей
+        if (sourceInfo.foundCount) {
+          formattedData['📊 Найдено записей'] = sourceInfo.foundCount;
+        }
+        
+        // Показываем базы данных
+        if (sourceInfo.databases && sourceInfo.databases.length > 0) {
+          formattedData['🗄️ Базы данных'] = sourceInfo.databases.join(', ');
+        }
+        
+        // Показываем все обработанные записи от ИИ
+        if (sourceInfo.records && Array.isArray(sourceInfo.records)) {
+          sourceInfo.records.forEach((record, index) => {
+            if (record && typeof record === 'object') {
+              const recordInfo = [];
+              
+              // Форматируем каждую запись
+              if (record.email) recordInfo.push(`📧 ${record.email}`);
+              if (record.phone) recordInfo.push(`📞 ${record.phone}`);
+              if (record.name) recordInfo.push(`👤 ${record.name}`);
+              if (record.username) recordInfo.push(`🔑 ${record.username}`);
+              if (record.password) recordInfo.push(`🔐 ${record.password.substring(0, 8)}...`);
+              if (record.database) recordInfo.push(`🗄️ ${record.database}`);
+              if (record.source) recordInfo.push(`🔗 ${record.source}`);
+              if (record.date) recordInfo.push(`📅 ${record.date}`);
+              
+              if (recordInfo.length > 0) {
+                formattedData[`📄 Запись ${index + 1}`] = recordInfo.join(' | ');
+              }
+            } else if (typeof record === 'string') {
+              formattedData[`📄 Запись ${index + 1}`] = record;
+            }
+          });
+        }
+        
+        // Добавляем заметки ИИ
+        if (sourceInfo.notes) {
+          formattedData['📝 Анализ ИИ'] = sourceInfo.notes;
+        }
+        
+        // Если есть обработанные данные, возвращаем их
+        if (Object.keys(formattedData).length > 1) { // больше 1 потому что может быть только счетчик
+          return formattedData;
+        }
+      }
+      
+      // Если нет ИИ данных, возвращаем оригинальные данные без дополнительного форматирования
+      return originalData;
     };
 
     // ===== ФУНКЦИИ ДЛЯ КРАСИВОГО ФОРМАТИРОВАНИЯ ПРОФИЛЯ =====
