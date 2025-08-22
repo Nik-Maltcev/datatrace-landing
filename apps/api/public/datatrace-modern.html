@@ -590,12 +590,6 @@
 
       <!-- Results -->
       <div id="results"></div>
-
-      <!-- AI Summary -->
-      <div id="summary" class="summary-container">
-        <h3 class="summary-title">Итоговый анализ ИИ</h3>
-        <div id="summaryBody"></div>
-      </div>
     </div>
 
     <!-- Footer Info -->
@@ -2469,24 +2463,11 @@
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Шаг 3: Обработка данных через ИИ
+      // Шаг 3: Отображение результатов (без ИИ обработки)
+      updateProgress(75, 'Формирование отчета...');
+      console.log('📊 Displaying company results without AI processing');
+      
       if (allResults.length > 0) {
-        updateProgress(75, 'Обработка через ИИ...');
-        console.log('🤖 Processing company data through AI...');
-        
-        const combinedData = {
-          inn: query,
-          results: allResults
-        };
-        
-        try {
-          await requestAISummaryForCompany(combinedData);
-        } catch (error) {
-          console.error('🚨 AI processing completely failed, showing raw results');
-          displayCompanyResultsBySources(allResults);
-        }
-      } else {
-        // Показываем результаты по источникам без AI
         displayCompanyResultsBySources(allResults);
       }
 
@@ -2676,178 +2657,11 @@
       }
     }
 
-    async function requestAISummaryForCompany(data) {
-      try {
-        console.log('🏢 Requesting AI summary for company mode');
-        console.log('📊 Data received:', data);
-        console.log('🔍 INN:', data.inn);
-        console.log('📋 Results count:', data.results ? data.results.length : 0);
-        console.log('📋 Results data:', data.results);
-        
-        const requestBody = { inn: data.inn, results: data.results };
-        console.log('📤 Sending to OpenAI:', requestBody);
-        
-        // Используем основной эндпоинт для анализа компаний
-        let response = null;
-        const endpoints = ['/api/company-summarize'];
-        
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`🔄 Trying company endpoint: ${endpoint}`);
-            
-            // Создаем AbortController для таймаута
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => {
-              console.log(`⏰ Company request timeout for ${endpoint}`);
-              controller.abort();
-            }, 60000); // 60 секунд таймаут
-            
-            response = await fetch(endpoint, {
-              method: 'POST',
-              headers: createAuthHeaders(),
-              body: JSON.stringify(requestBody),
-              signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-              console.log(`✅ Success with company endpoint: ${endpoint}`);
-              break;
-            } else {
-              console.error(`❌ Endpoint ${endpoint} failed with status:`, response.status);
-              const errorText = await response.text();
-              console.error('Error response:', errorText);
-            }
-          } catch (fetchError) {
-            console.log(`💥 Fetch error with company endpoint: ${endpoint}:`, fetchError.message);
-            if (fetchError.name === 'AbortError') {
-              console.log(`⏰ Company request was aborted due to timeout`);
-            }
-          }
-        }
-        
-        if (!response || !response.ok) {
-          console.error('❌ All company endpoints failed or returned errors');
-          throw new Error('OpenAI processing failed');
-        }
-
-        console.log('📡 Response status:', response.status);
-        
-        const aiData = await response.json();
-        console.log('🤖 AI response received:', aiData);
-        
-        if (aiData.ok && aiData.summary) {
-          console.log('✅ AI processing successful, displaying processed company data');
-          // Теперь отображаем данные, обработанные через OpenAI
-          displayCompanyResultsBySources(data.results, aiData.summary);
-          
-          // Дополнительно выводим текстовый анализ
-          const summaryEl = document.getElementById('summary');
-          const summaryBody = document.getElementById('summaryBody');
-          summaryBody.innerHTML = formatCompanySummary(aiData.summary);
-          summaryEl.style.display = 'block';
-        } else {
-          console.error('❌ AI response is not OK or missing summary:', aiData);
-          throw new Error(aiData.error || 'Invalid AI response');
-        }
-      } catch (error) {
-        console.error('💥 Ошибка ИИ анализа компании:', error);
-        
-        // В случае ошибки показываем сырые данные по источникам
-        console.log('🔄 Falling back to raw data display');
-        displayCompanyResultsBySources(data.results, null);
-        
-        // Показываем уведомление об ошибке
-        const summaryEl = document.getElementById('summary');
-        const summaryBody = document.getElementById('summaryBody');
-        summaryBody.innerHTML = `
-          <div style="background: #fef2f2; color: #dc2626; padding: 15px; border-radius: 8px; border: 1px solid #fecaca;">
-            <h4 style="margin: 0 0 10px 0; font-size: 16px;">⚠️ Ошибка обработки данных через ИИ</h4>
-            <p style="margin: 0 0 10px 0;">Не удалось обработать данные компании через OpenAI.</p>
-            <p style="margin: 0; font-size: 14px; opacity: 0.8;">Ошибка: ${error.message}</p>
-            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.8;">Показаны сырые данные по источникам.</p>
-          </div>
-        `;
-        summaryEl.style.display = 'block';
-        
-        throw error; // Пробрасываем ошибку выше
-      }
-    }
-
     // No global company JSON card; each source card has its own JSON view
 
     function escapeHtml(s) {
       return String(s)
         .replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    }
-    
-    function formatCompanySummary(summary) {
-      if (!summary) return 'Нет анализа';
-      
-      let html = '<div style="line-height: 1.6;">';
-      
-      // Основная информация о компании
-      if (summary.company) {
-        const company = summary.company;
-        html += '<div style="font-weight: 600; margin-bottom: 16px; font-size: 18px;">🏢 Информация о компании</div>';
-        
-        if (company.name) {
-          html += `<div style="margin-bottom: 8px;"><strong>Название:</strong> ${company.name}</div>`;
-        }
-        if (company.inn) {
-          html += `<div style="margin-bottom: 8px;"><strong>ИНН:</strong> ${company.inn}</div>`;
-        }
-        if (company.status) {
-          const statusColor = company.status.toLowerCase().includes('действует') ? '#16a34a' : '#dc2626';
-          html += `<div style="margin-bottom: 8px;"><strong>Статус:</strong> <span style="color: ${statusColor};">${company.status}</span></div>`;
-        }
-        if (company.address) {
-          html += `<div style="margin-bottom: 8px;"><strong>Адрес:</strong> ${company.address}</div>`;
-        }
-        if (company.activity) {
-          html += `<div style="margin-bottom: 8px;"><strong>Деятельность:</strong> ${company.activity}</div>`;
-        }
-      }
-      
-      // Руководство
-      if (summary.ceo && (summary.ceo.name || summary.ceo.fio)) {
-        html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">👤 Руководство</div>';
-        html += `<div style="margin-bottom: 8px;"><strong>Руководитель:</strong> ${summary.ceo.name || summary.ceo.fio}`;
-        if (summary.ceo.position || summary.ceo.post) {
-          html += ` (${summary.ceo.position || summary.ceo.post})`;
-        }
-        html += '</div>';
-      }
-      
-      // Флаги рисков
-      if (summary.risk_flags && summary.risk_flags.length > 0) {
-        html += '<div style="font-weight: 600; margin: 16px 0 8px 0; color: #dc2626;">⚠️ Флаги рисков</div>';
-        html += '<ul style="list-style-type: disc; padding-left: 20px; background: #fef2f2; padding: 12px; border-radius: 6px;">';
-        summary.risk_flags.forEach(flag => {
-          html += `<li style="margin-bottom: 4px;">${flag}</li>`;
-        });
-        html += '</ul>';
-      }
-      
-      // Дополнительные заметки
-      if (summary.notes && summary.notes.length > 0) {
-        html += '<div style="font-weight: 600; margin: 16px 0 8px 0;">📝 Дополнительная информация</div>';
-        html += '<ul style="list-style-type: disc; padding-left: 20px;">';
-        summary.notes.forEach(note => {
-          html += `<li style="margin-bottom: 4px;">${note}</li>`;
-        });
-        html += '</ul>';
-      }
-      
-      // Если есть общая сводка
-      if (summary.summary || summary.ai_analysis) {
-        const text = summary.summary || summary.ai_analysis;
-        html += `<div style="margin-top: 16px; padding: 12px; background: #f3f4f6; border-left: 4px solid #6b7280;">${text}</div>`;
-      }
-      
-      html += '</div>';
-      return html;
     }
 
     function formatSummary(summary) {
@@ -2938,103 +2752,6 @@
         case 'critical': return 'Критический';
         default: return 'Неопределен';
       }
-    }
-
-    function displayCompanyAIResult(summary, processedLabel = 'Обработано ИИ') {
-      if (!summary || !summary.company) {
-        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных о компании</div></div>';
-        return;
-      }
-
-      const company = summary.company;
-      let html = '<div class="result-card open">';
-      
-      // Заголовок компании
-      html += `
-        <div class="result-header" onclick="toggleResult(this)">
-          <div class="result-title">
-            <strong>${company.name || company.shortName || 'Неизвестная компания'}</strong>
-            <span class="status-badge success">${processedLabel}</span>
-            <span class="caret">▼</span>
-          </div>
-        </div>
-        <div class="result-body">
-      `;
-
-      // Основная информация
-      html += '<div class="data-grid">';
-      
-      if (company.name) html += `<div class="data-label">Название</div><div class="data-value">${company.name}</div>`;
-      if (company.fullName && company.fullName !== company.name) html += `<div class="data-label">Полное название</div><div class="data-value">${company.fullName}</div>`;
-      if (company.inn) html += `<div class="data-label">ИНН</div><div class="data-value">${company.inn}</div>`;
-      if (company.ogrn) html += `<div class="data-label">ОГРН</div><div class="data-value">${company.ogrn}</div>`;
-      if (company.kpp) html += `<div class="data-label">КПП</div><div class="data-value">${company.kpp}</div>`;
-      if (company.opf) html += `<div class="data-label">Организационно-правовая форма</div><div class="data-value">${company.opf}</div>`;
-      if (company.status) html += `<div class="data-label">Статус</div><div class="data-value">${company.status}</div>`;
-      if (company.registration_date) html += `<div class="data-label">Дата регистрации</div><div class="data-value">${company.registration_date}</div>`;
-      if (company.years_from_registration) html += `<div class="data-label">Лет с регистрации</div><div class="data-value">${company.years_from_registration}</div>`;
-      if (company.address) html += `<div class="data-label">Адрес</div><div class="data-value">${company.address}</div>`;
-      if (company.charter_capital) html += `<div class="data-label">Уставной капитал</div><div class="data-value">${company.charter_capital}</div>`;
-      
-      // Контакты
-      if (company.contacts) {
-        if (company.contacts.phones && company.contacts.phones.length > 0) {
-          html += `<div class="data-label">Телефоны</div><div class="data-value">${company.contacts.phones.join(', ')}</div>`;
-        }
-        if (company.contacts.emails && company.contacts.emails.length > 0) {
-          html += `<div class="data-label">Email</div><div class="data-value">${company.contacts.emails.join(', ')}</div>`;
-        }
-        if (company.contacts.sites && company.contacts.sites.length > 0) {
-          html += `<div class="data-label">Сайты</div><div class="data-value">${company.contacts.sites.join(', ')}</div>`;
-        }
-      }
-
-      html += '</div>';
-
-      // Руководство
-      if (summary.ceo && (summary.ceo.name || summary.ceo.fio)) {
-        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600;">Руководство</h4>';
-        html += '<div class="data-grid">';
-        html += `<div class="data-label">Руководитель</div><div class="data-value">${summary.ceo.name || summary.ceo.fio}</div>`;
-        if (summary.ceo.position || summary.ceo.post) {
-          html += `<div class="data-label">Должность</div><div class="data-value">${summary.ceo.position || summary.ceo.post}</div>`;
-        }
-        html += '</div>';
-      }
-
-      // ОКВЭД
-      if (summary.okved && summary.okved.main) {
-        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600;">Деятельность</h4>';
-        html += '<div class="data-grid">';
-        if (summary.okved.main.code) html += `<div class="data-label">Код ОКВЭД</div><div class="data-value">${summary.okved.main.code}</div>`;
-        if (summary.okved.main.text || summary.okved.main.title) {
-          html += `<div class="data-label">Основная деятельность</div><div class="data-value">${summary.okved.main.text || summary.okved.main.title}</div>`;
-        }
-        html += '</div>';
-      }
-
-      // Флаги рисков
-      if (summary.risk_flags && summary.risk_flags.length > 0) {
-        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600; color: #dc2626;">Флаги рисков</h4>';
-        html += '<ul style="list-style-type: disc; padding-left: 20px; color: #dc2626;">';
-        summary.risk_flags.forEach(flag => {
-          html += `<li style="margin-bottom: 4px;">${flag}</li>`;
-        });
-        html += '</ul>';
-      }
-
-      // Дополнительные заметки
-      if (summary.notes && summary.notes.length > 0) {
-        html += '<h4 style="margin: 20px 0 10px 0; font-weight: 600;">Дополнительная информация</h4>';
-        html += '<ul style="list-style-type: disc; padding-left: 20px;">';
-        summary.notes.forEach(note => {
-          html += `<li style="margin-bottom: 4px;">${note}</li>`;
-        });
-        html += '</ul>';
-      }
-
-      html += '</div></div>';
-      results.innerHTML = html;
     }
 
     function hasRealCompanyData(summary) {
