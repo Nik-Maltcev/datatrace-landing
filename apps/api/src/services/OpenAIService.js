@@ -44,8 +44,8 @@ class OpenAIService {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           console.log('⏰ Request timeout reached, sending fallback');
-          reject(new Error('OpenAI request timed out after 90 seconds'));
-        }, 90000); // Увеличиваем до 90 секунд
+          reject(new Error('OpenAI request timed out after 180 seconds'));
+        }, 180000); // Увеличиваем до 180 секунд (3 минуты)
       });
 
       // Пробуем разные модели с fallback: gpt-5 -> gpt-4-turbo -> gpt-3.5-turbo
@@ -69,7 +69,7 @@ class OpenAIService {
 
           if (model === 'gpt-5') {
             // GPT-5 не поддерживает temperature и max_tokens
-            requestParams.max_completion_tokens = 2048;
+            requestParams.max_completion_tokens = 4096; // Увеличиваем лимит токенов для более детального анализа
             // temperature не указываем, используется значение по умолчанию
           } else {
             // Для остальных моделей используем стандартные параметры
