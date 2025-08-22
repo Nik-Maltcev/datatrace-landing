@@ -1934,11 +1934,11 @@
           await requestAISummaryForLeaks(combinedData);
         } catch (error) {
           console.error('🚨 AI processing completely failed, showing raw results');
-          displayLeakResultsBySources(allResults, null);
+          window.displayLeakResultsBySources(allResults, null);
         }
       } else {
         // Показываем результаты по источникам без AI
-        displayLeakResultsBySources(allResults, null);
+        window.displayLeakResultsBySources(allResults, null);
       }
 
       // Шаг 7: Завершение
@@ -2157,7 +2157,7 @@
         if (aiData.ok && aiData.summary) {
           console.log('✅ Displaying AI processed leak results by sources');
           // Показываем результаты по источникам с AI анализом
-          displayLeakResultsBySources(data.results, aiData.summary);
+          window.displayLeakResultsBySources(data.results, aiData.summary);
           
           // Также показываем общую сводку
           const summaryEl = document.getElementById('summary');
@@ -2167,12 +2167,12 @@
         } else {
           console.error('❌ AI processing failed:', aiData);
           // Если OpenAI не сработал, показываем результаты без AI
-          displayLeakResultsBySources(data.results, null);
+          window.displayLeakResultsBySources(data.results, null);
         }
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа утечек:', error);
         console.log('🔄 Falling back to display without AI');
-        displayLeakResultsBySources(data.results, null);
+        window.displayLeakResultsBySources(data.results, null);
         
         // Показываем уведомление пользователю
         const summaryEl = document.getElementById('summary');
@@ -3757,7 +3757,7 @@
       return html;
     }
 
-    function displayLeakResultsBySources(sourceResults, aiSummary) {
+    window.displayLeakResultsBySources = function(sourceResults, aiSummary) {
       results.innerHTML = '';
       
       if (!sourceResults || sourceResults.length === 0) {
@@ -3775,7 +3775,7 @@
           status = 'warning'; // Желтый (ошибка источника)
         } else if (result.ok && result.items) {
           // Проверяем, есть ли данные в результатах
-          const hasData = checkIfSourceHasLeakData(result, sourceName);
+          const hasData = window.checkIfSourceHasLeakData(result, sourceName);
           if (hasData) {
             status = 'danger'; // Красный (найдены утечки)
           }
@@ -3791,9 +3791,9 @@
         const item = createResultItem(sourceName, status, displayData);
         results.appendChild(item);
       });
-    }
+    };
 
-    function checkIfSourceHasLeakData(result, sourceName) {
+    window.checkIfSourceHasLeakData = function(result, sourceName) {
       if (!result.ok || !result.items) return false;
       
       // Проверяем каждый источник на наличие данных
@@ -3811,7 +3811,7 @@
         default:
           return false;
       }
-    }
+    };
 
     function formatAIDataForLeakSource(originalData, sourceName, aiSummary) {
       const formattedData = {};
