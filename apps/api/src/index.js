@@ -1330,8 +1330,8 @@ ${truncatedData}
     try {
       console.log('🤖 Sending request to OpenAI for profile formatting...');
       
-      // Пробуем сначала GPT-5, затем fallback на GPT-4o, затем на GPT-4o-mini
-      const modelsToTry = ['gpt-5', 'gpt-4o', 'gpt-4o-mini'];
+      // Пробуем сначала GPT-5, затем fallback на доступные модели
+      const modelsToTry = ['gpt-5', 'gpt-4-turbo', 'gpt-3.5-turbo'];
       let completion;
       let usedModel;
       
@@ -1339,7 +1339,8 @@ ${truncatedData}
         try {
           console.log(`🔄 Trying model: ${model}`);
           
-          completion = await openai.chat.completions.create({
+          // Создаем параметры запроса в зависимости от модели
+          const requestParams = {
             model: model,
             messages: [
               {
@@ -1350,10 +1351,19 @@ ${truncatedData}
                 role: 'user',
                 content: prompt
               }
-            ],
-            max_tokens: 2500, // Уменьшаем лимит токенов
-            temperature: 0.3
-          });
+            ]
+          };
+
+          if (model === 'gpt-5') {
+            // GPT-5 использует max_completion_tokens и не поддерживает temperature
+            requestParams.max_completion_tokens = 2500;
+          } else {
+            // Остальные модели используют стандартные параметры
+            requestParams.max_tokens = 2500;
+            requestParams.temperature = 0.3;
+          }
+          
+          completion = await openai.chat.completions.create(requestParams);
           
           usedModel = model;
           console.log(`✅ Successfully used model: ${model}`);
@@ -1372,7 +1382,8 @@ ${truncatedData}
             const smallerPrompt = prompt.replace(truncatedData, smallerData);
             
             try {
-              completion = await openai.chat.completions.create({
+              // Создаем параметры для повторного запроса с меньшими данными
+              const retryParams = {
                 model: model,
                 messages: [
                   {
@@ -1383,10 +1394,17 @@ ${truncatedData}
                     role: 'user',
                     content: smallerPrompt
                   }
-                ],
-                max_tokens: 2000,
-                temperature: 0.3
-              });
+                ]
+              };
+
+              if (model === 'gpt-5') {
+                retryParams.max_completion_tokens = 2000;
+              } else {
+                retryParams.max_tokens = 2000;
+                retryParams.temperature = 0.3;
+              }
+
+              completion = await openai.chat.completions.create(retryParams);
               
               usedModel = model + ' (сокращенные данные)';
               console.log(`✅ Successfully used model with smaller data: ${model}`);
