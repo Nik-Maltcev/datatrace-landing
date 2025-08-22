@@ -1451,8 +1451,8 @@ ${truncatedData}
           });
           return;
         }
-        // Если не последняя модель, пропускаем к следующей итерации
-        continue;
+        // Если не последняя модель, бросаем ошибку чтобы перейти к catch блоку
+        throw new Error('Empty response, trying next model');
       }
 
       console.log('✅ OpenAI profile formatting completed');
