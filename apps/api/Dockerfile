@@ -5,8 +5,11 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies (fallback to npm install if ci fails)
-RUN npm install --production
+# Install dependencies with timeout and retry
+RUN npm config set fetch-timeout 300000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm ci --production --prefer-offline || npm install --production
 
 # Copy source code
 COPY . .
