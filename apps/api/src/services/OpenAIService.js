@@ -45,16 +45,17 @@ class OpenAIService {
         setTimeout(() => reject(new Error('OpenAI request timed out after 30 seconds')), 30000);
       });
 
-      // Пробуем разные модели с fallback
-      const modelsToTry = [this.model, 'gpt-4o', 'gpt-4o-mini'];
+      // Пробуем разные модели с fallback: gpt-5 -> gpt-4.1 (gpt-4o) -> gpt-4o-mini
+      const modelsToTry = ['gpt-5', 'gpt-4o', 'gpt-4o-mini'];
       let completion;
-      let usedModel = this.model;
+      let usedModel = 'gpt-5';
       
       for (const model of modelsToTry) {
         try {
           console.log(`🔄 Trying model: ${model}`);
           
-          const chatPromise = this.client.chat.completions.create({
+          // Для GPT-5 используем max_completion_tokens, для остальных max_tokens
+          const requestParams = {
             model: model,
             response_format: { type: 'json_object' },
             messages: [
@@ -62,8 +63,15 @@ class OpenAIService {
               { role: 'user', content: user }
             ],
             temperature: 0.5,
-            max_tokens: 2048,
-          });
+          };
+
+          if (model === 'gpt-5') {
+            requestParams.max_completion_tokens = 2048;
+          } else {
+            requestParams.max_tokens = 2048;
+          }
+          
+          const chatPromise = this.client.chat.completions.create(requestParams);
 
           completion = await Promise.race([chatPromise, timeoutPromise]);
           usedModel = model;
