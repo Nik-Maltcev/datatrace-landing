@@ -911,7 +911,10 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
       return res.json(fallbackResponse);
     }
 
-    // Устанавливаем общий таймаут для всего запроса
+    // Адаптивные timeout'ы для разных сред
+    const isProduction = process.env.NODE_ENV === 'production';
+    const generalTimeout = isProduction ? 30000 : 250000; // 30s для production, 250s для development
+    
     const requestTimeout = setTimeout(() => {
       console.log('⏰ Request timeout reached, sending fallback');
       if (!res.headersSent) {
@@ -920,7 +923,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
         );
         res.json(fallbackResponse);
       }
-    }, 250000); // 250 секунд общий таймаут (больше чем OpenAI timeout)
+    }, generalTimeout);
 
       console.log(`Starting AI request with ${leaksAIService.isAvailable() ?
         'OpenAI' : 'fallback'}...`);

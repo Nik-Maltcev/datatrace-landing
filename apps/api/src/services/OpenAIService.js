@@ -41,11 +41,15 @@ class OpenAIService {
     try {
       console.log(`🚀 Calling OpenAI Chat Completions API with model ${this.model}...`);
     
+      // Адаптивные timeout'ы для разных сред
+      const isProduction = process.env.NODE_ENV === 'production';
+      const aiTimeout = isProduction ? 25000 : 240000; // 25s для production, 240s для development
+      
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           console.log('⏰ Request timeout reached, sending fallback');
-          reject(new Error('OpenAI request timed out after 240 seconds'));
-        }, 240000); // Увеличиваем до 240 секунд (4 минуты)
+          reject(new Error(`OpenAI request timed out after ${aiTimeout/1000} seconds`));
+        }, aiTimeout);
       });
 
       // Пробуем разные модели с fallback: gpt-5 -> gpt-4-turbo -> gpt-3.5-turbo

@@ -2605,11 +2605,17 @@
             
             // Создаем AbortController для таймаута
             const controller = new AbortController();
+            // Адаптивные timeout'ы для разных сред
+            const isProduction = window.location.hostname.includes('railway.app') || 
+                                window.location.hostname.includes('vercel.app') ||
+                                window.location.hostname !== 'localhost';
+            const frontendTimeout = isProduction ? 35000 : 300000; // 35s для production, 300s для development
+            
             const timeoutId = setTimeout(() => {
               console.log(`⏰ Request timeout for ${endpoint}`);
               updateProgress(91, 'Превышен лимит времени, пробуем другой сервис...');
               controller.abort();
-            }, 300000); // Увеличиваем до 300 секунд (5 минут)
+            }, frontendTimeout);
             
             updateProgress(93, 'ИИ анализирует данные...');
             
