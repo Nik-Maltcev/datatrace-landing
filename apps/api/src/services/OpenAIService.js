@@ -45,8 +45,8 @@ class OpenAIService {
         setTimeout(() => reject(new Error('OpenAI request timed out after 30 seconds')), 30000);
       });
 
-      // Пробуем разные модели с fallback: gpt-5 -> gpt-4.1 (gpt-4o) -> gpt-4o-mini
-      const modelsToTry = ['gpt-5', 'gpt-4o', 'gpt-4o-mini'];
+      // Пробуем разные модели с fallback: gpt-5 -> gpt-4-turbo -> gpt-3.5-turbo
+      const modelsToTry = ['gpt-5', 'gpt-4-turbo', 'gpt-3.5-turbo'];
       let completion;
       let usedModel = 'gpt-5';
       
@@ -54,7 +54,7 @@ class OpenAIService {
         try {
           console.log(`🔄 Trying model: ${model}`);
           
-          // Для GPT-5 используем max_completion_tokens, для остальных max_tokens
+          // Для GPT-5 используем особые параметры
           const requestParams = {
             model: model,
             response_format: { type: 'json_object' },
@@ -62,12 +62,15 @@ class OpenAIService {
               { role: 'system', content: system },
               { role: 'user', content: user }
             ],
-            temperature: 0.5,
           };
 
           if (model === 'gpt-5') {
+            // GPT-5 не поддерживает temperature и max_tokens
             requestParams.max_completion_tokens = 2048;
+            // temperature не указываем, используется значение по умолчанию
           } else {
+            // Для остальных моделей используем стандартные параметры
+            requestParams.temperature = 0.5;
             requestParams.max_tokens = 2048;
           }
           
