@@ -42,7 +42,10 @@ class OpenAIService {
       console.log(`🚀 Calling OpenAI Chat Completions API with model ${this.model}...`);
     
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('OpenAI request timed out after 30 seconds')), 30000);
+        setTimeout(() => {
+          console.log('⏰ Request timeout reached, sending fallback');
+          reject(new Error('OpenAI request timed out after 90 seconds'));
+        }, 90000); // Увеличиваем до 90 секунд
       });
 
       // Пробуем разные модели с fallback: gpt-5 -> gpt-4-turbo -> gpt-3.5-turbo

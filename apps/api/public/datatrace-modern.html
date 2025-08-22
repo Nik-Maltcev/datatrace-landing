@@ -2597,7 +2597,7 @@
               console.log(`⏰ Request timeout for ${endpoint}`);
               updateAIStatus('Превышен лимит времени, пробуем другой сервис...');
               controller.abort();
-            }, 60000); // 60 секунд таймаут
+            }, 120000); // Увеличиваем до 120 секунд (2 минуты)
             
             updateAIStatus('ИИ анализирует данные...');
             
