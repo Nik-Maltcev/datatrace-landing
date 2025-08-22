@@ -469,6 +469,63 @@
     // Переключение режимов
     let currentMode = 'leaks';
 
+    // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С УТЕЧКАМИ (определяем в начале) =====
+    window.displayLeakResultsBySources = function(sourceResults, aiSummary) {
+      results.innerHTML = '';
+      
+      if (!sourceResults || sourceResults.length === 0) {
+        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
+        return;
+      }
+
+      sourceResults.forEach((result, index) => {
+        const sourceName = result.name || `Источник ${index + 1}`;
+        
+        // Определяем статус на основе найденных данных
+        let status = 'success'; // По умолчанию зеленый (нет утечек)
+        
+        if (result.error) {
+          status = 'warning'; // Желтый (ошибка источника)
+        } else if (result.ok && result.items) {
+          // Проверяем, есть ли данные в результатах
+          const hasData = window.checkIfSourceHasLeakData(result, sourceName);
+          if (hasData) {
+            status = 'danger'; // Красный (найдены утечки)
+          }
+        }
+        
+        let displayData = result.items || result.error;
+        
+        // Если есть обработанные данные от AI, используем их
+        if (aiSummary && result.ok && result.items) {
+          displayData = formatAIDataForLeakSource(result.items, sourceName, aiSummary);
+        }
+        
+        const item = createResultItem(sourceName, status, displayData);
+        results.appendChild(item);
+      });
+    };
+
+    window.checkIfSourceHasLeakData = function(result, sourceName) {
+      if (!result.ok || !result.items) return false;
+      
+      // Проверяем каждый источник на наличие данных
+      switch (sourceName) {
+        case 'ITP':
+          return result.items && typeof result.items === 'object' && Object.keys(result.items).length > 0;
+        case 'Dyxless':
+          return Array.isArray(result.items) && result.items.length > 0;
+        case 'LeakOsint':
+          return Array.isArray(result.items) && result.items.length > 0;
+        case 'Usersbox':
+          return Array.isArray(result.items) && result.items.length > 0;
+        case 'Vektor':
+          return result.items && (Array.isArray(result.items) ? result.items.length > 0 : Object.keys(result.items).length > 0);
+        default:
+          return false;
+      }
+    };
+
     // Глобальная функция для работы с финансами (определяем в начале)
     window.getFinanceData = async function(event, bodyId, sourceName) {
       event.stopPropagation(); // Предотвращаем сворачивание карточки
@@ -3756,62 +3813,6 @@
 
       return html;
     }
-
-    window.displayLeakResultsBySources = function(sourceResults, aiSummary) {
-      results.innerHTML = '';
-      
-      if (!sourceResults || sourceResults.length === 0) {
-        results.innerHTML = '<div class="result-card"><div style="color: #dc2626;">Нет данных для отображения</div></div>';
-        return;
-      }
-
-      sourceResults.forEach((result, index) => {
-        const sourceName = result.name || `Источник ${index + 1}`;
-        
-        // Определяем статус на основе найденных данных
-        let status = 'success'; // По умолчанию зеленый (нет утечек)
-        
-        if (result.error) {
-          status = 'warning'; // Желтый (ошибка источника)
-        } else if (result.ok && result.items) {
-          // Проверяем, есть ли данные в результатах
-          const hasData = window.checkIfSourceHasLeakData(result, sourceName);
-          if (hasData) {
-            status = 'danger'; // Красный (найдены утечки)
-          }
-        }
-        
-        let displayData = result.items || result.error;
-        
-        // Если есть обработанные данные от AI, используем их
-        if (aiSummary && result.ok && result.items) {
-          displayData = formatAIDataForLeakSource(result.items, sourceName, aiSummary);
-        }
-        
-        const item = createResultItem(sourceName, status, displayData);
-        results.appendChild(item);
-      });
-    };
-
-    window.checkIfSourceHasLeakData = function(result, sourceName) {
-      if (!result.ok || !result.items) return false;
-      
-      // Проверяем каждый источник на наличие данных
-      switch (sourceName) {
-        case 'ITP':
-          return result.items && typeof result.items === 'object' && Object.keys(result.items).length > 0;
-        case 'Dyxless':
-          return Array.isArray(result.items) && result.items.length > 0;
-        case 'LeakOsint':
-          return Array.isArray(result.items) && result.items.length > 0;
-        case 'Usersbox':
-          return Array.isArray(result.items) && result.items.length > 0;
-        case 'Vektor':
-          return result.items && (Array.isArray(result.items) ? result.items.length > 0 : Object.keys(result.items).length > 0);
-        default:
-          return false;
-      }
-    };
 
     function formatAIDataForLeakSource(originalData, sourceName, aiSummary) {
       const formattedData = {};
