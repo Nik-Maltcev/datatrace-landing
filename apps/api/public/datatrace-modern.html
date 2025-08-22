@@ -1407,16 +1407,45 @@
         heroDescription.textContent = 'Получите детальную информацию о компании по ИНН из официальных источников';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
+        
+        // Удаляем элемент summary для режима компаний
+        const existingSummary = document.getElementById('summary');
+        if (existingSummary) {
+          existingSummary.remove();
+        }
       } else if (currentMode === 'password') {
         heroTitle.textContent = 'Проверка пароля';
         heroDescription.textContent = 'Проверьте, был ли ваш пароль скомпрометирован в утечках данных';
         searchInput.classList.add('hidden');
         passwordInput.classList.remove('hidden');
+        
+        // Удаляем элемент summary для режима паролей
+        const existingSummary = document.getElementById('summary');
+        if (existingSummary) {
+          existingSummary.remove();
+        }
       } else {
         heroTitle.textContent = 'Поиск утечек данных';
         heroDescription.textContent = 'Проверим ваши персональные данные по всем доступным источникам утечек и предоставим детальный анализ';
         searchInput.classList.remove('hidden');
         passwordInput.classList.add('hidden');
+        
+        // Создаем элемент summary для режима утечек (если не существует)
+        let summaryEl = document.getElementById('summary');
+        if (!summaryEl) {
+          summaryEl = document.createElement('div');
+          summaryEl.id = 'summary';
+          summaryEl.className = 'summary-container';
+          summaryEl.style.display = 'none';
+          summaryEl.innerHTML = `
+            <h3 class="summary-title">Итоговый анализ ИИ</h3>
+            <div id="summaryBody"></div>
+          `;
+          
+          // Вставляем после элемента results
+          const resultsEl = document.getElementById('results');
+          resultsEl.parentNode.insertBefore(summaryEl, resultsEl.nextSibling);
+        }
       }
     }
 
@@ -1425,7 +1454,8 @@
       // Проверяем, есть ли данные для очистки
       const hasResults = results.innerHTML.trim() !== '';
       const hasQuery = q.value.trim() !== '';
-      const summaryVisible = document.getElementById('summary').style.display === 'block';
+      const summaryEl = document.getElementById('summary');
+      const summaryVisible = summaryEl && summaryEl.style.display === 'block';
       
       if ((hasResults || hasQuery || summaryVisible) && currentMode !== newMode) {
         const confirmed = confirm(
@@ -1469,9 +1499,11 @@
       // Очищаем результаты
       results.innerHTML = '';
       
-      // Скрываем сводку ИИ
+      // Скрываем сводку ИИ (если существует)
       const summaryEl = document.getElementById('summary');
-      summaryEl.style.display = 'none';
+      if (summaryEl) {
+        summaryEl.style.display = 'none';
+      }
       
       // Скрываем прогресс
       hideProgress();
