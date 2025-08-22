@@ -369,6 +369,94 @@
       animation: spin 1s linear infinite;
       margin: 0 auto;
     }
+
+    /* AI Loading Overlay */
+    .ai-loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ai-loading-content {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 420px;
+      margin: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .ai-loading-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1f2937;
+    }
+
+    .ai-loading-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 32px;
+    }
+
+    .ai-spinner {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 24px;
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: ai-spin 1s linear infinite;
+    }
+
+    @keyframes ai-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .ai-progress-dots {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .ai-dot {
+      width: 10px;
+      height: 10px;
+      background: #3b82f6;
+      border-radius: 50%;
+      animation: ai-bounce 1.4s ease-in-out infinite both;
+    }
+
+    .ai-dot:nth-child(1) { animation-delay: -0.32s; }
+    .ai-dot:nth-child(2) { animation-delay: -0.16s; }
+    .ai-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes ai-bounce {
+      0%, 80%, 100% { 
+        transform: scale(0.6); 
+        opacity: 0.5; 
+      }
+      40% { 
+        transform: scale(1.2); 
+        opacity: 1; 
+      }
+    }
+
+    .ai-status-text {
+      font-size: 14px;
+      color: #4b5563;
+      font-weight: 500;
+    }
   </style>
 </head>
 
@@ -1157,41 +1245,39 @@
         html += '<h5 style="color: #374151; font-weight: 600; margin-bottom: 8px;">📊 Бухгалтерский баланс</h5>';
         
         if (financeData.balances.years && financeData.balances.years.length > 0) {
-          html += `<div style="margin-bottom: 8px; color: #6b7280;">Отчетные периоды: ${financeData.balances.years.join(', ')}</div>`;
-        }
-        
-        if (financeData.balances.indicators && financeData.balances.indicators.length > 0) {
-          html += '<div class="data-grid">';
+          html += '<div style="margin-bottom: 8px; color: #6b7280;">Отчетные периоды:</div>';
           
-          // Показываем ВСЕ показатели баланса с разбивкой по годам
+          // Создаем сводку по годам для каждого показателя
           financeData.balances.indicators.forEach((indicator, index) => {
-            console.log(`Balance indicator ${index}:`, indicator);
             if (indicator.name && (indicator.values || indicator.sum)) {
-              console.log(`Processing ${indicator.name}:`, indicator.values || indicator.sum);
-              // Datanewton использует свойство 'sum', а не 'values'
               const yearData = indicator.values || indicator.sum;
               const years = Object.keys(yearData).sort((a, b) => b - a);
-              const yearValues = years.map(year => {
+              const yearEntries = [];
+              
+              years.forEach(year => {
                 const value = yearData[year];
-                console.log(`Year ${year}, value:`, value, typeof value);
-                if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
-                  const numValue = parseFloat(value) || 0;
-                  if (numValue !== 0) {
-                    return `${year} - ${window.formatCurrency(numValue * 1000)}`;
+                if (value !== undefined && value !== null && value !== '') {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue)) {
+                    yearEntries.push(`${year} - ${window.formatCurrency(numValue * 1000)}`);
                   }
                 }
-                return null;
-              }).filter(Boolean);
+              });
               
-              console.log(`Year values for ${indicator.name}:`, yearValues);
-              
-              if (yearValues.length > 0) {
-                html += `<div class="data-label">${indicator.name}</div><div class="data-value">${yearValues.join('<br>')}</div>`;
+              if (yearEntries.length > 0) {
+                html += `<div style="margin-bottom: 12px;">`;
+                html += `<div style="font-weight: 600; color: #374151; margin-bottom: 4px;">${indicator.name}</div>`;
+                html += `<div style="color: #6b7280; padding-left: 12px;">`;
+                yearEntries.forEach(entry => {
+                  html += `<div>${entry}</div>`;
+                });
+                html += `</div></div>`;
               }
             }
           });
-          
-          html += '</div>';
+        }
+        
+        if (financeData.balances.indicators && financeData.balances.indicators.length > 0) {
           html += `<div style="margin-top: 8px; color: #6b7280; font-size: 12px;">Всего показателей: ${financeData.balances.indicators.length}</div>`;
         }
         
@@ -2487,6 +2573,10 @@
 
     async function requestAISummaryForLeaks(data) {
       try {
+        // Показываем AI loading
+        showAILoading();
+        updateAIStatus('Отправка данных в ИИ...');
+        
         console.log('🔍 Requesting AI summary for leak search');
         console.log('📊 Data received:', data);
         console.log('🌐 Current location:', window.location.href);
@@ -2499,13 +2589,17 @@
         for (const endpoint of endpoints) {
           try {
             console.log(`🔄 Trying endpoint: ${endpoint}`);
+            updateAIStatus(`Подключение к ИИ сервису...`);
             
             // Создаем AbortController для таймаута
             const controller = new AbortController();
             const timeoutId = setTimeout(() => {
               console.log(`⏰ Request timeout for ${endpoint}`);
+              updateAIStatus('Превышен лимит времени, пробуем другой сервис...');
               controller.abort();
             }, 60000); // 60 секунд таймаут
+            
+            updateAIStatus('ИИ анализирует данные...');
             
             response = await fetch(endpoint, {
               method: 'POST',
@@ -2518,6 +2612,7 @@
             
             if (response.ok) {
               console.log(`✅ Success with endpoint: ${endpoint}`);
+              updateAIStatus('Получение результатов анализа...');
               break;
             } else {
               console.log(`❌ Failed with endpoint: ${endpoint}, status: ${response.status}`);
@@ -2527,6 +2622,7 @@
             console.log(`💥 Fetch error with endpoint: ${endpoint}:`, fetchError.message);
             if (fetchError.name === 'AbortError') {
               console.log(`⏰ Request was aborted due to timeout`);
+              updateAIStatus('Превышен лимит времени ожидания...');
               lastError = new Error('Request timeout (60s)');
             } else {
               lastError = fetchError;
@@ -2540,11 +2636,13 @@
         }
 
         console.log('📡 Response status:', response.status);
+        updateAIStatus('Обработка результатов ИИ...');
         const aiData = await response.json();
         console.log('🤖 AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
           console.log('✅ Displaying AI processed leak results by sources');
+          updateAIStatus('Формирование красивого отчета...');
           // Показываем результаты по источникам с AI анализом
           await window.displayLeakResultsBySources(data.results, aiData.summary);
           
@@ -2558,6 +2656,10 @@
           // Если OpenAI не сработал, показываем результаты без AI
           await window.displayLeakResultsBySources(data.results, null);
         }
+        
+        // Скрываем AI loading при успехе
+        hideAILoading();
+        
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа утечек:', error);
         console.log('🔄 Falling back to display without AI');
@@ -2568,6 +2670,9 @@
         const summaryBody = document.getElementById('summaryBody');
         summaryBody.innerHTML = '<div style="color: #dc2626;">Анализ ИИ временно недоступен. Показаны базовые результаты.</div>';
         summaryEl.style.display = 'block';
+        
+        // Скрываем AI loading при ошибке
+        hideAILoading();
       }
     }
 
@@ -4506,6 +4611,54 @@
 
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
+
+    // Функции управления AI Loading
+    function showAILoading() {
+      const overlay = document.getElementById('aiLoadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+      }
+    }
+
+    function hideAILoading() {
+      const overlay = document.getElementById('aiLoadingOverlay');
+      if (overlay) {
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 500);
+      }
+    }
+
+    function updateAIStatus(message) {
+      const statusText = document.getElementById('aiStatusText');
+      if (statusText) {
+        statusText.textContent = message;
+      }
+    }
+
+    // Делаем функции доступными глобально
+    window.showAILoading = showAILoading;
+    window.hideAILoading = hideAILoading;
+    window.updateAIStatus = updateAIStatus;
   </script>
+
+  <!-- AI Loading Overlay -->
+  <div id="aiLoadingOverlay" class="ai-loading-overlay">
+    <div class="ai-loading-content">
+      <div class="ai-loading-title">🤖 Обработка данных ИИ</div>
+      <div class="ai-loading-subtitle">Анализируем найденную информацию...</div>
+      
+      <div class="ai-spinner"></div>
+      
+      <div class="ai-progress-dots">
+        <div class="ai-dot"></div>
+        <div class="ai-dot"></div>
+        <div class="ai-dot"></div>
+      </div>
+      
+      <div id="aiStatusText" class="ai-status-text">Подготовка данных для анализа</div>
+    </div>
+  </div>
+
 </body>
 </html>
