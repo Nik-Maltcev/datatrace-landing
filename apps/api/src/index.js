@@ -1223,6 +1223,168 @@ app.get('/api/company', async (req, res) => {
   }
 });
 
+// Новый эндпоинт для красивого форматирования профиля утечек через GPT-4
+app.post('/api/format-leak-profile', optionalAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('🎨 Format leak profile request received');
+    
+    const { leakData } = req.body;
+    
+    if (!leakData || !Array.isArray(leakData) || leakData.length === 0) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Данные утечек не предоставлены' 
+      });
+    }
+
+    // Проверяем доступность OpenAI
+    if (!openai) {
+      console.log('❌ OpenAI not available for profile formatting');
+      return res.status(503).json({
+        ok: false,
+        error: 'ИИ форматирование временно недоступно',
+        fallback: true
+      });
+    }
+
+    // Подготавливаем данные для анализа
+    const rawDataText = leakData.map(source => {
+      if (!source.ok || !source.items) return '';
+      
+      let text = `=== ${source.name} ===\n`;
+      
+      if (typeof source.items === 'object' && !Array.isArray(source.items)) {
+        // ITP формат
+        Object.entries(source.items).forEach(([category, items]) => {
+          if (Array.isArray(items) && items.length > 0) {
+            text += `${category}:\n`;
+            items.forEach(item => {
+              text += `${JSON.stringify(item, null, 2)}\n`;
+            });
+          }
+        });
+      } else if (Array.isArray(source.items)) {
+        // Другие источники
+        source.items.forEach(item => {
+          text += `${JSON.stringify(item, null, 2)}\n`;
+        });
+      }
+      
+      return text;
+    }).filter(Boolean).join('\n\n');
+
+    console.log('📝 Prepared data length:', rawDataText.length);
+
+    const prompt = `Ты - эксперт по анализу данных утечек. Твоя задача - создать красивый структурированный профиль пользователя на основе данных из различных баз данных утечек.
+
+ВАЖНЫЕ ПРАВИЛА:
+1. Объединяй дублирующуюся информацию между источниками
+2. Маскируй конфиденциальные данные (номера карт: 4276 88** **** 0319, паспорта: 9218 41****22)
+3. Группируй информацию по логическим категориям
+4. Используй эмодзи для визуального разделения
+5. Пиши на русском языке
+6. Не выдумывай данные - используй только то, что есть в источниках
+7. Если нет данных для раздела - не включай его
+
+СТРУКТУРА ОТВЕТА:
+📋 Основная информация
+- Полное имя
+- Дата рождения  
+- Пол
+- Телефоны
+
+📧 Email адреса
+- Список email с описанием (основной, деловой, etc.)
+
+🏠 Адреса проживания
+- Основной адрес
+- Дополнительные адреса
+
+🔍 Telegram профиль
+- ID и имена в контактах
+
+🏦 Финансовые данные
+- Банковские карты (замаскированные)
+- Банки и услуги
+
+📄 Документы
+- Паспорт (замаскированный)
+- СНИЛС (замаскированный)
+
+🛒 Интернет-сервисы
+- Группировка по категориям (книги, еда, доставка, etc.)
+
+💰 Финансовые услуги
+- МФО, займы, страхование
+
+🎯 Дополнительные сведения
+- VIP статусы, деятельность, география
+
+ИСХОДНЫЕ ДАННЫЕ:
+${rawDataText}
+
+Создай красивый профиль на основе этих данных:`;
+
+    try {
+      console.log('🤖 Sending request to OpenAI for profile formatting...');
+      
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini', // Используем более быструю модель
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 3000,
+        temperature: 0.3
+      });
+
+      const formattedProfile = completion.choices[0]?.message?.content;
+      
+      if (!formattedProfile) {
+        throw new Error('Пустой ответ от OpenAI');
+      }
+
+      console.log('✅ OpenAI profile formatting completed');
+      console.log('📊 Response length:', formattedProfile.length);
+
+      res.json({
+        ok: true,
+        model: 'gpt-4o-mini',
+        profile: formattedProfile,
+        meta: {
+          sources_processed: leakData.length,
+          data_length: rawDataText.length,
+          response_length: formattedProfile.length
+        }
+      });
+
+    } catch (aiError) {
+      console.error('❌ OpenAI error in profile formatting:', aiError.message);
+      
+      res.status(500).json({
+        ok: false,
+        error: 'Ошибка форматирования профиля',
+        details: aiError.message,
+        fallback: true
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error in format-leak-profile:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Внутренняя ошибка сервера',
+      details: error.message
+    });
+  }
+});
+
 app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
 
 // Новый дизайн на отдельном endpoint

@@ -275,6 +275,100 @@
     .footer-text div {
       margin-bottom: 8px;
     }
+
+    /* Стили для красивого профиля */
+    .formatted-profile {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px;
+    }
+
+    .profile-header h2 {
+      color: white !important;
+    }
+
+    .view-toggle-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .view-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .view-toggle-btn.active {
+      background: white;
+      color: #667eea;
+      border-color: white;
+      font-weight: 600;
+    }
+
+    .profile-content {
+      padding: 24px;
+    }
+
+    .profile-text {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #374151;
+    }
+
+    .profile-text h3, .profile-text h4 {
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #1f2937;
+      font-weight: 700;
+    }
+
+    .profile-text p {
+      margin-bottom: 12px;
+    }
+
+    .profile-text ul {
+      margin: 12px 0;
+      padding-left: 0;
+    }
+
+    .profile-text li {
+      margin-bottom: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+      list-style: none;
+    }
+
+    .profile-text li:last-child {
+      border-bottom: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
   </style>
 </head>
 
@@ -470,7 +564,7 @@
     let currentMode = 'leaks';
 
     // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С УТЕЧКАМИ (определяем в начале) =====
-    window.displayLeakResultsBySources = function(sourceResults, aiSummary) {
+    window.displayLeakResultsBySources = async function(sourceResults, aiSummary) {
       results.innerHTML = '';
       
       if (!sourceResults || sourceResults.length === 0) {
@@ -478,6 +572,55 @@
         return;
       }
 
+      // Проверяем, есть ли данные утечек для форматирования
+      const hasLeakData = sourceResults.some(result => {
+        if (!result.ok || !result.items) return false;
+        const sourceName = result.name || '';
+        return window.checkIfSourceHasLeakData(result, sourceName);
+      });
+
+      // Если есть данные утечек, пытаемся создать красивый профиль
+      if (hasLeakData && !aiSummary) { // Только если нет aiSummary (избегаем двойной обработки)
+        console.log('🎨 Attempting to create formatted profile...');
+        
+        // Показываем индикатор загрузки
+        results.innerHTML = `
+          <div class="result-card" style="text-align: center; padding: 30px;">
+            <div style="font-size: 18px; margin-bottom: 10px;">🎨 Создание красивого профиля...</div>
+            <div style="color: #6b7280; font-size: 14px;">Обрабатываем данные с помощью ИИ для лучшего отображения</div>
+            <div style="margin-top: 15px;">
+              <div class="loading-spinner" style="border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            </div>
+          </div>
+        `;
+        
+        try {
+          const profileResult = await window.formatLeakProfileWithAI(sourceResults);
+          
+          if (profileResult.success) {
+            // Отображаем красивый профиль
+            window.displayFormattedProfile(profileResult, sourceResults);
+            return;
+          } else {
+            console.log('🔄 AI formatting failed, falling back to standard display:', profileResult.error);
+            // Fallback к стандартному отображению
+            displayStandardLeakResults(sourceResults, aiSummary);
+          }
+        } catch (error) {
+          console.error('❌ Error in AI profile formatting:', error);
+          // Fallback к стандартному отображению
+          displayStandardLeakResults(sourceResults, aiSummary);
+        }
+      } else {
+        // Стандартное отображение (если нет данных утечек или уже есть aiSummary)
+        displayStandardLeakResults(sourceResults, aiSummary);
+      }
+    };
+
+    // Функция стандартного отображения результатов
+    function displayStandardLeakResults(sourceResults, aiSummary) {
+      results.innerHTML = '';
+      
       sourceResults.forEach((result, index) => {
         const sourceName = result.name || `Источник ${index + 1}`;
         
@@ -504,7 +647,7 @@
         const item = createResultItem(sourceName, status, displayData);
         results.appendChild(item);
       });
-    };
+    }
 
     window.checkIfSourceHasLeakData = function(result, sourceName) {
       if (!result.ok || !result.items) return false;
@@ -523,6 +666,135 @@
           return result.items && (Array.isArray(result.items) ? result.items.length > 0 : Object.keys(result.items).length > 0);
         default:
           return false;
+      }
+    };
+
+    // ===== ФУНКЦИИ ДЛЯ КРАСИВОГО ФОРМАТИРОВАНИЯ ПРОФИЛЯ =====
+    window.formatLeakProfileWithAI = async function(leakData) {
+      console.log('🎨 Starting AI profile formatting...');
+      console.log('📊 Input data:', leakData);
+
+      try {
+        const response = await fetch('/api/format-leak-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            leakData: leakData
+          })
+        });
+
+        console.log('📡 Response status:', response.status);
+        const data = await response.json();
+        console.log('🤖 AI response:', data);
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Ошибка форматирования профиля');
+        }
+
+        if (data.ok && data.profile) {
+          return {
+            success: true,
+            profile: data.profile,
+            model: data.model,
+            meta: data.meta
+          };
+        } else {
+          throw new Error('Некорректный ответ от сервера');
+        }
+
+      } catch (error) {
+        console.error('❌ Error formatting leak profile:', error);
+        return {
+          success: false,
+          error: error.message
+        };
+      }
+    };
+
+    window.displayFormattedProfile = function(profileData, sourceResults) {
+      results.innerHTML = '';
+      
+      if (profileData.success && profileData.profile) {
+        // Создаем контейнер для красивого профиля
+        const profileContainer = document.createElement('div');
+        profileContainer.className = 'formatted-profile';
+        profileContainer.innerHTML = `
+          <div class="profile-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h2 style="margin: 0; color: #1f2937;">📊 Профиль пользователя</h2>
+              <div style="display: flex; gap: 10px;">
+                <button onclick="window.toggleProfileView('formatted')" class="view-toggle-btn active" id="formattedViewBtn">
+                  🎨 Структурированный
+                </button>
+                <button onclick="window.toggleProfileView('detailed')" class="view-toggle-btn" id="detailedViewBtn">
+                  📋 Подробные данные
+                </button>
+              </div>
+            </div>
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">
+              Обработано ${profileData.meta?.sources_processed || 0} источников • 
+              Модель: ${profileData.model || 'AI'} • 
+              ${new Date().toLocaleString('ru-RU')}
+            </div>
+          </div>
+          
+          <div id="formattedView" class="profile-content">
+            <div class="profile-text">
+              ${profileData.profile.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+          
+          <div id="detailedView" class="profile-content" style="display: none;">
+            <div id="detailedDataContainer"></div>
+          </div>
+        `;
+        
+        results.appendChild(profileContainer);
+        
+        // Сохраняем исходные данные для переключения
+        window.profileSourceData = sourceResults;
+        
+      } else {
+        // Fallback к обычному отображению при ошибке
+        console.log('🔄 Falling back to standard display due to formatting error');
+        displayStandardLeakResults(sourceResults, null);
+      }
+    };
+
+    window.toggleProfileView = function(viewType) {
+      const formattedView = document.getElementById('formattedView');
+      const detailedView = document.getElementById('detailedView');
+      const formattedBtn = document.getElementById('formattedViewBtn');
+      const detailedBtn = document.getElementById('detailedViewBtn');
+      
+      if (viewType === 'formatted') {
+        formattedView.style.display = 'block';
+        detailedView.style.display = 'none';
+        formattedBtn.classList.add('active');
+        detailedBtn.classList.remove('active');
+      } else {
+        formattedView.style.display = 'none';
+        detailedView.style.display = 'block';
+        formattedBtn.classList.remove('active');
+        detailedBtn.classList.add('active');
+        
+        // Загружаем подробные данные при первом показе
+        const detailedContainer = document.getElementById('detailedDataContainer');
+        if (detailedContainer.innerHTML === '' && window.profileSourceData) {
+          detailedContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Загрузка подробных данных...</div>';
+          
+          setTimeout(async () => {
+            await window.displayLeakResultsBySources(window.profileSourceData, null);
+            // Перемещаем результаты в detailedContainer
+            const resultCards = Array.from(results.children);
+            detailedContainer.innerHTML = '';
+            resultCards.forEach(card => {
+              detailedContainer.appendChild(card);
+            });
+          }, 100);
+        }
       }
     };
 
@@ -1991,11 +2263,11 @@
           await requestAISummaryForLeaks(combinedData);
         } catch (error) {
           console.error('🚨 AI processing completely failed, showing raw results');
-          window.displayLeakResultsBySources(allResults, null);
+          await window.displayLeakResultsBySources(allResults, null);
         }
       } else {
         // Показываем результаты по источникам без AI
-        window.displayLeakResultsBySources(allResults, null);
+        await window.displayLeakResultsBySources(allResults, null);
       }
 
       // Шаг 7: Завершение
@@ -2214,7 +2486,7 @@
         if (aiData.ok && aiData.summary) {
           console.log('✅ Displaying AI processed leak results by sources');
           // Показываем результаты по источникам с AI анализом
-          window.displayLeakResultsBySources(data.results, aiData.summary);
+          await window.displayLeakResultsBySources(data.results, aiData.summary);
           
           // Также показываем общую сводку
           const summaryEl = document.getElementById('summary');
@@ -2224,12 +2496,12 @@
         } else {
           console.error('❌ AI processing failed:', aiData);
           // Если OpenAI не сработал, показываем результаты без AI
-          window.displayLeakResultsBySources(data.results, null);
+          await window.displayLeakResultsBySources(data.results, null);
         }
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа утечек:', error);
         console.log('🔄 Falling back to display without AI');
-        window.displayLeakResultsBySources(data.results, null);
+        await window.displayLeakResultsBySources(data.results, null);
         
         // Показываем уведомление пользователю
         const summaryEl = document.getElementById('summary');
