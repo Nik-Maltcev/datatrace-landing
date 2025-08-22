@@ -2,11 +2,10 @@
 builder = "dockerfile"
 
 [deploy]
-healthcheckPath = "/api/health"
-healthcheckTimeout = 300
+healthcheckPath = "/health"
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
+restartPolicyMaxRetries = 5
 
 [variables]
 NODE_ENV = "production"
-PORT = "3001"

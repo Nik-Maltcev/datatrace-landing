@@ -8,29 +8,18 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies with timeout and retry
-RUN npm config set fetch-timeout 300000 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm ci --production --prefer-offline || npm install --production
+# Install dependencies with simplified approach for Railway
+RUN npm ci --production --ignore-scripts
 
 # Copy source code
 COPY . .
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S datatrace -u 1001
+# Expose port (Railway will override this)
+EXPOSE $PORT
 
-# Change ownership
-RUN chown -R datatrace:nodejs /app
-USER datatrace
-
-# Expose port
-EXPOSE 3001
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+# Simplified health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
 
 # Start the application
 CMD ["npm", "start"]

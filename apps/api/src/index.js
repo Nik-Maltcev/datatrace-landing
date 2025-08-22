@@ -11,7 +11,16 @@ const { requireAuth, optionalAuth, requireAdmin, userRateLimit, authService } = 
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Debug информация для Railway
+console.log('🔧 Environment Debug Info:');
+console.log('- NODE_ENV:', process.env.NODE_ENV);
+console.log('- PORT from env:', process.env.PORT);
+console.log('- Working directory:', process.cwd());
+console.log('- Platform:', process.platform);
+console.log('- Node version:', process.version);
+console.log('- Memory usage:', process.memoryUsage());
+
+const PORT = process.env.PORT || 3001; // Railway автоматически назначает порт
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
