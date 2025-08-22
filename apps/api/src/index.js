@@ -463,7 +463,7 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 const DeepSeekService = require('./services/DeepSeekService');
 const KimiService = require('./services/KimiService');
 
-const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-4o');
+const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-5');
 const deepseekService = new DeepSeekService(
   process.env.DEEPSEEK_API_KEY,
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
@@ -481,7 +481,7 @@ try {
 }
 
 // Choose AI services by use case
-// Company summaries: prefer OpenAI if available (GPT-4o or GPT-4), fallback to DeepSeek, then fallback
+// Company summaries: prefer OpenAI if available (GPT-5 or GPT-4o), fallback to DeepSeek, then fallback
 const companyAIService = openaiService.isAvailable()
   ? openaiService
   : (deepseekService.isAvailable() ? deepseekService : openaiService);
@@ -1328,21 +1328,44 @@ ${rawDataText}
     try {
       console.log('🤖 Sending request to OpenAI for profile formatting...');
       
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Используем более быструю модель
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
-          },
-          {
-            role: 'user',
-            content: prompt
+      // Пробуем сначала GPT-5, затем fallback на GPT-4o, затем на GPT-4o-mini
+      const modelsToTry = ['gpt-5', 'gpt-4o', 'gpt-4o-mini'];
+      let completion;
+      let usedModel;
+      
+      for (const model of modelsToTry) {
+        try {
+          console.log(`🔄 Trying model: ${model}`);
+          
+          completion = await openai.chat.completions.create({
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            max_tokens: 3000,
+            temperature: 0.3
+          });
+          
+          usedModel = model;
+          console.log(`✅ Successfully used model: ${model}`);
+          break;
+          
+        } catch (modelError) {
+          console.log(`❌ Model ${model} failed: ${modelError.message}`);
+          if (model === modelsToTry[modelsToTry.length - 1]) {
+            throw modelError; // Если это последняя модель, пробрасываем ошибку
           }
-        ],
-        max_tokens: 3000,
-        temperature: 0.3
-      });
+          // Иначе пробуем следующую модель
+          continue;
+        }
+      }
 
       const formattedProfile = completion.choices[0]?.message?.content;
       
@@ -1355,7 +1378,7 @@ ${rawDataText}
 
       res.json({
         ok: true,
-        model: 'gpt-4o-mini',
+        model: usedModel || 'unknown',
         profile: formattedProfile,
         meta: {
           sources_processed: leakData.length,

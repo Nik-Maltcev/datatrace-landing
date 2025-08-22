@@ -41,23 +41,43 @@ class OpenAIService {
     try {
       console.log(`🚀 Calling OpenAI Chat Completions API with model ${this.model}...`);
     
-    const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('OpenAI request timed out after 30 seconds')), 30000);
-    });
+      });
 
-    const chatPromise = this.client.chat.completions.create({
-        model: this.model,
-      response_format: { type: 'json_object' },
-      messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user }
-      ],
-        temperature: 0.5,
-        // gpt-5 не поддерживает max_tokens, используем max_completion_tokens
-        max_completion_tokens: 2048,
-    });
+      // Пробуем разные модели с fallback
+      const modelsToTry = [this.model, 'gpt-4o', 'gpt-4o-mini'];
+      let completion;
+      let usedModel = this.model;
+      
+      for (const model of modelsToTry) {
+        try {
+          console.log(`🔄 Trying model: ${model}`);
+          
+          const chatPromise = this.client.chat.completions.create({
+            model: model,
+            response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: system },
+              { role: 'user', content: user }
+            ],
+            temperature: 0.5,
+            max_tokens: 2048,
+          });
 
-    const completion = await Promise.race([chatPromise, timeoutPromise]);
+          completion = await Promise.race([chatPromise, timeoutPromise]);
+          usedModel = model;
+          console.log(`✅ Successfully used model: ${model}`);
+          break;
+          
+        } catch (modelError) {
+          console.log(`❌ Model ${model} failed: ${modelError.message}`);
+          if (model === modelsToTry[modelsToTry.length - 1]) {
+            throw modelError; // Если это последняя модель, пробрасываем ошибку
+          }
+          continue;
+        }
+      }
       console.log('✅ OpenAI Chat Completions response received.');
     
     const messageContent = completion.choices?.[0]?.message?.content || '{}';
@@ -73,7 +93,7 @@ class OpenAIService {
       ok: true,
         summary: parsedSummary,
         provider: 'openai',
-        model: this.model,
+        model: usedModel,
         usage: completion.usage,
       };
 
