@@ -6,3 +6,17 @@ Dockerfile
 .dockerignore
 npm-debug.log
 .env
+.nyc_output
+coverage
+.cache
+.vscode
+.idea
+*.log
+*.md
+tests
+.DS_Store
+Thumbs.db
+railway.json
+railway.toml
+nixpacks.toml
+DEPLOYMENT.md
