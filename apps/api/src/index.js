@@ -920,7 +920,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
         );
         res.json(fallbackResponse);
       }
-    }, 25000); // 25 секунд общий таймаут
+    }, 250000); // 250 секунд общий таймаут (больше чем OpenAI timeout)
 
       console.log(`Starting AI request with ${leaksAIService.isAvailable() ?
         'OpenAI' : 'fallback'}...`);

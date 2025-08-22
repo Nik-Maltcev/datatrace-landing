@@ -44,8 +44,8 @@ class OpenAIService {
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           console.log('⏰ Request timeout reached, sending fallback');
-          reject(new Error('OpenAI request timed out after 180 seconds'));
-        }, 180000); // Увеличиваем до 180 секунд (3 минуты)
+          reject(new Error('OpenAI request timed out after 240 seconds'));
+        }, 240000); // Увеличиваем до 240 секунд (4 минуты)
       });
 
       // Пробуем разные модели с fallback: gpt-5 -> gpt-4-turbo -> gpt-3.5-turbo
