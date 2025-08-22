@@ -580,8 +580,10 @@
       });
 
       // Если есть данные утечек, пытаемся создать красивый профиль
-      if (hasLeakData && !aiSummary) { // Только если нет aiSummary (избегаем двойной обработки)
+      // Используем новое форматирование только если нет существующего ИИ анализа или это fallback
+      if (hasLeakData && (!aiSummary || (aiSummary && aiSummary.model === 'fallback'))) {
         console.log('🎨 Attempting to create formatted profile...');
+        console.log('🔍 AI Summary present:', !!aiSummary, 'Model:', aiSummary?.model);
         
         // Показываем индикатор загрузки
         results.innerHTML = `

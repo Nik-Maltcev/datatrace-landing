@@ -942,7 +942,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
 
       // Используем Kimi для анализа утечек
       const response = await leaksAIService.generateSummary(
-        { query, field, results: optimizedData }, 'leaks'
+        { query, field, results: results }, 'leaks' // Передаем оригинальные results как массив
       );
 
       clearTimeout(requestTimeout);

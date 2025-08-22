@@ -2,7 +2,21 @@ const axios = require('axios');
 const ErrorHandler = require('../utils/ErrorHandler');
 
 class KimiService {
-  constructor(apiKey, baseUrl = 'https://platform.moonshot.ai') {
+  constructor(apiKey, baseUrl = 'htt  buildPrompt(data, type) {
+    const { query, field, results } = data;
+    
+    // Проверяем, что results является массивом
+    if (!Array.isArray(results)) {
+      console.error('KimiService: results is not an array:', typeof results);
+      return {
+        system: 'Ты эксперт по анализу данных утечек.',
+        user: `Не удалось обработать данные для запроса "${query}". Результаты имеют неверный формат.`
+      };
+    }
+    
+    let prompt = `Проанализируй результаты поиска утечек для запроса: "${query}" (тип поиска: ${field}) и верни результат в формате JSON.\n\n`;
+    
+    results.forEach((result, index) => {latform.moonshot.ai') {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
     this.isEnabled = !!(apiKey && apiKey.trim() !== '');
