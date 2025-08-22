@@ -1482,7 +1482,30 @@ ${truncatedData}
   }
 });
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, version: '2.0', design: 'modern' }));
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ 
+    ok: true, 
+    version: '2.0', 
+    design: 'modern',
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    env: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Простой healthcheck для Railway
+app.get('/health', (_req, res) => {
+  res.status(200).send('OK');
+});
+
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.status(200).json({ 
+    message: 'DataTrace API Server', 
+    version: '2.0',
+    endpoints: ['/api/health', '/health', '/modern']
+  });
+});
 
 // Новый дизайн на отдельном endpoint
 app.get('/modern', (_req, res) => {
@@ -1509,9 +1532,12 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-modern.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   // eslint-disable-next-line no-console
-  console.log(`Server listening on http://localhost:${PORT}`);
+  console.log(`🚀 Server listening on http://0.0.0.0:${PORT}`);
+  console.log(`🏥 Health check available at http://0.0.0.0:${PORT}/health`);
+  console.log(`📊 API health at http://0.0.0.0:${PORT}/api/health`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 
