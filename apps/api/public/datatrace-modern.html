@@ -2586,9 +2586,8 @@
 
     async function requestAISummaryForLeaks(data) {
       try {
-        // Показываем AI loading
-        showAILoading();
-        updateAIStatus('Отправка данных в ИИ...');
+        // Продолжаем обычную загрузку вместо AI Loading
+        updateProgress(87, 'Отправка данных в ИИ...');
         
         console.log('🔍 Requesting AI summary for leak search');
         console.log('📊 Data received:', data);
@@ -2602,17 +2601,17 @@
         for (const endpoint of endpoints) {
           try {
             console.log(`🔄 Trying endpoint: ${endpoint}`);
-            updateAIStatus(`Подключение к ИИ сервису...`);
+            updateProgress(89, 'Подключение к ИИ сервису...');
             
             // Создаем AbortController для таймаута
             const controller = new AbortController();
             const timeoutId = setTimeout(() => {
               console.log(`⏰ Request timeout for ${endpoint}`);
-              updateAIStatus('Превышен лимит времени, пробуем другой сервис...');
+              updateProgress(91, 'Превышен лимит времени, пробуем другой сервис...');
               controller.abort();
             }, 200000); // Увеличиваем до 200 секунд (3 минуты 20 секунд)
             
-            updateAIStatus('ИИ анализирует данные...');
+            updateProgress(93, 'ИИ анализирует данные...');
             
             response = await fetch(endpoint, {
               method: 'POST',
@@ -2625,7 +2624,7 @@
             
             if (response.ok) {
               console.log(`✅ Success with endpoint: ${endpoint}`);
-              updateAIStatus('Получение результатов анализа...');
+              updateProgress(95, 'Получение результатов анализа...');
               break;
             } else {
               console.log(`❌ Failed with endpoint: ${endpoint}, status: ${response.status}`);
@@ -2635,7 +2634,7 @@
             console.log(`💥 Fetch error with endpoint: ${endpoint}:`, fetchError.message);
             if (fetchError.name === 'AbortError') {
               console.log(`⏰ Request was aborted due to timeout`);
-              updateAIStatus('Превышен лимит времени ожидания...');
+              updateProgress(92, 'Превышен лимит времени ожидания...');
               lastError = new Error('Request timeout (60s)');
             } else {
               lastError = fetchError;
@@ -2649,13 +2648,13 @@
         }
 
         console.log('📡 Response status:', response.status);
-        updateAIStatus('Обработка результатов ИИ...');
+        updateProgress(96, 'Обработка результатов ИИ...');
         const aiData = await response.json();
         console.log('🤖 AI response:', aiData);
         
         if (aiData.ok && aiData.summary) {
           console.log('✅ Displaying AI processed leak results by sources');
-          updateAIStatus('Формирование красивого отчета...');
+          updateProgress(98, 'Формирование красивого отчета...');
           // Показываем результаты по источникам с AI анализом
           await window.displayLeakResultsBySources(data.results, aiData.summary);
           
@@ -2670,8 +2669,7 @@
           await window.displayLeakResultsBySources(data.results, null);
         }
         
-        // Скрываем AI loading при успехе
-        hideAILoading();
+        // AI обработка завершена, прогресс управляется из основной функции
         
       } catch (error) {
         console.error('💥 Ошибка ИИ анализа утечек:', error);
@@ -2684,8 +2682,7 @@
         summaryBody.innerHTML = '<div style="color: #dc2626;">Анализ ИИ временно недоступен. Показаны базовые результаты.</div>';
         summaryEl.style.display = 'block';
         
-        // Скрываем AI loading при ошибке
-        hideAILoading();
+        // AI loading ошибка, прогресс управляется из основной функции
       }
     }
 
