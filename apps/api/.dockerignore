@@ -5,7 +5,7 @@ README.md
 Dockerfile
 .dockerignore
 npm-debug.log
-.env
+.env*
 .nyc_output
 coverage
 .cache
@@ -20,3 +20,13 @@ railway.json
 railway.toml
 nixpacks.toml
 DEPLOYMENT.md
+# Build artifacts
+dist
+build
+# Development files
+*.test.js
+*.spec.js
+# Large files that slow down build
+*.zip
+*.tar.gz
+*.pdf
