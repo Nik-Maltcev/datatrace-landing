@@ -777,11 +777,13 @@
           // Показываем ВСЕ показатели баланса с разбивкой по годам
           financeData.balances.indicators.forEach((indicator, index) => {
             console.log(`Balance indicator ${index}:`, indicator);
-            if (indicator.name && indicator.values) {
-              console.log(`Processing ${indicator.name}:`, indicator.values);
-              const years = Object.keys(indicator.values).sort((a, b) => b - a);
+            if (indicator.name && (indicator.values || indicator.sum)) {
+              console.log(`Processing ${indicator.name}:`, indicator.values || indicator.sum);
+              // Datanewton использует свойство 'sum', а не 'values'
+              const yearData = indicator.values || indicator.sum;
+              const years = Object.keys(yearData).sort((a, b) => b - a);
               const yearValues = years.map(year => {
-                const value = indicator.values[year];
+                const value = yearData[year];
                 console.log(`Year ${year}, value:`, value, typeof value);
                 if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
                   const numValue = parseFloat(value) || 0;
@@ -821,10 +823,12 @@
           
           // Показываем ВСЕ показатели прибыли и убытков с разбивкой по годам
           financeData.fin_results.indicators.forEach(indicator => {
-            if (indicator.name && indicator.values) {
-              const years = Object.keys(indicator.values).sort((a, b) => b - a);
+            if (indicator.name && (indicator.values || indicator.sum)) {
+              // Datanewton использует свойство 'sum', а не 'values'
+              const yearData = indicator.values || indicator.sum;
+              const years = Object.keys(yearData).sort((a, b) => b - a);
               const yearValues = years.map(year => {
-                const value = indicator.values[year];
+                const value = yearData[year];
                 if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
                   const numValue = parseFloat(value) || 0;
                   if (numValue !== 0) {
@@ -861,10 +865,12 @@
           
           // Показываем ВСЕ показатели движения денежных средств с разбивкой по годам
           financeData.money_flow.indicators.forEach(indicator => {
-            if (indicator.name && indicator.values) {
-              const years = Object.keys(indicator.values).sort((a, b) => b - a);
+            if (indicator.name && (indicator.values || indicator.sum)) {
+              // Datanewton использует свойство 'sum', а не 'values'
+              const yearData = indicator.values || indicator.sum;
+              const years = Object.keys(yearData).sort((a, b) => b - a);
               const yearValues = years.map(year => {
-                const value = indicator.values[year];
+                const value = yearData[year];
                 if (value !== undefined && value !== null && value !== '' && String(value).trim() !== '0') {
                   const numValue = parseFloat(value) || 0;
                   if (numValue !== 0) {
