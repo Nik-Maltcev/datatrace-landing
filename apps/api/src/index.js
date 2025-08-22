@@ -461,38 +461,28 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 
 // Initialize AI services
 const DeepSeekService = require('./services/DeepSeekService');
-const KimiService = require('./services/KimiService');
 
 const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-5');
 const deepseekService = new DeepSeekService(
   process.env.DEEPSEEK_API_KEY,
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
 );
-// Initialize Kimi service safely
-let kimiService;
-try {
-  kimiService = new KimiService(
-    process.env.KIMI_API_KEY,
-    process.env.KIMI_BASE_URL || 'https://platform.moonshot.ai'
-  );
-} catch (error) {
-  console.warn('⚠️ Failed to initialize Kimi service:', error.message);
-  kimiService = { isAvailable: () => false, createFallbackResponse: () => ({}) };
-}
 
 // Choose AI services by use case
 // Company summaries: prefer OpenAI if available (GPT-5 or GPT-4o), fallback to DeepSeek, then fallback
 const companyAIService = openaiService.isAvailable()
   ? openaiService
   : (deepseekService.isAvailable() ? deepseekService : openaiService);
-const leaksAIService = kimiService.isAvailable() ? kimiService : (deepseekService.isAvailable() ? deepseekService : openaiService);
+// Leaks summaries: также используем OpenAI для консистентности
+const leaksAIService = openaiService.isAvailable()
+  ? openaiService
+  : (deepseekService.isAvailable() ? deepseekService : openaiService);
 
 console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ?
-  (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI') : 'None (fallback mode)'}`);
+  'OpenAI' : 'None (fallback mode)'}`);
 console.log(`🔍 Leaks AI service: ${leaksAIService.isAvailable() ?
-  (kimiService.isAvailable() ? 'Kimi' : (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI')) : 'None (fallback mode)'}`);
-
-// Initialize DeHashed service
+  'OpenAI' : 'None (fallback mode)'}`);
+console.log(`🎯 Both services using unified OpenAI for better consistency`);
 const dehashedService = new DeHashedService(
   process.env.DEHASHED_API_KEY,
   process.env.DEHASHED_BASE_URL || 'https://api.dehashed.com'
@@ -933,8 +923,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
     }, 25000); // 25 секунд общий таймаут
 
       console.log(`Starting AI request with ${leaksAIService.isAvailable() ?
-        (kimiService.isAvailable() ? 'Kimi' : (deepseekService.isAvailable() ? 'DeepSeek' : 'OpenAI'))
-        : 'fallback'}...`);
+        'OpenAI' : 'fallback'}...`);
 
     try {
       const compact = compactResults(results);
