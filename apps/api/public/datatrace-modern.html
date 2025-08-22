@@ -600,12 +600,8 @@
 
     // Функция форматирования валюты для Checko (данные уже в тысячах)
     window.formatCheckoCurrency = function(value) {
-      // value уже в тысячах рублей, не умножаем на 1000
-      if (Math.abs(value) >= 1000) {
-        return `${(value / 1000).toFixed(1)} млн руб.`;
-      } else {
-        return `${value.toFixed(0)} тыс. руб.`;
-      }
+      // value уже в тысячах рублей, показываем как есть с разделителями тысяч
+      return value.toLocaleString('ru-RU') + ' тыс. руб.';
     };
 
     // Форматирование финансовых данных Checko
