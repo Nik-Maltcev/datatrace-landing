@@ -1412,10 +1412,18 @@ ${truncatedData}
 
 // Новый эндпоинт для ИИ анализа утечек
 app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000), async (req, res) => {
+  console.log('🚀 AI Leak Analysis endpoint hit!');
+  console.log('📥 Request method:', req.method);
+  console.log('📋 Content-Type:', req.headers['content-type']);
+  console.log('📦 Body exists:', !!req.body);
+  
   try {
     const { query, field, results } = req.body || {};
+    console.log('🔍 AI Leak Analysis request received');
+    console.log('📊 Results count:', results?.length || 0);
     
     if (!results || !Array.isArray(results) || results.length === 0) {
+      console.log('❌ No results provided');
       return res.status(400).json({ error: 'Данные для анализа не предоставлены' });
     }
 
@@ -1425,13 +1433,11 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
     );
     
     if (!isLeakData) {
+      console.log('❌ Not leak data:', results.map(r => r.name));
       return res.status(400).json({ 
         error: 'ИИ анализ доступен только для результатов поиска утечек' 
       });
     }
-
-    console.log('🔍 AI Leak Analysis request received');
-    console.log('📊 Results count:', results.length);
 
     // Проверяем доступность OpenAI
     if (!openai) {
