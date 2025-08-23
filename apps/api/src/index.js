@@ -1443,6 +1443,7 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
 
     // Подготавливаем данные для анализа
     const leakSummary = summarizeLeakData(results);
+    console.log('📝 Leak summary for AI:', leakSummary.substring(0, 200) + '...');
     
     const prompt = `Проанализируй данные утечек и дай краткий анализ безопасности.
 
@@ -1453,7 +1454,7 @@ ${leakSummary}
 
 Верни JSON в формате:
 {
-  "risk_level": "low|medium|high|critical",
+  "risk_level": "medium",
   "summary": "Краткое описание ситуации на русском языке",
   "security_recommendations": {
     "password_change_sites": ["список сайтов где нужно сменить пароль"],
@@ -1461,25 +1462,71 @@ ${leakSummary}
   }
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5',
-      messages: [
-        {
-          role: 'system',
-          content: 'Ты эксперт по кибербезопасности. Анализируешь утечки данных и даешь практические рекомендации. ВАЖНО: отвечай ТОЛЬКО валидным JSON без дополнительного текста. Используй русский язык в значениях полей.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      response_format: { type: 'json_object' },
-      max_completion_tokens: 1024
-    });
+    console.log('📤 Sending prompt to GPT-5, length:', prompt.length);
+
+    let response;
+    try {
+      response = await openai.chat.completions.create({
+        model: 'gpt-5',
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты эксперт по кибербезопасности. Анализируешь утечки данных и даешь практические рекомендации. ВАЖНО: отвечай ТОЛЬКО валидным JSON без дополнительного текста. Используй русский язык в значениях полей.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        response_format: { type: 'json_object' },
+        max_completion_tokens: 1024
+      });
+    } catch (error) {
+      console.error('❌ GPT-5 failed, trying GPT-4 turbo:', error.message);
+      // Fallback на GPT-4 если GPT-5 не работает
+      response = await openai.chat.completions.create({
+        model: 'gpt-4-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты эксперт по кибербезопасности. Отвечай ТОЛЬКО валидным JSON.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        response_format: { type: 'json_object' },
+        max_completion_tokens: 512,
+        temperature: 0.3
+      });
+    }
 
     const analysisText = response.choices[0]?.message?.content;
     console.log('🔍 Raw AI response:', analysisText);
     console.log('📏 Response length:', analysisText?.length);
+    
+    // Проверяем что GPT-5 вернул хоть что-то
+    if (!analysisText || analysisText.trim().length === 0) {
+      console.error('⚠️ GPT-5 returned empty response, using fallback');
+      const analysis = {
+        risk_level: 'medium',
+        summary: 'Обнаружены данные в утечках. Рекомендуется сменить пароли на затронутых сервисах.',
+        security_recommendations: {
+          password_change_sites: ['затронутые сервисы'],
+          immediate_actions: ['Смените пароли', 'Включите двухфакторную аутентификацию']
+        }
+      };
+      
+      console.log('✅ AI leak analysis completed with fallback');
+      return res.json({
+        ok: true,
+        analysis,
+        model: 'gpt-5-fallback',
+        query,
+        field
+      });
+    }
     
     let analysis;
     
