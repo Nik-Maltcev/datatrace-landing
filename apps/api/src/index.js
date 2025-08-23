@@ -1535,11 +1535,11 @@ ${leakDataJSON}
 }`;
 
     console.log('📤 Sending prompt to GPT-5, length:', prompt.length);
-    console.log('🔍 Testing GPT-5 with minimal parameters...');
+    console.log('🔍 Testing GPT-5 with correct parameters...');
 
     let response;
     try {
-      // Тест с минимальными параметрами
+      // Тест с правильными параметрами для GPT-5
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
@@ -1548,7 +1548,7 @@ ${leakDataJSON}
             content: 'Привет! Напиши простой JSON ответ: {"test": "работает"}'
           }
         ],
-        max_tokens: 100
+        max_completion_tokens: 100
       });
       console.log('✅ GPT-5 basic test response:', response.choices[0]?.message?.content);
       
@@ -1565,29 +1565,14 @@ ${leakDataJSON}
             content: prompt
           }
         ],
-        max_tokens: 800
+        max_completion_tokens: 800
       });
     } catch (error) {
       console.error('❌ GPT-5 failed:', error.message);
       console.error('❌ Full error:', error);
-      // Возможно GPT-5 недоступен, используем fallback
-      // Fallback на GPT-4 если GPT-5 не работает
-      response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты эксперт по кибербезопасности. Отвечай ТОЛЬКО валидным JSON.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        response_format: { type: 'json_object' },
-        max_completion_tokens: 512,
-        temperature: 0.3
-      });
+      
+      // Убираем fallback на GPT-4 turbo, используем только статический fallback
+      throw new Error('GPT-5 недоступен: ' + error.message);
     }
 
     const analysisText = response.choices[0]?.message?.content;
