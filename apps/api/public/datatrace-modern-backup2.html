@@ -1359,6 +1359,153 @@
       }
     }
 
+    // Последовательный поиск утечек
+    async function performLeakSearch(query) {
+      console.log('🔍 Starting leak search for:', query);
+      
+      const allResults = [];
+      const sources = [
+        { name: 'ITP', step: 1 },
+        { name: 'Dyxless', step: 2 },
+        { name: 'LeakOsint', step: 3 },
+        { name: 'Usersbox', step: 4 },
+        { name: 'Vektor', step: 5 }
+      ];
+
+      // Последовательный поиск по источникам
+      for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        const progress = 10 + (i * 15); // 10%, 25%, 40%, 55%, 70%
+        
+        updateProgress(progress, `Поиск в ${source.name}...`);
+        console.log(`🔍 Step ${source.step}: Searching ${source.name}...`);
+        
+        try {
+          const response = await fetch('/api/leak-search-step', {
+            method: 'POST',
+            headers: createAuthHeaders(),
+            body: JSON.stringify({ 
+              query: query, 
+              field: fieldSel.value,
+              step: source.step 
+            })
+          });
+
+          const stepData = await response.json();
+          
+          if (response.ok && stepData.result) {
+            allResults.push(stepData.result);
+            console.log(`✅ ${source.name} completed:`, stepData.result);
+          } else {
+            console.log(`❌ ${source.name} failed:`, stepData.error);
+            allResults.push({ name: source.name, ok: false, error: stepData.error });
+          }
+        } catch (error) {
+          console.error(`💥 Error in ${source.name}:`, error);
+          allResults.push({ name: source.name, ok: false, error: error.message });
+        }
+        
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      // Сразу показываем сырые результаты
+      updateProgress(100, 'Завершено');
+      setTimeout(() => {
+        hideProgress();
+        window.displayLeakResultsBySources(allResults);
+      }, 500);
+    }
+
+    // Поиск по компаниям (упрощенная версия)
+    async function performCompanySearch(query) {
+      console.log('🏢 Starting company search for:', query);
+      
+      const allResults = [];
+      const sources = [
+        { name: 'Datanewton', step: 1 },
+        { name: 'Checko', step: 2 }
+      ];
+
+      for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        const progress = 25 + (i * 25);
+        
+        updateProgress(progress, `Поиск в ${source.name}...`);
+        
+        try {
+          const response = await fetch('/api/company-search-step', {
+            method: 'POST',
+            headers: createAuthHeaders(),
+            body: JSON.stringify({ inn: query, step: source.step })
+          });
+
+          const stepData = await response.json();
+          
+          if (response.ok && stepData.result) {
+            allResults.push(stepData.result);
+          } else {
+            allResults.push({ name: source.name, ok: false, error: stepData.error });
+          }
+        } catch (error) {
+          allResults.push({ name: source.name, ok: false, error: error.message });
+        }
+      }
+
+      updateProgress(100, 'Завершено');
+      setTimeout(() => {
+        hideProgress();
+        displayCompanyResults(allResults);
+      }, 500);
+    }
+
+    // Функция отображения результатов поиска компаний
+    function displayCompanyResults(companyResults) {
+      results.innerHTML = '';
+
+      companyResults.forEach((result, index) => {
+        const sourceName = result.name || `Источник ${index + 1}`;
+        let status = result.ok && result.items ? 'success' : 'warning';
+        
+        const item = createResultItem(sourceName, status, result.items || result.error);
+        results.appendChild(item);
+      });
+    }
+
+    // Основная функция поиска с разделением по режимам
+    async function performSearch() {
+      if (currentMode === 'password') {
+        // Password mode uses its own button and logic
+        return;
+      }
+      
+      const query = q.value.trim();
+      if (!query) {
+        alert('Введите данные для поиска');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Поиск...';
+      results.innerHTML = '';
+      showProgress();
+
+      try {
+        if (currentMode === 'company') {
+          await performCompanySearch(query);
+        } else if (currentMode === 'leaks') {
+          await performLeakSearch(query);
+        }
+      } catch (error) {
+        console.error('Ошибка поиска:', error);
+        hideProgress();
+        results.innerHTML = `<div class="result-card"><div style="color: #dc2626;">${error.message}</div></div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Проверить';
+      }
+    }
+
     // Поиск утечек (новая логика с кнопкой ИИ)
     async function performLeakSearch(query) {
       console.log('🔍 Starting leak search for:', query);

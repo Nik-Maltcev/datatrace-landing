@@ -43,7 +43,7 @@ class OpenAIService {
     
       // Адаптивные timeout'ы для разных сред
       const isProduction = process.env.NODE_ENV === 'production';
-      const aiTimeout = isProduction ? 25000 : 240000; // 25s для production, 240s для development
+      const aiTimeout = isProduction ? 180000 : 240000; // 180s для production, 240s для development
       
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
@@ -52,71 +52,56 @@ class OpenAIService {
         }, aiTimeout);
       });
 
-      // Пробуем разные модели с fallback: gpt-5 -> gpt-4-turbo -> gpt-3.5-turbo
-      const modelsToTry = ['gpt-5', 'gpt-4-turbo', 'gpt-3.5-turbo'];
-      let completion;
-      let usedModel = 'gpt-5';
+      // Используем только GPT-5 согласно документации
+      console.log(`🔄 Trying model: gpt-5`);
       
-      for (const model of modelsToTry) {
-        try {
-          console.log(`🔄 Trying model: ${model}`);
-          
-          // Для GPT-5 используем особые параметры
-          const requestParams = {
-            model: model,
-            response_format: { type: 'json_object' },
-            messages: [
-              { role: 'system', content: system },
-              { role: 'user', content: user }
-            ],
-          };
-
-          if (model === 'gpt-5') {
-            // GPT-5 не поддерживает temperature и max_tokens
-            requestParams.max_completion_tokens = 4096; // Увеличиваем лимит токенов для более детального анализа
-            // temperature не указываем, используется значение по умолчанию
-          } else {
-            // Для остальных моделей используем стандартные параметры
-            requestParams.temperature = 0.5;
-            requestParams.max_tokens = 2048;
-          }
-          
-          const chatPromise = this.client.chat.completions.create(requestParams);
-
-          completion = await Promise.race([chatPromise, timeoutPromise]);
-          usedModel = model;
-          console.log(`✅ Successfully used model: ${model}`);
-          break;
-          
-        } catch (modelError) {
-          console.log(`❌ Model ${model} failed: ${modelError.message}`);
-          if (model === modelsToTry[modelsToTry.length - 1]) {
-            throw modelError; // Если это последняя модель, пробрасываем ошибку
-          }
-          continue;
-        }
-      }
+      // Конфигурация для GPT-5 согласно документации (Chat Completions API)
+      const requestParams = {
+        model: 'gpt-5',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
+        response_format: { type: 'json_object' },
+        max_completion_tokens: 4096, // Для GPT-5 используем max_completion_tokens вместо max_tokens
+        temperature: 0.3,
+        stream: false
+      };
+      
+      // Используем стандартный Chat Completions API
+      const chatPromise = this.client.chat.completions.create(requestParams);
+      const completion = await Promise.race([chatPromise, timeoutPromise]);
+      
+      console.log(`✅ Successfully used model: gpt-5`);
       console.log('✅ OpenAI Chat Completions response received.');
     
-    const messageContent = completion.choices?.[0]?.message?.content || '{}';
+      // Стандартная структура ответа Chat Completions
+      const messageContent = completion.choices?.[0]?.message?.content || '{}';
+      
+      // Проверяем на пустой ответ
+      if (!messageContent || messageContent.trim() === '' || messageContent.trim() === '{}') {
+        console.warn('⚠️ Empty response from OpenAI, trying next model...');
+        throw new Error('Empty response from GPT-5');
+      }
+      
       let parsedSummary;
       try {
         parsedSummary = JSON.parse(messageContent);
       } catch (e) {
         console.error('❌ Failed to parse JSON response from OpenAI:', e);
         parsedSummary = { error: 'Failed to parse AI response', raw: messageContent };
-    }
+      }
 
-    return {
-      ok: true,
+      return {
+        ok: true,
         summary: parsedSummary,
         provider: 'openai',
-        model: usedModel,
+        model: 'gpt-5',
         usage: completion.usage,
       };
 
     } catch (error) {
-      console.error('❌ OpenAI API call failed:', error.message);
+      console.error('❌ OpenAI error in profile formatting:', error.message);
       // Return a structured error response with a fallback
       return this.createFallbackResponse(data, type, error);
     }

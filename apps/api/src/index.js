@@ -922,7 +922,7 @@ app.post('/api/summarize', optionalAuth, userRateLimit(30, 15 * 60 * 1000), asyn
 
     // Адаптивные timeout'ы для разных сред
     const isProduction = process.env.NODE_ENV === 'production';
-    const generalTimeout = isProduction ? 30000 : 250000; // 30s для production, 250s для development
+    const generalTimeout = isProduction ? 180000 : 250000; // 180s для production, 250s для development
     
     const requestTimeout = setTimeout(() => {
       console.log('⏰ Request timeout reached, sending fallback');
@@ -1341,126 +1341,42 @@ ${truncatedData}
 
     try {
       console.log('🤖 Sending request to OpenAI for profile formatting...');
+      console.log(`🔄 Trying model: gpt-5`);
       
-      // Пробуем сначала GPT-5, затем fallback на доступные модели
-      const modelsToTry = ['gpt-5', 'gpt-4-turbo', 'gpt-3.5-turbo'];
-      let completion;
-      let usedModel;
-      
-      for (const model of modelsToTry) {
-        try {
-          console.log(`🔄 Trying model: ${model}`);
-          
-          // Создаем параметры запроса в зависимости от модели
-          const requestParams = {
-            model: model,
-            messages: [
-              {
-                role: 'system',
-                content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
-              },
-              {
-                role: 'user',
-                content: prompt
-              }
-            ]
-          };
-
-          if (model === 'gpt-5') {
-            // GPT-5 использует max_completion_tokens и не поддерживает temperature
-            requestParams.max_completion_tokens = 2500;
-          } else {
-            // Остальные модели используют стандартные параметры
-            requestParams.max_tokens = 2500;
-            requestParams.temperature = 0.3;
+      // Создаем параметры запроса для GPT-5
+      const requestParams = {
+        model: 'gpt-5',
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
+          },
+          {
+            role: 'user',
+            content: prompt
           }
-          
-          completion = await openai.chat.completions.create(requestParams);
-          
-          usedModel = model;
-          console.log(`✅ Successfully used model: ${model}`);
-          break;
-          
-        } catch (modelError) {
-          console.log(`❌ Model ${model} failed: ${modelError.message}`);
-          
-          // Если это ошибка контекста, попробуем с меньшим количеством данных
-          if (modelError.message.includes('context_length_exceeded') || 
-              modelError.message.includes('too long')) {
-            console.log('🔄 Context too long, trying with less data...');
-            
-            // Урезаем данные еще больше
-            const smallerData = truncatedData.substring(0, 4000) + '\n\n[ДАННЫЕ СИЛЬНО ОБРЕЗАНЫ]';
-            const smallerPrompt = prompt.replace(truncatedData, smallerData);
-            
-            try {
-              // Создаем параметры для повторного запроса с меньшими данными
-              const retryParams = {
-                model: model,
-                messages: [
-                  {
-                    role: 'system',
-                    content: 'Ты - эксперт по анализу данных и созданию структурированных профилей. Отвечай только на русском языке.'
-                  },
-                  {
-                    role: 'user',
-                    content: smallerPrompt
-                  }
-                ]
-              };
+        ],
+        max_completion_tokens: 4096
+      };
 
-              if (model === 'gpt-5') {
-                retryParams.max_completion_tokens = 2000;
-              } else {
-                retryParams.max_tokens = 2000;
-                retryParams.temperature = 0.3;
-              }
-
-              completion = await openai.chat.completions.create(retryParams);
-              
-              usedModel = model + ' (сокращенные данные)';
-              console.log(`✅ Successfully used model with smaller data: ${model}`);
-              break;
-              
-            } catch (smallDataError) {
-              console.log(`❌ Model ${model} failed even with smaller data: ${smallDataError.message}`);
-            }
-          }
-          
-          if (model === modelsToTry[modelsToTry.length - 1]) {
-            throw modelError; // Если это последняя модель, пробрасываем ошибку
-          }
-          // Иначе пробуем следующую модель
-          continue;
-        }
-      }
+      const completion = await openai.chat.completions.create(requestParams);
+      console.log(`✅ Successfully used model: gpt-5`);
 
       const formattedProfile = completion.choices[0]?.message?.content;
       
       if (!formattedProfile || formattedProfile.trim() === '') {
         console.log('⚠️ Empty response from OpenAI, trying next model...');
-        if (model === modelsToTry[modelsToTry.length - 1]) {
-          // Если это последняя модель, возвращаем базовый ответ
-          console.log('📋 All models returned empty responses, providing basic summary');
-          const fallbackProfile = `📊 Анализ данных по запросу "${truncatedData.substring(0, 100)}..."\n\nК сожалению, детальный анализ временно недоступен. Показаны базовые результаты поиска.`;
-          
-          res.json({
-            ok: true,
-            model: 'fallback',
-            profile: fallbackProfile
-          });
-          return;
-        }
-        // Если не последняя модель, бросаем ошибку чтобы перейти к catch блоку
-        throw new Error('Empty response, trying next model');
+        throw new Error('Empty response from GPT-5');
       }
 
+      console.log('✅ OpenAI Chat Completions response received.');
+      console.log('✅ AI service response received');
       console.log('✅ OpenAI profile formatting completed');
       console.log('📊 Response length:', formattedProfile.length);
 
       res.json({
         ok: true,
-        model: usedModel || 'unknown',
+        model: 'gpt-5',
         profile: formattedProfile,
         meta: {
           sources_processed: leakData.length,
@@ -1472,6 +1388,9 @@ ${truncatedData}
 
     } catch (aiError) {
       console.error('❌ OpenAI error in profile formatting:', aiError.message);
+      
+      // Provide fallback response when OpenAI fails
+      const fallbackProfile = `📊 Анализ данных по запросу\n\nК сожалению, детальный анализ временно недоступен. Показаны базовые результаты поиска.`;
       
       res.status(500).json({
         ok: false,
@@ -1490,6 +1409,152 @@ ${truncatedData}
     });
   }
 });
+
+// Новый эндпоинт для ИИ анализа утечек
+app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { query, field, results } = req.body || {};
+    
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return res.status(400).json({ error: 'Данные для анализа не предоставлены' });
+    }
+
+    // Проверяем, что это действительно данные утечек, а не компаний
+    const isLeakData = results.some(result => 
+      result.name && ['ITP', 'Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'].includes(result.name)
+    );
+    
+    if (!isLeakData) {
+      return res.status(400).json({ 
+        error: 'ИИ анализ доступен только для результатов поиска утечек' 
+      });
+    }
+
+    console.log('🔍 AI Leak Analysis request received');
+    console.log('📊 Results count:', results.length);
+
+    // Проверяем доступность OpenAI
+    if (!openai) {
+      return res.status(503).json({
+        ok: false,
+        error: 'ИИ анализ временно недоступен'
+      });
+    }
+
+    // Подготавливаем данные для анализа
+    const leakSummary = summarizeLeakData(results);
+    
+    const prompt = `Проанализируй данные утечек и дай краткий анализ безопасности.
+
+ДАННЫЕ УТЕЧЕК:
+${leakSummary}
+
+ЗАПРОС: ${query} (тип: ${field})
+
+Верни JSON в формате:
+{
+  "risk_level": "low|medium|high|critical",
+  "summary": "Краткое описание ситуации на русском языке",
+  "security_recommendations": {
+    "password_change_sites": ["список сайтов где нужно сменить пароль"],
+    "immediate_actions": ["список рекомендуемых действий"]
+  }
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5',
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты эксперт по кибербезопасности. Анализируешь утечки данных и даешь практические рекомендации. Отвечай только валидным JSON на русском языке.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 1024,
+      temperature: 0.3
+    });
+
+    const analysisText = response.choices[0]?.message?.content;
+    let analysis;
+    
+    try {
+      analysis = JSON.parse(analysisText);
+    } catch (e) {
+      console.error('Failed to parse AI response:', e);
+      analysis = {
+        risk_level: 'medium',
+        summary: 'Обнаружены данные в утечках. Рекомендуется сменить пароли.',
+        security_recommendations: {
+          password_change_sites: ['затронутые сервисы'],
+          immediate_actions: ['Смените пароли', 'Включите 2FA']
+        }
+      };
+    }
+
+    console.log('✅ AI leak analysis completed');
+
+    res.json({
+      ok: true,
+      analysis,
+      model: 'gpt-5',
+      query,
+      field
+    });
+
+  } catch (error) {
+    console.error('AI leak analysis error:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Ошибка при анализе данных'
+    });
+  }
+});
+
+// Функция для подготовки данных утечек для анализа
+function summarizeLeakData(results) {
+  let summary = '';
+  
+  results.forEach(result => {
+    if (!result.ok || !result.items) {
+      summary += `${result.name}: Нет данных\n`;
+      return;
+    }
+
+    const sourceName = result.name;
+    let count = 0;
+    let databases = [];
+
+    // Подсчитываем записи по типу источника
+    if (sourceName === 'ITP' && typeof result.items === 'object') {
+      for (const [category, items] of Object.entries(result.items)) {
+        if (Array.isArray(items) && items.length > 0) {
+          count += items.length;
+          databases.push(category);
+        }
+      }
+    } else if (Array.isArray(result.items)) {
+      count = result.items.length;
+      // Пытаемся извлечь названия баз данных
+      const dbNames = result.items.map(item => item.database || item.source).filter(Boolean);
+      databases = [...new Set(dbNames)];
+    }
+
+    if (count > 0) {
+      summary += `${sourceName}: ${count} записей`;
+      if (databases.length > 0) {
+        summary += ` в базах: ${databases.slice(0, 3).join(', ')}`;
+        if (databases.length > 3) summary += ` и еще ${databases.length - 3}`;
+      }
+      summary += '\n';
+    }
+  });
+
+  return summary || 'Данные не найдены';
+}
 
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ 
