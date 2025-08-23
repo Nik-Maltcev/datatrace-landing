@@ -52,8 +52,14 @@ console.log('OPENAI_API_KEY length:', OPENAI_API_KEY ? OPENAI_API_KEY.length : 0
 
 if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
   try {
-    openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+    openai = new OpenAI({ 
+      apiKey: OPENAI_API_KEY,
+      timeout: 60000, // 60 секунд таймаут
+      maxRetries: 2
+    });
     console.log('✅ OpenAI client initialized successfully');
+    console.log('🔍 OpenAI SDK version check...');
+    console.log('📦 Available OpenAI methods:', Object.getOwnPropertyNames(openai.chat.completions).slice(0, 5));
   } catch (error) {
     console.error('❌ Failed to initialize OpenAI client:', error.message);
     openai = null;
@@ -1529,26 +1535,42 @@ ${leakDataJSON}
 }`;
 
     console.log('📤 Sending prompt to GPT-5, length:', prompt.length);
+    console.log('🔍 Testing GPT-5 with minimal parameters...');
 
     let response;
     try {
+      // Тест с минимальными параметрами
+      response = await openai.chat.completions.create({
+        model: 'gpt-5',
+        messages: [
+          {
+            role: 'user',
+            content: 'Привет! Напиши простой JSON ответ: {"test": "работает"}'
+          }
+        ],
+        max_tokens: 100
+      });
+      console.log('✅ GPT-5 basic test response:', response.choices[0]?.message?.content);
+      
+      // Если базовый тест прошел, делаем реальный запрос
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
           {
             role: 'system',
-            content: 'Ты эксперт по кибербезопасности и анализу утечек данных. Анализируешь JSON с результатами поиска утечек персональных данных. Отвечай ТОЛЬКО валидным JSON без дополнительного текста. Давай практические рекомендации на русском языке.'
+            content: 'Ты эксперт по кибербезопасности. Отвечай JSON форматом.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        max_completion_tokens: 1024
+        max_tokens: 800
       });
     } catch (error) {
-      console.error('❌ GPT-5 failed, trying GPT-4 turbo:', error.message);
+      console.error('❌ GPT-5 failed:', error.message);
+      console.error('❌ Full error:', error);
+      // Возможно GPT-5 недоступен, используем fallback
       // Fallback на GPT-4 если GPT-5 не работает
       response = await openai.chat.completions.create({
         model: 'gpt-4-turbo',
