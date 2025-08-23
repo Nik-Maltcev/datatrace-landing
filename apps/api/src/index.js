@@ -1447,10 +1447,43 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       });
     }
 
-    // Подготавливаем данные для анализа - просто отправляем JSON как есть
+    // Подготавливаем данные для анализа - ограничиваем размер для GPT-5
     console.log('📦 Raw results received:', JSON.stringify(results, null, 2).substring(0, 500) + '...');
-    const leakDataJSON = JSON.stringify(results, null, 2);
-    console.log('📝 Sending full JSON to GPT-5, length:', leakDataJSON.length);
+    
+    // Создаем сокращенную версию данных для GPT-5
+    const summarizedResults = results.map(result => {
+      if (!result.ok || !result.items) {
+        return { name: result.name, ok: false, error: result.error };
+      }
+      
+      let itemCount = 0;
+      let sampleData = [];
+      
+      if (result.name === 'ITP' && typeof result.items === 'object') {
+        // Для ITP берем только первые записи из каждой базы
+        const summary = {};
+        for (const [dbName, dbData] of Object.entries(result.items)) {
+          if (dbData.data && Array.isArray(dbData.data)) {
+            itemCount += dbData.data.length;
+            summary[dbName] = {
+              count: dbData.data.length,
+              sample: dbData.data.slice(0, 2) // только первые 2 записи
+            };
+          }
+        }
+        return { name: result.name, ok: true, totalRecords: itemCount, databases: summary };
+      } else if (Array.isArray(result.items)) {
+        // Для других источников берем только первые 3 записи
+        itemCount = result.items.length;
+        sampleData = result.items.slice(0, 3);
+        return { name: result.name, ok: true, totalRecords: itemCount, sampleData };
+      }
+      
+      return { name: result.name, ok: true, items: result.items };
+    });
+    
+    const leakDataJSON = JSON.stringify(summarizedResults, null, 2);
+    console.log('📝 Sending summarized JSON to GPT-5, length:', leakDataJSON.length);
     
     const prompt = `Проанализируй данные утечек персональной информации и дай краткий анализ безопасности.
 
