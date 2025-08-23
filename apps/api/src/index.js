@@ -1535,11 +1535,12 @@ ${leakDataJSON}
 }`;
 
     console.log('📤 Sending prompt to GPT-5, length:', prompt.length);
-    console.log('🔍 Testing GPT-5 with ultra-simple request...');
+    console.log('🔍 Testing GPT-5 with updated SDK and enhanced parameters...');
 
     let response;
     try {
-      // Максимально простой тест на английском
+      // Тест с улучшенными параметрами для GPT-5
+      console.log('🧪 Test 1: Simple word with enhanced params...');
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
@@ -1548,34 +1549,33 @@ ${leakDataJSON}
             content: 'Say hello in one word'
           }
         ],
-        max_completion_tokens: 50
+        max_completion_tokens: 500,
+        temperature: 0.7,
+        top_p: 0.9,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        stream: false
       });
-      console.log('✅ GPT-5 ultra-simple test response:', JSON.stringify(response.choices[0]?.message?.content));
+      console.log('✅ GPT-5 enhanced test response:', JSON.stringify(response.choices[0]?.message?.content));
+      console.log('🔍 Full response structure:', JSON.stringify(response, null, 2).substring(0, 1000));
       
-      // Если простой тест прошел, пробуем JSON на английском
-      response = await openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [
-          {
-            role: 'user',
-            content: 'Return JSON: {"status": "ok", "message": "working"}'
-          }
-        ],
-        max_completion_tokens: 100
-      });
-      console.log('✅ GPT-5 JSON test response:', JSON.stringify(response.choices[0]?.message?.content));
+      // Проверяем альтернативные пути к content
+      console.log('🔍 Alternative content paths:');
+      console.log('- choices[0]?.message?.content:', response.choices?.[0]?.message?.content);
+      console.log('- choices[0]?.text:', response.choices?.[0]?.text);
+      console.log('- choices[0]?.message?.text:', response.choices?.[0]?.message?.text);
       
-      // Если JSON тест прошел, делаем реальный запрос на английском
-      const englishPrompt = `Analyze security data leaks:
+      // Если первый тест прошел, делаем анализ с правильной структурой
+      console.log('🧪 Test 2: Security analysis with proper structure...');
+      const analysisPrompt = `Security Analysis:
 
-${leakDataJSON}
+Data leaks found: ${query}
+Sources: ${JSON.stringify(summarizedResults).substring(0, 500)}
 
-Query: ${query} (field: ${field})
-
-Return JSON:
+Analyze and return JSON:
 {
   "risk_level": "medium",
-  "summary": "Brief description in Russian",
+  "summary": "Brief assessment in Russian",
   "security_recommendations": {
     "password_change_sites": ["sites"],
     "immediate_actions": ["actions"]
@@ -1587,24 +1587,26 @@ Return JSON:
         messages: [
           {
             role: 'system',
-            content: 'You are a cybersecurity expert. Analyze data leaks and provide security recommendations. Return only valid JSON.'
+            content: 'You are a cybersecurity expert. Analyze data leaks and provide security recommendations in JSON format.'
           },
           {
             role: 'user',
-            content: englishPrompt
+            content: analysisPrompt
           }
         ],
-        max_completion_tokens: 800
+        max_completion_tokens: 1000,
+        temperature: 0.7,
+        stream: false
       });
+      
     } catch (error) {
       console.error('❌ GPT-5 failed:', error.message);
       console.error('❌ Full error:', error);
       
-      // Убираем fallback на GPT-4 turbo, используем только статический fallback
       throw new Error('GPT-5 недоступен: ' + error.message);
     }
-
-    const analysisText = response.choices[0]?.message?.content;
+      
+      const analysisText = response.choices[0]?.message?.content;
     console.log('🔍 Raw AI response:', analysisText);
     console.log('📏 Response length:', analysisText?.length);
     
