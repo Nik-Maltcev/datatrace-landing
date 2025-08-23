@@ -1539,8 +1539,8 @@ ${leakDataJSON}
 
     let response;
     try {
-      // Тест с улучшенными параметрами для GPT-5
-      console.log('🧪 Test 1: Simple word with enhanced params...');
+      // GPT-5 с только поддерживаемыми параметрами
+      console.log('🧪 GPT-5 with minimal supported params...');
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
@@ -1549,36 +1549,25 @@ ${leakDataJSON}
             content: 'Say hello in one word'
           }
         ],
-        max_completion_tokens: 500,
-        temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        stream: false
+        max_completion_tokens: 500
       });
-      console.log('✅ GPT-5 enhanced test response:', JSON.stringify(response.choices[0]?.message?.content));
-      console.log('🔍 Full response structure:', JSON.stringify(response, null, 2).substring(0, 1000));
+      console.log('✅ GPT-5 test successful:', JSON.stringify(response.choices[0]?.message?.content));
       
-      // Проверяем альтернативные пути к content
-      console.log('🔍 Alternative content paths:');
-      console.log('- choices[0]?.message?.content:', response.choices?.[0]?.message?.content);
-      console.log('- choices[0]?.text:', response.choices?.[0]?.text);
-      console.log('- choices[0]?.message?.text:', response.choices?.[0]?.message?.text);
+      // Теперь делаем основной анализ утечек
+      console.log('🔍 Starting leak analysis with GPT-5...');
       
-      // Если первый тест прошел, делаем анализ с правильной структурой
-      console.log('🧪 Test 2: Security analysis with proper structure...');
-      const analysisPrompt = `Security Analysis:
+      const analysisPrompt = `Analyze data leak security risks:
 
-Data leaks found: ${query}
-Sources: ${JSON.stringify(summarizedResults).substring(0, 500)}
+Query: ${query} (field: ${field})
+Found in databases: ${JSON.stringify(summarizedResults).substring(0, 500)}
 
-Analyze and return JSON:
+Return JSON response:
 {
-  "risk_level": "medium",
-  "summary": "Brief assessment in Russian",
+  "risk_level": "high|medium|low",
+  "summary": "Brief security assessment in Russian",
   "security_recommendations": {
-    "password_change_sites": ["sites"],
-    "immediate_actions": ["actions"]
+    "password_change_sites": ["list of affected sites"],
+    "immediate_actions": ["recommended actions in Russian"]
   }
 }`;
 
@@ -1594,9 +1583,7 @@ Analyze and return JSON:
             content: analysisPrompt
           }
         ],
-        max_completion_tokens: 1000,
-        temperature: 0.7,
-        stream: false
+        max_completion_tokens: 1000
       });
       
     } catch (error) {
