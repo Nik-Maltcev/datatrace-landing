@@ -1466,7 +1466,7 @@ ${leakSummary}
       messages: [
         {
           role: 'system',
-          content: 'Ты эксперт по кибербезопасности. Анализируешь утечки данных и даешь практические рекомендации. Отвечай только валидным JSON на русском языке.'
+          content: 'Ты эксперт по кибербезопасности. Анализируешь утечки данных и даешь практические рекомендации. ВАЖНО: отвечай ТОЛЬКО валидным JSON без дополнительного текста. Используй русский язык в значениях полей.'
         },
         {
           role: 'user',
@@ -1478,12 +1478,17 @@ ${leakSummary}
     });
 
     const analysisText = response.choices[0]?.message?.content;
+    console.log('🔍 Raw AI response:', analysisText);
+    console.log('📏 Response length:', analysisText?.length);
+    
     let analysis;
     
     try {
       analysis = JSON.parse(analysisText);
+      console.log('✅ Successfully parsed AI response');
     } catch (e) {
-      console.error('Failed to parse AI response:', e);
+      console.error('❌ Failed to parse AI response:', e);
+      console.error('💔 Raw response that failed:', JSON.stringify(analysisText));
       analysis = {
         risk_level: 'medium',
         summary: 'Обнаружены данные в утечках. Рекомендуется сменить пароли.',
