@@ -1474,8 +1474,7 @@ ${leakSummary}
         }
       ],
       response_format: { type: 'json_object' },
-      max_completion_tokens: 1024,
-      temperature: 0.3
+      max_completion_tokens: 1024
     });
 
     const analysisText = response.choices[0]?.message?.content;
