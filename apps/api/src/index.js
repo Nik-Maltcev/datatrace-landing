@@ -1442,8 +1442,9 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
     }
 
     // Подготавливаем данные для анализа
-    const leakSummary = summarizeLeakData(results);
-    console.log('📝 Leak summary for AI:', leakSummary.substring(0, 200) + '...');
+    console.log('📦 Raw results received:', JSON.stringify(results, null, 2).substring(0, 500) + '...');
+    const leakSummary = extractDetailedLeakData(results);
+    console.log('📝 Detailed leak data for AI:', leakSummary.substring(0, 300) + '...');
     
     const prompt = `Проанализируй данные утечек и дай краткий анализ безопасности.
 
@@ -1605,6 +1606,69 @@ function summarizeLeakData(results) {
   });
 
   return summary || 'Данные не найдены';
+}
+
+// Новая функция для детального анализа утечек
+function extractDetailedLeakData(results) {
+  let detailedData = '';
+  let totalLeaks = 0;
+  let uniqueDatabases = new Set();
+  let sensitiveData = [];
+
+  results.forEach(result => {
+    if (!result.ok || !result.items) {
+      detailedData += `${result.name}: Нет данных\n`;
+      return;
+    }
+
+    const sourceName = result.name;
+    detailedData += `\n=== ${sourceName} ===\n`;
+
+    if (sourceName === 'ITP' && typeof result.items === 'object') {
+      for (const [category, items] of Object.entries(result.items)) {
+        if (Array.isArray(items) && items.length > 0) {
+          detailedData += `${category}: ${items.length} записей\n`;
+          totalLeaks += items.length;
+          uniqueDatabases.add(category);
+          
+          // Берем первые 2-3 записи для анализа
+          items.slice(0, 3).forEach(item => {
+            if (item.password) sensitiveData.push(`Пароль: ${item.password}`);
+            if (item.email) sensitiveData.push(`Email: ${item.email}`);
+            if (item.phone) sensitiveData.push(`Телефон: ${item.phone}`);
+            if (item.login) sensitiveData.push(`Логин: ${item.login}`);
+          });
+        }
+      }
+    } else if (Array.isArray(result.items)) {
+      detailedData += `Найдено: ${result.items.length} записей\n`;
+      totalLeaks += result.items.length;
+      
+      // Берем первые 3 записи для анализа
+      result.items.slice(0, 3).forEach(item => {
+        if (item.database) uniqueDatabases.add(item.database);
+        if (item.source) uniqueDatabases.add(item.source);
+        
+        if (item.password) sensitiveData.push(`Пароль: ${item.password}`);
+        if (item.email) sensitiveData.push(`Email: ${item.email}`);
+        if (item.phone) sensitiveData.push(`Телефон: ${item.phone}`);
+        if (item.login) sensitiveData.push(`Логин: ${item.login}`);
+        if (item.data) sensitiveData.push(`Данные: ${JSON.stringify(item.data).substring(0, 100)}`);
+      });
+    }
+  });
+
+  // Добавляем сводку
+  detailedData += `\n=== СВОДКА ===\n`;
+  detailedData += `Общее количество утечек: ${totalLeaks}\n`;
+  detailedData += `Затронутые базы данных: ${Array.from(uniqueDatabases).join(', ')}\n`;
+  
+  if (sensitiveData.length > 0) {
+    detailedData += `\nПримеры утечек (первые записи):\n`;
+    detailedData += sensitiveData.slice(0, 10).join('\n');
+  }
+
+  return detailedData;
 }
 
 app.get('/api/health', (_req, res) => {
