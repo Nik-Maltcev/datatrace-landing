@@ -1504,6 +1504,28 @@
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
 
+    // AI Loading функции
+    function showAILoading() {
+      const overlay = document.getElementById('aiLoadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+      }
+    }
+
+    function hideAILoading() {
+      const overlay = document.getElementById('aiLoadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+
+    function updateAIStatus(message) {
+      const statusElement = document.querySelector('#aiLoadingOverlay .loading-text');
+      if (statusElement) {
+        statusElement.textContent = message;
+      }
+    }
+
     // Делаем функции доступными глобально
     window.showAILoading = showAILoading;
     window.hideAILoading = hideAILoading;
