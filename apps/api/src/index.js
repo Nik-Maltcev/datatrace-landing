@@ -1450,57 +1450,81 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
     // Подготавливаем данные для анализа - ограничиваем размер для GPT-5
     console.log('📦 Raw results received:', JSON.stringify(results, null, 2).substring(0, 500) + '...');
     
-    // Создаем сокращенную версию данных для GPT-5
+    // Создаем максимально сокращенную версию данных для GPT-5
     const summarizedResults = results.map(result => {
       if (!result.ok || !result.items) {
-        return { name: result.name, ok: false, error: result.error };
+        return { name: result.name, status: 'no_data', error: result.error?.substring?.(0, 100) };
       }
       
       let itemCount = 0;
-      let sampleData = [];
+      let databases = [];
+      let sampleRecord = null;
       
       if (result.name === 'ITP' && typeof result.items === 'object') {
-        // Для ITP берем только первые записи из каждой базы
-        const summary = {};
+        // Для ITP - только статистика + один пример
         for (const [dbName, dbData] of Object.entries(result.items)) {
-          if (dbData.data && Array.isArray(dbData.data)) {
+          if (dbData.data && Array.isArray(dbData.data) && dbData.data.length > 0) {
             itemCount += dbData.data.length;
-            summary[dbName] = {
-              count: dbData.data.length,
-              sample: dbData.data.slice(0, 2) // только первые 2 записи
-            };
+            databases.push(dbName);
+            
+            // Берем только первый пример, если еще нет
+            if (!sampleRecord && dbData.data[0]) {
+              sampleRecord = {
+                database: dbName,
+                hasPhone: !!dbData.data[0].phone,
+                hasEmail: !!dbData.data[0].email,
+                hasAddress: !!dbData.data[0].address,
+                hasName: !!dbData.data[0].name,
+                hasPassword: !!dbData.data[0].password
+              };
+            }
           }
         }
-        return { name: result.name, ok: true, totalRecords: itemCount, databases: summary };
-      } else if (Array.isArray(result.items)) {
-        // Для других источников берем только первые 3 записи
+        return { 
+          name: result.name, 
+          status: 'found_data',
+          totalRecords: itemCount, 
+          databases: databases.slice(0, 3), // максимум 3 названия
+          sampleRecord 
+        };
+      } else if (Array.isArray(result.items) && result.items.length > 0) {
+        // Для других источников - только статистика + один пример
         itemCount = result.items.length;
-        sampleData = result.items.slice(0, 3);
-        return { name: result.name, ok: true, totalRecords: itemCount, sampleData };
+        const firstItem = result.items[0];
+        sampleRecord = {
+          hasPhone: !!firstItem.phone,
+          hasEmail: !!firstItem.email,
+          hasPassword: !!firstItem.password,
+          hasDatabase: !!firstItem.database,
+          hasLogin: !!firstItem.login
+        };
+        return { 
+          name: result.name, 
+          status: 'found_data',
+          totalRecords: itemCount, 
+          sampleRecord 
+        };
       }
       
-      return { name: result.name, ok: true, items: result.items };
+      return { name: result.name, status: 'found_data', items: result.items };
     });
     
     const leakDataJSON = JSON.stringify(summarizedResults, null, 2);
-    console.log('📝 Sending summarized JSON to GPT-5, length:', leakDataJSON.length);
+    console.log('📝 Sending ultra-compressed JSON to GPT-5, length:', leakDataJSON.length);
     
-    const prompt = `Проанализируй данные утечек персональной информации и дай краткий анализ безопасности.
+    const prompt = `Анализ утечек данных:
 
-ДАННЫЕ УТЕЧЕК (JSON):
 ${leakDataJSON}
 
-ЗАПРОС ПОЛЬЗОВАТЕЛЯ: ${query} (поле поиска: ${field})
+Запрос: ${query} (${field})
 
-ЗАДАЧА: Проанализировать найденные утечки и дать рекомендации по безопасности.
-
-Верни JSON в точно таком формате:
+Верни JSON:
 {
   "risk_level": "medium",
-  "summary": "Краткое описание найденных утечек на русском языке",
+  "summary": "Описание найденных утечек",
   "security_recommendations": {
-    "password_change_sites": ["список конкретных сайтов/сервисов где нужно сменить пароли"],
-    "immediate_actions": ["список конкретных рекомендуемых действий"]
+    "password_change_sites": ["сайты"],
+    "immediate_actions": ["действия"]
   }
 }`;
 
