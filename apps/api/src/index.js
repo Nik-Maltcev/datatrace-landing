@@ -1535,34 +1535,63 @@ ${leakDataJSON}
 }`;
 
     console.log('📤 Sending prompt to GPT-5, length:', prompt.length);
-    console.log('🔍 Testing GPT-5 with correct parameters...');
+    console.log('🔍 Testing GPT-5 with ultra-simple request...');
 
     let response;
     try {
-      // Тест с правильными параметрами для GPT-5
+      // Максимально простой тест на английском
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
           {
             role: 'user',
-            content: 'Привет! Напиши простой JSON ответ: {"test": "работает"}'
+            content: 'Say hello in one word'
+          }
+        ],
+        max_completion_tokens: 50
+      });
+      console.log('✅ GPT-5 ultra-simple test response:', JSON.stringify(response.choices[0]?.message?.content));
+      
+      // Если простой тест прошел, пробуем JSON на английском
+      response = await openai.chat.completions.create({
+        model: 'gpt-5',
+        messages: [
+          {
+            role: 'user',
+            content: 'Return JSON: {"status": "ok", "message": "working"}'
           }
         ],
         max_completion_tokens: 100
       });
-      console.log('✅ GPT-5 basic test response:', response.choices[0]?.message?.content);
+      console.log('✅ GPT-5 JSON test response:', JSON.stringify(response.choices[0]?.message?.content));
       
-      // Если базовый тест прошел, делаем реальный запрос
+      // Если JSON тест прошел, делаем реальный запрос на английском
+      const englishPrompt = `Analyze security data leaks:
+
+${leakDataJSON}
+
+Query: ${query} (field: ${field})
+
+Return JSON:
+{
+  "risk_level": "medium",
+  "summary": "Brief description in Russian",
+  "security_recommendations": {
+    "password_change_sites": ["sites"],
+    "immediate_actions": ["actions"]
+  }
+}`;
+
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
           {
             role: 'system',
-            content: 'Ты эксперт по кибербезопасности. Отвечай JSON форматом.'
+            content: 'You are a cybersecurity expert. Analyze data leaks and provide security recommendations. Return only valid JSON.'
           },
           {
             role: 'user',
-            content: prompt
+            content: englishPrompt
           }
         ],
         max_completion_tokens: 800
