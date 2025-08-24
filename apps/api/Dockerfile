@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies quickly for Railway - optimized for v1.0.1
-RUN npm ci --production --no-audit --no-fund --silent --prefer-offline && npm cache clean --force
+RUN npm install --production --no-audit --no-fund --silent --prefer-offline && npm cache clean --force
 
 # Copy only necessary source files
 COPY src/ ./src/

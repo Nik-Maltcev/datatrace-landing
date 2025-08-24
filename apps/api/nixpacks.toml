@@ -8,7 +8,7 @@ NPM_CONFIG_LOGLEVEL = "silent"
 
 [phases.install]
 cmds = [
-  'npm ci --production --no-audit --no-fund --no-optional --silent --prefer-offline'
+  'npm install --production --no-audit --no-fund --no-optional --silent --prefer-offline'
 ]
 
 [start]
