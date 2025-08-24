@@ -1618,11 +1618,16 @@
         searchInput.style.display = 'block';
         passwordInput.style.display = 'none';
         fieldSel.style.display = 'inline-block';
+        q.placeholder = 'Например: +79001234567, user@email.com';
+        q.value = '';
       } else if (mode === 'company') {
         modeCompany.classList.add('active');
         searchInput.style.display = 'block';
         passwordInput.style.display = 'none';
-        fieldSel.style.display = 'none';
+        fieldSel.style.display = 'none'; // Скрываем селектор для ИНН
+        q.placeholder = 'Введите ИНН компании (например: 1234567890)';
+        q.value = '';
+        fieldSel.value = 'inn'; // Устанавливаем поле поиска как ИНН
       } else if (mode === 'password') {
         modePassword.classList.add('active');
         searchInput.style.display = 'none';
