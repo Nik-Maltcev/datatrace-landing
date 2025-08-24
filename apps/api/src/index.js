@@ -1618,14 +1618,14 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
         messages: [
           {
             role: 'system',
-            content: 'Ты — аналитик утечек данных. Верни краткий JSON с полями: risk_level (low|medium|high|critical), summary (краткое описание на русском), security_recommendations (объект с password_change_sites[] и immediate_actions[]). Обязательно отвечай валидным JSON!'
+            content: 'Ты — аналитик данных. Анализируй кратко и сразу отвечай JSON. Не размышляй долго. Формат: {"risk_level": "low|medium|high", "summary": "краткое описание", "security_recommendations": {"password_change_sites": ["сайты"], "immediate_actions": ["действия"]}}.'
           },
           {
             role: 'user', 
-            content: `Проанализируй утечки данных для пользователя:\n\nЗапрос: ${query} (${field})\nРезультаты поиска:\n${compressedData}\n\nВерни JSON анализ безопасности. ОБЯЗАТЕЛЬНО отвечай валидным JSON!`
+            content: `Данные: ${compressedData}. Верни JSON анализ безопасности.`
           }
         ],
-        max_completion_tokens: 800 // Убираем response_format и stream
+        max_completion_tokens: 1500, // Увеличиваем для reasoning + content!
       });
       
       const endTime = Date.now();
