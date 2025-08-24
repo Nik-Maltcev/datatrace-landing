@@ -1416,6 +1416,36 @@ ${truncatedData}
   }
 });
 
+// Функция для нормализации ответа OpenAI (поддержка разных форматов)
+function normalizeOpenAIText(res) {
+  if (!res || typeof res !== "object") return "";
+  
+  // 1) Chat Completions shape (наш текущий случай)
+  const chatContent = res.choices?.[0]?.message?.content;
+  if (chatContent && typeof chatContent === "string") {
+    return chatContent.trim();
+  }
+  
+  // 2) Responses API shape (если GPT-5 использует это)
+  if (typeof res.output_text === "string" && res.output_text.length > 0) {
+    return res.output_text.trim();
+  }
+  
+  // 3) output[].content[].text
+  const outputText = res.output?.flatMap(o => 
+    o?.content?.flatMap(c => c?.text?.value || c?.text)?.filter(Boolean)
+  )?.join("\n");
+  if (outputText) return outputText.trim();
+  
+  // 4) Legacy completions
+  const legacyText = res.choices?.[0]?.text;
+  if (legacyText && typeof legacyText === "string") {
+    return legacyText.trim();
+  }
+  
+  return "";
+}
+
 // Новый эндпоинт для ИИ анализа утечек
 app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000), async (req, res) => {
   console.log('🚀 AI Leak Analysis endpoint hit!');
@@ -1534,118 +1564,99 @@ ${leakDataJSON}
   }
 }`;
 
-    console.log('📤 Sending prompt to GPT-5, length:', prompt.length);
-    console.log('🔍 Testing GPT-5 with updated SDK and enhanced parameters...');
-
+    console.log('📤 Starting GPT-5 analysis...');
+    console.log('⏰ Request time:', new Date().toISOString());
+    
     let response;
+    const startTime = Date.now();
+    
     try {
-      // GPT-5 с только поддерживаемыми параметрами
-      console.log('🧪 GPT-5 with minimal supported params...');
-      response = await openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [
-          {
-            role: 'user',
-            content: 'Say hello in one word'
-          }
-        ],
-        max_completion_tokens: 500
-      });
-      console.log('✅ GPT-5 test successful:', JSON.stringify(response.choices[0]?.message?.content));
-      
-      // Теперь делаем основной анализ утечек
-      console.log('🔍 Starting leak analysis with GPT-5...');
-      
-      const analysisPrompt = `Analyze this data leak:
-      
-User: ${query}
-Found in: ${summarizedResults.map(r => r.name).join(', ')}
-
-Return JSON:
-{"risk_level": "high", "summary": "Found in data leaks", "security_recommendations": {"immediate_actions": ["Change passwords"]}}`;
-
-      console.log('⏱️ Starting GPT-5 request at:', new Date().toISOString());
-      const startTime = Date.now();
-      
+      // Улучшенный запрос к GPT-5 с правильными параметрами
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
           {
             role: 'system',
-            content: 'You are a cybersecurity expert. Analyze data leaks and provide security recommendations in JSON format.'
+            content: 'Ты — аналитик утечек данных. Верни краткий JSON с полями: risk_level (low|medium|high|critical), summary (краткое описание на русском), security_recommendations (объект с password_change_sites[] и immediate_actions[]). Если данных недостаточно — верни {"error":"no_data"}.'
           },
           {
-            role: 'user',
-            content: analysisPrompt
+            role: 'user', 
+            content: `Проанализируй утечки данных для пользователя:\n\nЗапрос: ${query} (${field})\nНайдено в базах: ${JSON.stringify(summarizedResults).substring(0, 1000)}\n\nВерни JSON анализ безопасности.`
           }
         ],
-        max_completion_tokens: 1000
+        max_completion_tokens: 800, // Увеличиваем лимит токенов!
+        stream: false, // Явно отключаем стриминг
+        response_format: { type: 'json_object' }
+      });
+      
+      const endTime = Date.now();
+      console.log(`⏰ GPT-5 response time: ${endTime - startTime}ms`);
+      console.log('⏰ Completed at:', new Date().toISOString());
+      
+      // Нормализуем ответ с помощью новой функции
+      const rawText = normalizeOpenAIText(response);
+      console.log('🔍 Normalized AI response:', rawText);
+      console.log('📏 Response length:', rawText.length);
+      
+      // Проверяем finish_reason для диагностики
+      const finishReason = response.choices?.[0]?.finish_reason;
+      console.log('🏁 Finish reason:', finishReason);
+      
+      if (!rawText || rawText.length === 0) {
+        console.warn('⚠️ Empty AI response detected!');
+        console.log('🔍 Full response object:', JSON.stringify(response, null, 2));
+        console.log('🔍 Response choices:', JSON.stringify(response.choices, null, 2));
+        throw new Error('GPT-5 returned empty response');
+      }
+      
+      // Парсим JSON с улучшенной обработкой ошибок
+      let analysis;
+      try {
+        analysis = JSON.parse(rawText);
+        console.log('✅ JSON parsing successful');
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError.message);
+        console.log('💔 Raw response that failed to parse:', JSON.stringify(rawText));
+        throw new Error('Invalid JSON response from GPT-5: ' + parseError.message);
+      }
+      
+      console.log('✅ AI leak analysis completed successfully');
+      return res.json({
+        ok: true,
+        analysis,
+        model: 'gpt-5',
+        query,
+        field,
+        responseTime: endTime - startTime
       });
       
     } catch (error) {
-      console.error('❌ GPT-5 failed:', error.message);
+      const endTime = Date.now();
+      console.error('❌ GPT-5 request failed after', endTime - startTime, 'ms');
+      console.error('❌ Error details:', error.message);
       console.error('❌ Full error:', error);
       
-      throw new Error('GPT-5 недоступен: ' + error.message);
-    }
-    
-    const endTime = Date.now();
-    console.log('⏱️ GPT-5 response time:', endTime - startTime, 'ms');
-    console.log('⏱️ Completed at:', new Date().toISOString());
-      
-    const analysisText = response.choices[0]?.message?.content;
-    console.log('🔍 Raw AI response:', analysisText);
-    console.log('📏 Response length:', analysisText?.length);
-    
-    // Проверяем что GPT-5 вернул хоть что-то
-    if (!analysisText || analysisText.trim().length === 0) {
-      console.error('⚠️ GPT-5 returned empty response, using fallback');
-      const analysis = {
-        risk_level: 'medium',
-        summary: 'Обнаружены данные в утечках. Рекомендуется сменить пароли на затронутых сервисах.',
+      // Fallback анализ при ошибке GPT-5
+      console.log('🔄 Using fallback analysis due to GPT-5 error');
+      const fallbackAnalysis = {
+        risk_level: "medium", 
+        summary: "Обнаружены данные в утечках. Рекомендуется сменить пароли на затронутых сервисах.",
         security_recommendations: {
-          password_change_sites: ['затронутые сервисы'],
-          immediate_actions: ['Смените пароли', 'Включите двухфакторную аутентификацию']
+          password_change_sites: ["затронутые сервисы"],
+          immediate_actions: ["Смените пароли", "Включите двухфакторную аутентификацию"]
         }
       };
       
       console.log('✅ AI leak analysis completed with fallback');
       return res.json({
         ok: true,
-        analysis,
+        analysis: fallbackAnalysis,
         model: 'gpt-5-fallback',
         query,
-        field
+        field,
+        error: error.message
       });
     }
-    
-    let analysis;
-    
-    try {
-      analysis = JSON.parse(analysisText);
-      console.log('✅ Successfully parsed AI response');
-    } catch (e) {
-      console.error('❌ Failed to parse AI response:', e);
-      console.error('💔 Raw response that failed:', JSON.stringify(analysisText));
-      analysis = {
-        risk_level: 'medium',
-        summary: 'Обнаружены данные в утечках. Рекомендуется сменить пароли.',
-        security_recommendations: {
-          password_change_sites: ['затронутые сервисы'],
-          immediate_actions: ['Смените пароли', 'Включите 2FA']
-        }
-      };
-    }
-
-    console.log('✅ AI leak analysis completed');
-
-    res.json({
-      ok: true,
-      analysis,
-      model: 'gpt-5',
-      query,
-      field
-    });
 
   } catch (error) {
     console.error('AI leak analysis error:', error);
