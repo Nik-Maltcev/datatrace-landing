@@ -1677,10 +1677,10 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       });
     }
 
-    // Подготавливаем данные для анализа - ограничиваем размер для GPT-5
-    console.log('📦 Processing results for AI analysis...');
+    // Подготавливаем данные для анализа DeepSeek V3
+    console.log('📦 Processing results for DeepSeek V3 analysis...');
     
-    // Создаем максимально сокращенную версию данных для GPT-5
+    // Создаем максимально сокращенную версию данных для DeepSeek V3
     const summarizedResults = results.map(result => {
       if (!result.ok || !result.items) {
         return { name: result.name, status: 'no_data', error: result.error?.substring?.(0, 100) };
@@ -1745,37 +1745,85 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       sources: summarizedResults.filter(r => r.status === 'found_data')
     });
     
-    console.log('📝 Sending compressed data to GPT-5, length:', compressedData.length);
+    console.log('📝 Sending compressed data to DeepSeek V3, length:', compressedData.length);
 
-    // Проверяем доступность OpenAI
+    // Проверяем доступность DeepSeek V3
     if (!openai) {
-      console.error('❌ OpenAI client not initialized');
+      console.error('❌ DeepSeek V3 client not initialized');
       return res.status(503).json({
         ok: false,
         error: 'ИИ анализ временно недоступен'
       });
     }
 
-    console.log('📤 Creating practical security analysis from real data...');
+    console.log('📤 Starting DeepSeek V3 security analysis...');
     console.log('⏰ Analysis time:', new Date().toISOString());
     
     const startTime = Date.now();
     
-    // Создаем практический анализ на основе реальных данных (без GPT-5!)
-    const analysis = createPracticalSecurityAnalysis(results, query, field);
-    
-    const endTime = Date.now();
-    console.log(`⏰ Analysis completed in ${endTime - startTime}ms`);
-    console.log('✅ Practical analysis result:', JSON.stringify(analysis, null, 2));
-    
-    return res.json({
-      ok: true,
-      analysis,
-      model: 'practical-analysis',
-      query,
-      field,
-      responseTime: endTime - startTime
-    });
+    try {
+      // Системный промпт для анализа утечек безопасности
+      const systemPrompt = `Ты эксперт по кибербезопасности и анализу утечек данных. Проанализируй предоставленные данные утечек и создай структурированный отчет на русском языке.
+
+СТРУКТУРА АНАЛИЗА:
+1. 🚨 КРИТИЧЕСКИЕ НАХОДКИ
+2. 📊 СТАТИСТИКА УТЕЧЕК  
+3. 🛡️ АНАЛИЗ РИСКОВ
+4. ⚡ СРОЧНЫЕ РЕКОМЕНДАЦИИ
+5. 🔍 ДЕТАЛИ ПО ИСТОЧНИКАМ
+
+Используй эмодзи для выделения важной информации. Будь конкретным и практичным.`;
+
+      const userPrompt = `Проанализируй данные утечек по запросу "${query}" (поле: ${field}):
+
+${compressedData}
+
+Создай профессиональный анализ безопасности с практическими рекомендациями.`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        max_tokens: 3000,
+        temperature: 0.3,
+        top_p: 0.9
+      });
+
+      const analysis = completion.choices[0].message.content;
+      const endTime = Date.now();
+      
+      console.log(`⏰ DeepSeek V3 analysis completed in ${endTime - startTime}ms`);
+      console.log('✅ DeepSeek V3 analysis preview:', analysis.substring(0, 200) + '...');
+      
+      return res.json({
+        ok: true,
+        analysis,
+        model: 'deepseek-chat',
+        query,
+        field,
+        responseTime: endTime - startTime,
+        usage: completion.usage
+      });
+
+    } catch (aiError) {
+      console.error('❌ DeepSeek V3 analysis error:', aiError);
+      
+      // Fallback к программному анализу при ошибке ИИ
+      const fallbackAnalysis = createPracticalSecurityAnalysis(results, query, field);
+      const endTime = Date.now();
+      
+      return res.json({
+        ok: true,
+        analysis: `⚠️ ИИ анализ временно недоступен. Показан базовый анализ:\n\n${JSON.stringify(fallbackAnalysis, null, 2)}`,
+        model: 'fallback-analysis',
+        query,
+        field,
+        responseTime: endTime - startTime,
+        error: aiError.message
+      });
+    }
 
   } catch (error) {
     console.error('AI leak analysis error:', error);
