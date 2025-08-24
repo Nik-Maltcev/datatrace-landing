@@ -1821,12 +1821,7 @@
 
     // ===== ОБРАБОТЧИКИ ДЛЯ РЕЖИМА ПРОВЕРКИ ПАРОЛЕЙ =====
 
-    // Переключение видимости пароля
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordField = document.getElementById('password');
-    const passwordStrength = document.getElementById('passwordStrength');
-    const checkPasswordBtn = document.getElementById('checkPassword');
-
+    // Переключение видимости пароля (используем уже объявленные переменные)
     if (togglePassword && passwordField) {
       togglePassword.addEventListener('click', () => {
         const type = passwordField.type === 'password' ? 'text' : 'password';
