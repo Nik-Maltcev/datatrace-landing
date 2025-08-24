@@ -1416,6 +1416,165 @@ ${truncatedData}
   }
 });
 
+// Функция для создания практического анализа безопасности на основе реальных данных
+function createPracticalSecurityAnalysis(results, query, field) {
+  const analysis = {
+    critical_findings: [],
+    affected_services: [],
+    immediate_actions: [],
+    risk_level: 'low'
+  };
+
+  let totalRecords = 0;
+  let hasPasswords = false;
+  let hasPersonalData = false;
+
+  results.forEach(source => {
+    if (!source.ok || !source.items) return;
+
+    if (source.name === 'ITP' && typeof source.items === 'object') {
+      // Анализируем базы ITP
+      Object.entries(source.items).forEach(([dbName, dbData]) => {
+        if (dbData.data && Array.isArray(dbData.data) && dbData.data.length > 0) {
+          const records = dbData.data.length;
+          totalRecords += records;
+          
+          const sampleRecord = dbData.data[0];
+          const dataTypes = [];
+          
+          if (sampleRecord.phone) dataTypes.push('телефон');
+          if (sampleRecord.email) dataTypes.push('email'); 
+          if (sampleRecord.name) dataTypes.push('имя');
+          if (sampleRecord.address) dataTypes.push('адрес');
+          if (sampleRecord.password) {
+            dataTypes.push('пароль');
+            hasPasswords = true;
+          }
+          
+          if (dataTypes.length > 2) hasPersonalData = true;
+
+          // Определяем сервис по названию базы
+          const serviceName = extractServiceName(dbName);
+          const serviceUrl = getServiceUrl(serviceName);
+          
+          analysis.affected_services.push({
+            source: 'ITP',
+            database: dbName,
+            service: serviceName,
+            url: serviceUrl,
+            records_found: records,
+            data_types: dataTypes,
+            risk_level: hasPasswords ? 'critical' : (hasPersonalData ? 'high' : 'medium')
+          });
+
+          analysis.critical_findings.push(
+            `Найдено ${records} записей в базе "${dbName}" с данными: ${dataTypes.join(', ')}`
+          );
+        }
+      });
+    } else if (['Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'].includes(source.name)) {
+      // Анализируем другие источники
+      if (Array.isArray(source.items) && source.items.length > 0) {
+        totalRecords += source.items.length;
+        
+        analysis.affected_services.push({
+          source: source.name,
+          records_found: source.items.length,
+          risk_level: 'medium'
+        });
+
+        analysis.critical_findings.push(
+          `Найдено ${source.items.length} записей в базе ${source.name}`
+        );
+      }
+    }
+  });
+
+  // Определяем общий уровень риска
+  if (hasPasswords) {
+    analysis.risk_level = 'critical';
+  } else if (hasPersonalData || totalRecords > 5) {
+    analysis.risk_level = 'high';
+  } else if (totalRecords > 0) {
+    analysis.risk_level = 'medium';
+  }
+
+  // Генерируем конкретные действия
+  analysis.immediate_actions = generateSpecificActions(analysis.affected_services, hasPasswords);
+
+  return {
+    risk_level: analysis.risk_level,
+    summary: `Обнаружено ${totalRecords} записей с вашими данными в ${analysis.affected_services.length} источниках`,
+    security_recommendations: {
+      password_change_sites: analysis.affected_services
+        .filter(s => s.url)
+        .map(s => s.url),
+      immediate_actions: analysis.immediate_actions
+    },
+    detailed_findings: analysis.critical_findings,
+    affected_services: analysis.affected_services
+  };
+}
+
+// Извлекает название сервиса из названия базы данных
+function extractServiceName(dbName) {
+  const serviceMap = {
+    'авито': 'Авито',
+    'avito': 'Авито', 
+    '2 берега': '2 Берега',
+    'вконтакте': 'ВКонтакте',
+    'vk': 'ВКонтакте',
+    'одноклассники': 'Одноклассники',
+    'ok': 'Одноклассники',
+    'mail': 'Mail.ru',
+    'яндекс': 'Яндекс',
+    'yandex': 'Яндекс'
+  };
+
+  const dbLower = dbName.toLowerCase();
+  for (const [key, value] of Object.entries(serviceMap)) {
+    if (dbLower.includes(key)) {
+      return value;
+    }
+  }
+  
+  return dbName; // Возвращаем оригинальное название если не нашли
+}
+
+// Получает URL сервиса для смены пароля
+function getServiceUrl(serviceName) {
+  const urlMap = {
+    'Авито': 'avito.ru',
+    '2 Берега': '2berega.ru',
+    'ВКонтакте': 'vk.com',
+    'Одноклассники': 'ok.ru', 
+    'Mail.ru': 'mail.ru',
+    'Яндекс': 'passport.yandex.ru'
+  };
+  
+  return urlMap[serviceName] || null;
+}
+
+// Генерирует конкретные действия на основе найденных сервисов
+function generateSpecificActions(services, hasPasswords) {
+  const actions = [];
+  
+  if (hasPasswords) {
+    actions.push('🔥 КРИТИЧНО: Обнаружены пароли! Немедленно смените пароли на всех сервисах');
+  }
+  
+  services.forEach(service => {
+    if (service.url) {
+      actions.push(`Смените пароль на ${service.url} (найдено ${service.records_found} записей)`);
+    }
+  });
+  
+  actions.push('Включите двухфакторную аутентификацию на всех важных сервисах');
+  actions.push('Проверьте банковские карты и счета на подозрительную активность');
+  
+  return actions;
+}
+
 // Функция для нормализации ответа OpenAI (поддержка разных форматов)
 function normalizeOpenAIText(res) {
   if (!res || typeof res !== "object") return "";
@@ -1605,120 +1764,26 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       });
     }
 
-    console.log('📤 Starting GPT-5 analysis...');
-    console.log('⏰ Request time:', new Date().toISOString());
+    console.log('📤 Creating practical security analysis from real data...');
+    console.log('⏰ Analysis time:', new Date().toISOString());
     
-    let response;
     const startTime = Date.now();
     
-    try {
-      // Улучшенный запрос к GPT-5 с правильными параметрами
-      response = await openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты — аналитик данных. Анализируй кратко и сразу отвечай JSON. Не размышляй долго. Формат: {"risk_level": "low|medium|high", "summary": "краткое описание", "security_recommendations": {"password_change_sites": ["сайты"], "immediate_actions": ["действия"]}}.'
-          },
-          {
-            role: 'user', 
-            content: `Данные: ${compressedData}. Верни JSON анализ безопасности.`
-          }
-        ],
-        max_completion_tokens: 800, // Возвращаем к 800, reasoning отключен
-        reasoning_effort: "low" // Отключаем избыточное reasoning!
-      });
-      
-      const endTime = Date.now();
-      console.log(`⏰ GPT-5 response time: ${endTime - startTime}ms`);
-      console.log('⏰ Completed at:', new Date().toISOString());
-      
-      // Нормализуем ответ с помощью новой функции
-      const rawText = normalizeOpenAIText(response);
-      console.log('🔍 Normalized AI response:', rawText);
-      console.log('📏 Response length:', rawText.length);
-      
-      // ДЕТАЛЬНАЯ ДИАГНОСТИКА для пустых ответов
-      console.log('🔍 Full response structure analysis:');
-      console.log('- response type:', typeof response);
-      console.log('- response.choices exists:', !!response.choices);
-      console.log('- response.choices length:', response.choices?.length || 0);
-      if (response.choices?.[0]) {
-        console.log('- choices[0] exists:', true);
-        console.log('- choices[0].message exists:', !!response.choices[0].message);
-        console.log('- choices[0].message.content:', JSON.stringify(response.choices[0].message?.content));
-        console.log('- choices[0].message.content type:', typeof response.choices[0].message?.content);
-        console.log('- choices[0].message keys:', Object.keys(response.choices[0].message || {}));
-      }
-      console.log('- response.output_text:', JSON.stringify(response.output_text));
-      console.log('- response.output exists:', !!response.output);
-      console.log('- response keys:', Object.keys(response));
-      
-      // Проверяем finish_reason для диагностики
-      const finishReason = response.choices?.[0]?.finish_reason;
-      console.log('🏁 Finish reason:', finishReason);
-      
-      if (!rawText || rawText.length === 0) {
-        console.warn('⚠️ Empty AI response detected!');
-        console.log('🔍 FULL RESPONSE DUMP:', JSON.stringify(response, null, 2));
-        
-        // Попробуем альтернативные способы извлечения текста
-        console.log('🧪 Testing alternative extraction methods:');
-        console.log('- JSON.stringify(response.choices):', JSON.stringify(response.choices));
-        console.log('- response.data:', JSON.stringify(response.data));
-        console.log('- response.choices[0]?.delta:', JSON.stringify(response.choices?.[0]?.delta));
-        
-        throw new Error('GPT-5 returned empty response');
-      }
-      
-      // Парсим JSON с улучшенной обработкой ошибок
-      let analysis;
-      try {
-        analysis = JSON.parse(rawText);
-        console.log('✅ JSON parsing successful');
-      } catch (parseError) {
-        console.error('❌ JSON parse error:', parseError.message);
-        console.log('💔 Raw response that failed to parse:', JSON.stringify(rawText));
-        throw new Error('Invalid JSON response from GPT-5: ' + parseError.message);
-      }
-      
-      console.log('✅ AI leak analysis completed successfully');
-      return res.json({
-        ok: true,
-        analysis,
-        model: 'gpt-5',
-        query,
-        field,
-        responseTime: endTime - startTime
-      });
-      
-    } catch (error) {
-      const endTime = Date.now();
-      console.error('❌ GPT-5 request failed after', endTime - startTime, 'ms');
-      console.error('❌ Error details:', error.message);
-      console.error('❌ Full error:', error);
-      
-      // Fallback анализ при ошибке GPT-5
-      console.log('🔄 Using fallback analysis due to GPT-5 error');
-      const fallbackAnalysis = {
-        risk_level: "medium", 
-        summary: "Обнаружены данные в утечках. Рекомендуется сменить пароли на затронутых сервисах.",
-        security_recommendations: {
-          password_change_sites: ["затронутые сервисы"],
-          immediate_actions: ["Смените пароли", "Включите двухфакторную аутентификацию"]
-        }
-      };
-      
-      console.log('✅ AI leak analysis completed with fallback');
-      return res.json({
-        ok: true,
-        analysis: fallbackAnalysis,
-        model: 'gpt-5-fallback',
-        query,
-        field,
-        error: error.message
-      });
-    }
+    // Создаем практический анализ на основе реальных данных (без GPT-5!)
+    const analysis = createPracticalSecurityAnalysis(results, query, field);
+    
+    const endTime = Date.now();
+    console.log(`⏰ Analysis completed in ${endTime - startTime}ms`);
+    console.log('✅ Practical analysis result:', JSON.stringify(analysis, null, 2));
+    
+    return res.json({
+      ok: true,
+      analysis,
+      model: 'practical-analysis',
+      query,
+      field,
+      responseTime: endTime - startTime
+    });
 
   } catch (error) {
     console.error('AI leak analysis error:', error);
@@ -1727,9 +1792,7 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       error: 'Ошибка при анализе данных'
     });
   }
-});
-
-// Функция для подготовки данных утечек для анализа
+});// Функция для подготовки данных утечек для анализа
 function summarizeLeakData(results) {
   let summary = '';
   
