@@ -667,29 +667,12 @@
         return;
       }
 
-      // Показываем результаты по источникам
-      sourceResults.forEach((result, index) => {
-        const sourceName = result.name || `Источник ${index + 1}`;
-        let status = 'success';
-        
-        if (result.error) {
-          status = 'warning';
-        } else if (result.ok && result.items) {
-          const hasData = window.checkIfSourceHasLeakData(result, sourceName);
-          if (hasData) {
-            status = 'danger';
-          }
-        }
-        
-        const item = createResultItem(sourceName, status, result.items || result.error);
-        results.appendChild(item);
-      });
-
-      // Добавляем кнопку ИИ анализа если есть данные
+      // Проверяем есть ли вообще данные для AI анализа
       const hasAnyData = sourceResults.some(result => 
         result.ok && result.items && window.checkIfSourceHasLeakData(result, result.name)
       );
 
+      // Добавляем кнопку ИИ анализа В НАЧАЛЕ если есть данные
       if (hasAnyData) {
         const aiAnalysisContainer = document.createElement('div');
         aiAnalysisContainer.className = 'result-card';
@@ -717,6 +700,24 @@
           await performAIAnalysis(sourceResults);
         });
       }
+
+      // Показываем результаты по источникам ПОСЛЕ AI блока
+      sourceResults.forEach((result, index) => {
+        const sourceName = result.name || `Источник ${index + 1}`;
+        let status = 'success';
+        
+        if (result.error) {
+          status = 'warning';
+        } else if (result.ok && result.items) {
+          const hasData = window.checkIfSourceHasLeakData(result, sourceName);
+          if (hasData) {
+            status = 'danger';
+          }
+        }
+        
+        const item = createResultItem(sourceName, status, result.items || result.error);
+        results.appendChild(item);
+      });
     };
 
     // Функция выполнения ИИ анализа
