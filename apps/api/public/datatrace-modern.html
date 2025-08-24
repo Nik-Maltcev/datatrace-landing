@@ -781,9 +781,54 @@
       // Проверяем тип анализа - строка (DeepSeek V3) или объект (старый формат)
       if (typeof analysis === 'string') {
         // DeepSeek V3 возвращает готовый markdown-форматированный текст
+        let htmlContent = analysis
+          .replace(/\n/g, '<br>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/### (.*?)(?=<br>|$)/g, '<h3 style="color: #1f2937; margin: 16px 0 8px 0; font-size: 18px;">$1</h3>')
+          .replace(/#### (.*?)(?=<br>|$)/g, '<h4 style="color: #374151; margin: 12px 0 6px 0; font-size: 16px;">$1</h4>');
+
+        // Конвертируем markdown-таблицы в HTML-таблицы
+        htmlContent = htmlContent.replace(
+          /(\|.*?\|<br>)+/g,
+          match => {
+            const lines = match.split('<br>').filter(line => line.trim().startsWith('|'));
+            if (lines.length < 2) return match; // не таблица
+            
+            const rows = lines.map(line => 
+              line.trim().slice(1, -1).split('|').map(cell => cell.trim())
+            );
+            
+            // Пропускаем строку с разделителями (---|---|---)
+            const dataRows = rows.filter(row => !row[0].includes('-'));
+            if (dataRows.length < 2) return match;
+            
+            let table = '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">';
+            
+            // Заголовок
+            table += '<thead><tr>';
+            dataRows[0].forEach(cell => {
+              table += `<th style="border:1px solid #d1d5db;padding:8px 12px;background:#f9fafb;text-align:left;font-weight:600;">${cell}</th>`;
+            });
+            table += '</tr></thead>';
+            
+            // Данные
+            table += '<tbody>';
+            for (let i = 1; i < dataRows.length; i++) {
+              table += '<tr>';
+              dataRows[i].forEach(cell => {
+                table += `<td style="border:1px solid #d1d5db;padding:8px 12px;">${cell}</td>`;
+              });
+              table += '</tr>';
+            }
+            table += '</tbody></table>';
+            
+            return table;
+          }
+        );
+
         html += `
-          <div style="color: #374151; line-height: 1.6; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            ${analysis.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/### (.*?)(?=<br>|$)/g, '<h3 style="color: #1f2937; margin: 16px 0 8px 0; font-size: 18px;">$1</h3>').replace(/#### (.*?)(?=<br>|$)/g, '<h4 style="color: #374151; margin: 12px 0 6px 0; font-size: 16px;">$1</h4>')}
+          <div style="color: #374151; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            ${htmlContent}
           </div>
         `;
       } else if (typeof analysis === 'object' && analysis !== null) {
