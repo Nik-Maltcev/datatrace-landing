@@ -1456,11 +1456,17 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
   try {
     const { query, field, results } = req.body || {};
     console.log('🔍 AI Leak Analysis request received');
-    console.log('📊 Results count:', results?.length || 0);
+    console.log('� Request data:');
+    console.log('- Query:', query);
+    console.log('- Field:', field);
+    console.log('- Results count:', results?.length || 0);
     
     if (!results || !Array.isArray(results) || results.length === 0) {
-      console.log('❌ No results provided');
-      return res.status(400).json({ error: 'Данные для анализа не предоставлены' });
+      console.log('❌ No results provided or invalid format');
+      return res.status(400).json({ 
+        ok: false,
+        error: 'Данные для анализа не предоставлены или неверный формат' 
+      });
     }
 
     // Проверяем, что это действительно данные утечек, а не компаний
@@ -1471,7 +1477,44 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
     if (!isLeakData) {
       console.log('❌ Not leak data:', results.map(r => r.name));
       return res.status(400).json({ 
+        ok: false,
         error: 'ИИ анализ доступен только для результатов поиска утечек' 
+      });
+    }
+
+    // Проверяем есть ли реальные утечки в данных
+    const hasActualLeaks = results.some(result => {
+      if (!result.ok || !result.items) return false;
+      
+      // Для каждого источника проверяем наличие данных
+      const sourceName = result.name;
+      if (sourceName === 'ITP' && typeof result.items === 'object') {
+        // ITP возвращает объект с базами данных
+        return Object.values(result.items).some(db => 
+          db.data && Array.isArray(db.data) && db.data.length > 0
+        );
+      } else if (['Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'].includes(sourceName)) {
+        // Остальные возвращают массив
+        return Array.isArray(result.items) && result.items.length > 0;
+      }
+      return false;
+    });
+
+    if (!hasActualLeaks) {
+      console.log('📋 No actual leak data found, returning clean analysis');
+      return res.json({
+        ok: true,
+        analysis: {
+          risk_level: "low",
+          summary: "Утечки данных не обнаружены для указанного запроса",
+          security_recommendations: {
+            password_change_sites: [],
+            immediate_actions: ["Продолжайте использовать надежные пароли и двухфакторную аутентификацию"]
+          }
+        },
+        model: 'static-clean',
+        query,
+        field
       });
     }
 
@@ -1484,7 +1527,7 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
     }
 
     // Подготавливаем данные для анализа - ограничиваем размер для GPT-5
-    console.log('📦 Raw results received:', JSON.stringify(results, null, 2).substring(0, 500) + '...');
+    console.log('📦 Processing results for AI analysis...');
     
     // Создаем максимально сокращенную версию данных для GPT-5
     const summarizedResults = results.map(result => {
@@ -1545,24 +1588,22 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       return { name: result.name, status: 'found_data', items: result.items };
     });
     
-    const leakDataJSON = JSON.stringify(summarizedResults, null, 2);
-    console.log('📝 Sending ultra-compressed JSON to GPT-5, length:', leakDataJSON.length);
+    const compressedData = JSON.stringify({
+      query: query,
+      field: field,
+      sources: summarizedResults.filter(r => r.status === 'found_data')
+    });
     
-    const prompt = `Анализ утечек данных:
+    console.log('📝 Sending compressed data to GPT-5, length:', compressedData.length);
 
-${leakDataJSON}
-
-Запрос: ${query} (${field})
-
-Верни JSON:
-{
-  "risk_level": "medium",
-  "summary": "Описание найденных утечек",
-  "security_recommendations": {
-    "password_change_sites": ["сайты"],
-    "immediate_actions": ["действия"]
-  }
-}`;
+    // Проверяем доступность OpenAI
+    if (!openai) {
+      console.error('❌ OpenAI client not initialized');
+      return res.status(503).json({
+        ok: false,
+        error: 'ИИ анализ временно недоступен'
+      });
+    }
 
     console.log('📤 Starting GPT-5 analysis...');
     console.log('⏰ Request time:', new Date().toISOString());
@@ -1581,7 +1622,7 @@ ${leakDataJSON}
           },
           {
             role: 'user', 
-            content: `Проанализируй утечки данных для пользователя:\n\nЗапрос: ${query} (${field})\nНайдено в базах: ${JSON.stringify(summarizedResults).substring(0, 1000)}\n\nВерни JSON анализ безопасности. ОБЯЗАТЕЛЬНО отвечай текстом!`
+            content: `Проанализируй утечки данных для пользователя:\n\nЗапрос: ${query} (${field})\nРезультаты поиска:\n${compressedData}\n\nВерни JSON анализ безопасности. ОБЯЗАТЕЛЬНО отвечай валидным JSON!`
           }
         ],
         max_completion_tokens: 800 // Убираем response_format и stream
