@@ -1678,48 +1678,36 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
       let sampleRecord = null;
       
       if (result.name === 'ITP' && typeof result.items === 'object') {
-        // Для ITP - только статистика + один пример
+        // Для ITP - передаем ВСЕ данные из всех баз (с лимитом) для полного AI анализа
+        const allITPData = {};
+        let totalRecords = 0;
+        
         for (const [dbName, dbData] of Object.entries(result.items)) {
           if (dbData.data && Array.isArray(dbData.data) && dbData.data.length > 0) {
-            itemCount += dbData.data.length;
-            databases.push(dbName);
-            
-            // Берем только первый пример, если еще нет
-            if (!sampleRecord && dbData.data[0]) {
-              sampleRecord = {
-                database: dbName,
-                hasPhone: !!dbData.data[0].phone,
-                hasEmail: !!dbData.data[0].email,
-                hasAddress: !!dbData.data[0].address,
-                hasName: !!dbData.data[0].name,
-                hasPassword: !!dbData.data[0].password
-              };
-            }
+            // Берем до 8 записей из каждой базы для AI анализа
+            allITPData[dbName] = {
+              totalCount: dbData.data.length,
+              samples: dbData.data.slice(0, 8) // Образцы данных для анализа
+            };
+            totalRecords += dbData.data.length;
           }
         }
+        
         return { 
           name: result.name, 
           status: 'found_data',
-          totalRecords: itemCount, 
-          databases: databases.slice(0, 3), // максимум 3 названия
-          sampleRecord 
+          totalRecords: totalRecords,
+          data: allITPData // Полные данные для AI анализа
         };
       } else if (Array.isArray(result.items) && result.items.length > 0) {
-        // Для других источников - только статистика + один пример
-        itemCount = result.items.length;
-        const firstItem = result.items[0];
-        sampleRecord = {
-          hasPhone: !!firstItem.phone,
-          hasEmail: !!firstItem.email,
-          hasPassword: !!firstItem.password,
-          hasDatabase: !!firstItem.database,
-          hasLogin: !!firstItem.login
-        };
+        // Для других источников - передаем ВСЕ записи (с лимитом) для полного AI анализа
+        const limitedData = result.items.slice(0, 15); // До 15 записей для AI анализа
+        
         return { 
           name: result.name, 
           status: 'found_data',
-          totalRecords: itemCount, 
-          sampleRecord 
+          totalRecords: result.items.length,
+          data: limitedData // Полные данные вместо только статистики
         };
       }
       
