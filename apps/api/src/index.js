@@ -54,8 +54,8 @@ if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
   try {
     openai = new OpenAI({ 
       apiKey: OPENAI_API_KEY,
-      timeout: 60000, // 60 секунд таймаут
-      maxRetries: 2
+      timeout: 120000, // 120 секунд таймаут для GPT-5
+      maxRetries: 3
     });
     console.log('✅ OpenAI client initialized successfully');
     console.log('🔍 OpenAI SDK version check...');
@@ -1556,21 +1556,17 @@ ${leakDataJSON}
       // Теперь делаем основной анализ утечек
       console.log('🔍 Starting leak analysis with GPT-5...');
       
-      const analysisPrompt = `Analyze data leak security risks:
+      const analysisPrompt = `Analyze this data leak:
+      
+User: ${query}
+Found in: ${summarizedResults.map(r => r.name).join(', ')}
 
-Query: ${query} (field: ${field})
-Found in databases: ${JSON.stringify(summarizedResults).substring(0, 500)}
+Return JSON:
+{"risk_level": "high", "summary": "Found in data leaks", "security_recommendations": {"immediate_actions": ["Change passwords"]}}`;
 
-Return JSON response:
-{
-  "risk_level": "high|medium|low",
-  "summary": "Brief security assessment in Russian",
-  "security_recommendations": {
-    "password_change_sites": ["list of affected sites"],
-    "immediate_actions": ["recommended actions in Russian"]
-  }
-}`;
-
+      console.log('⏱️ Starting GPT-5 request at:', new Date().toISOString());
+      const startTime = Date.now();
+      
       response = await openai.chat.completions.create({
         model: 'gpt-5',
         messages: [
@@ -1592,8 +1588,12 @@ Return JSON response:
       
       throw new Error('GPT-5 недоступен: ' + error.message);
     }
+    
+    const endTime = Date.now();
+    console.log('⏱️ GPT-5 response time:', endTime - startTime, 'ms');
+    console.log('⏱️ Completed at:', new Date().toISOString());
       
-      const analysisText = response.choices[0]?.message?.content;
+    const analysisText = response.choices[0]?.message?.content;
     console.log('🔍 Raw AI response:', analysisText);
     console.log('📏 Response length:', analysisText?.length);
     
