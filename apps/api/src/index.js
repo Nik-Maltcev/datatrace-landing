@@ -2,8 +2,7 @@ const path = require('path');
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const OpenAI = require('openai');
-const OpenAIService = require('./services/OpenAIService');
+const OpenAI = require('openai'); // Используется для DeepSeek V3 (OpenAI-compatible API)
 const ErrorHandler = require('./utils/ErrorHandler');
 const AuthService = require('./services/AuthService');
 const DeHashedService = require('./services/DeHashedService');
@@ -41,32 +40,33 @@ const LEAKOSINT_BASE = 'https://leakosintapi.com/';
 const USERSBOX_BASE = 'https://api.usersbox.ru/v1';
 const VEKTOR_BASE = 'https://infosearch54321.xyz';
 
-// OpenAI client
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// DeepSeek V3 client (OpenAI-compatible API)
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 let openai = null;
 
-// Initialize OpenAI client only if API key is available
-console.log('Checking OpenAI API key...');
-console.log('OPENAI_API_KEY exists:', !!OPENAI_API_KEY);
-console.log('OPENAI_API_KEY length:', OPENAI_API_KEY ? OPENAI_API_KEY.length : 0);
+// Initialize DeepSeek V3 client (uses OpenAI-compatible API)
+console.log('Checking DeepSeek API key...');
+console.log('DEEPSEEK_API_KEY exists:', !!DEEPSEEK_API_KEY);
+console.log('DEEPSEEK_API_KEY length:', DEEPSEEK_API_KEY ? DEEPSEEK_API_KEY.length : 0);
 
-if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
+if (DEEPSEEK_API_KEY && DEEPSEEK_API_KEY.trim() !== '') {
   try {
     openai = new OpenAI({ 
-      apiKey: OPENAI_API_KEY,
-      timeout: 120000, // 120 секунд таймаут для GPT-5
+      apiKey: DEEPSEEK_API_KEY,
+      baseURL: 'https://api.deepseek.com', // DeepSeek V3 API endpoint
+      timeout: 120000, // 120 секунд таймаут для DeepSeek V3
       maxRetries: 3
     });
-    console.log('✅ OpenAI client initialized successfully');
-    console.log('🔍 OpenAI SDK version check...');
-    console.log('📦 Available OpenAI methods:', Object.getOwnPropertyNames(openai.chat.completions).slice(0, 5));
+    console.log('✅ DeepSeek V3 client initialized successfully');
+    console.log('🔍 DeepSeek SDK version check...');
+    console.log('📦 Available DeepSeek methods:', Object.getOwnPropertyNames(openai.chat.completions).slice(0, 5));
   } catch (error) {
-    console.error('❌ Failed to initialize OpenAI client:', error.message);
+    console.error('❌ Failed to initialize DeepSeek V3 client:', error.message);
     openai = null;
   }
 } else {
-  console.warn('⚠️ OpenAI API key not found in environment variables');
-  console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('OPENAI')));
+  console.warn('⚠️ DeepSeek API key not found in environment variables');
+  console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('DEEPSEEK')));
 }
 
 // Company check providers
@@ -474,30 +474,21 @@ app.post('/api/leak-search-step', optionalAuth, userRateLimit(50, 15 * 60 * 1000
 });
 
 
-// Initialize AI services
+// Initialize AI services - Only DeepSeek V3
 const DeepSeekService = require('./services/DeepSeekService');
 
-const openaiService = new OpenAIService(OPENAI_API_KEY, process.env.OPENAI_MODEL || 'gpt-5');
 const deepseekService = new DeepSeekService(
   process.env.DEEPSEEK_API_KEY,
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com'
 );
 
-// Choose AI services by use case
-// Company summaries: prefer OpenAI if available (GPT-5 or GPT-4o), fallback to DeepSeek, then fallback
-const companyAIService = openaiService.isAvailable()
-  ? openaiService
-  : (deepseekService.isAvailable() ? deepseekService : openaiService);
-// Leaks summaries: также используем OpenAI для консистентности
-const leaksAIService = openaiService.isAvailable()
-  ? openaiService
-  : (deepseekService.isAvailable() ? deepseekService : openaiService);
+// Use DeepSeek V3 for all AI operations (more reliable than GPT-5)
+const companyAIService = deepseekService.isAvailable() ? deepseekService : null;
+const leaksAIService = deepseekService.isAvailable() ? deepseekService : null;
 
-console.log(`🤖 Company AI service: ${companyAIService.isAvailable() ?
-  'OpenAI' : 'None (fallback mode)'}`);
-console.log(`🔍 Leaks AI service: ${leaksAIService.isAvailable() ?
-  'OpenAI' : 'None (fallback mode)'}`);
-console.log(`🎯 Both services using unified OpenAI for better consistency`);
+console.log(`🤖 Company AI service: ${companyAIService ? 'DeepSeek V3' : 'None (unavailable)'}`);
+console.log(`🔍 Leaks AI service: ${leaksAIService ? 'DeepSeek V3' : 'None (unavailable)'}`);
+console.log(`🎯 Using DeepSeek V3 for all AI operations (671B parameter model)`);
 const dehashedService = new DeHashedService(
   process.env.DEHASHED_API_KEY,
   process.env.DEHASHED_BASE_URL || 'https://api.dehashed.com'
@@ -1244,9 +1235,9 @@ app.post('/api/format-leak-profile', optionalAuth, userRateLimit(10, 15 * 60 * 1
       });
     }
 
-    // Проверяем доступность OpenAI
+    // Проверяем доступность DeepSeek V3
     if (!openai) {
-      console.log('❌ OpenAI not available for profile formatting');
+      console.log('❌ DeepSeek V3 not available for profile formatting');
       return res.status(503).json({
         ok: false,
         error: 'ИИ форматирование временно недоступно',
@@ -1346,12 +1337,12 @@ ${truncatedData}
 Создай красивый профиль на основе этих данных:`;
 
     try {
-      console.log('🤖 Sending request to OpenAI for profile formatting...');
-      console.log(`🔄 Trying model: gpt-5`);
+      console.log('🤖 Sending request to DeepSeek V3 for profile formatting...');
+      console.log(`🔄 Using model: deepseek-chat`);
       
-      // Создаем параметры запроса для GPT-5
+      // Создаем параметры запроса для DeepSeek V3
       const requestParams = {
-        model: 'gpt-5',
+        model: 'deepseek-chat', // DeepSeek V3 model
         messages: [
           {
             role: 'system',
@@ -1362,27 +1353,28 @@ ${truncatedData}
             content: prompt
           }
         ],
-        max_completion_tokens: 4096
+        max_tokens: 4096,
+        temperature: 0.3 // Более консервативная температура для точного анализа
       };
 
       const completion = await openai.chat.completions.create(requestParams);
-      console.log(`✅ Successfully used model: gpt-5`);
+      console.log(`✅ Successfully used model: deepseek-chat`);
 
       const formattedProfile = completion.choices[0]?.message?.content;
       
       if (!formattedProfile || formattedProfile.trim() === '') {
-        console.log('⚠️ Empty response from OpenAI, trying next model...');
-        throw new Error('Empty response from GPT-5');
+        console.log('⚠️ Empty response from DeepSeek V3');
+        throw new Error('Empty response from DeepSeek V3');
       }
 
-      console.log('✅ OpenAI Chat Completions response received.');
+      console.log('✅ DeepSeek V3 Chat Completions response received.');
       console.log('✅ AI service response received');
-      console.log('✅ OpenAI profile formatting completed');
+      console.log('✅ DeepSeek V3 profile formatting completed');
       console.log('📊 Response length:', formattedProfile.length);
 
       res.json({
         ok: true,
-        model: 'gpt-5',
+        model: 'deepseek-chat',
         profile: formattedProfile,
         meta: {
           sources_processed: leakData.length,
@@ -1393,9 +1385,9 @@ ${truncatedData}
       });
 
     } catch (aiError) {
-      console.error('❌ OpenAI error in profile formatting:', aiError.message);
+      console.error('❌ DeepSeek V3 error in profile formatting:', aiError.message);
       
-      // Provide fallback response when OpenAI fails
+      // Provide fallback response when DeepSeek V3 fails
       const fallbackProfile = `📊 Анализ данных по запросу\n\nК сожалению, детальный анализ временно недоступен. Показаны базовые результаты поиска.`;
       
       res.status(500).json({
