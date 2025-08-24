@@ -1619,13 +1619,16 @@
       if (mode === 'leaks') {
         modeLeaks.classList.add('active');
         searchInput.style.display = 'block';
+        searchInput.style.justifyContent = 'flex-start';
         passwordInput.style.display = 'none';
         fieldSel.style.display = 'inline-block';
+        fieldSel.value = 'phone'; // Устанавливаем телефон по умолчанию
         q.placeholder = 'Например: +79990000000';
         q.value = '';
       } else if (mode === 'company') {
         modeCompany.classList.add('active');
         searchInput.style.display = 'block';
+        searchInput.style.justifyContent = 'center'; // Центрируем для ИНН
         passwordInput.style.display = 'none';
         fieldSel.style.display = 'none'; // Скрываем селектор для ИНН
         q.placeholder = 'Введите ИНН';
