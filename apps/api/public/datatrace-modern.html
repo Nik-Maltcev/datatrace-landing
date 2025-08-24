@@ -1553,6 +1553,148 @@
       }, 500);
     }
 
+    // Форматирование данных компаний (нормализатор для красивого отображения)
+    function formatCompanyData(data, sourceName) {
+      if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+        return '<div style="color: #6b7280; font-style: italic;">Нет данных</div>';
+      }
+
+      if (typeof data === 'string') {
+        return data;
+      }
+
+      let html = '<div class="data-grid">';
+      
+      // Основная информация о компании
+      if (data.name || data.fullName) {
+        html += `
+          <div class="data-label">🏢 Название</div>
+          <div class="data-value">${data.name || data.fullName}</div>
+        `;
+      }
+      
+      if (data.inn) {
+        html += `
+          <div class="data-label">🆔 ИНН</div>
+          <div class="data-value">${data.inn}</div>
+        `;
+      }
+      
+      if (data.kpp) {
+        html += `
+          <div class="data-label">🏛️ КПП</div>
+          <div class="data-value">${data.kpp}</div>
+        `;
+      }
+      
+      if (data.ogrn) {
+        html += `
+          <div class="data-label">📋 ОГРН</div>
+          <div class="data-value">${data.ogrn}</div>
+        `;
+      }
+      
+      if (data.address) {
+        html += `
+          <div class="data-label">📍 Адрес</div>
+          <div class="data-value">${data.address}</div>
+        `;
+      }
+      
+      if (data.ceo || data.director) {
+        html += `
+          <div class="data-label">👨‍💼 Руководитель</div>
+          <div class="data-value">${data.ceo || data.director}</div>
+        `;
+      }
+      
+      if (data.status) {
+        html += `
+          <div class="data-label">📊 Статус</div>
+          <div class="data-value">${data.status}</div>
+        `;
+      }
+      
+      if (data.registrationDate) {
+        html += `
+          <div class="data-label">📅 Дата регистрации</div>
+          <div class="data-value">${data.registrationDate}</div>
+        `;
+      }
+      
+      // Финансовые данные
+      if (data.revenue) {
+        html += `
+          <div class="data-label">💰 Выручка</div>
+          <div class="data-value">${formatCurrency(data.revenue)}</div>
+        `;
+      }
+      
+      if (data.profit) {
+        html += `
+          <div class="data-label">📈 Прибыль</div>
+          <div class="data-value">${formatCurrency(data.profit)}</div>
+        `;
+      }
+      
+      if (data.employees) {
+        html += `
+          <div class="data-label">👥 Сотрудники</div>
+          <div class="data-value">${data.employees}</div>
+        `;
+      }
+      
+      // Контактная информация
+      if (data.phone) {
+        html += `
+          <div class="data-label">📞 Телефон</div>
+          <div class="data-value">${data.phone}</div>
+        `;
+      }
+      
+      if (data.email) {
+        html += `
+          <div class="data-label">📧 Email</div>
+          <div class="data-value">${data.email}</div>
+        `;
+      }
+      
+      if (data.website) {
+        html += `
+          <div class="data-label">🌐 Сайт</div>
+          <div class="data-value"><a href="${data.website}" target="_blank" style="color: #2563eb;">${data.website}</a></div>
+        `;
+      }
+      
+      // Если есть финансовые данные отдельно
+      if (data.finance && typeof data.finance === 'object') {
+        html += '</div>';
+        html += '<div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">';
+        html += '<h4 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">💰 Финансовая информация</h4>';
+        html += formatResultData(data.finance);
+        return html;
+      }
+      
+      // Если остались другие поля
+      const processedFields = ['name', 'fullName', 'inn', 'kpp', 'ogrn', 'address', 'ceo', 'director', 'status', 'registrationDate', 'revenue', 'profit', 'employees', 'phone', 'email', 'website', 'finance'];
+      
+      for (const [key, value] of Object.entries(data)) {
+        if (!processedFields.includes(key) && value !== null && value !== undefined && value !== '') {
+          const formattedValue = Array.isArray(value) ? value.join(', ') : 
+                                 typeof value === 'object' ? JSON.stringify(value, null, 2) : 
+                                 String(value);
+          
+          html += `
+            <div class="data-label">${key}</div>
+            <div class="data-value">${formattedValue}</div>
+          `;
+        }
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
     // Отображение результатов компаний (стандартная логика)
     function displayCompanyResults(companyResults) {
       results.innerHTML = '';
@@ -1573,7 +1715,9 @@
           status = 'success';
         }
         
-        const item = createResultItem(sourceName, status, result.items || result.error);
+        // Используем formatCompanyData для красивого отображения
+        const formattedData = formatCompanyData(result.items || {}, sourceName);
+        const item = createResultItem(sourceName, status, formattedData);
         results.appendChild(item);
       });
     }
