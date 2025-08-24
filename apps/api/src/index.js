@@ -1577,16 +1577,14 @@ ${leakDataJSON}
         messages: [
           {
             role: 'system',
-            content: 'Ты — аналитик утечек данных. Верни краткий JSON с полями: risk_level (low|medium|high|critical), summary (краткое описание на русском), security_recommendations (объект с password_change_sites[] и immediate_actions[]). Если данных недостаточно — верни {"error":"no_data"}.'
+            content: 'Ты — аналитик утечек данных. Верни краткий JSON с полями: risk_level (low|medium|high|critical), summary (краткое описание на русском), security_recommendations (объект с password_change_sites[] и immediate_actions[]). Обязательно отвечай валидным JSON!'
           },
           {
             role: 'user', 
-            content: `Проанализируй утечки данных для пользователя:\n\nЗапрос: ${query} (${field})\nНайдено в базах: ${JSON.stringify(summarizedResults).substring(0, 1000)}\n\nВерни JSON анализ безопасности.`
+            content: `Проанализируй утечки данных для пользователя:\n\nЗапрос: ${query} (${field})\nНайдено в базах: ${JSON.stringify(summarizedResults).substring(0, 1000)}\n\nВерни JSON анализ безопасности. ОБЯЗАТЕЛЬНО отвечай текстом!`
           }
         ],
-        max_completion_tokens: 800, // Увеличиваем лимит токенов!
-        stream: false, // Явно отключаем стриминг
-        response_format: { type: 'json_object' }
+        max_completion_tokens: 800 // Убираем response_format и stream
       });
       
       const endTime = Date.now();
@@ -1598,14 +1596,36 @@ ${leakDataJSON}
       console.log('🔍 Normalized AI response:', rawText);
       console.log('📏 Response length:', rawText.length);
       
+      // ДЕТАЛЬНАЯ ДИАГНОСТИКА для пустых ответов
+      console.log('🔍 Full response structure analysis:');
+      console.log('- response type:', typeof response);
+      console.log('- response.choices exists:', !!response.choices);
+      console.log('- response.choices length:', response.choices?.length || 0);
+      if (response.choices?.[0]) {
+        console.log('- choices[0] exists:', true);
+        console.log('- choices[0].message exists:', !!response.choices[0].message);
+        console.log('- choices[0].message.content:', JSON.stringify(response.choices[0].message?.content));
+        console.log('- choices[0].message.content type:', typeof response.choices[0].message?.content);
+        console.log('- choices[0].message keys:', Object.keys(response.choices[0].message || {}));
+      }
+      console.log('- response.output_text:', JSON.stringify(response.output_text));
+      console.log('- response.output exists:', !!response.output);
+      console.log('- response keys:', Object.keys(response));
+      
       // Проверяем finish_reason для диагностики
       const finishReason = response.choices?.[0]?.finish_reason;
       console.log('🏁 Finish reason:', finishReason);
       
       if (!rawText || rawText.length === 0) {
         console.warn('⚠️ Empty AI response detected!');
-        console.log('🔍 Full response object:', JSON.stringify(response, null, 2));
-        console.log('🔍 Response choices:', JSON.stringify(response.choices, null, 2));
+        console.log('🔍 FULL RESPONSE DUMP:', JSON.stringify(response, null, 2));
+        
+        // Попробуем альтернативные способы извлечения текста
+        console.log('🧪 Testing alternative extraction methods:');
+        console.log('- JSON.stringify(response.choices):', JSON.stringify(response.choices));
+        console.log('- response.data:', JSON.stringify(response.data));
+        console.log('- response.choices[0]?.delta:', JSON.stringify(response.choices?.[0]?.delta));
+        
         throw new Error('GPT-5 returned empty response');
       }
       
