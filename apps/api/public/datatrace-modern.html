@@ -774,6 +774,36 @@
     }
 
     // Функция отображения ИИ анализа
+    function convertMarkdownTablesToHTML(text) {
+      // Convert markdown tables to HTML tables
+      return text.replace(/(\|[^\n]*\|\n)+/g, function(match) {
+        const lines = match.trim().split('\n');
+        let html = '<table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">';
+        
+        lines.forEach((line, index) => {
+          if (line.includes('|---') || line.includes('|-') || line.includes('|:')) {
+            return; // Skip separator lines
+          }
+          
+          const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
+          const isHeader = index === 0;
+          const tag = isHeader ? 'th' : 'td';
+          const style = isHeader 
+            ? 'background: #f8fafc; font-weight: 600; color: #374151; padding: 12px; border: 1px solid #e2e8f0; text-align: left;'
+            : 'padding: 12px; border: 1px solid #e2e8f0; color: #374151;';
+          
+          html += '<tr>';
+          cells.forEach(cell => {
+            html += `<${tag} style="${style}">${cell}</${tag}>`;
+          });
+          html += '</tr>';
+        });
+        
+        html += '</table>';
+        return html;
+      });
+    }
+
     function displayAIAnalysis(analysis, container) {
       console.log('🎯 displayAIAnalysis called!');
       console.log('📊 Analysis type:', typeof analysis);
@@ -784,10 +814,16 @@
       
       // Проверяем тип анализа - строка (DeepSeek V3) или объект (старый формат)
       if (typeof analysis === 'string') {
-        // DeepSeek V3 возвращает готовый текст - отображаем как есть с минимальным форматированием
+        // DeepSeek V3 возвращает готивый текст - конвертируем markdown в HTML
         let htmlContent = analysis
           .replace(/\n/g, '<br>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/### (.*?)(<br>|$)/g, '<h3 style="color: #1f2937; margin: 20px 0 10px 0; font-size: 18px; font-weight: 600;">$1</h3>')
+          .replace(/## (.*?)(<br>|$)/g, '<h2 style="color: #1f2937; margin: 24px 0 12px 0; font-size: 20px; font-weight: 700;">$1</h2>')
+          .replace(/# (.*?)(<br>|$)/g, '<h1 style="color: #1f2937; margin: 28px 0 14px 0; font-size: 24px; font-weight: 800;">$1</h1>');
+
+        // Конвертируем markdown таблицы в HTML таблицы
+        htmlContent = convertMarkdownTablesToHTML(htmlContent);
 
         html += `
           <div style="color: #374151; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
