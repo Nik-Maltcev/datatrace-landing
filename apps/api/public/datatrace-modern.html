@@ -81,6 +81,9 @@
       transition: border-color 0.2s;
       flex: 1;
       font-size: 15px;
+      width: 100%;
+      max-width: 400px;
+      min-width: 320px;
     }
     
     .input-field:focus {
@@ -1625,7 +1628,7 @@
         searchInput.style.display = 'block';
         passwordInput.style.display = 'none';
         fieldSel.style.display = 'none'; // Скрываем селектор для ИНН
-        q.placeholder = 'Введите ИНН компании (например: 1234567890)';
+        q.placeholder = 'Введите ИНН';
         q.value = '';
         fieldSel.value = 'inn'; // Устанавливаем поле поиска как ИНН
       } else if (mode === 'password') {
