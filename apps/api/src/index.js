@@ -1625,7 +1625,8 @@ app.post('/api/ai-leak-analysis', optionalAuth, userRateLimit(5, 15 * 60 * 1000)
             content: `Данные: ${compressedData}. Верни JSON анализ безопасности.`
           }
         ],
-        max_completion_tokens: 1500, // Увеличиваем для reasoning + content!
+        max_completion_tokens: 800, // Возвращаем к 800, reasoning отключен
+        reasoning_effort: "low" // Отключаем избыточное reasoning!
       });
       
       const endTime = Date.now();
