@@ -728,6 +728,10 @@
       button.innerHTML = '🔄 Анализируем данные...';
       
       try {
+        // Устанавливаем большой таймаут для DeepSeek V3 анализа (120 секунд)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+        
         const response = await fetch('/api/ai-leak-analysis', {
           method: 'POST',
           headers: createAuthHeaders(),
@@ -735,9 +739,11 @@
             query: q.value.trim(),
             field: fieldSel.value,
             results: sourceResults
-          })
+          }),
+          signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
         const data = await response.json();
         
         if (data.ok && data.analysis) {
@@ -748,8 +754,13 @@
           throw new Error(data.error || 'Ошибка анализа');
         }
       } catch (error) {
-        console.error('AI Analysis error:', error);
-        button.innerHTML = '❌ Ошибка анализа';
+        if (error.name === 'AbortError') {
+          console.error('AI Analysis timeout after 120 seconds');
+          button.innerHTML = '⏱️ Таймаут анализа (120с)';
+        } else {
+          console.error('AI Analysis error:', error);
+          button.innerHTML = '❌ Ошибка анализа';
+        }
         button.disabled = false;
         
         setTimeout(() => {
