@@ -771,71 +771,103 @@
 
     // Функция отображения ИИ анализа
     function displayAIAnalysis(analysis, container) {
+      console.log('🎯 displayAIAnalysis called!');
+      console.log('📊 Analysis type:', typeof analysis);
+      console.log('📝 Analysis preview:', typeof analysis === 'string' ? analysis.substring(0, 200) + '...' : analysis);
+      console.log('📦 Container element:', container);
+      
       let html = '<div style="text-align: left; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">';
       
-      // Уровень критичности
-      if (analysis.risk_level) {
-        const riskColors = {
-          'low': '#16a34a',
-          'medium': '#d97706', 
-          'high': '#dc2626',
-          'critical': '#991b1b'
-        };
-        const riskTexts = {
-          'low': 'Низкий',
-          'medium': 'Средний',
-          'high': 'Высокий', 
-          'critical': 'Критический'
-        };
+      // Проверяем тип анализа - строка (DeepSeek V3) или объект (старый формат)
+      if (typeof analysis === 'string') {
+        // DeepSeek V3 возвращает готовый markdown-форматированный текст
+        html += `
+          <div style="color: #374151; line-height: 1.6; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            ${analysis.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/### (.*?)(?=<br>|$)/g, '<h3 style="color: #1f2937; margin: 16px 0 8px 0; font-size: 18px;">$1</h3>').replace(/#### (.*?)(?=<br>|$)/g, '<h4 style="color: #374151; margin: 12px 0 6px 0; font-size: 16px;">$1</h4>')}
+          </div>
+        `;
+      } else if (typeof analysis === 'object' && analysis !== null) {
+        // Старый объектный формат - оставляем как есть для совместимости
         
-        html += `
-          <div style="margin-bottom: 20px;">
-            <div style="font-weight: 600; margin-bottom: 8px;">🚨 Уровень риска:</div>
-            <div style="color: ${riskColors[analysis.risk_level] || '#6b7280'}; font-weight: 600; font-size: 16px;">
-              ${riskTexts[analysis.risk_level] || analysis.risk_level}
+        // Уровень критичности
+        if (analysis.risk_level) {
+          const riskColors = {
+            'low': '#16a34a',
+            'medium': '#d97706', 
+            'high': '#dc2626',
+            'critical': '#991b1b'
+          };
+          const riskTexts = {
+            'low': 'Низкий',
+            'medium': 'Средний',
+            'high': 'Высокий', 
+            'critical': 'Критический'
+          };
+          
+          html += `
+            <div style="margin-bottom: 20px;">
+              <div style="font-weight: 600; margin-bottom: 8px;">🚨 Уровень риска:</div>
+              <div style="color: ${riskColors[analysis.risk_level] || '#6b7280'}; font-weight: 600; font-size: 16px;">
+                ${riskTexts[analysis.risk_level] || analysis.risk_level}
+              </div>
             </div>
+          `;
+        }
+
+        // Сайты для смены паролей
+        if (analysis.security_recommendations?.password_change_sites?.length > 0) {
+          html += `
+            <div style="margin-bottom: 20px;">
+              <div style="font-weight: 600; margin-bottom: 8px;">🔐 Смените пароли на сайтах:</div>
+              <ul style="list-style: none; padding-left: 0;">
+          `;
+          analysis.security_recommendations.password_change_sites.forEach(site => {
+            html += `<li style="margin-bottom: 4px; color: #dc2626;">• ${site}</li>`;
+          });
+          html += '</ul></div>';
+        }
+
+        // Краткая сводка
+        if (analysis.summary) {
+          html += `
+            <div style="margin-bottom: 20px;">
+              <div style="font-weight: 600; margin-bottom: 8px;">📋 Краткая сводка:</div>
+              <div style="color: #374151; line-height: 1.5;">${analysis.summary}</div>
+            </div>
+          `;
+        }
+
+        // Рекомендации
+        if (analysis.security_recommendations?.immediate_actions?.length > 0) {
+          html += `
+            <div>
+              <div style="font-weight: 600; margin-bottom: 8px;">⚡ Рекомендуемые действия:</div>
+              <ul style="list-style: none; padding-left: 0;">
+          `;
+          analysis.security_recommendations.immediate_actions.forEach(action => {
+            html += `<li style="margin-bottom: 4px; color: #059669;">• ${action}</li>`;
+          });
+          html += '</ul></div>';
+        }
+      } else {
+        // Fallback для неожиданного формата
+        html += `
+          <div style="color: #dc2626; font-weight: 600;">
+            ❌ Ошибка: неожиданный формат анализа
           </div>
+          <pre style="background: #f3f4f6; padding: 10px; border-radius: 4px; margin-top: 10px; overflow-x: auto;">
+            ${JSON.stringify(analysis, null, 2)}
+          </pre>
         `;
-      }
-
-      // Сайты для смены паролей
-      if (analysis.security_recommendations?.password_change_sites?.length > 0) {
-        html += `
-          <div style="margin-bottom: 20px;">
-            <div style="font-weight: 600; margin-bottom: 8px;">🔐 Смените пароли на сайтах:</div>
-            <ul style="list-style: none; padding-left: 0;">
-        `;
-        analysis.security_recommendations.password_change_sites.forEach(site => {
-          html += `<li style="margin-bottom: 4px; color: #dc2626;">• ${site}</li>`;
-        });
-        html += '</ul></div>';
-      }
-
-      // Краткая сводка
-      if (analysis.summary) {
-        html += `
-          <div style="margin-bottom: 20px;">
-            <div style="font-weight: 600; margin-bottom: 8px;">📋 Краткая сводка:</div>
-            <div style="color: #374151; line-height: 1.5;">${analysis.summary}</div>
-          </div>
-        `;
-      }
-
-      // Рекомендации
-      if (analysis.security_recommendations?.immediate_actions?.length > 0) {
-        html += `
-          <div>
-            <div style="font-weight: 600; margin-bottom: 8px;">⚡ Рекомендуемые действия:</div>
-            <ul style="list-style: none; padding-left: 0;">
-        `;
-        analysis.security_recommendations.immediate_actions.forEach(action => {
-          html += `<li style="margin-bottom: 4px; color: #059669;">• ${action}</li>`;
-        });
-        html += '</ul></div>';
       }
 
       html += '</div>';
       container.innerHTML = html;
+      
+      console.log('✅ HTML content set!');
+      console.log('📏 HTML length:', html.length);
+      console.log('👁️ Container visibility:', container.style.display);
+      console.log('🎨 Final HTML preview:', html.substring(0, 300) + '...');
     }
 
     // Функция стандартного отображения результатов
