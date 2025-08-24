@@ -1818,6 +1818,277 @@
     window.showAILoading = showAILoading;
     window.hideAILoading = hideAILoading;
     window.updateAIStatus = updateAIStatus;
+
+    // ===== ОБРАБОТЧИКИ ДЛЯ РЕЖИМА ПРОВЕРКИ ПАРОЛЕЙ =====
+
+    // Переключение видимости пароля
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('password');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const checkPasswordBtn = document.getElementById('checkPassword');
+
+    if (togglePassword && passwordField) {
+      togglePassword.addEventListener('click', () => {
+        const type = passwordField.type === 'password' ? 'text' : 'password';
+        passwordField.type = type;
+        togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+      });
+    }
+
+    // Анализ силы пароля при вводе
+    if (passwordField && passwordStrength) {
+      passwordField.addEventListener('input', () => {
+        const password = passwordField.value;
+        const strength = analyzePasswordStrength(password);
+        passwordStrength.innerHTML = strength.html;
+      });
+    }
+
+    // Обработчик кнопки проверки пароля
+    if (checkPasswordBtn) {
+      checkPasswordBtn.addEventListener('click', async () => {
+        const password = passwordField.value.trim();
+        
+        if (!password) {
+          alert('Введите пароль для проверки');
+          return;
+        }
+        
+        if (password.length < 1 || password.length > 200) {
+          alert('Длина пароля должна быть от 1 до 200 символов');
+          return;
+        }
+        
+        await checkPasswordSecurity(password);
+      });
+    }
+
+    // Проверка пароля при нажатии Enter
+    if (passwordField) {
+      passwordField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          checkPasswordBtn.click();
+        }
+      });
+    }
+
+    // Функция анализа силы пароля
+    function analyzePasswordStrength(password) {
+      if (!password) {
+        return { score: 0, html: '' };
+      }
+      
+      let score = 0;
+      let feedback = [];
+      
+      // Длина
+      if (password.length >= 8) score += 20;
+      else feedback.push('Длина менее 8 символов');
+      
+      if (password.length >= 12) score += 10;
+      if (password.length >= 16) score += 10;
+      
+      // Символы
+      if (/[a-z]/.test(password)) score += 10;
+      else feedback.push('Нет строчных букв');
+      
+      if (/[A-Z]/.test(password)) score += 10;
+      else feedback.push('Нет заглавных букв');
+      
+      if (/[0-9]/.test(password)) score += 10;
+      else feedback.push('Нет цифр');
+      
+      if (/[^a-zA-Z0-9]/.test(password)) score += 20;
+      else feedback.push('Нет специальных символов');
+      
+      // Уникальность
+      const uniqueChars = new Set(password).size;
+      if (uniqueChars >= password.length * 0.7) score += 10;
+      
+      // Определяем уровень
+      let level, color, emoji;
+      if (score < 30) {
+        level = 'Слабый';
+        color = '#dc2626';
+        emoji = '🔴';
+      } else if (score < 60) {
+        level = 'Средний';
+        color = '#f59e0b';
+        emoji = '🟡';
+      } else if (score < 80) {
+        level = 'Хороший';
+        color = '#10b981';
+        emoji = '🟢';
+      } else {
+        level = 'Отличный';
+        color = '#059669';
+        emoji = '💚';
+      }
+      
+      let html = `
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <span>${emoji}</span>
+          <span style="color: ${color}; font-weight: 600;">Сила пароля: ${level}</span>
+          <span style="color: #6b7280;">(${score}/100)</span>
+        </div>
+      `;
+      
+      if (feedback.length > 0) {
+        html += `<div style="color: #6b7280; font-size: 12px;">💡 ${feedback.join(', ')}</div>`;
+      }
+      
+      return { score, html };
+    }
+
+    // Функция проверки пароля через API
+    async function checkPasswordSecurity(password) {
+      const button = checkPasswordBtn;
+      const originalText = button.textContent;
+      
+      button.disabled = true;
+      button.textContent = '🔄 Проверяем...';
+      
+      try {
+        console.log('🔐 Starting password security check...');
+        
+        const response = await fetch('/api/password-check', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error?.message || 'Ошибка проверки пароля');
+        }
+        
+        displayPasswordResults(data, password);
+        
+      } catch (error) {
+        console.error('Password check error:', error);
+        
+        results.innerHTML = `
+          <div class="result-card">
+            <div style="color: #dc2626;">
+              <strong>❌ Ошибка проверки</strong><br>
+              ${error.message || 'Не удалось проверить пароль. Попробуйте позже.'}
+            </div>
+          </div>
+        `;
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+
+    // Функция отображения результатов проверки пароля
+    function displayPasswordResults(data, password) {
+      let html = '';
+      
+      if (data.ok === false) {
+        html = `
+          <div class="result-card">
+            <div style="color: #dc2626;">
+              <strong>❌ Сервис недоступен</strong><br>
+              ${data.error?.message || 'Проверка паролей временно недоступна'}
+            </div>
+          </div>
+        `;
+      } else if (data.isCompromised) {
+        html = `
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-title">🚨 Пароль скомпрометирован</div>
+              <span class="status-badge status-found">Найден</span>
+            </div>
+            <div class="result-body" style="display: block;">
+              <div class="data-grid">
+                <div class="data-label">🔴 Статус</div>
+                <div class="data-value">Пароль найден в базах утечек</div>
+                
+                <div class="data-label">📊 Количество утечек</div>
+                <div class="data-value">${data.breachCount || 'Неизвестно'}</div>
+                
+                <div class="data-label">⚠️ Уровень риска</div>
+                <div class="data-value" style="color: #dc2626; font-weight: 600;">ВЫСОКИЙ</div>
+                
+                <div class="data-label">💡 Рекомендация</div>
+                <div class="data-value">
+                  <strong style="color: #dc2626;">Немедленно смените этот пароль!</strong><br>
+                  Используйте уникальный пароль длиной минимум 12 символов с комбинацией букв, цифр и специальных символов.
+                </div>
+              </div>
+              
+              <div style="margin-top: 16px; padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px;">
+                <strong style="color: #dc2626;">🔥 Критично:</strong> Этот пароль уже известен злоумышленникам и может использоваться для атак на ваши аккаунты.
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        html = `
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-title">✅ Пароль безопасен</div>
+              <span class="status-badge status-clean">Чисто</span>
+            </div>
+            <div class="result-body" style="display: block;">
+              <div class="data-grid">
+                <div class="data-label">🟢 Статус</div>
+                <div class="data-value">Пароль не найден в известных утечках</div>
+                
+                <div class="data-label">🔍 Проверено баз</div>
+                <div class="data-value">DeHashed (крупнейшая база утечек)</div>
+                
+                <div class="data-label">⭐ Уровень риска</div>
+                <div class="data-value" style="color: #059669; font-weight: 600;">НИЗКИЙ</div>
+                
+                <div class="data-label">💡 Рекомендация</div>
+                <div class="data-value">
+                  Пароль выглядит безопасным, но рекомендуем:<br>
+                  • Использовать уникальные пароли для каждого сайта<br>
+                  • Включить двухфакторную аутентификацию<br>
+                  • Регулярно менять пароли (раз в 6-12 месяцев)
+                </div>
+              </div>
+              
+              <div style="margin-top: 16px; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px;">
+                <strong style="color: #059669;">✨ Отлично:</strong> Этот пароль не обнаружен в известных базах утечек данных.
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Добавляем анализ силы пароля
+      const strength = analyzePasswordStrength(password);
+      html += `
+        <div class="result-card">
+          <div class="result-header">
+            <div class="result-title">📊 Анализ силы пароля</div>
+          </div>
+          <div class="result-body" style="display: block;">
+            ${strength.html}
+            
+            <div style="margin-top: 16px;">
+              <div style="font-weight: 600; margin-bottom: 8px;">💡 Советы для создания надежного пароля:</div>
+              <ul style="margin: 0; padding-left: 16px; color: #6b7280;">
+                <li>Используйте минимум 12 символов</li>
+                <li>Комбинируйте буквы разного регистра</li>
+                <li>Добавляйте цифры и спецсимволы (!@#$%^&*)</li>
+                <li>Избегайте личной информации</li>
+                <li>Используйте менеджер паролей</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      results.innerHTML = html;
+    }
   </script>
 
   <!-- AI Loading Overlay -->
