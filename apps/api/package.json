@@ -1,7 +1,7 @@
 {
   "name": "datatrace-api",
-  "version": "1.0.0",
-  "description": "DataTrace API server with leak detection and company analysis",
+  "version": "1.0.1",
+  "description": "DataTrace API server with leak detection and DeepSeek V3 analysis",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
