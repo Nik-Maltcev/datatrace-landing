@@ -1590,6 +1590,50 @@
       }
     });
 
+    // Обработчики для переключения режимов
+    modeLeaks.addEventListener('click', () => {
+      setMode('leaks');
+    });
+    
+    modeCompany.addEventListener('click', () => {
+      setMode('company');
+    });
+    
+    modePassword.addEventListener('click', () => {
+      setMode('password');
+    });
+
+    // Функция переключения режимов
+    function setMode(mode) {
+      currentMode = mode;
+      
+      // Убираем активный класс со всех кнопок
+      modeLeaks.classList.remove('active');
+      modeCompany.classList.remove('active');
+      modePassword.classList.remove('active');
+      
+      // Добавляем активный класс к выбранной кнопке
+      if (mode === 'leaks') {
+        modeLeaks.classList.add('active');
+        searchInput.style.display = 'block';
+        passwordInput.style.display = 'none';
+        fieldSel.style.display = 'inline-block';
+      } else if (mode === 'company') {
+        modeCompany.classList.add('active');
+        searchInput.style.display = 'block';
+        passwordInput.style.display = 'none';
+        fieldSel.style.display = 'none';
+      } else if (mode === 'password') {
+        modePassword.classList.add('active');
+        searchInput.style.display = 'none';
+        passwordInput.style.display = 'block';
+        fieldSel.style.display = 'none';
+      }
+      
+      // Очищаем результаты при смене режима
+      results.innerHTML = '';
+    }
+
     // Глобальная функция для переключения результатов
     window.toggleResult = toggleResult;
 
