@@ -774,32 +774,74 @@
     }
 
     // Функция отображения ИИ анализа
-    function convertMarkdownTablesToHTML(text) {
-      // Convert markdown tables to HTML tables
-      return text.replace(/(\|[^\n]*\|\n)+/g, function(match) {
-        const lines = match.trim().split('\n');
-        let html = '<table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">';
+    function convertMarkdownTablesToHTML(content) {
+      // Правильное регулярное выражение для markdown таблиц от DeepSeek V3
+      const tableRegex = /(\|[^\n]*\|\s*\n)+/g;
+      
+      return content.replace(tableRegex, (match) => {
+        console.log('🔍 Found markdown table:', match);
         
-        lines.forEach((line, index) => {
-          if (line.includes('|---') || line.includes('|-') || line.includes('|:')) {
-            return; // Skip separator lines
+        const lines = match.trim().split('\n').filter(line => line.includes('|') && line.trim().length > 0);
+        
+        if (lines.length < 2) {
+          console.log('❌ Not enough lines for table');
+          return match;
+        }
+        
+        // Первая строка - заголовки
+        const headerLine = lines[0];
+        const headerCells = headerLine.split('|')
+          .map(cell => cell.trim())
+          .filter(cell => cell.length > 0);
+        
+        console.log('📋 Header cells:', headerCells);
+        
+        // Находим строку с разделителями (может быть вторая или любая с --- или |---|)
+        let dataStartIndex = 1;
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].includes('---') || lines[i].includes(':---') || lines[i].includes('---|') || lines[i].includes('|---')) {
+            dataStartIndex = i + 1;
+            break;
           }
-          
-          const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell);
-          const isHeader = index === 0;
-          const tag = isHeader ? 'th' : 'td';
-          const style = isHeader 
-            ? 'background: #f8fafc; font-weight: 600; color: #374151; padding: 12px; border: 1px solid #e2e8f0; text-align: left;'
-            : 'padding: 12px; border: 1px solid #e2e8f0; color: #374151;';
-          
-          html += '<tr>';
-          cells.forEach(cell => {
-            html += `<${tag} style="${style}">${cell}</${tag}>`;
+        }
+        
+        // Остальные строки - данные
+        const dataRows = lines.slice(dataStartIndex)
+          .map(line => {
+            const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell.length > 0);
+            return cells;
+          })
+          .filter(row => row.length > 0);
+        
+        console.log('📊 Data rows:', dataRows);
+        
+        // Создаем HTML таблицу
+        let html = '<table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif;">';
+        
+        // Заголовки
+        if (headerCells.length > 0) {
+          html += '<thead><tr>';
+          headerCells.forEach(header => {
+            html += `<th style="background: #f8fafc; font-weight: 600; color: #374151; padding: 12px; border: 1px solid #e2e8f0; text-align: left;">${header}</th>`;
           });
-          html += '</tr>';
-        });
+          html += '</tr></thead>';
+        }
+        
+        // Данные
+        if (dataRows.length > 0) {
+          html += '<tbody>';
+          dataRows.forEach(row => {
+            html += '<tr>';
+            row.forEach(cell => {
+              html += `<td style="padding: 12px; border: 1px solid #e2e8f0; color: #374151; vertical-align: top;">${cell}</td>`;
+            });
+            html += '</tr>';
+          });
+          html += '</tbody>';
+        }
         
         html += '</table>';
+        console.log('✅ Generated HTML table');
         return html;
       });
     }
