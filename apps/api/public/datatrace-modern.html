@@ -599,11 +599,13 @@
     }
 
     .risk-level {
-      font-size: 16px;
+      font-size: 12px;
       font-weight: 700;
       color: #ffffff;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-align: center;
+      line-height: 1.2;
     }
 
     .risk-count {
@@ -1294,11 +1296,22 @@
 
     // Функция выполнения ИИ анализа
     async function performAIAnalysis(sourceResults) {
-      const button = document.getElementById('getAIAnalysis');
-      const resultDiv = document.getElementById('aiAnalysisResult');
+      // Ищем кнопку AI анализа (может быть в списке или дашборде)
+      let button = document.getElementById('getAIAnalysis') || document.getElementById('nothingAIBtn');
+      let resultDiv = document.getElementById('aiAnalysisResult');
       
-      button.disabled = true;
-      button.innerHTML = '🔄 Анализируем данные...';
+      // Если кнопка в дашборде, создаем контейнер для результата
+      if (!resultDiv && button && button.id === 'nothingAIBtn') {
+        resultDiv = document.createElement('div');
+        resultDiv.id = 'aiAnalysisResult';
+        resultDiv.style.marginTop = '20px';
+        button.parentNode.appendChild(resultDiv);
+      }
+      
+      if (button) {
+        button.disabled = true;
+        button.innerHTML = '🔄 Анализируем данные...';
+      }
       
       try {
         // Устанавливаем большой таймаут для DeepSeek V3 анализа (120 секунд)
@@ -1321,23 +1334,30 @@
         
         if (data.ok && data.analysis) {
           displayAIAnalysis(data.analysis, resultDiv);
-          button.style.display = 'none';
-          resultDiv.style.display = 'block';
+          if (button) {
+            button.style.display = 'none';
+          }
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+          }
         } else {
           throw new Error(data.error || 'Ошибка анализа');
         }
       } catch (error) {
         if (error.name === 'AbortError') {
           console.error('AI Analysis timeout after 120 seconds');
-          button.innerHTML = '⏱️ Таймаут анализа (120с)';
+          if (button) button.innerHTML = '⏱️ Таймаут анализа (120с)';
         } else {
           console.error('AI Analysis error:', error);
-          button.innerHTML = '❌ Ошибка анализа';
+          if (button) button.innerHTML = '❌ Ошибка анализа';
         }
-        button.disabled = false;
+        if (button) button.disabled = false;
         
         setTimeout(() => {
-          button.innerHTML = '📊 Получить ИИ анализ';
+          if (button) {
+            const isNothingBtn = button.id === 'nothingAIBtn';
+            button.innerHTML = isNothingBtn ? '🤖 АНАЛИЗ УГРОЗ ИИ' : '📊 Получить ИИ анализ';
+          }
         }, 3000);
       }
     }
