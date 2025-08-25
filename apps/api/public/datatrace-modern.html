@@ -482,6 +482,7 @@
       background: #000000;
       min-height: 100vh;
       font-family: 'PT Mono', monospace;
+      color: #ffffff;
     }
 
     .dashboard-header {
@@ -1168,8 +1169,8 @@
       viewToggle.className = 'view-toggle-container';
       viewToggle.innerHTML = `
         <div class="view-toggle-buttons">
-          <button id="listViewBtn" class="view-toggle-btn active">SOURCE LIST</button>
-          <button id="dashboardViewBtn" class="view-toggle-btn">DASHBOARD</button>
+          <button id="listViewBtn" class="view-toggle-btn active">СПИСОК ИСТОЧНИКОВ</button>
+          <button id="dashboardViewBtn" class="view-toggle-btn">ДАШБОРД</button>
         </div>
       `;
       
@@ -2671,28 +2672,28 @@
           <!-- Header Section -->
           <div class="dashboard-header">
             <div class="dashboard-title">
-              <h1>Security Analysis</h1>
-              <p>COMPREHENSIVE DIGITAL FOOTPRINT SCAN COMPLETED</p>
-              <p>FOUND <strong>${dashboardData.totalBreaches}</strong> DATA EXPOSURES ACROSS <strong>${dashboardData.affectedSources}</strong> SOURCES</p>
+              <h1>Анализ безопасности</h1>
+              <p>КОМПЛЕКСНОЕ СКАНИРОВАНИЕ ЦИФРОВОГО СЛЕДА ЗАВЕРШЕНО</p>
+              <p>ОБНАРУЖЕНО <strong>${dashboardData.totalBreaches}</strong> УТЕЧЕК ДАННЫХ В <strong>${dashboardData.affectedSources}</strong> ИСТОЧНИКАХ</p>
             </div>
             
             <!-- Stats Grid -->
             <div class="dashboard-stats">
               <div class="stat-card ${dashboardData.foundBreaches > 0 ? 'pulse-red' : ''}">
                 <div class="stat-number">${dashboardData.foundBreaches}</div>
-                <div class="stat-label">BREACHES FOUND</div>
+                <div class="stat-label">НАЙДЕНО УТЕЧЕК</div>
               </div>
               <div class="stat-card">
                 <div class="stat-number">${dashboardData.cleanSources}</div>
-                <div class="stat-label">CLEAN SOURCES</div>
+                <div class="stat-label">ЧИСТЫХ ИСТОЧНИКОВ</div>
               </div>
               <div class="stat-card">
                 <div class="stat-number">${dashboardData.totalBreaches}</div>
-                <div class="stat-label">TOTAL RECORDS</div>
+                <div class="stat-label">ВСЕГО ЗАПИСЕЙ</div>
               </div>
               <div class="stat-card ${dashboardData.errorSources > 0 ? 'pulse-red' : ''}">
                 <div class="stat-number">${dashboardData.errorSources}</div>
-                <div class="stat-label">SCAN ERRORS</div>
+                <div class="stat-label">ОШИБОК СКАНИРОВАНИЯ</div>
               </div>
             </div>
             
@@ -2708,24 +2709,24 @@
           <!-- Action Section -->
           ${dashboardData.foundBreaches > 0 ? `
           <div class="action-section">
-            <h2>IMMEDIATE ACTION REQUIRED</h2>
-            <p>YOUR DATA HAS BEEN COMPROMISED. FOLLOW SECURITY PROTOCOL.</p>
+            <h2>ТРЕБУЮТСЯ НЕМЕДЛЕННЫЕ ДЕЙСТВИЯ</h2>
+            <p>ВАШИ ДАННЫЕ СКОМПРОМЕТИРОВАНЫ. СЛЕДУЙТЕ ПРОТОКОЛУ БЕЗОПАСНОСТИ.</p>
             <div class="action-buttons">
               <button id="nothingFixBtn" class="nothing-btn danger">
-                🚨 INITIATE SECURITY PROTOCOL
+                🚨 ЗАПУСТИТЬ ПРОТОКОЛ БЕЗОПАСНОСТИ
               </button>
               <button id="nothingAIBtn" class="nothing-btn">
-                🤖 AI THREAT ANALYSIS
+                🤖 АНАЛИЗ УГРОЗ ИИ
               </button>
             </div>
           </div>
           ` : `
           <div class="action-section">
-            <h2>SYSTEM STATUS: SECURE</h2>
-            <p>NO IMMEDIATE THREATS DETECTED. CONTINUE MONITORING.</p>
+            <h2>СТАТУС СИСТЕМЫ: БЕЗОПАСНО</h2>
+            <p>НЕМЕДЛЕННЫХ УГРОЗ НЕ ОБНАРУЖЕНО. ПРОДОЛЖАЙТЕ МОНИТОРИНГ.</p>
             <div class="action-buttons">
               <button id="nothingAIBtn" class="nothing-btn">
-                📊 DETAILED ANALYSIS
+                📊 ДЕТАЛЬНЫЙ АНАЛИЗ
               </button>
             </div>
           </div>
@@ -2733,31 +2734,31 @@
 
           <!-- Data Table -->
           <div class="breaches-section">
-            <h2>SOURCE ANALYSIS RESULTS</h2>
-            <p>SCANNED ${sourceResults.length} DATABASES FOR DIGITAL FOOTPRINT TRACES</p>
+            <h2>РЕЗУЛЬТАТЫ АНАЛИЗА ИСТОЧНИКОВ</h2>
+            <p>ПРОВЕРЕНО ${sourceResults.length} БАЗ ДАННЫХ НА НАЛИЧИЕ ЦИФРОВЫХ СЛЕДОВ</p>
             
             <div class="table-filters">
               <button class="nothing-filter-btn active" data-filter="all">
-                ALL SOURCES (${sourceResults.length})
+                ВСЕ ИСТОЧНИКИ (${sourceResults.length})
               </button>
               <button class="nothing-filter-btn" data-filter="breaches">
-                COMPROMISED (${dashboardData.foundBreaches})
+                СКОМПРОМЕТИРОВАНЫ (${dashboardData.foundBreaches})
               </button>
               <button class="nothing-filter-btn" data-filter="clean">
-                SECURE (${dashboardData.cleanSources})
+                БЕЗОПАСНЫ (${dashboardData.cleanSources})
               </button>
               <button class="nothing-filter-btn" data-filter="errors">
-                ERRORS (${dashboardData.errorSources})
+                ОШИБКИ (${dashboardData.errorSources})
               </button>
             </div>
             
             <table class="nothing-table">
               <thead>
                 <tr>
-                  <th>SOURCE DATABASE</th>
-                  <th>SCAN DATE</th>
-                  <th>STATUS</th>
-                  <th>ACTION</th>
+                  <th>БАЗА ДАННЫХ ИСТОЧНИКА</th>
+                  <th>ДАТА СКАНИРОВАНИЯ</th>
+                  <th>СТАТУС</th>
+                  <th>ДЕЙСТВИЕ</th>
                 </tr>
               </thead>
               <tbody>
@@ -2818,9 +2819,9 @@
     }
 
     function getRiskLevel(data) {
-      if (data.foundBreaches >= 3) return 'HIGH RISK';
-      if (data.foundBreaches >= 1) return 'RISK DETECTED';
-      return 'SECURE';
+      if (data.foundBreaches >= 3) return 'ВЫСОКИЙ РИСК';
+      if (data.foundBreaches >= 1) return 'РИСК ОБНАРУЖЕН';
+      return 'БЕЗОПАСНО';
     }
 
     function generateNothingTableRows(sourceResults) {
@@ -2833,22 +2834,22 @@
         if (result.error) {
           status = 'ERROR';
           statusClass = 'status-error';
-          statusText = 'SCAN FAILED';
+          statusText = 'ОШИБКА СКАНИРОВАНИЯ';
         } else if (result.ok && result.items) {
           const hasData = window.checkIfSourceHasLeakData(result, sourceName);
           if (hasData) {
             status = 'COMPROMISED';
             statusClass = 'status-breach';
-            statusText = 'DATA FOUND';
+            statusText = 'ДАННЫЕ НАЙДЕНЫ';
           } else {
             status = 'SECURE';
             statusClass = 'status-clean';
-            statusText = 'NO THREATS';
+            statusText = 'УГРОЗ НЕТ';
           }
         } else {
           status = 'UNKNOWN';
           statusClass = 'status-error';
-          statusText = 'NO DATA';
+          statusText = 'НЕТ ДАННЫХ';
         }
 
         return `
@@ -2870,7 +2871,7 @@
             </td>
             <td>
               <button class="nothing-details-btn" onclick="showNothingSourceDetails('${sourceName}', ${JSON.stringify(result).replace(/"/g, '&quot;')})">
-                DETAILS
+                ПОДРОБНЕЕ
               </button>
             </td>
           </tr>
@@ -2891,13 +2892,13 @@
 
     function getNothingSourceDescription(sourceName) {
       const descriptions = {
-        'ITP': 'INTELLIGENCE DATABASE',
-        'Dyxless': 'BREACH COLLECTION',
-        'LeakOsint': 'OSINT REPOSITORY',
-        'Usersbox': 'USER DATA ARCHIVE',
-        'Vektor': 'VECTOR DATABASE'
+        'ITP': 'БАЗА РАЗВЕДДАННЫХ',
+        'Dyxless': 'КОЛЛЕКЦИЯ УТЕЧЕК',
+        'LeakOsint': 'OSINT РЕПОЗИТОРИЙ',
+        'Usersbox': 'АРХИВ ПОЛЬЗОВАТЕЛЕЙ',
+        'Vektor': 'ВЕКТОРНАЯ БАЗА'
       };
-      return descriptions[sourceName] || 'DATA SOURCE';
+      return descriptions[sourceName] || 'ИСТОЧНИК ДАННЫХ';
     }
 
     function setupNothingDashboardHandlers(sourceResults) {
@@ -2955,7 +2956,7 @@
       modal.innerHTML = `
         <div class="nothing-modal-content">
           <div class="nothing-modal-header">
-            <h3>${getNothingSourceIcon(sourceName)} ${sourceName} - DETAILED SCAN RESULTS</h3>
+            <h3>${getNothingSourceIcon(sourceName)} ${sourceName} - ДЕТАЛЬНЫЕ РЕЗУЛЬТАТЫ СКАНИРОВАНИЯ</h3>
             <button class="nothing-modal-close" onclick="this.closest('.nothing-modal').remove()">×</button>
           </div>
           <div class="nothing-modal-body">
@@ -2973,33 +2974,33 @@
       modal.innerHTML = `
         <div class="nothing-modal-content">
           <div class="nothing-modal-header">
-            <h2>🚨 SECURITY PROTOCOL INITIATED</h2>
+            <h2>🚨 ПРОТОКОЛ БЕЗОПАСНОСТИ ЗАПУЩЕН</h2>
             <button class="nothing-modal-close" onclick="this.closest('.nothing-modal').remove()">×</button>
           </div>
           <div class="nothing-modal-body">
             <div style="margin-bottom: 24px;">
-              <h3 style="color: #ff0000; margin-bottom: 16px;">PHASE 1: IMMEDIATE CONTAINMENT</h3>
+              <h3 style="color: #ff0000; margin-bottom: 16px;">ФАЗА 1: НЕМЕДЛЕННАЯ ИЗОЛЯЦИЯ</h3>
               <ul style="list-style: none; padding: 0;">
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🔐 CHANGE ALL ACCOUNT PASSWORDS</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">📱 ENABLE 2FA ON ALL SERVICES</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🏦 REVIEW FINANCIAL ACCOUNTS</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">📧 SECURE EMAIL ACCOUNTS</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🔐 СМЕНИТЕ ВСЕ ПАРОЛИ АККАУНТОВ</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">📱 ВКЛЮЧИТЕ 2FA НА ВСЕХ СЕРВИСАХ</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🏦 ПРОВЕРЬТЕ ФИНАНСОВЫЕ АККАУНТЫ</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">📧 ЗАЩИТИТЕ EMAIL АККАУНТЫ</li>
               </ul>
               <button class="nothing-btn" style="margin-top: 16px;" onclick="nextProtocolPhase(this)">
-                PHASE 1 COMPLETE
+                ФАЗА 1 ЗАВЕРШЕНА
               </button>
             </div>
             
             <div style="margin-bottom: 24px; display: none;" data-phase="2">
-              <h3 style="color: #ffffff; margin-bottom: 16px;">PHASE 2: MONITORING SETUP</h3>
+              <h3 style="color: #ffffff; margin-bottom: 16px;">ФАЗА 2: НАСТРОЙКА МОНИТОРИНГА</h3>
               <ul style="list-style: none; padding: 0;">
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🔔 CONFIGURE BREACH ALERTS</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">📊 SETUP CREDIT MONITORING</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">👀 ENABLE ACCOUNT NOTIFICATIONS</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🔄 SCHEDULE REGULAR SCANS</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🔔 НАСТРОЙТЕ УВЕДОМЛЕНИЯ О УТЕЧКАХ</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">📊 ПОДКЛЮЧИТЕ КРЕДИТНЫЙ МОНИТОРИНГ</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">👀 ВКЛЮЧИТЕ УВЕДОМЛЕНИЯ АККАУНТОВ</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #333;">🔄 ЗАПЛАНИРУЙТЕ РЕГУЛЯРНЫЕ СКАНИРОВАНИЯ</li>
               </ul>
               <button class="nothing-btn" style="margin-top: 16px;" onclick="nextProtocolPhase(this)">
-                PROTOCOL COMPLETE
+                ПРОТОКОЛ ЗАВЕРШЕН
               </button>
             </div>
           </div>
@@ -3018,7 +3019,7 @@
         nextPhase.style.display = 'block';
       } else {
         document.querySelector('.nothing-modal').remove();
-        alert('🎯 SECURITY PROTOCOL COMPLETE. YOUR DIGITAL FOOTPRINT IS NOW PROTECTED.');
+        alert('🎯 ПРОТОКОЛ БЕЗОПАСНОСТИ ЗАВЕРШЕН. ВАШ ЦИФРОВОЙ СЛЕД ТЕПЕРЬ ЗАЩИЩЕН.');
       }
     };
   </script>
