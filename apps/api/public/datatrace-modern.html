@@ -945,7 +945,38 @@
 
     .nothing-modal-body {
       padding: 24px;
-      color: #cccccc;
+      color: #ffffff;
+    }
+
+    /* Стили для отображения данных в модальных окнах */
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 8px 16px;
+      color: #ffffff;
+    }
+
+    .data-label {
+      font-weight: 600;
+      color: #cccccc !important;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .data-value {
+      color: #ffffff !important;
+      font-family: 'PT Mono', monospace;
+      word-break: break-all;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 8px;
+      border-radius: 2px;
+    }
+
+    .data-value:empty::after {
+      content: 'Нет данных';
+      color: #666666;
+      font-style: italic;
     }
 
     /* Nothing OS Animations */
@@ -1528,12 +1559,25 @@
     }
 
     window.checkIfSourceHasLeakData = function(result, sourceName) {
-      if (!result.ok || !result.items) return false;
+      if (!result.ok || !result.items) {
+        console.log(`❌ ${sourceName}: result.ok=${result.ok}, result.items=`, result.items);
+        return false;
+      }
+      
+      // Диагностика для отладки
+      console.log(`🔍 Checking ${sourceName}:`, { 
+        ok: result.ok, 
+        itemsType: typeof result.items, 
+        itemsKeys: typeof result.items === 'object' ? Object.keys(result.items) : 'N/A',
+        itemsLength: Array.isArray(result.items) ? result.items.length : 'N/A'
+      });
       
       // Проверяем каждый источник на наличие данных
       switch (sourceName) {
         case 'ITP':
-          return result.items && typeof result.items === 'object' && Object.keys(result.items).length > 0;
+          const hasITPData = result.items && typeof result.items === 'object' && Object.keys(result.items).length > 0;
+          console.log(`🎯 ITP has data: ${hasITPData}`, result.items);
+          return hasITPData;
         case 'Dyxless':
           return Array.isArray(result.items) && result.items.length > 0;
         case 'LeakOsint':
@@ -2059,7 +2103,14 @@
           
           if (stepData.result) {
             console.log(`✅ ${source.name} completed:`, stepData.result);
-            allResults.push(stepData.result);
+            console.log(`📊 ${source.name} response structure:`, {
+              ok: stepData.result.ok,
+              itemsType: typeof stepData.result.items,
+              itemsKeys: typeof stepData.result.items === 'object' ? Object.keys(stepData.result.items) : 'N/A',
+              error: stepData.result.error
+            });
+            // Добавляем имя источника к результату
+            allResults.push({ name: source.name, ...stepData.result });
           } else {
             console.log(`❌ ${source.name} failed:`, stepData.error);
             allResults.push({ name: source.name, ok: false, error: stepData.error });
