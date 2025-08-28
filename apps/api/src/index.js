@@ -2014,6 +2014,40 @@ app.get('*', (_req, res) => {
 const SnusbaseService = require('./services/SnusbaseService');
 const snusbaseService = new SnusbaseService();
 
+// Snusbase connection test endpoint
+app.get('/api/snusbase/test', requireAuth, userRateLimit(3, 60 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('🔍 Snusbase connection test request');
+
+    const testResult = await snusbaseService.testConnection();
+
+    if (!testResult.success) {
+      console.error('❌ Snusbase connection test failed:', testResult.error);
+      return res.status(500).json({
+        ok: false,
+        error: testResult.error || 'Ошибка подключения к Snusbase'
+      });
+    }
+
+    console.log('✅ Snusbase connection test successful');
+
+    res.json({
+      ok: true,
+      connection: 'successful',
+      rows: testResult.rows,
+      tablesCount: testResult.tablesCount,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Snusbase connection test error:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Внутренняя ошибка сервера при тестировании подключения'
+    });
+  }
+});
+
 // Domain search endpoint for Snusbase
 app.post('/api/snusbase/domain-search', requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
   try {

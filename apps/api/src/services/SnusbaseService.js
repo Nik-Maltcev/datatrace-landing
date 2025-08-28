@@ -3,13 +3,13 @@ const axios = require('axios');
 class SnusbaseService {
   constructor() {
     this.apiKey = 'sb99cd2vxyohst65mh98ydz6ud844l';
-    this.baseUrl = 'https://api-experimental.snusbase.com';
+    this.baseUrl = 'https://api.snusbase.com'; // Исправлен URL согласно документации
     
     // Настройка axios instance для Snusbase
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        'Auth': this.apiKey, // Исправлен заголовок согласно документации
         'Content-Type': 'application/json',
         'User-Agent': 'DataTrace/1.0'
       },
@@ -68,13 +68,11 @@ class SnusbaseService {
     try {
       console.log(`📊 [Snusbase] Getting stats for domain: ${domain}`);
       
-      const response = await this.client.post('/tools/stats', {
-        terms: [`@${domain}`],
-        types: ['email']
-      });
+      // Согласно документации, /data/stats это GET запрос без параметров
+      const response = await this.client.get('/data/stats');
 
       const data = response.data;
-      console.log(`✅ [Snusbase] Got stats for domain ${domain}`);
+      console.log(`✅ [Snusbase] Got general stats`);
       
       return {
         success: true,
@@ -104,17 +102,20 @@ class SnusbaseService {
     try {
       console.log('📋 [Snusbase] Getting available databases');
       
-      const response = await this.client.get('/data/sources');
+      // Согласно документации, это GET /data/stats
+      const response = await this.client.get('/data/stats');
 
       const data = response.data;
-      console.log(`✅ [Snusbase] Got ${data.length} databases`);
+      console.log(`✅ [Snusbase] Got database info with ${Object.keys(data.tables || {}).length} tables`);
       
       return {
         success: true,
-        databases: data,
+        databases: data.tables || {},
         metadata: {
           fetchedAt: new Date().toISOString(),
-          source: 'snusbase'
+          source: 'snusbase',
+          totalRows: data.rows,
+          features: data.features
         }
       };
 
@@ -216,6 +217,35 @@ class SnusbaseService {
         hasPersonalData: analysis.dataTypes.names > 0 || analysis.dataTypes.phones > 0
       }
     };
+  }
+
+  /**
+   * Тестирование подключения к Snusbase API
+   * @returns {Promise<Object>} Результат теста
+   */
+  async testConnection() {
+    try {
+      console.log('🔍 [Snusbase] Testing API connection...');
+      
+      // Простой запрос для тестирования
+      const response = await this.client.get('/data/stats');
+      
+      console.log('✅ [Snusbase] Connection test successful');
+      return {
+        success: true,
+        message: 'Connection successful',
+        rows: response.data.rows,
+        tablesCount: Object.keys(response.data.tables || {}).length
+      };
+      
+    } catch (error) {
+      console.error('❌ [Snusbase] Connection test failed:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data || error.message,
+        status: error.response?.status
+      };
+    }
   }
 }
 
