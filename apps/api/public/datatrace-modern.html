@@ -3499,7 +3499,9 @@
             <button class="nothing-modal-close" onclick="this.closest('.nothing-modal').remove()">×</button>
           </div>
           <div class="nothing-modal-body">
-            ${formatResultData(result.items || result.error)}
+            ${window.checkIfSourceHasLeakData(result, 'ITP') ? 
+              formatITPResultData(result.items || result.error) : 
+              formatResultData(result.items || result.error)}
           </div>
         </div>
       `;
