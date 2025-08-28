@@ -1024,6 +1024,7 @@
             <span id="userEmail" class="text-sm"></span>
             <button id="logoutBtn" class="btn-secondary ml-2">Выйти</button>
           </div>
+          <button id="corporateBtn" class="btn-primary">🏢 Корпоративный тариф</button>
           <button id="loginBtn" class="btn-secondary">Войти</button>
         </div>
       </div>
@@ -1148,6 +1149,168 @@
           <div>1. Запустите бота для удаления данных</div>
           <div>2. Выберите "Мой профиль"</div>
           <div>3. Нажмите "Скрыть информацию"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Corporate Interface -->
+  <div id="corporateInterface" class="hidden">
+    <!-- Corporate Header -->
+    <header class="border-b-2 border-gray-200" style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%);">
+      <div class="container py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+            </svg>
+            <span class="text-xl font-bold text-white">DataTrace Corporate</span>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div id="corporateUserInfo" class="hidden">
+              <span id="corporateUserEmail" class="text-sm text-gray-300"></span>
+              <button id="corporateLogoutBtn" class="btn-secondary ml-2" style="color: white; border-color: white;">Выйти</button>
+            </div>
+            <button id="backToMainBtn" class="btn-secondary" style="color: white; border-color: white;">← Назад</button>
+            <button id="corporateLoginBtn" class="btn-primary" style="background: white; color: #1f2937;">Войти</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Corporate Main Content -->
+    <div class="container py-16" style="background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%); min-height: calc(100vh - 80px);">
+      <!-- Corporate Hero Section -->
+      <div class="text-center mb-16">
+        <div class="inline-flex items-center justify-center p-3 mb-6" style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-radius: 50%; width: 80px; height: 80px;">
+          <svg class="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+        </div>
+        <h1 class="text-5xl font-bold text-gray-900 leading-tight mb-6">
+          Корпоративная безопасность
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          Профессиональный анализ утечек данных компаний, проверка сотрудников и комплексный мониторинг корпоративной информационной безопасности
+        </p>
+        
+        <!-- Corporate Features -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-5xl mx-auto">
+          <div class="p-6 bg-white border-2 border-gray-200 hover:border-gray-900 transition-colors">
+            <div class="text-3xl mb-4">🏢</div>
+            <h3 class="text-lg font-bold mb-2">Проверка компаний</h3>
+            <p class="text-gray-600 text-sm">Полный анализ корпоративных данных и финансовой отчетности</p>
+          </div>
+          <div class="p-6 bg-white border-2 border-gray-200 hover:border-gray-900 transition-colors">
+            <div class="text-3xl mb-4">👥</div>
+            <h3 class="text-lg font-bold mb-2">Анализ сотрудников</h3>
+            <p class="text-gray-600 text-sm">Проверка цифрового следа персонала и выявление рисков</p>
+          </div>
+          <div class="p-6 bg-white border-2 border-gray-200 hover:border-gray-900 transition-colors">
+            <div class="text-3xl mb-4">📊</div>
+            <h3 class="text-lg font-bold mb-2">Мониторинг 24/7</h3>
+            <p class="text-gray-600 text-sm">Постоянное отслеживание новых утечек и угроз</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corporate Search Form -->
+      <div class="max-w-4xl mx-auto">
+        <!-- Corporate Mode Selection -->
+        <div class="flex gap-3 mb-8 justify-center flex-wrap">
+          <button id="corpModeCompany" class="btn-secondary active">🏢 Проверить компанию</button>
+          <button id="corpModeEmployee" class="btn-secondary">👤 Анализ сотрудника</button>
+          <button id="corpModeBatch" class="btn-secondary">📋 Массовая проверка</button>
+        </div>
+
+        <!-- Company Search Input -->
+        <div id="corporateSearchInput" class="max-w-2xl mx-auto mb-8">
+          <div class="bg-white p-8 border-2 border-gray-200 hover:border-gray-900 transition-colors">
+            <h3 class="text-xl font-bold mb-6 text-center">Проверка компании</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-bold mb-2">ИНН компании</label>
+                <input id="corporateInn" type="text" placeholder="Введите ИНН..." class="input-field w-full" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-2">Название компании (опционально)</label>
+                <input id="corporateName" type="text" placeholder="Например: ООО 'Рога и копыта'..." class="input-field w-full" />
+              </div>
+              <div class="text-center pt-4">
+                <button id="corporateSearchBtn" class="btn-primary w-full">🔍 Начать анализ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employee Search Input -->
+        <div id="employeeSearchInput" class="hidden max-w-2xl mx-auto mb-8">
+          <div class="bg-white p-8 border-2 border-gray-200 hover:border-gray-900 transition-colors">
+            <h3 class="text-xl font-bold mb-6 text-center">Анализ сотрудника</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-bold mb-2">Тип данных</label>
+                <select id="employeeField" class="select-field w-full">
+                  <option value="phone">Телефон</option>
+                  <option value="email">Email</option>
+                  <option value="fullname">ФИО</option>
+                  <option value="vk">VK профиль</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-2">Данные сотрудника</label>
+                <input id="employeeData" type="text" placeholder="Введите данные..." class="input-field w-full" />
+              </div>
+              <div class="text-center pt-4">
+                <button id="employeeSearchBtn" class="btn-primary w-full">🔍 Проверить сотрудника</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Search Input -->
+        <div id="batchSearchInput" class="hidden max-w-2xl mx-auto mb-8">
+          <div class="bg-white p-8 border-2 border-gray-200 hover:border-gray-900 transition-colors">
+            <h3 class="text-xl font-bold mb-6 text-center">Массовая проверка</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-bold mb-2">Список для проверки</label>
+                <textarea id="batchData" placeholder="Введите данные (по одному на строку):&#10;+79991234567&#10;ivan@company.com&#10;+79995556677" class="input-field w-full h-32 resize-none"></textarea>
+              </div>
+              <div class="text-xs text-gray-500">
+                💡 Поддерживаются: телефоны, email, ИНН. Максимум 100 записей за раз.
+              </div>
+              <div class="text-center pt-4">
+                <button id="batchSearchBtn" class="btn-primary w-full">📊 Запустить массовую проверку</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Corporate Progress -->
+        <div id="corporateProgressContainer" class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="corporateProgressFill"></div>
+          </div>
+          <div class="progress-text">
+            <span id="corporateProgressStatus">Ожидание...</span>
+            <span id="corporateProgressPercent" class="progress-percent">0%</span>
+          </div>
+        </div>
+
+        <!-- Corporate Results -->
+        <div id="corporateResults"></div>
+      </div>
+
+      <!-- Corporate Footer -->
+      <div class="footer-section" style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%);">
+        <div class="max-w-4xl mx-auto">
+          <div class="footer-title" style="color: white;">Корпоративная поддержка</div>
+          <div class="footer-text" style="color: #d1d5db;">
+            <div>📞 Техподдержка: +7 (800) 123-45-67</div>
+            <div>📧 Email: corporate@datatrace.ru</div>
+            <div>🕐 Работаем 24/7 для корпоративных клиентов</div>
+          </div>
         </div>
       </div>
     </div>
@@ -3098,6 +3261,567 @@
         alert('🎯 ПРОТОКОЛ БЕЗОПАСНОСТИ ЗАВЕРШЕН. ВАШ ЦИФРОВОЙ СЛЕД ТЕПЕРЬ ЗАЩИЩЕН.');
       }
     };
+
+    // ===== КОРПОРАТИВНЫЙ ИНТЕРФЕЙС =====
+    
+    // Элементы корпоративного интерфейса
+    const corporateBtn = document.getElementById('corporateBtn');
+    const corporateInterface = document.getElementById('corporateInterface');
+    const backToMainBtn = document.getElementById('backToMainBtn');
+    const mainContainer = document.querySelector('.container');
+    
+    // Корпоративные режимы
+    const corpModeCompany = document.getElementById('corpModeCompany');
+    const corpModeEmployee = document.getElementById('corpModeEmployee');
+    const corpModeBatch = document.getElementById('corpModeBatch');
+    
+    // Корпоративные формы
+    const corporateSearchInput = document.getElementById('corporateSearchInput');
+    const employeeSearchInput = document.getElementById('employeeSearchInput');
+    const batchSearchInput = document.getElementById('batchSearchInput');
+    
+    // Корпоративные кнопки поиска
+    const corporateSearchBtn = document.getElementById('corporateSearchBtn');
+    const employeeSearchBtn = document.getElementById('employeeSearchBtn');
+    const batchSearchBtn = document.getElementById('batchSearchBtn');
+    
+    // Корпоративные элементы прогресса и результатов
+    const corporateProgressContainer = document.getElementById('corporateProgressContainer');
+    const corporateProgressFill = document.getElementById('corporateProgressFill');
+    const corporateProgressStatus = document.getElementById('corporateProgressStatus');
+    const corporateProgressPercent = document.getElementById('corporateProgressPercent');
+    const corporateResults = document.getElementById('corporateResults');
+    
+    let currentCorporateMode = 'company';
+    
+    // Переключение на корпоративный интерфейс
+    if (corporateBtn) {
+      corporateBtn.addEventListener('click', () => {
+        showCorporateInterface();
+      });
+    }
+    
+    // Возврат к основному интерфейсу
+    if (backToMainBtn) {
+      backToMainBtn.addEventListener('click', () => {
+        showMainInterface();
+      });
+    }
+    
+    // Переключение корпоративных режимов
+    if (corpModeCompany) {
+      corpModeCompany.addEventListener('click', () => {
+        setCorporateMode('company');
+      });
+    }
+    
+    if (corpModeEmployee) {
+      corpModeEmployee.addEventListener('click', () => {
+        setCorporateMode('employee');
+      });
+    }
+    
+    if (corpModeBatch) {
+      corpModeBatch.addEventListener('click', () => {
+        setCorporateMode('batch');
+      });
+    }
+    
+    // Обработчики корпоративного поиска
+    if (corporateSearchBtn) {
+      corporateSearchBtn.addEventListener('click', () => {
+        performCorporateCompanySearch();
+      });
+    }
+    
+    if (employeeSearchBtn) {
+      employeeSearchBtn.addEventListener('click', () => {
+        performEmployeeSearch();
+      });
+    }
+    
+    if (batchSearchBtn) {
+      batchSearchBtn.addEventListener('click', () => {
+        performBatchSearch();
+      });
+    }
+    
+    // Функция показа корпоративного интерфейса
+    function showCorporateInterface() {
+      // Скрываем основной интерфейс
+      document.querySelector('header').style.display = 'none';
+      mainContainer.style.display = 'none';
+      
+      // Показываем корпоративный интерфейс
+      corporateInterface.style.display = 'block';
+      
+      // Устанавливаем режим по умолчанию
+      setCorporateMode('company');
+      
+      console.log('🏢 Switched to corporate interface');
+    }
+    
+    // Функция показа основного интерфейса
+    function showMainInterface() {
+      // Показываем основной интерфейс
+      document.querySelector('header').style.display = 'block';
+      mainContainer.style.display = 'block';
+      
+      // Скрываем корпоративный интерфейс
+      corporateInterface.style.display = 'none';
+      
+      console.log('🏠 Switched back to main interface');
+    }
+    
+    // Функция переключения корпоративных режимов
+    function setCorporateMode(mode) {
+      currentCorporateMode = mode;
+      
+      // Убираем активный класс со всех кнопок
+      document.querySelectorAll('#corporateInterface .btn-secondary').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Скрываем все формы
+      corporateSearchInput.style.display = 'none';
+      employeeSearchInput.style.display = 'none';
+      batchSearchInput.style.display = 'none';
+      
+      // Показываем нужную форму и активируем кнопку
+      if (mode === 'company') {
+        corpModeCompany.classList.add('active');
+        corporateSearchInput.style.display = 'block';
+      } else if (mode === 'employee') {
+        corpModeEmployee.classList.add('active');
+        employeeSearchInput.style.display = 'block';
+      } else if (mode === 'batch') {
+        corpModeBatch.classList.add('active');
+        batchSearchInput.style.display = 'block';
+      }
+      
+      // Очищаем результаты
+      corporateResults.innerHTML = '';
+      hideCorporateProgress();
+      
+      console.log(`🔄 Corporate mode set to: ${mode}`);
+    }
+    
+    // Функции прогресса для корпоративного интерфейса
+    function showCorporateProgress() {
+      corporateProgressContainer.style.display = 'block';
+      resetCorporateProgress();
+    }
+    
+    function hideCorporateProgress() {
+      corporateProgressContainer.style.display = 'none';
+    }
+    
+    function resetCorporateProgress() {
+      corporateProgressFill.style.width = '0%';
+      corporateProgressPercent.textContent = '0%';
+      corporateProgressStatus.textContent = 'Инициализация...';
+    }
+    
+    function updateCorporateProgress(percentage, statusText) {
+      corporateProgressFill.style.width = percentage + '%';
+      corporateProgressPercent.textContent = Math.round(percentage) + '%';
+      corporateProgressStatus.textContent = statusText;
+    }
+    
+    // Поиск компании в корпоративном режиме
+    async function performCorporateCompanySearch() {
+      const inn = document.getElementById('corporateInn').value.trim();
+      const name = document.getElementById('corporateName').value.trim();
+      
+      if (!inn && !name) {
+        alert('Введите ИНН или название компании');
+        return;
+      }
+      
+      corporateSearchBtn.disabled = true;
+      corporateSearchBtn.textContent = '🔄 Анализируем...';
+      corporateResults.innerHTML = '';
+      showCorporateProgress();
+      
+      try {
+        console.log('🏢 Starting corporate company search:', { inn, name });
+        
+        updateCorporateProgress(25, 'Поиск основной информации...');
+        
+        const response = await fetch('/api/company-search', {
+          method: 'POST',
+          headers: createAuthHeaders(),
+          body: JSON.stringify({
+            query: inn || name,
+            mode: 'corporate'
+          })
+        });
+        
+        updateCorporateProgress(75, 'Обработка результатов...');
+        
+        const data = await response.json();
+        
+        updateCorporateProgress(100, 'Завершено');
+        
+        setTimeout(() => {
+          hideCorporateProgress();
+          displayCorporateCompanyResults(data, inn, name);
+        }, 500);
+        
+      } catch (error) {
+        console.error('Corporate company search error:', error);
+        hideCorporateProgress();
+        corporateResults.innerHTML = `
+          <div class="result-card">
+            <div style="color: #dc2626;">
+              <strong>❌ Ошибка поиска</strong><br>
+              ${error.message}
+            </div>
+          </div>
+        `;
+      } finally {
+        corporateSearchBtn.disabled = false;
+        corporateSearchBtn.textContent = '🔍 Начать анализ';
+      }
+    }
+    
+    // Поиск сотрудника
+    async function performEmployeeSearch() {
+      const field = document.getElementById('employeeField').value;
+      const data = document.getElementById('employeeData').value.trim();
+      
+      if (!data) {
+        alert('Введите данные сотрудника');
+        return;
+      }
+      
+      employeeSearchBtn.disabled = true;
+      employeeSearchBtn.textContent = '🔄 Проверяем...';
+      corporateResults.innerHTML = '';
+      showCorporateProgress();
+      
+      try {
+        console.log('👤 Starting employee search:', { field, data });
+        
+        // Используем тот же API что и для обычного поиска утечек
+        const allResults = [];
+        const sources = [
+          { name: 'ITP', step: 1 },
+          { name: 'Dyxless', step: 2 },
+          { name: 'LeakOsint', step: 3 },
+          { name: 'Usersbox', step: 4 },
+          { name: 'Vektor', step: 5 }
+        ];
+
+        for (const source of sources) {
+          updateCorporateProgress((source.step / sources.length) * 90, `Проверка в ${source.name}...`);
+          
+          try {
+            const response = await fetch('/api/leak-search-step', {
+              method: 'POST',
+              headers: createAuthHeaders(),
+              body: JSON.stringify({
+                query: data,
+                field: field,
+                step: source.step,
+                mode: 'employee'
+              })
+            });
+
+            const stepData = await response.json();
+            
+            if (stepData.result) {
+              allResults.push({ name: source.name, ...stepData.result });
+            } else {
+              allResults.push({ name: source.name, ok: false, error: stepData.error });
+            }
+          } catch (error) {
+            console.error(`Error in ${source.name}:`, error);
+            allResults.push({ name: source.name, ok: false, error: error.message });
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        updateCorporateProgress(100, 'Завершено');
+        
+        setTimeout(() => {
+          hideCorporateProgress();
+          displayEmployeeResults(allResults, data, field);
+        }, 500);
+        
+      } catch (error) {
+        console.error('Employee search error:', error);
+        hideCorporateProgress();
+        corporateResults.innerHTML = `
+          <div class="result-card">
+            <div style="color: #dc2626;">
+              <strong>❌ Ошибка проверки</strong><br>
+              ${error.message}
+            </div>
+          </div>
+        `;
+      } finally {
+        employeeSearchBtn.disabled = false;
+        employeeSearchBtn.textContent = '🔍 Проверить сотрудника';
+      }
+    }
+    
+    // Массовая проверка
+    async function performBatchSearch() {
+      const batchData = document.getElementById('batchData').value.trim();
+      
+      if (!batchData) {
+        alert('Введите данные для массовой проверки');
+        return;
+      }
+      
+      const lines = batchData.split('\n').filter(line => line.trim().length > 0);
+      
+      if (lines.length === 0) {
+        alert('Нет данных для проверки');
+        return;
+      }
+      
+      if (lines.length > 100) {
+        alert('Максимум 100 записей за раз');
+        return;
+      }
+      
+      batchSearchBtn.disabled = true;
+      batchSearchBtn.textContent = '🔄 Обрабатываем...';
+      corporateResults.innerHTML = '';
+      showCorporateProgress();
+      
+      try {
+        console.log('📋 Starting batch search for', lines.length, 'items');
+        
+        const batchResults = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          const item = lines[i].trim();
+          const progress = (i / lines.length) * 100;
+          
+          updateCorporateProgress(progress, `Проверяем ${i + 1} из ${lines.length}: ${item.substring(0, 20)}...`);
+          
+          // Определяем тип данных автоматически
+          const field = detectDataType(item);
+          
+          try {
+            // Быстрая проверка только в одном источнике для массовой проверки
+            const response = await fetch('/api/leak-search-step', {
+              method: 'POST',
+              headers: createAuthHeaders(),
+              body: JSON.stringify({
+                query: item,
+                field: field,
+                step: 1, // Только ITP для быстроты
+                mode: 'batch'
+              })
+            });
+
+            const stepData = await response.json();
+            batchResults.push({
+              query: item,
+              field: field,
+              result: stepData.result || { ok: false, error: stepData.error }
+            });
+            
+          } catch (error) {
+            batchResults.push({
+              query: item,
+              field: field,
+              result: { ok: false, error: error.message }
+            });
+          }
+          
+          // Пауза между запросами
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        updateCorporateProgress(100, 'Завершено');
+        
+        setTimeout(() => {
+          hideCorporateProgress();
+          displayBatchResults(batchResults);
+        }, 500);
+        
+      } catch (error) {
+        console.error('Batch search error:', error);
+        hideCorporateProgress();
+        corporateResults.innerHTML = `
+          <div class="result-card">
+            <div style="color: #dc2626;">
+              <strong>❌ Ошибка массовой проверки</strong><br>
+              ${error.message}
+            </div>
+          </div>
+        `;
+      } finally {
+        batchSearchBtn.disabled = false;
+        batchSearchBtn.textContent = '📊 Запустить массовую проверку';
+      }
+    }
+    
+    // Функция определения типа данных
+    function detectDataType(data) {
+      if (/^\+?[0-9\s\-\(\)]{10,}$/.test(data)) {
+        return 'phone';
+      } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data)) {
+        return 'email';
+      } else if (/^\d{10,12}$/.test(data)) {
+        return 'inn';
+      } else if (/vk\.com|vkontakte\.ru/.test(data)) {
+        return 'vk';
+      } else {
+        return 'email'; // По умолчанию
+      }
+    }
+    
+    // Функции отображения результатов
+    function displayCorporateCompanyResults(data, inn, name) {
+      const searchQuery = inn || name;
+      
+      corporateResults.innerHTML = `
+        <div class="result-card" style="border: 2px solid #1f2937;">
+          <div class="result-header">
+            <div class="result-title">🏢 Корпоративный анализ: ${searchQuery}</div>
+            <span class="status-badge ${data.success ? 'status-clean' : 'status-error'}">
+              ${data.success ? 'Завершен' : 'Ошибка'}
+            </span>
+          </div>
+          <div class="result-body" style="display: block;">
+            ${data.success ? formatResultData(data.result || {}) : `<div style="color: #dc2626;">${data.error}</div>`}
+          </div>
+        </div>
+        
+        <div class="mt-8 p-6 bg-gray-50 border-2 border-gray-200">
+          <h3 class="text-lg font-bold mb-4">🎯 Дополнительные корпоративные функции</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button class="btn-secondary w-full" onclick="alert('🚧 Функция в разработке')">
+              📊 Финансовый анализ
+            </button>
+            <button class="btn-secondary w-full" onclick="alert('🚧 Функция в разработке')">
+              👥 Анализ руководства
+            </button>
+            <button class="btn-secondary w-full" onclick="alert('🚧 Функция в разработке')">
+              🔍 Углубленная проверка
+            </button>
+            <button class="btn-secondary w-full" onclick="alert('🚧 Функция в разработке')">
+              📈 Мониторинг изменений
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    function displayEmployeeResults(results, query, field) {
+      let html = `
+        <div class="result-card" style="border: 2px solid #1f2937;">
+          <div class="result-header">
+            <div class="result-title">👤 Анализ сотрудника: ${query}</div>
+            <span class="status-badge status-clean">Завершен</span>
+          </div>
+          <div class="result-body" style="display: block;">
+            <div class="data-grid">
+              <div class="data-label">🔍 Тип данных</div>
+              <div class="data-value">${getFieldName(field)}</div>
+              <div class="data-label">📊 Проверено источников</div>
+              <div class="data-value">${results.length}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Добавляем результаты по источникам
+      results.forEach(result => {
+        const sourceName = result.name;
+        let status = 'success';
+        
+        if (result.error) {
+          status = 'warning';
+        } else if (result.ok && result.items) {
+          const hasData = window.checkIfSourceHasLeakData(result, sourceName);
+          if (hasData) {
+            status = 'danger';
+          }
+        }
+        
+        const item = createResultItem(`👤 ${sourceName}`, status, result.items || result.error);
+        html += item.outerHTML;
+      });
+      
+      corporateResults.innerHTML = html;
+    }
+    
+    function displayBatchResults(results) {
+      const totalItems = results.length;
+      const foundItems = results.filter(r => r.result.ok && r.result.items).length;
+      const errorItems = results.filter(r => !r.result.ok).length;
+      
+      let html = `
+        <div class="result-card" style="border: 2px solid #1f2937;">
+          <div class="result-header">
+            <div class="result-title">📊 Результаты массовой проверки</div>
+            <span class="status-badge status-clean">Завершено</span>
+          </div>
+          <div class="result-body" style="display: block;">
+            <div class="data-grid">
+              <div class="data-label">📝 Всего проверено</div>
+              <div class="data-value">${totalItems}</div>
+              <div class="data-label">🚨 Найдено утечек</div>
+              <div class="data-value" style="color: ${foundItems > 0 ? '#dc2626' : '#059669'};">${foundItems}</div>
+              <div class="data-label">❌ Ошибок</div>
+              <div class="data-value">${errorItems}</div>
+              <div class="data-label">✅ Безопасно</div>
+              <div class="data-value">${totalItems - foundItems - errorItems}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Детальные результаты
+      results.forEach((item, index) => {
+        let status = 'success';
+        let statusText = 'Чисто';
+        
+        if (!item.result.ok) {
+          status = 'warning';
+          statusText = 'Ошибка';
+        } else if (item.result.items && window.checkIfSourceHasLeakData(item.result, 'ITP')) {
+          status = 'danger';
+          statusText = 'Найдено';
+        }
+        
+        html += `
+          <div class="result-card">
+            <div class="result-header" onclick="toggleResult(this)">
+              <div class="result-title">${index + 1}. ${item.query} (${getFieldName(item.field)})</div>
+              <div class="flex items-center gap-3">
+                <span class="status-badge ${status === 'success' ? 'status-clean' : status === 'danger' ? 'status-found' : 'status-error'}">${statusText}</span>
+                <span class="caret">▶</span>
+              </div>
+            </div>
+            <div class="result-body">
+              ${typeof item.result.items === 'string' ? item.result.items : formatResultData(item.result.items || item.result.error)}
+            </div>
+          </div>
+        `;
+      });
+      
+      corporateResults.innerHTML = html;
+    }
+    
+    function getFieldName(field) {
+      const fieldNames = {
+        'phone': 'Телефон',
+        'email': 'Email',
+        'fullname': 'ФИО',
+        'vk': 'VK профиль',
+        'inn': 'ИНН'
+      };
+      return fieldNames[field] || field;
+    }
   </script>
 
   <!-- AI Loading Overlay -->
