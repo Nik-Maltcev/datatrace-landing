@@ -1993,6 +1993,146 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'datatrace-modern.html'));
 });
 
+// Snusbase API endpoints
+const SnusbaseService = require('./services/SnusbaseService');
+const snusbaseService = new SnusbaseService();
+
+// Domain search endpoint for Snusbase
+app.post('/api/snusbase/domain-search', requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { domain } = req.body;
+    
+    if (!domain || typeof domain !== 'string') {
+      return res.status(400).json({
+        ok: false,
+        error: 'Домен обязателен для поиска'
+      });
+    }
+
+    // Простая валидация домена
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
+    if (!domainRegex.test(domain.trim())) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Введите корректный домен (например: company.com)'
+      });
+    }
+
+    console.log(`🌐 Snusbase domain search request for: ${domain}`);
+
+    const cleanDomain = domain.trim().toLowerCase();
+    const searchResult = await snusbaseService.searchByDomain(cleanDomain);
+
+    if (!searchResult.success) {
+      console.error(`❌ Snusbase search failed for ${cleanDomain}:`, searchResult.error);
+      return res.status(500).json({
+        ok: false,
+        error: searchResult.error || 'Ошибка поиска в базе данных утечек'
+      });
+    }
+
+    // Форматируем результаты для фронтенда
+    const formattedResult = snusbaseService.formatForFrontend(searchResult);
+
+    console.log(`✅ Snusbase search completed for ${cleanDomain}: ${formattedResult.totalResults} results`);
+
+    res.json({
+      ok: true,
+      domain: cleanDomain,
+      results: formattedResult.results,
+      databases: formattedResult.databases,
+      analysis: formattedResult.analysis,
+      summary: formattedResult.summary,
+      metadata: formattedResult.metadata,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Snusbase domain search error:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Внутренняя ошибка сервера при поиске утечек'
+    });
+  }
+});
+
+// Snusbase stats endpoint
+app.post('/api/snusbase/stats', requireAuth, userRateLimit(5, 15 * 60 * 1000), async (req, res) => {
+  try {
+    const { domain } = req.body;
+    
+    if (!domain || typeof domain !== 'string') {
+      return res.status(400).json({
+        ok: false,
+        error: 'Домен обязателен для получения статистики'
+      });
+    }
+
+    console.log(`📊 Snusbase stats request for: ${domain}`);
+
+    const cleanDomain = domain.trim().toLowerCase();
+    const statsResult = await snusbaseService.getDomainStats(cleanDomain);
+
+    if (!statsResult.success) {
+      console.error(`❌ Snusbase stats failed for ${cleanDomain}:`, statsResult.error);
+      return res.status(500).json({
+        ok: false,
+        error: statsResult.error || 'Ошибка получения статистики'
+      });
+    }
+
+    console.log(`✅ Snusbase stats completed for ${cleanDomain}`);
+
+    res.json({
+      ok: true,
+      domain: cleanDomain,
+      stats: statsResult.stats,
+      metadata: statsResult.metadata,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Snusbase stats error:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Внутренняя ошибка сервера при получении статистики'
+    });
+  }
+});
+
+// Snusbase databases list endpoint
+app.get('/api/snusbase/databases', requireAuth, userRateLimit(3, 60 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('📋 Snusbase databases list request');
+
+    const databasesResult = await snusbaseService.getDatabases();
+
+    if (!databasesResult.success) {
+      console.error('❌ Snusbase databases list failed:', databasesResult.error);
+      return res.status(500).json({
+        ok: false,
+        error: databasesResult.error || 'Ошибка получения списка баз данных'
+      });
+    }
+
+    console.log(`✅ Snusbase databases list completed: ${databasesResult.databases.length} databases`);
+
+    res.json({
+      ok: true,
+      databases: databasesResult.databases,
+      metadata: databasesResult.metadata,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Snusbase databases error:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Внутренняя ошибка сервера при получении списка баз данных'
+    });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   // eslint-disable-next-line no-console
   console.log(`🚀 Server listening on http://0.0.0.0:${PORT}`);
