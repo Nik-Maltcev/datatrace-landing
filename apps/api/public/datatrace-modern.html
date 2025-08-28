@@ -1035,21 +1035,101 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 6px;
       padding: 12px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       font-family: 'PT Mono', monospace;
     }
 
     .record-email {
       color: #ff6b6b;
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
       font-size: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 6px;
+    }
+
+    .record-details {
+      margin: 8px 0;
+    }
+
+    .record-field {
+      margin: 4px 0;
+      padding: 3px 0;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .record-field strong {
+      color: #4ecdc4;
+      display: inline-block;
+      min-width: 100px;
+    }
+
+    .password-hidden {
+      background: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+
+    .hash-preview {
+      background: rgba(255, 206, 84, 0.2);
+      color: #ffce54;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: monospace;
     }
 
     .record-meta {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leak-source {
+      background: rgba(76, 209, 196, 0.2);
+      color: #4ecdc4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .db-stats {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 5px;
+    }
+
+    .data-types-summary {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .data-type-badge {
+      background: rgba(76, 209, 196, 0.2);
+      color: #4ecdc4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .data-type-badge.critical {
+      background: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+    }
+
+    .data-type-badge.warning {
+      background: rgba(255, 206, 84, 0.2);
+      color: #ffce54;
     }
 
     .leak-type {
@@ -3772,10 +3852,30 @@
       
       // Отображаем результаты по каждой базе
       Object.entries(groupedResults).forEach(([dbName, results]) => {
+        // Анализируем типы данных в этой базе
+        const dataTypes = {
+          emails: results.filter(r => r.email).length,
+          passwords: results.filter(r => r.password).length,
+          hashes: results.filter(r => r.hash).length,
+          names: results.filter(r => r.name).length,
+          phones: results.filter(r => r.phone).length,
+          addresses: results.filter(r => r.address || r.city || r.country).length
+        };
+        
         html += `
           <div class="database-group">
             <h4>📊 База данных: ${dbName}</h4>
-            <p>Найдено записей: <strong>${results.length}</strong></p>
+            <div class="db-stats">
+              <p><strong>Найдено записей:</strong> ${results.length}</p>
+              <div class="data-types-summary">
+                ${dataTypes.emails > 0 ? `<span class="data-type-badge">📧 Email: ${dataTypes.emails}</span>` : ''}
+                ${dataTypes.names > 0 ? `<span class="data-type-badge">👤 Имена: ${dataTypes.names}</span>` : ''}
+                ${dataTypes.phones > 0 ? `<span class="data-type-badge">📱 Телефоны: ${dataTypes.phones}</span>` : ''}
+                ${dataTypes.passwords > 0 ? `<span class="data-type-badge critical">🔑 Пароли: ${dataTypes.passwords}</span>` : ''}
+                ${dataTypes.hashes > 0 ? `<span class="data-type-badge warning">🔐 Хеши: ${dataTypes.hashes}</span>` : ''}
+                ${dataTypes.addresses > 0 ? `<span class="data-type-badge">🏠 Адреса: ${dataTypes.addresses}</span>` : ''}
+              </div>
+            </div>
             
             <div class="records-preview">
         `;
@@ -3784,12 +3884,25 @@
         results.slice(0, 5).forEach(record => {
           html += `
             <div class="record-item">
-              <div class="record-email">${record.email || 'Email скрыт'}</div>
+              <div class="record-email">📧 ${record.email || 'Email скрыт'}</div>
+              <div class="record-details">
+                ${record.name ? `<div class="record-field"><strong>👤 Имя:</strong> ${record.name}</div>` : ''}
+                ${record.phone ? `<div class="record-field"><strong>📱 Телефон:</strong> ${record.phone}</div>` : ''}
+                ${record.password ? `<div class="record-field"><strong>🔑 Пароль:</strong> <span class="password-hidden">${record.password.length > 20 ? record.password.substring(0, 20) + '...' : record.password}</span></div>` : ''}
+                ${record.hash ? `<div class="record-field"><strong>🔐 Хеш:</strong> <span class="hash-preview">${record.hash.substring(0, 16)}...</span></div>` : ''}
+                ${record.address ? `<div class="record-field"><strong>🏠 Адрес:</strong> ${record.address}</div>` : ''}
+                ${record.city ? `<div class="record-field"><strong>🏙️ Город:</strong> ${record.city}</div>` : ''}
+                ${record.country ? `<div class="record-field"><strong>🌍 Страна:</strong> ${record.country}</div>` : ''}
+                ${record.birthdate && record.birthdate !== '0000-00-00' ? `<div class="record-field"><strong>🎂 Дата рождения:</strong> ${record.birthdate}</div>` : ''}
+                ${record.gender ? `<div class="record-field"><strong>⚧️ Пол:</strong> ${record.gender}</div>` : ''}
+                ${record.job ? `<div class="record-field"><strong>💼 Работа:</strong> ${record.job}</div>` : ''}
+                ${record.company ? `<div class="record-field"><strong>🏢 Компания:</strong> ${record.company}</div>` : ''}
+                ${record.created ? `<div class="record-field"><strong>📅 Дата создания:</strong> ${new Date(record.created).toLocaleDateString('ru-RU')}</div>` : ''}
+                ${record.lastip ? `<div class="record-field"><strong>🌐 Последний IP:</strong> ${record.lastip}</div>` : ''}
+                ${record.username ? `<div class="record-field"><strong>👨‍💻 Имя пользователя:</strong> ${record.username}</div>` : ''}
+              </div>
               <div class="record-meta">
-                ${record.password ? '<span class="leak-type">Пароль</span>' : ''}
-                ${record.hash ? '<span class="leak-type">Хеш</span>' : ''}
-                ${record.name ? '<span class="leak-type">Имя</span>' : ''}
-                ${record.phone ? '<span class="leak-type">Телефон</span>' : ''}
+                <span class="leak-source">Источник: ${record.database || 'Неизвестно'}</span>
               </div>
             </div>
           `;
