@@ -2479,12 +2479,27 @@
 
     // Функция форматирования данных результата
     function formatITPResultData(data) {
-      if (!data) return '<div style="color: #6b7280;">Нет данных</div>';
+      console.log('🔧 formatITPResultData called with:', {
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'not array',
+        keys: data && typeof data === 'object' ? Object.keys(data).slice(0, 3) : 'no keys'
+      });
+      
+      if (!data) {
+        console.log('❌ formatITPResultData: No data provided');
+        return '<div style="color: #6b7280;">Нет данных</div>';
+      }
       
       const formattedData = {};
       formatITPData(data, formattedData);
       
-      return formatResultData(formattedData);
+      console.log('✅ formatITPResultData: Formatted data keys:', Object.keys(formattedData));
+      
+      const result = formatResultData(formattedData);
+      console.log('📋 formatITPResultData: Final result length:', result ? result.length : 'null');
+      
+      return result;
     }
 
     function formatResultData(data) {
@@ -4294,8 +4309,16 @@
             </div>
             <div class="result-body">
               ${typeof item.result.items === 'string' ? item.result.items : 
-                (window.checkIfSourceHasLeakData(item.result, 'ITP') ? formatITPResultData(item.result.items || item.result.error) : 
-                 formatResultData(item.result.items || item.result.error))}
+                (() => {
+                  const isITP = window.checkIfSourceHasLeakData(item.result, 'ITP');
+                  console.log('🎯 Formatting decision for result:', {
+                    isITP: isITP,
+                    itemsType: typeof item.result.items,
+                    itemsLength: Array.isArray(item.result.items) ? item.result.items.length : 'not array'
+                  });
+                  return isITP ? formatITPResultData(item.result.items || item.result.error) : 
+                         formatResultData(item.result.items || item.result.error);
+                })()}
             </div>
           </div>
         `;
