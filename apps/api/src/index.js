@@ -128,6 +128,16 @@ async function searchITP(query, field) {
     );
     const data = res.data || {};
     
+    // Логируем структуру ответа ITP для отладки
+    console.log(`🔍 ITP response structure:`, {
+      statusCode: res.status,
+      hasData: !!data.data,
+      dataType: typeof data.data,
+      dataKeys: data.data ? Object.keys(data.data) : 'no data',
+      dataLength: Array.isArray(data.data) ? data.data.length : 'not array',
+      fullResponseKeys: Object.keys(data)
+    });
+    
     // Нормализуем данные ITP
     const normalizedItems = data.data ? ITPNormalizer.normalizeRecords(data.data) : [];
     
