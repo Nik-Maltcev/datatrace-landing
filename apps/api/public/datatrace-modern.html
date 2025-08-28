@@ -2044,63 +2044,114 @@
       
       // Если data это массив нормализованных записей
       if (Array.isArray(data)) {
-        formattedData['📊 Общая информация'] = `Найдено ${data.length} записей`;
+        formattedData['📊 Общая информация'] = `Найдено ${data.length} записей в базах данных`;
         
-        // Показываем детали каждой записи
-        data.slice(0, 5).forEach((record, index) => {
+        // Показываем каждую запись в структурированном виде
+        data.forEach((record, index) => {
           if (record && typeof record === 'object') {
-            const recordDetails = [];
+            const userName = record.name || 'Пользователь';
+            const dbName = record.dbName || record.source_database || 'Неизвестная БД';
+            
+            // Заголовок записи
+            const recordTitle = `📄 Запись ${index + 1}: ${userName}`;
+            let recordContent = [];
             
             // Основная информация
-            if (record.name) recordDetails.push(`👤 ${record.name}`);
-            if (record.phone) recordDetails.push(`📱 ${record.phone}`);
-            if (record.email) recordDetails.push(`📧 ${record.email}`);
-            if (record.address) recordDetails.push(`🏠 ${record.address}`);
-            if (record.birthDate) recordDetails.push(`🎂 ${record.birthDate}`);
-            if (record.gender) recordDetails.push(`⚧️ ${record.gender}`);
+            recordContent.push('🔹 Основная информация:');
+            if (record.dataProvider || record._original?.data_provider) {
+              recordContent.push(`  � Источник данных: ${record.dataProvider || record._original.data_provider}`);
+            }
+            recordContent.push(`  💾 База данных: ${dbName}`);
             
-            // Аккаунты и безопасность
-            if (record.login) recordDetails.push(`👨‍💻 ${record.login}`);
-            if (record.password) recordDetails.push(`🔑 ${record.password.substring(0, 8)}***`);
-            if (record.passwordHash) recordDetails.push(`🔐 Хеш: ${record.passwordHash.substring(0, 16)}...`);
+            if (record.name) recordContent.push(`  � Имя: ${record.name}`);
+            if (record.email) recordContent.push(`  📧 Email: ${record.email}`);
+            if (record.phone) recordContent.push(`  📱 Телефон: ${record.phone}`);
+            if (record.address) recordContent.push(`  🏠 Адрес: ${record.address}`);
+            if (record.birthDate) recordContent.push(`  🎂 Дата рождения: ${record.birthDate}`);
+            if (record.gender) recordContent.push(`  ⚧️ Пол: ${record.gender}`);
+            if (record.isVip !== undefined) {
+              recordContent.push(`  ⭐ VIP статус: ${record.isVip ? 'Да' : 'Нет'}`);
+            }
+            
+            // Учетные записи и безопасность
+            const original = record._original;
+            if (original?.accounts && Array.isArray(original.accounts) && original.accounts.length > 0) {
+              recordContent.push('');
+              recordContent.push('🔐 Учетные записи:');
+              original.accounts.forEach(account => {
+                if (account.title) recordContent.push(`  🏷️ Сервис: ${account.title}`);
+                if (account.login) recordContent.push(`  👨‍💻 Логин: ${account.login}`);
+                if (account.password) recordContent.push(`  🔑 Пароль: ${account.password}`);
+                if (account.password_hash) recordContent.push(`  🔐 Хеш пароля: ${account.password_hash}`);
+                if (account.id) recordContent.push(`  🆔 ID: ${account.id}`);
+                if (account.url) recordContent.push(`  🌐 URL: ${account.url}`);
+              });
+            }
             
             // Финансовая информация
-            if (record.cardNumber) recordDetails.push(`💳 ${record.cardNumber}`);
+            if (original?.financials && Array.isArray(original.financials) && original.financials.length > 0) {
+              recordContent.push('');
+              recordContent.push('💳 Финансовая информация:');
+              original.financials.forEach(financial => {
+                if (financial.title) recordContent.push(`  🏦 Банк: ${financial.title}`);
+                if (financial.card_number) recordContent.push(`  💳 Номер карты: ${financial.card_number}`);
+                if (financial.date && financial.date !== 'undefined') recordContent.push(`  📅 Дата: ${financial.date}`);
+              });
+            }
             
             // Документы
-            if (record.documents) {
-              const doc = record.documents;
-              const docInfo = [];
-              if (doc.type) docInfo.push(doc.type);
-              if (doc.serial) docInfo.push(`№${doc.serial}`);
-              if (doc.authority) docInfo.push(doc.authority);
-              if (docInfo.length > 0) {
-                recordDetails.push(`📄 ${docInfo.join(', ')}`);
-              }
+            if (original?.documents && Array.isArray(original.documents) && original.documents.length > 0) {
+              recordContent.push('');
+              recordContent.push('📄 Документы:');
+              original.documents.forEach(doc => {
+                if (doc.type !== undefined) {
+                  const docType = doc.type === 0 ? 'Паспорт' : doc.type === 1 ? 'СНИЛС' : `Тип ${doc.type}`;
+                  recordContent.push(`  📋 Тип: ${docType}`);
+                }
+                if (doc.serial) recordContent.push(`  🔢 Номер: ${doc.serial}`);
+                if (doc.authority) recordContent.push(`  🏛️ Орган выдачи: ${doc.authority}`);
+                if (doc.country) recordContent.push(`  🌍 Страна: ${doc.country}`);
+                if (doc.date_issue) recordContent.push(`  � Дата выдачи: ${doc.date_issue}`);
+              });
+            }
+            
+            // Телеграм и социальные сети
+            if (record.telegramId) {
+              recordContent.push('');
+              recordContent.push('📱 Социальные сети:');
+              recordContent.push(`  📱 Telegram ID: ${record.telegramId}`);
+            }
+            
+            // Дополнительные имена
+            if (record.additionalNames && Array.isArray(record.additionalNames)) {
+              recordContent.push('');
+              recordContent.push('👥 Дополнительные имена:');
+              record.additionalNames.forEach(name => {
+                recordContent.push(`  📝 ${name}`);
+              });
             }
             
             // Дополнительная информация
-            if (record.telegramId) recordDetails.push(`📱 TG: ${record.telegramId}`);
-            if (record.phoneCarrier) recordDetails.push(`📶 ${record.phoneCarrier}`);
-            if (record.phoneRegion) recordDetails.push(`🌍 ${record.phoneRegion}`);
-            if (record.dbName) recordDetails.push(`💾 БД: ${record.dbName}`);
-            if (record.isVip) recordDetails.push(`⭐ VIP`);
+            const additionalInfo = [];
+            if (record.actuality) additionalInfo.push(`📅 Актуальность данных: ${record.actuality}`);
+            if (record.createdDate) additionalInfo.push(`� Дата создания: ${record.createdDate}`);
+            if (record.phoneCarrier) additionalInfo.push(`📶 Оператор связи: ${record.phoneCarrier}`);
+            if (record.phoneRegion) additionalInfo.push(`🌍 Регион: ${record.phoneRegion}`);
+            if (record.crmId) additionalInfo.push(`🔢 CRM ID: ${record.crmId}`);
+            if (record.senderInn) additionalInfo.push(`🏢 ИНН отправителя: ${record.senderInn}`);
+            if (record.senderName) additionalInfo.push(`👔 Отправитель: ${record.senderName}`);
+            if (record.postalCode) additionalInfo.push(`📮 Индекс: ${record.postalCode}`);
+            if (record.notes) additionalInfo.push(`� Заметки: ${record.notes.substring(0, 100)}...`);
             
-            // Технические данные
-            if (record.crmId) recordDetails.push(`🔢 CRM: ${record.crmId}`);
-            if (record.createdDate) recordDetails.push(`📅 ${record.createdDate}`);
-            if (record.senderInn) recordDetails.push(`🏢 ИНН: ${record.senderInn}`);
-            if (record.senderName) recordDetails.push(`👔 ${record.senderName}`);
-            
-            if (recordDetails.length > 0) {
-              formattedData[`📄 Запись ${index + 1}`] = recordDetails.join(' | ');
+            if (additionalInfo.length > 0) {
+              recordContent.push('');
+              recordContent.push('🔹 Дополнительно:');
+              additionalInfo.forEach(info => recordContent.push(`  ${info}`));
             }
+            
+            formattedData[recordTitle] = recordContent.join('\n');
           }
         });
-        
-        if (data.length > 5) {
-          formattedData['📋 Дополнительно'] = `... и еще ${data.length - 5} записей`;
-        }
         
         return;
       }
