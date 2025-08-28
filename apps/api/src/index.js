@@ -101,6 +101,9 @@ function extractUsernameIfSocial(field, query) {
   }
 }
 
+// Import normalizers
+const ITPNormalizer = require('./utils/ITPNormalizer');
+
 async function searchITP(query, field) {
   try {
     const itpTypeMap = {
@@ -124,7 +127,24 @@ async function searchITP(query, field) {
       { headers: { 'x-api-key': TOKENS.ITP } }
     );
     const data = res.data || {};
-    return { name: 'ITP', ok: true, meta: { records: data.records, searchId: data.searchId }, items: data.data };
+    
+    // Нормализуем данные ITP
+    const normalizedItems = data.data ? ITPNormalizer.normalizeRecords(data.data) : [];
+    
+    console.log(`📊 ITP normalized ${normalizedItems.length} records from ${data.data?.length || 0} original records`);
+    
+    return { 
+      name: 'ITP', 
+      ok: true, 
+      meta: { 
+        records: data.records, 
+        searchId: data.searchId,
+        originalCount: data.data?.length || 0,
+        normalizedCount: normalizedItems.length
+      }, 
+      items: normalizedItems,
+      _originalItems: data.data // Сохраняем оригинальные данные для отладки
+    };
   } catch (err) {
     return { name: 'ITP', ok: false, error: normalizeError(err) };
   }
