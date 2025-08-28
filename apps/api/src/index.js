@@ -2086,6 +2086,13 @@ app.post('/api/snusbase/domain-search', userRateLimit(10, 15 * 60 * 1000), async
     const formattedResult = snusbaseService.formatForFrontend(searchResult);
 
     console.log(`✅ Snusbase search completed for ${cleanDomain}: ${formattedResult.totalResults} results`);
+    console.log(`📊 Results structure:`, {
+      totalResults: formattedResult.totalResults,
+      resultsLength: formattedResult.results?.length,
+      hasResults: Array.isArray(formattedResult.results),
+      firstResult: formattedResult.results?.[0] ? 'has data' : 'empty',
+      analysisPresent: !!formattedResult.analysis
+    });
 
     res.json({
       ok: true,

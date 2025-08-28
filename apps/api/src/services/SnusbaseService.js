@@ -5,6 +5,13 @@ class SnusbaseService {
     this.apiKey = process.env.SNUSBASE_API_KEY || 'sb99cd2vxyohst65mh98ydz6ud844l'; // Fallback для разработки
     this.baseUrl = 'https://api.snusbase.com'; // Исправлен URL согласно документации
     
+    console.log(`🔑 [Snusbase] API Key info:`, {
+      hasEnvKey: !!process.env.SNUSBASE_API_KEY,
+      envKeyLength: (process.env.SNUSBASE_API_KEY || '').length,
+      usingKey: this.apiKey.substring(0, 8) + '...',
+      keyLength: this.apiKey.length
+    });
+    
     if (!process.env.SNUSBASE_API_KEY) {
       console.warn('⚠️ [Snusbase] SNUSBASE_API_KEY not found in environment variables, using fallback key');
     } else {
@@ -32,11 +39,16 @@ class SnusbaseService {
     try {
       console.log(`🌐 [Snusbase] Searching for domain: ${domain}`);
       
-      const response = await this.client.post('/data/search', {
-        terms: [`@${domain}`],
-        types: ['email'],
+      const searchParams = {
+        terms: [`_domain:${domain}`],
+        types: ['_domain'],
         wildcard: false
-      });
+      };
+      
+      console.log(`📋 [Snusbase] Search params:`, searchParams);
+      console.log(`🔑 [Snusbase] Using API key:`, this.apiKey.substring(0, 8) + '...');
+      
+      const response = await this.client.post('/data/search', searchParams);
 
       const data = response.data;
       
