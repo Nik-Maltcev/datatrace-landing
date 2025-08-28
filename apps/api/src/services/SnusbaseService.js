@@ -40,7 +40,7 @@ class SnusbaseService {
       console.log(`🌐 [Snusbase] Searching for domain: ${domain}`);
       
       const searchParams = {
-        terms: [`_domain:${domain}`],
+        terms: [domain],
         types: ['_domain'],
         wildcard: false
       };
