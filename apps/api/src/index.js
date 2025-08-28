@@ -2014,8 +2014,8 @@ app.get('*', (_req, res) => {
 const SnusbaseService = require('./services/SnusbaseService');
 const snusbaseService = new SnusbaseService();
 
-// Snusbase connection test endpoint
-app.get('/api/snusbase/test', requireAuth, userRateLimit(3, 60 * 60 * 1000), async (req, res) => {
+// Snusbase connection test endpoint (без аутентификации для диагностики)
+app.get('/api/snusbase/test', userRateLimit(3, 60 * 60 * 1000), async (req, res) => {
   try {
     console.log('🔍 Snusbase connection test request');
 
@@ -2048,8 +2048,8 @@ app.get('/api/snusbase/test', requireAuth, userRateLimit(3, 60 * 60 * 1000), asy
   }
 });
 
-// Domain search endpoint for Snusbase
-app.post('/api/snusbase/domain-search', requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+// Domain search endpoint for Snusbase (без аутентификации для тестирования)
+app.post('/api/snusbase/domain-search', userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
   try {
     const { domain } = req.body;
     

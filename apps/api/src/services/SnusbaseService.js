@@ -39,17 +39,38 @@ class SnusbaseService {
       });
 
       const data = response.data;
-      console.log(`✅ [Snusbase] Found ${data.results?.length || 0} results for domain ${domain}`);
+      
+      // Согласно документации, results - это объект с группировкой по базам данных
+      const resultsObj = data.results || {};
+      
+      // Преобразуем объект в массив для удобства
+      const allResults = [];
+      Object.keys(resultsObj).forEach(dbName => {
+        const dbResults = resultsObj[dbName];
+        if (Array.isArray(dbResults)) {
+          dbResults.forEach(record => {
+            allResults.push({
+              ...record,
+              database: dbName
+            });
+          });
+        }
+      });
+      
+      console.log(`✅ [Snusbase] Found ${allResults.length} results for domain ${domain} across ${Object.keys(resultsObj).length} databases`);
       
       return {
         success: true,
         domain: domain,
-        totalResults: data.results?.length || 0,
-        results: data.results || [],
-        databases: this.groupByDatabase(data.results || []),
+        totalResults: allResults.length,
+        results: allResults,
+        databases: this.groupByDatabase(allResults),
+        rawResults: resultsObj, // Сохраняем оригинальные данные
         metadata: {
           searchedAt: new Date().toISOString(),
-          source: 'snusbase'
+          source: 'snusbase',
+          took: data.took,
+          size: data.size
         }
       };
 
@@ -140,6 +161,12 @@ class SnusbaseService {
    * @returns {Object} Сгруппированные результаты
    */
   groupByDatabase(results) {
+    // Проверяем что results это массив
+    if (!Array.isArray(results)) {
+      console.warn('⚠️ [Snusbase] groupByDatabase: expected array, got:', typeof results);
+      return {};
+    }
+    
     const grouped = {};
     
     results.forEach(result => {
@@ -164,9 +191,15 @@ class SnusbaseService {
    * @returns {Object} Анализ данных
    */
   analyzeResults(results) {
+    // Проверяем что results это массив
+    if (!Array.isArray(results)) {
+      console.warn('⚠️ [Snusbase] analyzeResults: expected array, got:', typeof results);
+      results = [];
+    }
+    
     const analysis = {
       totalRecords: results.length,
-      uniqueDatabases: new Set(results.map(r => r.database)).size,
+      uniqueDatabases: new Set(results.map(r => r.database || 'unknown')).size,
       dataTypes: {
         emails: 0,
         passwords: 0,
