@@ -247,46 +247,47 @@ class ITPNormalizer {
   }
 
   /**
-   * Нормализация массива записей ITP
-   * @param {Array} records - Массив записей
+   * Нормализация данных ITP (объект с базами данных)
+   * @param {Object} rawData - Объект где ключи = названия БД, значения = { data: [...] }
    * @returns {Array} Нормализованные записи
    */
-  static normalizeRecords(records) {
+  static normalizeRecords(rawData) {
     console.log(`🔧 ITPNormalizer.normalizeRecords called with:`, {
-      inputType: typeof records,
-      isArray: Array.isArray(records),
-      length: Array.isArray(records) ? records.length : 'not array',
-      keys: records && typeof records === 'object' ? Object.keys(records) : 'no keys'
+      inputType: typeof rawData,
+      isArray: Array.isArray(rawData),
+      keys: rawData && typeof rawData === 'object' ? Object.keys(rawData).slice(0, 5) : 'no keys'
     });
     
-    if (!Array.isArray(records)) {
-      console.log(`⚠️ ITPNormalizer: Expected array, got ${typeof records}, trying to convert...`);
+    if (!rawData || typeof rawData !== 'object') {
+      console.log(`❌ ITPNormalizer: Invalid input data`);
+      return [];
+    }
+
+    const allRecords = [];
+    
+    // ITP структура: { "База данных": { "data": [...] }, ... }
+    for (const [dbName, dbData] of Object.entries(rawData)) {
+      console.log(`📋 Processing database: ${dbName}`);
       
-      // Если это объект, попробуем извлечь массивы из его свойств
-      if (records && typeof records === 'object') {
-        const allRecords = [];
-        Object.values(records).forEach(value => {
-          if (Array.isArray(value)) {
-            allRecords.push(...value);
-          } else if (value && typeof value === 'object' && value.data && Array.isArray(value.data)) {
-            allRecords.push(...value.data);
-          }
-        });
+      if (dbData && dbData.data && Array.isArray(dbData.data)) {
+        console.log(`📊 Found ${dbData.data.length} records in ${dbName}`);
         
-        if (allRecords.length > 0) {
-          console.log(`✅ ITPNormalizer: Extracted ${allRecords.length} records from object`);
-          records = allRecords;
-        } else {
-          console.log(`❌ ITPNormalizer: No valid records found in object`);
-          return [];
-        }
+        // Добавляем имя базы данных к каждой записи
+        const dbRecords = dbData.data.map(record => ({
+          ...record,
+          source_database: dbName
+        }));
+        
+        allRecords.push(...dbRecords);
       } else {
-        return [];
+        console.log(`⚠️ Invalid structure in ${dbName}:`, typeof dbData);
       }
     }
     
-    const normalized = records.map(record => this.normalizeRecord(record)).filter(Boolean);
-    console.log(`📊 ITPNormalizer: Normalized ${normalized.length} records from ${records.length} input records`);
+    console.log(`📊 Total records collected: ${allRecords.length}`);
+    
+    const normalized = allRecords.map(record => this.normalizeRecord(record)).filter(Boolean);
+    console.log(`✅ ITPNormalizer: Normalized ${normalized.length} records from ${allRecords.length} input records`);
     
     return normalized;
   }
