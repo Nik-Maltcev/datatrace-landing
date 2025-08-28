@@ -2507,10 +2507,21 @@
       
       console.log('✅ formatITPResultData: Formatted data keys:', Object.keys(formattedData));
       
-      const result = formatResultData(formattedData);
-      console.log('📋 formatITPResultData: Final result length:', result ? result.length : 'null');
+      // Специальное форматирование для ITP данных с правильными переносами строк
+      let html = '<div style="font-family: monospace; line-height: 1.6; white-space: pre-line;">';
       
-      return result;
+      for (const [key, value] of Object.entries(formattedData)) {
+        if (value !== null && value !== undefined && value !== '') {
+          const formattedValue = Array.isArray(value) ? value.join('\n') : String(value);
+          html += `<div style="margin-bottom: 20px;"><strong>${key}</strong>\n${formattedValue}</div>`;
+        }
+      }
+      
+      html += '</div>';
+      
+      console.log('📋 formatITPResultData: Final result length:', html ? html.length : 'null');
+      
+      return html;
     }
 
     function formatResultData(data) {
