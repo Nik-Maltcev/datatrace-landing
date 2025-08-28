@@ -1084,7 +1084,6 @@
       <!-- Mode Selection -->
       <div class="flex gap-3 mb-8 justify-center flex-wrap">
         <button id="modeLeaks" class="btn-secondary active">Поиск утечек</button>
-        <button id="modeCompany" class="btn-secondary">Проверить компанию</button>
         <button id="modePassword" class="btn-secondary">🔐 Проверить пароль</button>
       </div>
 
@@ -1322,7 +1321,6 @@
     const fieldSel = document.getElementById('field');
     const btn = document.getElementById('btn');
     const modeLeaks = document.getElementById('modeLeaks');
-    const modeCompany = document.getElementById('modeCompany');
     const modePassword = document.getElementById('modePassword');
     const results = document.getElementById('results');
     
@@ -2244,11 +2242,7 @@
       showProgress();
 
       try {
-        if (currentMode === 'company') {
-          await performCompanySearch(query);
-        } else {
-          await performLeakSearch(query);
-        }
+        await performLeakSearch(query);
       } catch (error) {
         console.error('Ошибка поиска:', error);
         hideProgress();
@@ -2557,10 +2551,6 @@
       setMode('leaks');
     });
     
-    modeCompany.addEventListener('click', () => {
-      setMode('company');
-    });
-    
     modePassword.addEventListener('click', () => {
       setMode('password');
     });
@@ -2571,7 +2561,6 @@
       
       // Убираем активный класс со всех кнопок
       modeLeaks.classList.remove('active');
-      modeCompany.classList.remove('active');
       modePassword.classList.remove('active');
       
       // Добавляем активный класс к выбранной кнопке
@@ -2584,15 +2573,6 @@
         fieldSel.value = 'phone'; // Устанавливаем телефон по умолчанию
         q.placeholder = 'Например: +79990000000';
         q.value = '';
-      } else if (mode === 'company') {
-        modeCompany.classList.add('active');
-        searchInput.style.display = 'block';
-        searchInput.style.justifyContent = 'center'; // Центрируем для ИНН
-        passwordInput.style.display = 'none';
-        fieldSel.style.display = 'none'; // Скрываем селектор для ИНН
-        q.placeholder = 'Введите ИНН';
-        q.value = '';
-        fieldSel.value = 'inn'; // Устанавливаем поле поиска как ИНН
       } else if (mode === 'password') {
         modePassword.classList.add('active');
         searchInput.style.display = 'none';
@@ -3268,7 +3248,6 @@
     const corporateBtn = document.getElementById('corporateBtn');
     const corporateInterface = document.getElementById('corporateInterface');
     const backToMainBtn = document.getElementById('backToMainBtn');
-    const mainContainer = document.querySelector('.container');
     
     // Корпоративные режимы
     const corpModeCompany = document.getElementById('corpModeCompany');
@@ -3348,27 +3327,43 @@
     
     // Функция показа корпоративного интерфейса
     function showCorporateInterface() {
-      // Скрываем основной интерфейс
+      // Скрываем основной интерфейс полностью
       document.querySelector('header').style.display = 'none';
-      mainContainer.style.display = 'none';
+      document.querySelector('body > div.container').style.display = 'none';
       
-      // Показываем корпоративный интерфейс
+      // Показываем корпоративный интерфейс как отдельную страницу
       corporateInterface.style.display = 'block';
+      corporateInterface.style.position = 'fixed';
+      corporateInterface.style.top = '0';
+      corporateInterface.style.left = '0';
+      corporateInterface.style.width = '100%';
+      corporateInterface.style.height = '100vh';
+      corporateInterface.style.zIndex = '9999';
+      corporateInterface.style.backgroundColor = '#ffffff';
+      corporateInterface.style.overflow = 'auto';
       
       // Устанавливаем режим по умолчанию
       setCorporateMode('company');
       
-      console.log('🏢 Switched to corporate interface');
+      console.log('🏢 Switched to corporate interface as separate page');
     }
     
     // Функция показа основного интерфейса
     function showMainInterface() {
       // Показываем основной интерфейс
       document.querySelector('header').style.display = 'block';
-      mainContainer.style.display = 'block';
+      document.querySelector('body > div.container').style.display = 'block';
       
       // Скрываем корпоративный интерфейс
       corporateInterface.style.display = 'none';
+      corporateInterface.style.position = '';
+      corporateInterface.style.top = '';
+      corporateInterface.style.left = '';
+      corporateInterface.style.width = '';
+      corporateInterface.style.height = '';
+      corporateInterface.style.zIndex = '';
+      corporateInterface.style.backgroundColor = '';
+      corporateInterface.style.overflow = '';
       
       console.log('🏠 Switched back to main interface');
     }
