@@ -1,9 +1,20 @@
-const fetch = require('node-fetch');
+const axios = require('axios');
 
 class SnusbaseService {
   constructor() {
     this.apiKey = 'sb99cd2vxyohst65mh98ydz6ud844l';
     this.baseUrl = 'https://api-experimental.snusbase.com';
+    
+    // Настройка axios instance для Snusbase
+    this.client = axios.create({
+      baseURL: this.baseUrl,
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'DataTrace/1.0'
+      },
+      timeout: 30000 // 30 секунд таймаут
+    });
   }
 
   /**
@@ -15,27 +26,13 @@ class SnusbaseService {
     try {
       console.log(`🌐 [Snusbase] Searching for domain: ${domain}`);
       
-      const response = await fetch(`${this.baseUrl}/data/search`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'DataTrace/1.0'
-        },
-        body: JSON.stringify({
-          terms: [`@${domain}`],
-          types: ['email'],
-          wildcard: false
-        })
+      const response = await this.client.post('/data/search', {
+        terms: [`@${domain}`],
+        types: ['email'],
+        wildcard: false
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [Snusbase] API error:', response.status, errorText);
-        throw new Error(`Snusbase API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       console.log(`✅ [Snusbase] Found ${data.results?.length || 0} results for domain ${domain}`);
       
       return {
@@ -51,10 +48,10 @@ class SnusbaseService {
       };
 
     } catch (error) {
-      console.error('❌ [Snusbase] Search error:', error);
+      console.error('❌ [Snusbase] Search error:', error.response?.data || error.message);
       return {
         success: false,
-        error: error.message,
+        error: error.response?.data?.message || error.message,
         domain: domain,
         totalResults: 0,
         results: []
@@ -71,24 +68,12 @@ class SnusbaseService {
     try {
       console.log(`📊 [Snusbase] Getting stats for domain: ${domain}`);
       
-      const response = await fetch(`${this.baseUrl}/tools/stats`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'User-Agent': 'DataTrace/1.0'
-        },
-        body: JSON.stringify({
-          terms: [`@${domain}`],
-          types: ['email']
-        })
+      const response = await this.client.post('/tools/stats', {
+        terms: [`@${domain}`],
+        types: ['email']
       });
 
-      if (!response.ok) {
-        throw new Error(`Stats API error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       console.log(`✅ [Snusbase] Got stats for domain ${domain}`);
       
       return {
@@ -102,10 +87,10 @@ class SnusbaseService {
       };
 
     } catch (error) {
-      console.error('❌ [Snusbase] Stats error:', error);
+      console.error('❌ [Snusbase] Stats error:', error.response?.data || error.message);
       return {
         success: false,
-        error: error.message,
+        error: error.response?.data?.message || error.message,
         domain: domain
       };
     }
@@ -119,19 +104,9 @@ class SnusbaseService {
     try {
       console.log('📋 [Snusbase] Getting available databases');
       
-      const response = await fetch(`${this.baseUrl}/data/sources`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'User-Agent': 'DataTrace/1.0'
-        }
-      });
+      const response = await this.client.get('/data/sources');
 
-      if (!response.ok) {
-        throw new Error(`Sources API error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       console.log(`✅ [Snusbase] Got ${data.length} databases`);
       
       return {
@@ -144,10 +119,10 @@ class SnusbaseService {
       };
 
     } catch (error) {
-      console.error('❌ [Snusbase] Databases error:', error);
+      console.error('❌ [Snusbase] Databases error:', error.response?.data || error.message);
       return {
         success: false,
-        error: error.message
+        error: error.response?.data?.message || error.message
       };
     }
   }

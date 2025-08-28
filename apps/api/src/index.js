@@ -20,6 +20,7 @@ console.log('- Node version:', process.version);
 console.log('- Memory usage:', process.memoryUsage());
 
 const PORT = process.env.PORT || 3001; // Railway автоматически назначает порт
+console.log('- PORT resolved:', PORT);
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -1956,7 +1957,23 @@ app.get('/api/health', (_req, res) => {
 
 // Простой healthcheck для Railway
 app.get('/health', (_req, res) => {
-  res.status(200).send('OK');
+  try {
+    // Проверяем что сервер отвечает
+    res.status(200).json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      port: PORT,
+      env: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    console.error('❌ Health check failed:', error);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Root endpoint
@@ -2133,12 +2150,39 @@ app.get('/api/snusbase/databases', requireAuth, userRateLimit(3, 60 * 60 * 1000)
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', (error) => {
+  if (error) {
+    console.error('❌ Server failed to start:', error);
+    process.exit(1);
+  }
+  
   // eslint-disable-next-line no-console
   console.log(`🚀 Server listening on http://0.0.0.0:${PORT}`);
   console.log(`🏥 Health check available at http://0.0.0.0:${PORT}/health`);
   console.log(`📊 API health at http://0.0.0.0:${PORT}/api/health`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`⚡ Server started successfully at ${new Date().toISOString()}`);
+});
+
+// Обработчики ошибок процесса для Railway
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+process.on('SIGTERM', () => {
+  console.log('📴 SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('📴 SIGINT received, shutting down gracefully');
+  process.exit(0);
 });
 
 
