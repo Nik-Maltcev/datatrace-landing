@@ -2478,6 +2478,15 @@
     }
 
     // Функция форматирования данных результата
+    function formatITPResultData(data) {
+      if (!data) return '<div style="color: #6b7280;">Нет данных</div>';
+      
+      const formattedData = {};
+      formatITPData(data, formattedData);
+      
+      return formatResultData(formattedData);
+    }
+
     function formatResultData(data) {
       if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
         return '<div style="color: #6b7280; font-style: italic;">Нет данных</div>';
@@ -4284,7 +4293,9 @@
               </div>
             </div>
             <div class="result-body">
-              ${typeof item.result.items === 'string' ? item.result.items : formatResultData(item.result.items || item.result.error)}
+              ${typeof item.result.items === 'string' ? item.result.items : 
+                (window.checkIfSourceHasLeakData(item.result, 'ITP') ? formatITPResultData(item.result.items || item.result.error) : 
+                 formatResultData(item.result.items || item.result.error))}
             </div>
           </div>
         `;
