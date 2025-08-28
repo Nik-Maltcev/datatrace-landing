@@ -2455,14 +2455,15 @@
       const statusText = status === 'success' ? 'Чисто' : 
                         status === 'danger' ? 'Найдено' : 'Ошибка';
 
-      // Проверяем, являются ли данные ITP данными для специального форматирования
+      // Используем правильный форматтер для каждого источника
       let formattedData;
       if (typeof data === 'string') {
         formattedData = data;
-      } else if (sourceName === 'ITP' && Array.isArray(data) && data.length > 0) {
-        console.log('🎯 createResultItem: Using ITP formatter for', sourceName);
-        formattedData = formatITPResultData(data);
+      } else if (sourceName) {
+        console.log('🎯 createResultItem: Using source-specific formatter for', sourceName);
+        formattedData = formatResultDataBySource(data, sourceName);
       } else {
+        console.log('🎯 createResultItem: Using default formatter (no sourceName)');
         formattedData = formatResultData(data);
       }
 
@@ -2489,6 +2490,38 @@
     }
 
     // Функция форматирования данных результата
+    function formatResultDataBySource(data, sourceName) {
+      console.log('🎯 formatResultDataBySource called for:', sourceName, {
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'not array'
+      });
+      
+      switch(sourceName) {
+        case 'ITP':
+          console.log('🔍 Using ITP formatter');
+          return formatITPResultData(data);
+        case 'Dyxless':
+          console.log('🔍 Using Dyxless formatter (fallback to JSON for now)');
+          return formatResultData(data);
+        case 'LeakOsint':
+          console.log('🔍 Using LeakOsint formatter (fallback to JSON for now)');
+          return formatResultData(data);
+        case 'Usersbox':
+          console.log('🔍 Using Usersbox formatter (fallback to JSON for now)');
+          return formatResultData(data);
+        case 'Vektor':
+          console.log('🔍 Using Vektor formatter (fallback to JSON for now)');
+          return formatResultData(data);
+        case 'Snusbase':
+          console.log('🔍 Using Snusbase formatter (fallback to JSON for now)');
+          return formatResultData(data);
+        default:
+          console.log('🔍 Using default JSON formatter for:', sourceName);
+          return formatResultData(data);
+      }
+    }
+
     function formatITPResultData(data) {
       console.log('🔧 formatITPResultData called with:', {
         dataType: typeof data,
@@ -3521,9 +3554,7 @@
             <button class="nothing-modal-close" onclick="this.closest('.nothing-modal').remove()">×</button>
           </div>
           <div class="nothing-modal-body">
-            ${window.checkIfSourceHasLeakData(result, 'ITP') ? 
-              formatITPResultData(result.items || result.error) : 
-              formatResultData(result.items || result.error)}
+            ${formatResultDataBySource(result.items || result.error, sourceName)}
           </div>
         </div>
       `;
@@ -4334,14 +4365,13 @@
             <div class="result-body">
               ${typeof item.result.items === 'string' ? item.result.items : 
                 (() => {
-                  const isITP = window.checkIfSourceHasLeakData(item.result, 'ITP');
-                  console.log('🎯 Formatting decision for result:', {
-                    isITP: isITP,
+                  // В массовой проверке все данные приходят от ITP
+                  const sourceName = 'ITP';
+                  console.log('🎯 Batch result formatting for source:', sourceName, {
                     itemsType: typeof item.result.items,
                     itemsLength: Array.isArray(item.result.items) ? item.result.items.length : 'not array'
                   });
-                  return isITP ? formatITPResultData(item.result.items || item.result.error) : 
-                         formatResultData(item.result.items || item.result.error);
+                  return formatResultDataBySource(item.result.items || item.result.error, sourceName);
                 })()}
             </div>
           </div>
