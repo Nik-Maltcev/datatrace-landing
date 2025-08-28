@@ -2,8 +2,14 @@ const axios = require('axios');
 
 class SnusbaseService {
   constructor() {
-    this.apiKey = 'sb99cd2vxyohst65mh98ydz6ud844l';
+    this.apiKey = process.env.SNUSBASE_API_KEY || 'sb99cd2vxyohst65mh98ydz6ud844l'; // Fallback для разработки
     this.baseUrl = 'https://api.snusbase.com'; // Исправлен URL согласно документации
+    
+    if (!process.env.SNUSBASE_API_KEY) {
+      console.warn('⚠️ [Snusbase] SNUSBASE_API_KEY not found in environment variables, using fallback key');
+    } else {
+      console.log('✅ [Snusbase] Using API key from environment variables');
+    }
     
     // Настройка axios instance для Snusbase
     this.client = axios.create({
