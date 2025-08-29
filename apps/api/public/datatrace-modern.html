@@ -2252,27 +2252,150 @@
     }
 
     function formatUsersboxData(data, formattedData) {
-      if (!Array.isArray(data)) return;
-      
-      formattedData['📊 Всего записей'] = data.length;
-      
-      data.slice(0, 5).forEach((record, index) => {
-        if (record && typeof record === 'object') {
-          const recordInfo = [];
-          if (record.email) recordInfo.push(`📧 ${record.email}`);
-          if (record.phone) recordInfo.push(`📞 ${record.phone}`);
-          if (record.name) recordInfo.push(`👤 ${record.name}`);
-          if (record.source) recordInfo.push(`🔗 ${record.source}`);
-          
-          if (recordInfo.length > 0) {
-            formattedData[`📄 Запись ${index + 1}`] = recordInfo.join(', ');
-          }
-        }
-      });
-      
-      if (data.length > 5) {
-        formattedData['...'] = `и еще ${data.length - 5} записей`;
+      if (!Array.isArray(data)) {
+        console.log('⚠️ Usersbox data is not an array:', data);
+        return;
       }
+      
+      console.log('📊 Processing Usersbox data:', data.length, 'sources');
+      
+      data.forEach((sourceData, sourceIndex) => {
+        if (!sourceData || typeof sourceData !== 'object') {
+          console.log(`⚠️ Invalid source data at index ${sourceIndex}`);
+          return;
+        }
+
+        const sourceName = sourceData.source || `Source ${sourceIndex + 1}`;
+        const items = sourceData.items || [];
+        const count = sourceData.count || items.length;
+        const hitsCount = sourceData.hitsCount || count;
+
+        console.log(`� Processing source "${sourceName}" with ${items.length} items`);
+
+        // Заголовок источника
+        const sourceHeader = `${sourceName}`;
+        formattedData[sourceHeader] = `Найдено: ${hitsCount} записей, показано: ${items.length}`;
+
+        // Обрабатываем каждую запись
+        items.forEach((record, recordIndex) => {
+          if (!record || typeof record !== 'object') return;
+
+          // ID записи
+          if (record._id) {
+            const idKey = recordIndex === 0 ? '_id:' : `_id: (${recordIndex + 1})`;
+            if (typeof record._id === 'string') {
+              formattedData[idKey] = `{"$oid":"${record._id}"}`;
+            } else {
+              formattedData[idKey] = JSON.stringify(record._id);
+            }
+          }
+
+          // Персональные данные
+          if (record.fullName) {
+            formattedData['full_name:'] = record.fullName;
+          }
+          if (record.firstName) {
+            formattedData['first_name:'] = record.firstName;
+          }
+          if (record.lastName) {
+            formattedData['last_name:'] = record.lastName;
+          }
+          if (record.name) {
+            formattedData['name:'] = record.name;
+          }
+          if (record.contactPerson) {
+            formattedData['contact_person:'] = record.contactPerson;
+          }
+
+          // Даты
+          if (record.birthDate) {
+            formattedData['birth_date:'] = record.birthDate;
+          }
+          if (record.createdAt) {
+            formattedData['created_at:'] = record.createdAt;
+          }
+          if (record.deliveredAt) {
+            formattedData['delivered_at:'] = record.deliveredAt;
+          }
+
+          // Контакты
+          if (record.phone && record.phone.length > 0) {
+            if (record.phone.length === 1) {
+              formattedData['phone:'] = record.phone[0];
+            } else {
+              formattedData['phones:'] = JSON.stringify(record.phone);
+            }
+          }
+          if (record.email && record.email.length > 0) {
+            if (record.email.length === 1) {
+              formattedData['email:'] = record.email[0];
+            } else {
+              formattedData['emails:'] = JSON.stringify(record.email);
+            }
+          }
+
+          // Адреса
+          if (record.addresses) {
+            formattedData['addresses:'] = JSON.stringify(record.addresses);
+          }
+          if (record.addressFact) {
+            formattedData['address_fact:'] = JSON.stringify(record.addressFact);
+          }
+          if (record.addressReal) {
+            formattedData['address_real:'] = JSON.stringify(record.addressReal);
+          }
+
+          // География
+          if (record.area) formattedData['area:'] = record.area;
+          if (record.city) formattedData['city:'] = record.city;
+          if (record.street) formattedData['street:'] = record.street;
+          if (record.house) formattedData['house:'] = record.house;
+          if (record.postalCode) formattedData['postal_code:'] = record.postalCode;
+          if (record.timezone) formattedData['timezone:'] = record.timezone;
+
+          // Точка выдачи
+          if (record.pickupPoint) {
+            formattedData['pickup_point:'] = JSON.stringify(record.pickupPoint);
+          }
+
+          // Финансовые данные
+          if (record.accounts) {
+            formattedData['accounts:'] = JSON.stringify(record.accounts);
+          }
+          if (record.shippingCost) {
+            formattedData['shipping_cost:'] = record.shippingCost;
+          }
+
+          // Продукты и заказы
+          if (record.products) {
+            formattedData['products:'] = JSON.stringify(record.products);
+          }
+          if (record.comment) {
+            formattedData['comment:'] = record.comment;
+          }
+
+          // Прочие поля
+          Object.keys(record).forEach(key => {
+            if (!key.startsWith('_') && 
+                !['fullName', 'firstName', 'lastName', 'name', 'contactPerson',
+                  'birthDate', 'createdAt', 'deliveredAt', 'phone', 'email',
+                  'addresses', 'addressFact', 'addressReal', 'area', 'city', 
+                  'street', 'house', 'postalCode', 'timezone', 'pickupPoint',
+                  'accounts', 'shippingCost', 'products', 'comment'].includes(key)) {
+              const fieldKey = `${key}:`;
+              if (!formattedData[fieldKey]) {
+                formattedData[fieldKey] = typeof record[key] === 'object' ? 
+                  JSON.stringify(record[key]) : record[key];
+              }
+            }
+          });
+
+          // Score
+          if (record._score) {
+            formattedData['_score:'] = record._score;
+          }
+        });
+      });
     }
 
     function formatVektorData(data, formattedData) {
@@ -2620,8 +2743,8 @@
           console.log('🔍 Using LeakOsint formatter');
           return formatLeakOsintResultData(data);
         case 'Usersbox':
-          console.log('🔍 Using Usersbox formatter (fallback to JSON for now)');
-          return formatResultData(data);
+          console.log('🔍 Using Usersbox formatter');
+          return formatUsersboxResultData(data);
         case 'Vektor':
           console.log('🔍 Using Vektor formatter (fallback to JSON for now)');
           return formatResultData(data);
@@ -2700,6 +2823,41 @@
       html += '</div>';
       
       console.log('📋 formatLeakOsintResultData: Final result length:', html ? html.length : 'null');
+      
+      return html;
+    }
+
+    function formatUsersboxResultData(data) {
+      console.log('🔧 formatUsersboxResultData called with:', {
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'not array',
+        keys: data && typeof data === 'object' ? Object.keys(data).slice(0, 3) : 'no keys'
+      });
+      
+      if (!data) {
+        console.log('❌ formatUsersboxResultData: No data provided');
+        return '<div style="color: #6b7280;">Нет данных</div>';
+      }
+      
+      const formattedData = {};
+      formatUsersboxData(data, formattedData);
+      
+      console.log('✅ formatUsersboxResultData: Formatted data keys:', Object.keys(formattedData));
+      
+      // Специальное форматирование для Usersbox данных с правильными переносами строк
+      let html = '<div style="font-family: monospace; line-height: 1.6; white-space: pre-line;">';
+      
+      for (const [key, value] of Object.entries(formattedData)) {
+        if (value !== null && value !== undefined && value !== '') {
+          const formattedValue = Array.isArray(value) ? value.join('\n') : String(value);
+          html += `<div style="margin-bottom: 20px;"><strong>${key}</strong>\n${formattedValue}</div>`;
+        }
+      }
+      
+      html += '</div>';
+      
+      console.log('📋 formatUsersboxResultData: Final result length:', html ? html.length : 'null');
       
       return html;
     }

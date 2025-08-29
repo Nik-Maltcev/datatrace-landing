@@ -104,6 +104,7 @@ function extractUsernameIfSocial(field, query) {
 // Import normalizers
 const ITPNormalizer = require('./utils/ITPNormalizer');
 const LeakOsintNormalizer = require('./utils/LeakOsintNormalizer');
+const UsersboxNormalizer = require('./utils/UsersboxNormalizer');
 
 async function searchITP(query, field) {
   try {
@@ -240,15 +241,27 @@ async function searchLeakOsint(query) {
 async function searchUsersbox(query) {
   try {
     const res = await axios.get(
-      USERSBOX_BASE + '/explain',
+      USERSBOX_BASE + '/search',
       {
         params: { q: query },
         headers: { Authorization: TOKENS.USERSBOX }
       }
     );
     const data = res.data || {};
-    return { name: 'Usersbox', ok: data.status === 'success', items: data.data?.items, meta: { count: data.data?.count } };
+    console.log('📊 Usersbox raw response:', JSON.stringify(data, null, 2));
+    
+    // Нормализуем данные
+    const normalizedData = UsersboxNormalizer.normalizeUsersboxData(data);
+    console.log('📋 Usersbox normalized data:', JSON.stringify(normalizedData, null, 2));
+    
+    return { 
+      name: 'Usersbox', 
+      ok: data.status === 'success', 
+      items: normalizedData, 
+      meta: { count: data.data?.count } 
+    };
   } catch (err) {
+    console.error('❌ Usersbox search error:', err.message);
     return { name: 'Usersbox', ok: false, error: normalizeError(err) };
   }
 }
