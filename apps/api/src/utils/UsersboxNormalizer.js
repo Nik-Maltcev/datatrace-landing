@@ -1,6 +1,180 @@
 // UsersboxNormalizer.js - Комплексный нормализатор данных Usersbox
 // Обрабатывает все источники данных Usersbox с их специфическими полями
 
+// Словарь переводов полей на русский язык
+const FIELD_TRANSLATIONS = {
+  // Основные поля
+  '_id': 'ID',
+  '_score': 'Кредитный рейтинг',
+  'full_name': 'ФИО',
+  'fullName': 'ФИО',
+  'first_name': 'Имя',
+  'firstName': 'Имя',
+  'last_name': 'Фамилия',
+  'lastName': 'Фамилия',
+  'birth_date': 'Дата рождения',
+  'birthDate': 'Дата рождения',
+  'name': 'Имя',
+  
+  // Контактная информация
+  'phone': 'Телефон',
+  'phones': 'Телефоны',
+  'email': 'Email',
+  'emails': 'Email',
+  'contact_person': 'Контактное лицо',
+  'contactPerson': 'Контактное лицо',
+  
+  // Адреса
+  'address': 'Адрес',
+  'addresses': 'Адреса',
+  'pickup_point': 'Пункт выдачи',
+  'pickupPoint': 'Пункт выдачи',
+  'area': 'Регион',
+  'city': 'Город',
+  'street': 'Улица',
+  'house': 'Дом',
+  'floor': 'Этаж',
+  'intercom': 'Домофон',
+  'postal_code': 'Почтовый индекс',
+  'postalCode': 'Почтовый индекс',
+  'longitude': 'Долгота',
+  'latitude': 'Широта',
+  'title': 'Название',
+  
+  // Банковские данные
+  'accounts': 'Счета',
+  'account_number': 'Номер счета',
+  'accountNumber': 'Номер счета',
+  'cards': 'Карты',
+  'inn': 'ИНН',
+  'citizenship': 'Гражданство',
+  'gender': 'Пол',
+  
+  // Даты и время
+  'created_at': 'Дата создания',
+  'createdAt': 'Дата создания',
+  'delivered_at': 'Дата доставки',
+  'deliveredAt': 'Дата доставки',
+  'delivery_date': 'Дата доставки',
+  'deliveryDate': 'Дата доставки',
+  'date': 'Дата',
+  'updated': 'Обновлено',
+  'timezone': 'Часовой пояс',
+  'dat_recognize': 'Дата распознавания',
+  'datRecognize': 'Дата распознавания',
+  'dat_process': 'Дата обработки',
+  'datProcess': 'Дата обработки',
+  
+  // Заказы и покупки
+  'price': 'Цена',
+  'amount': 'Сумма',
+  'currency': 'Валюта',
+  'products': 'Товары',
+  'shipping_cost': 'Стоимость доставки',
+  'shippingCost': 'Стоимость доставки',
+  'comment': 'Комментарий',
+  'status': 'Статус',
+  'first_order': 'Первый заказ',
+  'firstOrder': 'Первый заказ',
+  'platform': 'Платформа',
+  'paid': 'Оплачено',
+  'delivery_city_id': 'ID города доставки',
+  'deliveryCityId': 'ID города доставки',
+  
+  // Специфические поля
+  'want_receive_info': 'Получение информации',
+  'wantReceiveInfo': 'Получение информации',
+  'lang_code': 'Код языка',
+  'langCode': 'Код языка',
+  'cashier': 'Кассир',
+  'has_sign': 'Подпись',
+  'hasSign': 'Подпись',
+  'password': 'Пароль',
+  'user_id': 'ID пользователя',
+  'userId': 'ID пользователя',
+  'yandex_uid': 'Yandex UID',
+  'yandexUid': 'Yandex UID',
+  'app': 'Приложение',
+  'user_agent': 'User Agent',
+  'userAgent': 'User Agent',
+  'payment': 'Оплата',
+  'recovery': 'Восстановление',
+  'user_info': 'Информация пользователя',
+  'userInfo': 'Информация пользователя',
+  'login': 'Логин',
+  'moderation': 'Модерация',
+  
+  // Дополнительные переводы для недостающих полей
+  'phones': 'Телефоны',
+  'pickup_point': 'Пункт выдачи',
+  'service': 'Сервис'
+};
+
+// Функция для перевода полей объекта на русский язык
+function translateFieldsToRussian(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  const translated = {};
+  
+  Object.keys(obj).forEach(key => {
+    const russianKey = FIELD_TRANSLATIONS[key] || key;
+    let value = obj[key];
+    
+    // Специальная обработка для некоторых полей
+    if (key === 'gender' && value === 'F') {
+      value = 'Ж';
+    } else if (key === 'gender' && value === 'M') {
+      value = 'М';
+    }
+    
+    // Специальная обработка для банковских счетов
+    if ((key === 'accounts' || russianKey === 'Счета') && typeof value === 'string') {
+      // Преобразуем строку вида "account_number":"40817810106380061511","cards":"4790872330109818"
+      // в "Номер счета":"40817810106380061511","Карты":"4790872330109818"
+      value = value.replace(/"account_number":/g, '"Номер счета":')
+                   .replace(/"cards":/g, '"Карты":');
+    }
+    
+    // Специальная обработка для товаров
+    if ((key === 'products' || russianKey === 'Товары') && typeof value === 'string') {
+      // Преобразуем "name":"товар","price":"цена" в "Название":"товар","Цена":"цена"
+      value = value.replace(/"name":/g, '"Название":')
+                   .replace(/"price":/g, '"Цена":');
+    }
+    
+    // Обработка массивов со строками JSON
+    if (Array.isArray(value)) {
+      value = value.map(item => {
+        if (typeof item === 'string') {
+          // Применяем переводы к строкам с JSON-подобными данными
+          if ((key === 'accounts' || russianKey === 'Счета')) {
+            return item.replace(/"account_number":/g, '"Номер счета":')
+                      .replace(/"cards":/g, '"Карты":');
+          }
+          if ((key === 'products' || russianKey === 'Товары')) {
+            return item.replace(/"name":/g, '"Название":')
+                      .replace(/"price":/g, '"Цена":');
+          }
+        }
+        return item;
+      });
+    }
+    
+    // Обработка массивов и объектов
+    if (Array.isArray(value)) {
+      translated[russianKey] = value.map(item => 
+        typeof item === 'object' ? translateFieldsToRussian(item) : item
+      );
+    } else if (value && typeof value === 'object' && !value.toString().startsWith('[object')) {
+      translated[russianKey] = translateFieldsToRussian(value);
+    } else {
+      translated[russianKey] = value;
+    }
+  });
+  
+  return translated;
+}
+
 function normalizeUsersboxData(rawData) {
   if (!rawData || rawData.status !== 'success') {
     console.log('❌ Usersbox data is not valid or unsuccessful');
@@ -27,7 +201,8 @@ function normalizeUsersboxData(rawData) {
 
     // Нормализуем каждую запись в источнике
     const normalizedItems = sourceItems.map((item, itemIndex) => {
-      return normalizeUsersboxRecord(item, itemIndex, sourceName);
+      const normalized = normalizeUsersboxRecord(item, itemIndex, sourceName);
+      return translateFieldsToRussian(normalized);
     });
 
     normalizedSources.push({
