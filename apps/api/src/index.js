@@ -103,6 +103,7 @@ function extractUsernameIfSocial(field, query) {
 
 // Import normalizers
 const ITPNormalizer = require('./utils/ITPNormalizer');
+const LeakOsintNormalizer = require('./utils/LeakOsintNormalizer');
 
 async function searchITP(query, field) {
   try {
@@ -204,6 +205,16 @@ async function searchLeakOsint(query) {
       { headers: { 'Content-Type': 'application/json' } }
     );
     const data = res.data || {};
+    
+    // Логируем структуру ответа LeakOsint для отладки
+    console.log(`🔍 LeakOsint response structure:`, {
+      statusCode: res.status,
+      hasData: !!data.List,
+      dataType: typeof data.List,
+      listKeys: data.List ? Object.keys(data.List).slice(0, 3) : 'no List',
+      fullResponseKeys: Object.keys(data)
+    });
+    
     // Error path
     if (data && (data['Error code'] || data.Error || data.error)) {
       return { name: 'LeakOsint', ok: false, error: data };
@@ -214,7 +225,13 @@ async function searchLeakOsint(query) {
     if (!Object.keys(list).length) {
       return { name: 'LeakOsint', ok: false, error: { message: 'Нет данных или неизвестный формат ответа', preview: data } };
     }
-    return { name: 'LeakOsint', ok: true, items };
+    
+    // Нормализуем данные LeakOsint
+    const normalizedItems = LeakOsintNormalizer.normalizeRecords(items);
+    
+    console.log(`📊 LeakOsint normalized ${normalizedItems.length} records from ${items.length} original records`);
+    
+    return { name: 'LeakOsint', ok: true, items: normalizedItems };
   } catch (err) {
     return { name: 'LeakOsint', ok: false, error: normalizeError(err) };
   }

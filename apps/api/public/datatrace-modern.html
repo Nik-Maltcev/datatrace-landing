@@ -2301,6 +2301,118 @@
       }
     }
 
+    function formatLeakOsintData(data, formattedData) {
+      if (!Array.isArray(data) || data.length === 0) {
+        formattedData['📄 Результат'] = 'Нет данных для отображения';
+        return;
+      }
+      
+      console.log('🔧 formatLeakOsintData processing records:', data.length);
+      
+      // Добавляем общую информацию
+      formattedData['📊 Всего записей'] = data.length;
+      
+      // Обрабатываем каждую запись
+      data.forEach((record, index) => {
+        if (record && typeof record === 'object') {
+          const recordTitle = `📄 Запись ${index + 1}`;
+          let recordInfo = '';
+          
+          // Информация о базе данных
+          if (record.database) {
+            recordInfo += `База данных: ${record.database}\n`;
+          }
+          if (record.databaseInfo) {
+            recordInfo += `Описание базы данных: ${record.databaseInfo}\n\n`;
+          }
+          
+          // Если есть записи данных, показываем их
+          if (record.records && Array.isArray(record.records)) {
+            recordInfo += `Данные:\n`;
+            
+            record.records.forEach((dataRecord, dataIndex) => {
+              if (dataIndex > 0) recordInfo += '\n';
+              
+              // Основная информация
+              if (dataRecord.fullName) recordInfo += `ФИО: ${dataRecord.fullName}\n`;
+              if (dataRecord.firstName) recordInfo += `Имя: ${dataRecord.firstName}\n`;
+              if (dataRecord.lastName) recordInfo += `Фамилия: ${dataRecord.lastName}\n`;
+              if (dataRecord.middleName) recordInfo += `Отчество: ${dataRecord.middleName}\n`;
+              if (dataRecord.nickName) recordInfo += `Никнейм: ${dataRecord.nickName}\n`;
+              
+              // Контакты
+              if (dataRecord.phone) recordInfo += `Телефон: ${dataRecord.phone}\n`;
+              if (dataRecord.email) recordInfo += `Email: ${dataRecord.email}\n`;
+              
+              // Адрес
+              if (dataRecord.address) recordInfo += `Адрес: ${dataRecord.address}\n`;
+              if (dataRecord.pointAddress) recordInfo += `Адрес пункта выдачи: ${dataRecord.pointAddress}\n`;
+              if (dataRecord.region) recordInfo += `Регион: ${dataRecord.region}\n`;
+              if (dataRecord.city) recordInfo += `Город: ${dataRecord.city}\n`;
+              if (dataRecord.rusStreet) recordInfo += `Улица: ${dataRecord.rusStreet}\n`;
+              if (dataRecord.house) recordInfo += `Дом: ${dataRecord.house}\n`;
+              if (dataRecord.postCode) recordInfo += `Почтовый индекс: ${dataRecord.postCode}\n`;
+              
+              // Документы
+              if (dataRecord.passport) recordInfo += `Паспорт: ${dataRecord.passport}\n`;
+              if (dataRecord.snils) recordInfo += `СНИЛС: ${dataRecord.snils}\n`;
+              if (dataRecord.inn) recordInfo += `ИНН: ${dataRecord.inn}\n`;
+              
+              // Личная информация
+              if (dataRecord.birthDate) recordInfo += `Дата рождения: ${dataRecord.birthDate}\n`;
+              if (dataRecord.gender) recordInfo += `Пол: ${dataRecord.gender}\n`;
+              if (dataRecord.citizenship) recordInfo += `Гражданство: ${dataRecord.citizenship}\n`;
+              
+              // Финансы
+              if (dataRecord.amount) recordInfo += `Сумма заказа: ${dataRecord.amount}\n`;
+              if (dataRecord.price) recordInfo += `Цена: ${dataRecord.price}\n`;
+              if (dataRecord.balance) recordInfo += `Баланс: ${dataRecord.balance}\n`;
+              if (dataRecord.hasCards) recordInfo += `Наличие карт: ${dataRecord.hasCards}\n`;
+              
+              // Товары и заказы
+              if (dataRecord.product) recordInfo += `Товар: ${dataRecord.product}\n`;
+              if (dataRecord.product2) recordInfo += `Товар 2: ${dataRecord.product2}\n`;
+              if (dataRecord.product3) recordInfo += `Товар 3: ${dataRecord.product3}\n`;
+              
+              // Компания
+              if (dataRecord.company) recordInfo += `Компания: ${dataRecord.company}\n`;
+              if (dataRecord.nameCompany) recordInfo += `Название компании: ${dataRecord.nameCompany}\n`;
+              
+              // Даты
+              if (dataRecord.date) recordInfo += `Дата: ${dataRecord.date}\n`;
+              if (dataRecord.dateUnix) recordInfo += `Дата: ${dataRecord.dateUnix}\n`;
+              if (dataRecord.deliveryDate) recordInfo += `Дата доставки: ${dataRecord.deliveryDate}\n`;
+              if (dataRecord.regDate) recordInfo += `Дата регистрации: ${dataRecord.regDate}\n`;
+              if (dataRecord.regDateUnix) recordInfo += `Дата регистрации: ${dataRecord.regDateUnix}\n`;
+              if (dataRecord.lastActive) recordInfo += `Последняя активность: ${dataRecord.lastActive}\n`;
+              
+              // Технические данные
+              if (dataRecord.os) recordInfo += `ОС: ${dataRecord.os}\n`;
+              if (dataRecord.deliveryType) recordInfo += `Тип доставки: ${dataRecord.deliveryType}\n`;
+              if (dataRecord.paymentType) recordInfo += `Тип оплаты: ${dataRecord.paymentType}\n`;
+              if (dataRecord.status) recordInfo += `Статус: ${dataRecord.status}\n`;
+              if (dataRecord.clientType) recordInfo += `Тип клиента: ${dataRecord.clientType}\n`;
+              
+              // Дополнительная информация
+              if (dataRecord.description) recordInfo += `Описание: ${dataRecord.description}\n`;
+              if (dataRecord.comment) recordInfo += `Комментарий: ${dataRecord.comment}\n`;
+              if (dataRecord.text) recordInfo += `Текст: ${dataRecord.text}\n`;
+              if (dataRecord.tags) recordInfo += `Теги: ${dataRecord.tags}\n`;
+              if (dataRecord.vkId) recordInfo += `VK ID: ${dataRecord.vkId}\n`;
+              if (dataRecord.password) recordInfo += `Пароль: ${dataRecord.password}\n`;
+            });
+          }
+          
+          // Убираем последний перенос строки и добавляем запись
+          if (recordInfo) {
+            formattedData[recordTitle] = recordInfo.trim();
+          }
+        }
+      });
+      
+      console.log('✅ formatLeakOsintData: Processed', data.length, 'records');
+    }
+
     function displayFinanceData(bodyId, financeData) {
       const bodyEl = document.getElementById(bodyId);
       if (!bodyEl || !financeData) return;
@@ -2505,8 +2617,8 @@
           console.log('🔍 Using Dyxless formatter (fallback to JSON for now)');
           return formatResultData(data);
         case 'LeakOsint':
-          console.log('🔍 Using LeakOsint formatter (fallback to JSON for now)');
-          return formatResultData(data);
+          console.log('🔍 Using LeakOsint formatter');
+          return formatLeakOsintResultData(data);
         case 'Usersbox':
           console.log('🔍 Using Usersbox formatter (fallback to JSON for now)');
           return formatResultData(data);
@@ -2553,6 +2665,41 @@
       html += '</div>';
       
       console.log('📋 formatITPResultData: Final result length:', html ? html.length : 'null');
+      
+      return html;
+    }
+
+    function formatLeakOsintResultData(data) {
+      console.log('🔧 formatLeakOsintResultData called with:', {
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        length: Array.isArray(data) ? data.length : 'not array',
+        keys: data && typeof data === 'object' ? Object.keys(data).slice(0, 3) : 'no keys'
+      });
+      
+      if (!data) {
+        console.log('❌ formatLeakOsintResultData: No data provided');
+        return '<div style="color: #6b7280;">Нет данных</div>';
+      }
+      
+      const formattedData = {};
+      formatLeakOsintData(data, formattedData);
+      
+      console.log('✅ formatLeakOsintResultData: Formatted data keys:', Object.keys(formattedData));
+      
+      // Специальное форматирование для LeakOsint данных с правильными переносами строк
+      let html = '<div style="font-family: monospace; line-height: 1.6; white-space: pre-line;">';
+      
+      for (const [key, value] of Object.entries(formattedData)) {
+        if (value !== null && value !== undefined && value !== '') {
+          const formattedValue = Array.isArray(value) ? value.join('\n') : String(value);
+          html += `<div style="margin-bottom: 20px;"><strong>${key}</strong>\n${formattedValue}</div>`;
+        }
+      }
+      
+      html += '</div>';
+      
+      console.log('📋 formatLeakOsintResultData: Final result length:', html ? html.length : 'null');
       
       return html;
     }
