@@ -107,7 +107,26 @@ const FIELD_TRANSLATIONS = {
   // Дополнительные переводы для недостающих полей
   'phones': 'Телефоны',
   'pickup_point': 'Пункт выдачи',
-  'service': 'Сервис'
+  'service': 'Сервис',
+  'source': 'Источник',
+  'database': 'База данных',
+  'collection': 'Коллекция',
+  'count': 'Количество',
+  'hitsCount': 'Количество совпадений',
+  'items': 'Записи',
+  'data': 'Данные',
+  'info': 'Информация',
+  'value': 'Значение',
+  'type': 'Тип',
+  'category': 'Категория',
+  'description': 'Описание',
+  'details': 'Детали',
+  'metadata': 'Метаданные',
+  'timestamp': 'Временная метка',
+  'created': 'Создано',
+  'modified': 'Изменено',
+  'updated_at': 'Дата обновления',
+  'updatedAt': 'Дата обновления'
 };
 
 // Функция для перевода полей объекта на русский язык
@@ -117,6 +136,12 @@ function translateFieldsToRussian(obj) {
   const translated = {};
   
   Object.keys(obj).forEach(key => {
+    // Пропускаем служебные поля
+    if (key.startsWith('_')) {
+      translated[key] = obj[key];
+      return;
+    }
+    
     const russianKey = FIELD_TRANSLATIONS[key] || key;
     let value = obj[key];
     
@@ -156,16 +181,12 @@ function translateFieldsToRussian(obj) {
                       .replace(/"price":/g, '"Цена":');
           }
         }
-        return item;
+        return typeof item === 'object' ? translateFieldsToRussian(item) : item;
       });
     }
     
-    // Обработка массивов и объектов
-    if (Array.isArray(value)) {
-      translated[russianKey] = value.map(item => 
-        typeof item === 'object' ? translateFieldsToRussian(item) : item
-      );
-    } else if (value && typeof value === 'object' && !value.toString().startsWith('[object')) {
+    // Обработка вложенных объектов
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
       translated[russianKey] = translateFieldsToRussian(value);
     } else {
       translated[russianKey] = value;
@@ -202,7 +223,8 @@ function normalizeUsersboxData(rawData) {
     // Нормализуем каждую запись в источнике
     const normalizedItems = sourceItems.map((item, itemIndex) => {
       const normalized = normalizeUsersboxRecord(item, itemIndex, sourceName);
-      return translateFieldsToRussian(normalized);
+      const translated = translateFieldsToRussian(normalized);
+      return translated;
     });
 
     normalizedSources.push({
