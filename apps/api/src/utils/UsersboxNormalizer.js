@@ -352,6 +352,8 @@ function normalizeBankingRecord(record, normalized) {
   if (record.birth_date) normalized.birthDate = formatDate(record.birth_date);
 
   // Контакты
+  if (record.phone) normalized.phone = record.phone;
+  if (record.email) normalized.email = record.email;
   if (record.phones) {
     normalized.phones = Array.isArray(record.phones) ? record.phones : [record.phones];
   }
@@ -366,6 +368,10 @@ function normalizeBankingRecord(record, normalized) {
   if (record.cards) {
     normalized.cards = Array.isArray(record.cards) ? record.cards : [record.cards];
   }
+  
+  // Дополнительные поля
+  if (record.gender) normalized.gender = record.gender;
+  if (record.inn) normalized.inn = record.inn;
 }
 
 // Нормализация записей доставки (cdek/full)
@@ -374,6 +380,8 @@ function normalizeDeliveryRecord(record, normalized) {
   if (record.phone) normalized.phone = record.phone;
   if (record.email) normalized.email = record.email;
   if (record.pickup_point) normalized.pickupPoint = formatPickupPoint(record.pickup_point);
+  if (record.created_at) normalized.createdAt = record.created_at;
+  if (record.service) normalized.service = record.service;
 }
 
 // Нормализация контрагентов доставки (cdek/contragent)

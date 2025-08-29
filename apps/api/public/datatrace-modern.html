@@ -2270,308 +2270,56 @@
         const count = sourceData.count || items.length;
         const hitsCount = sourceData.hitsCount || count;
 
-        console.log(`� Processing source "${sourceName}" with ${items.length} items`);
+        console.log(`📊 Processing source "${sourceName}" with ${items.length} items`);
 
         // Заголовок источника
         const sourceHeader = `${sourceName}`;
         formattedData[sourceHeader] = `Найдено: ${hitsCount} записей, показано: ${items.length}`;
 
-        // Обрабатываем каждую запись
+        // Обрабатываем каждую запись - теперь используем уже переведенные поля!
         items.forEach((record, recordIndex) => {
           if (!record || typeof record !== 'object') return;
 
-          // ID записи
-          if (record._id) {
-            const idKey = recordIndex === 0 ? '_id:' : `_id: (${recordIndex + 1})`;
-            if (typeof record._id === 'string') {
-              formattedData[idKey] = `{"$oid":"${record._id}"}`;
-            } else {
-              formattedData[idKey] = JSON.stringify(record._id);
+          // Проходим по всем полям записи и отображаем их как есть
+          // (они уже переведены нормализатором на сервере)
+          Object.keys(record).forEach(key => {
+            const value = record[key];
+            
+            // Пропускаем пустые значения
+            if (value === null || value === undefined || value === '') return;
+            
+            // Специальная обработка для ID записи
+            if (key === '_id') {
+              const idKey = recordIndex === 0 ? '_id:' : `_id: (${recordIndex + 1})`;
+              if (typeof value === 'string') {
+                formattedData[idKey] = value;
+              } else {
+                formattedData[idKey] = JSON.stringify(value);
+              }
+              return;
             }
-          }
-
-          // Персональные данные
-          if (record.fullName) {
-            formattedData['full_name:'] = record.fullName;
-          }
-          if (record.firstName) {
-            formattedData['first_name:'] = record.firstName;
-          }
-          if (record.lastName) {
-            formattedData['last_name:'] = record.lastName;
-          }
-          if (record.name) {
-            formattedData['name:'] = record.name;
-          }
-          if (record.contactPerson) {
-            formattedData['contact_person:'] = record.contactPerson;
-          }
-          if (record.surName) {
-            formattedData['sur_name:'] = record.surName;
-          }
-          if (record.patronymic) {
-            formattedData['patronymic:'] = record.patronymic;
-          }
-
-          // Даты
-          if (record.birthDate) {
-            formattedData['birth_date:'] = record.birthDate;
-          }
-          if (record.birthday) {
-            formattedData['birthday:'] = record.birthday;
-          }
-          if (record.createdAt) {
-            formattedData['created_at:'] = record.createdAt;
-          }
-          if (record.deliveredAt) {
-            formattedData['delivered_at:'] = record.deliveredAt;
-          }
-          if (record.date) {
-            formattedData['date:'] = record.date;
-          }
-          if (record.deliveryDate) {
-            formattedData['delivery_date:'] = record.deliveryDate;
-          }
-          if (record.datRecognize) {
-            formattedData['dat_recognize:'] = record.datRecognize;
-          }
-          if (record.datProcess) {
-            formattedData['dat_process:'] = record.datProcess;
-          }
-          if (record.updated) {
-            formattedData['updated:'] = record.updated;
-          }
-          if (record.moderationTime) {
-            formattedData['moderation_time:'] = record.moderationTime;
-          }
-
-          // Контакты
-          if (record.phone && record.phone.length > 0) {
-            if (record.phone.length === 1) {
-              formattedData['phone:'] = record.phone[0];
-            } else {
-              formattedData['phones:'] = JSON.stringify(record.phone);
+            
+            // Специальная обработка для _score
+            if (key === '_score') {
+              formattedData['_score:'] = value;
+              return;
             }
-          }
-          if (record.email && record.email.length > 0) {
-            if (record.email.length === 1) {
-              formattedData['email:'] = record.email[0];
+            
+            // Для всех остальных полей используем переведенные названия
+            const displayKey = key + ':';
+            
+            if (Array.isArray(value)) {
+              if (value.length === 1) {
+                formattedData[displayKey] = value[0];
+              } else {
+                formattedData[displayKey] = JSON.stringify(value);
+              }
+            } else if (typeof value === 'object') {
+              formattedData[displayKey] = JSON.stringify(value);
             } else {
-              formattedData['emails:'] = JSON.stringify(record.email);
+              formattedData[displayKey] = value;
             }
-          }
-
-          // Адреса
-          if (record.addresses) {
-            formattedData['addresses:'] = JSON.stringify(record.addresses);
-          }
-          if (record.address) {
-            formattedData['address:'] = record.address;
-          }
-          if (record.addressFact) {
-            formattedData['address_fact:'] = record.addressFact;
-          }
-          if (record.addressReal) {
-            formattedData['address_real:'] = record.addressReal;
-          }
-
-          // География
-          if (record.area) formattedData['area:'] = record.area;
-          if (record.city) formattedData['city:'] = record.city;
-          if (record.country) formattedData['country:'] = record.country;
-          if (record.street) formattedData['street:'] = record.street;
-          if (record.house) formattedData['house:'] = record.house;
-          if (record.postalCode) formattedData['postal_code:'] = record.postalCode;
-          if (record.timezone) formattedData['timezone:'] = record.timezone;
-          if (record.fiasId) formattedData['fias_id:'] = record.fiasId;
-          if (record.fiasAddr) formattedData['fias_addr:'] = record.fiasAddr;
-          if (record.longitude) formattedData['longitude:'] = record.longitude;
-          if (record.latitude) formattedData['latitude:'] = record.latitude;
-          if (record.floor) formattedData['floor:'] = record.floor;
-          if (record.intercom) formattedData['intercom:'] = record.intercom;
-          if (record.title) formattedData['title:'] = record.title;
-
-          // Точка выдачи
-          if (record.pickupPoint) {
-            formattedData['pickup_point:'] = record.pickupPoint;
-          }
-
-          // Банковские данные
-          if (record.accounts) {
-            formattedData['accounts:'] = JSON.stringify(record.accounts);
-          }
-          if (record.accountNumber) {
-            formattedData['account_number:'] = record.accountNumber;
-          }
-          if (record.cards) {
-            formattedData['cards:'] = JSON.stringify(record.cards);
-          }
-          if (record.inn) {
-            formattedData['inn:'] = record.inn;
-          }
-          if (record.citizenship) {
-            formattedData['citizenship:'] = record.citizenship;
-          }
-          if (record.gender) {
-            formattedData['gender:'] = record.gender;
-          }
-
-          // Финансовые данные
-          if (record.shippingCost) {
-            formattedData['shipping_cost:'] = record.shippingCost;
-          }
-          if (record.price) {
-            formattedData['price:'] = record.price;
-          }
-          if (record.amount) {
-            formattedData['amount:'] = record.amount;
-          }
-          if (record.currency) {
-            formattedData['currency:'] = record.currency;
-          }
-
-          // Заказы и продукты
-          if (record.products) {
-            formattedData['products:'] = JSON.stringify(record.products);
-          }
-          if (record.firstOrder) {
-            formattedData['first_order:'] = record.firstOrder;
-          }
-          if (record.platform) {
-            formattedData['platform:'] = record.platform;
-          }
-          if (record.paid) {
-            formattedData['paid:'] = record.paid;
-          }
-          if (record.deliveryCityId) {
-            formattedData['delivery_city_id:'] = record.deliveryCityId;
-          }
-          if (record.status) {
-            formattedData['status:'] = record.status;
-          }
-
-          // Спортивные данные
-          if (record.wantReceiveInfo) {
-            formattedData['want_receive_info:'] = record.wantReceiveInfo;
-          }
-          if (record.langCode) {
-            formattedData['lang_code:'] = record.langCode;
-          }
-          if (record.cashier) {
-            formattedData['cashier:'] = record.cashier;
-          }
-          if (record.hasSign) {
-            formattedData['has_sign:'] = record.hasSign;
-          }
-
-          // Профессиональные данные
-          if (record.recovery) {
-            formattedData['recovery:'] = record.recovery;
-          }
-          if (record.token) {
-            formattedData['token:'] = record.token;
-          }
-          if (record.stage) {
-            formattedData['stage:'] = record.stage;
-          }
-          if (record.time) {
-            formattedData['time:'] = record.time;
-          }
-          if (record.userInfo) {
-            formattedData['user_info:'] = record.userInfo;
-          }
-          if (record.geo) {
-            formattedData['geo:'] = record.geo;
-          }
-          if (record.work) {
-            formattedData['work:'] = record.work;
-          }
-          if (record.place) {
-            formattedData['place:'] = record.place;
-          }
-          if (record.industry) {
-            formattedData['industry:'] = record.industry;
-          }
-          if (record.position) {
-            formattedData['position:'] = record.position;
-          }
-          if (record.ogrn) {
-            formattedData['ogrn:'] = record.ogrn;
-          }
-          if (record.year) {
-            formattedData['year:'] = record.year;
-          }
-          if (record.month) {
-            formattedData['month:'] = record.month;
-          }
-          if (record.day) {
-            formattedData['day:'] = record.day;
-          }
-          if (record.passport) {
-            formattedData['passport:'] = record.passport;
-          }
-          if (record.docs) {
-            formattedData['docs:'] = record.docs;
-          }
-          if (record.snils) {
-            formattedData['snils:'] = record.snils;
-          }
-          if (record.snilsDop) {
-            formattedData['snils_dop:'] = record.snilsDop;
-          }
-          if (record.idDocName) {
-            formattedData['idDocName:'] = record.idDocName;
-          }
-          if (record.idDoc) {
-            formattedData['idDoc:'] = record.idDoc;
-          }
-          if (record.images) {
-            formattedData['images:'] = record.images;
-          }
-          if (record.login) {
-            formattedData['login:'] = record.login;
-          }
-          if (record.moderation) {
-            formattedData['moderation:'] = record.moderation;
-          }
-          if (record.isModerated) {
-            formattedData['is_moderated:'] = record.isModerated;
-          }
-
-          // Yandex Eda данные
-          if (record.userId) {
-            formattedData['user_id:'] = record.userId;
-          }
-          if (record.yandexUid) {
-            formattedData['yandex_uid:'] = record.yandexUid;
-          }
-          if (record.app) {
-            formattedData['app:'] = record.app;
-          }
-          if (record.userAgent) {
-            formattedData['user_agent:'] = record.userAgent;
-          }
-          if (record.payment) {
-            formattedData['payment:'] = record.payment;
-          }
-          if (record.service) {
-            formattedData['service:'] = record.service;
-          }
-
-          // Пароли и другие чувствительные данные
-          if (record.password) {
-            formattedData['password:'] = record.password;
-          }
-
-          // Комментарии
-          if (record.comment) {
-            formattedData['comment:'] = record.comment;
-          }
-
-          // Score
-          if (record._score) {
-            formattedData['_score:'] = record._score;
-          }
+          });
         });
       });
     }
