@@ -18,16 +18,40 @@ class AuthService {
     }
 
     try {
+      // Валидация обязательных полей
+      if (!userData.name || !userData.phone) {
+        throw new Error('Name and phone are required');
+      }
+
+      // Валидация номера телефона (базовая)
+      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+      if (!phoneRegex.test(userData.phone.replace(/[\s\-\(\)]/g, ''))) {
+        throw new Error('Invalid phone number format');
+      }
+
       const { data, error } = await this.client.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: {
+            name: userData.name,
+            phone: userData.phone,
+            ...userData
+          }
         }
       });
 
       if (error) {
         throw error;
+      }
+
+      // Если у нас есть admin client, создаем дополнительную запись в кастомной таблице
+      if (this.admin && data.user) {
+        await this.createUserProfile(data.user.id, {
+          email: data.user.email,
+          name: userData.name,
+          phone: userData.phone
+        });
       }
 
       return {
@@ -299,6 +323,64 @@ class AuthService {
     }
   }
 
+  // Создание профиля пользователя в кастомной таблице
+  async createUserProfile(userId, profileData) {
+    if (!this.admin) {
+      console.warn('Admin client not available for creating user profile');
+      return;
+    }
+
+    try {
+      const { error } = await this.admin
+        .from('user_profiles')
+        .insert({
+          user_id: userId,
+          email: profileData.email,
+          name: profileData.name,
+          phone: profileData.phone,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error creating user profile:', error);
+        // Не выбрасываем ошибку, так как основная регистрация уже прошла
+      }
+    } catch (error) {
+      console.error('Error creating user profile:', error);
+    }
+  }
+
+  // Получение профиля пользователя
+  async getUserProfile(userId) {
+    if (!this.admin) {
+      return { ok: false, error: 'Admin client not available' };
+    }
+
+    try {
+      const { data, error } = await this.admin
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return {
+        ok: true,
+        profile: data
+      };
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      return {
+        ok: false,
+        error: this.formatAuthError(error)
+      };
+    }
+  }
+
   formatAuthError(error) {
     const errorMessages = {
       'Invalid login credentials': 'Неверный email или пароль',
@@ -309,7 +391,9 @@ class AuthService {
       'Invalid email': 'Некорректный email адрес',
       'Signup is disabled': 'Регистрация отключена',
       'Email rate limit exceeded': 'Превышен лимит отправки email',
-      'Token has expired or is invalid': 'Токен истек или недействителен'
+      'Token has expired or is invalid': 'Токен истек или недействителен',
+      'Name and phone are required': 'Имя и номер телефона обязательны',
+      'Invalid phone number format': 'Неверный формат номера телефона'
     };
 
     const message = errorMessages[error.message] || error.message || 'Ошибка аутентификации';

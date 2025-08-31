@@ -20,19 +20,54 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     
-    // Простая тестовая авторизация
-    setTimeout(() => {
-      if (email && password) {
-        // Сохраняем данные пользователя в localStorage для тестирования
+    // Валидация
+    if (!email.trim() || !password.trim()) {
+      alert("Email и пароль обязательны для заполнения")
+      setIsLoading(false)
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.ok) {
+        // Сохраняем данные пользователя
         localStorage.setItem("user", JSON.stringify({
-          email,
-          name: email.split("@")[0],
+          id: result.user?.id,
+          email: result.user?.email,
+          name: result.user?.user_metadata?.name || result.user?.email?.split("@")[0],
+          phone: result.user?.user_metadata?.phone,
           isAuthenticated: true
         }))
+        
+        // Сохраняем токены если есть
+        if (result.session) {
+          localStorage.setItem("access_token", result.session.access_token)
+          localStorage.setItem("refresh_token", result.session.refresh_token)
+        }
+
+        alert(result.message || "Вход выполнен успешно!")
         router.push("/dashboard")
+      } else {
+        alert(result.error?.message || "Ошибка входа")
       }
+    } catch (error) {
+      console.error('Login error:', error)
+      alert("Ошибка соединения с сервером")
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (

@@ -628,20 +628,57 @@ app.post('/api/datanewton-finances', optionalAuth, userRateLimit(10, 15 * 60 * 1
 // Authentication endpoints
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, userData } = req.body;
+    const { email, password, name, phone, ...additionalData } = req.body;
 
-    if (!email || !password) {
+    // Валидация обязательных полей
+    if (!email || !password || !name || !phone) {
       const { statusCode, response } = ErrorHandler.formatErrorResponse(
-        { name: 'ValidationError', message: 'Email and password are required' },
+        { name: 'ValidationError', message: 'Email, password, name, and phone are required' },
         req
       );
       return res.status(statusCode).json(response);
     }
 
-    const result = await authService.signUp(email, password, userData);
+    // Базовая валидация email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Invalid email format' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    // Валидация пароля
+    if (password.length < 6) {
+      const { statusCode, response } = ErrorHandler.formatErrorResponse(
+        { name: 'ValidationError', message: 'Password must be at least 6 characters long' },
+        req
+      );
+      return res.status(statusCode).json(response);
+    }
+
+    // Подготовка данных пользователя
+    const userData = {
+      name: name.trim(),
+      phone: phone.trim(),
+      ...additionalData
+    };
+
+    const result = await authService.signUp(email.trim().toLowerCase(), password, userData);
 
     if (result.ok) {
-      res.json(result);
+      // Удаляем чувствительные данные из ответа
+      const sanitizedResult = {
+        ...result,
+        user: result.user ? {
+          id: result.user.id,
+          email: result.user.email,
+          user_metadata: result.user.user_metadata,
+          created_at: result.user.created_at
+        } : null
+      };
+      res.json(sanitizedResult);
     } else {
       const statusCode = result.error.code === 'AUTH_ERROR' ? 400 : 500;
       res.status(statusCode).json(result);
@@ -693,12 +730,40 @@ app.post('/api/auth/signout', requireAuth, async (req, res) => {
 
 app.get('/api/auth/user', requireAuth, async (req, res) => {
   try {
-    res.json({
+    // Получаем дополнительную информацию из профиля
+    const profileResult = await authService.getUserProfile(req.user.id);
+    
+    const response = {
       ok: true,
-      user: req.user
-    });
+      user: {
+        ...req.user,
+        profile: profileResult.ok ? profileResult.profile : null
+      }
+    };
+    
+    res.json(response);
   } catch (error) {
     console.error('Get user endpoint error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+// Endpoint для получения профиля пользователя
+app.get('/api/auth/profile', requireAuth, async (req, res) => {
+  try {
+    const profileResult = await authService.getUserProfile(req.user.id);
+    
+    if (profileResult.ok) {
+      res.json(profileResult);
+    } else {
+      res.status(404).json({
+        ok: false,
+        error: { message: 'Профиль не найден' }
+      });
+    }
+  } catch (error) {
+    console.error('Get profile endpoint error:', error);
     const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
     res.status(statusCode).json(response);
   }

@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: ""
   })
@@ -24,23 +25,70 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
     
-    // Простая валидация
+    // Валидация
     if (formData.password !== formData.confirmPassword) {
       alert("Пароли не совпадают")
       setIsLoading(false)
       return
     }
-    
-    // Тестовая регистрация
-    setTimeout(() => {
-      localStorage.setItem("user", JSON.stringify({
-        email: formData.email,
-        name: formData.name,
-        isAuthenticated: true
-      }))
-      router.push("/dashboard")
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+      alert("Все поля обязательны для заполнения")
       setIsLoading(false)
-    }, 1000)
+      return
+    }
+
+    // Валидация номера телефона
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
+    if (!phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
+      alert("Неверный формат номера телефона")
+      setIsLoading(false)
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          phone: formData.phone
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.ok) {
+        // Сохраняем данные пользователя
+        localStorage.setItem("user", JSON.stringify({
+          id: result.user?.id,
+          email: result.user?.email,
+          name: result.user?.user_metadata?.name || formData.name,
+          phone: result.user?.user_metadata?.phone || formData.phone,
+          isAuthenticated: true
+        }))
+        
+        // Сохраняем токены если есть
+        if (result.session) {
+          localStorage.setItem("access_token", result.session.access_token)
+          localStorage.setItem("refresh_token", result.session.refresh_token)
+        }
+
+        alert(result.message || "Регистрация успешна!")
+        router.push("/dashboard")
+      } else {
+        alert(result.error?.message || "Ошибка регистрации")
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      alert("Ошибка соединения с сервером")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +130,18 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="your@email.com"
                 value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Номер телефона</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={formData.phone}
                 onChange={handleInputChange}
                 required
               />
