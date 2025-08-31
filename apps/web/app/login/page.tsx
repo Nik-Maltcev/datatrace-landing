@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Database, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { API_ENDPOINTS, apiRequest } from "@/lib/api"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -28,18 +29,13 @@ export default function LoginPage() {
     }
     
     try {
-      const response = await fetch('/api/auth/signin', {
+      const { response, data: result } = await apiRequest(API_ENDPOINTS.AUTH.SIGNIN, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           email: email.trim(),
           password: password
         })
       })
-
-      const result = await response.json()
 
       if (result.ok) {
         // Сохраняем данные пользователя

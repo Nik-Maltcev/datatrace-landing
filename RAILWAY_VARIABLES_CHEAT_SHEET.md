@@ -59,9 +59,11 @@ CHECKO_BASE=https://api.checko.ru/v2
 2. SQL Editor → выполните скрипт из `apps/api/supabase_setup.sql`
 3. Settings → API → скопируйте ключи
 
-### 2. Добавьте в Railway
+### 2. Настройте Railway проекты
+
+#### Вариант A: Один проект (API + Frontend)
 ```bash
-# Минимальный набор для работы аутентификации:
+# Переменные для объединенного деплоя:
 NODE_ENV=production
 PORT=3000
 FRONTEND_URL=https://your-app.railway.app
@@ -70,10 +72,26 @@ SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+#### Вариант B: Раздельные проекты (рекомендуется)
+**API проект:**
+```bash
+NODE_ENV=production
+PORT=3000
+FRONTEND_URL=https://your-frontend.railway.app
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Frontend проект:**
+```bash
+NEXT_PUBLIC_API_URL=https://your-api.railway.app
+```
+
 ### 3. Деплой и тест
-1. Railway автоматически задеплоит
-2. Обновите `FRONTEND_URL` на актуальный URL
-3. Тест: откройте `/register` и зарегистрируйтесь
+1. Railway автоматически задеплоит оба проекта
+2. Обновите переменные на актуальные URLs
+3. Тест: откройте фронтенд и попробуйте регистрацию
 
 ---
 

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Database, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { API_ENDPOINTS, apiRequest } from "@/lib/api"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -47,11 +48,8 @@ export default function RegisterPage() {
     }
     
     try {
-      const response = await fetch('/api/auth/signup', {
+      const { response, data: result } = await apiRequest(API_ENDPOINTS.AUTH.SIGNUP, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -59,8 +57,6 @@ export default function RegisterPage() {
           phone: formData.phone
         })
       })
-
-      const result = await response.json()
 
       if (result.ok) {
         // Сохраняем данные пользователя
