@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { getSupabaseClient } from '@/lib/config/supabase-api';
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
+    
+    if (!supabase) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'CONFIG_ERROR',
+            message: 'Authentication service not configured'
+          }
+        },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { email, password, name, phone, ...additionalData } = body;
 

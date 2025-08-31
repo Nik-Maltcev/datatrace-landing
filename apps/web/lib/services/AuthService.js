@@ -3,13 +3,22 @@ const ErrorHandler = require('../utils/ErrorHandler');
 
 class AuthService {
   constructor() {
-    this.client = supabaseClient;
-    this.admin = supabaseAdmin;
+    // Store the getter functions, not the values
+    this.getClient = supabaseClient;
+    this.getAdmin = supabaseAdmin;
     this.isEnabled = isConfigured;
   }
 
+  get client() {
+    return this.getClient();
+  }
+
+  get admin() {
+    return this.getAdmin();
+  }
+
   isAvailable() {
-    return this.isEnabled && this.client !== null;
+    return this.isEnabled() && this.client !== null;
   }
 
   async signUp(email, password, userData = {}) {
