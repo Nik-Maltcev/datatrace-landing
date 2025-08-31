@@ -44,11 +44,8 @@ export default function DashboardPage() {
   }
 
   const handleLeakSearch = () => {
-    // Перенаправление на сервис поиска утечек (новый дизайн)
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production.up.railway.app'
-    const modernUrl = `${apiUrl}/modern`
-    console.log('API URL:', modernUrl)
-    window.open(modernUrl, "_blank")
+    // Перенаправление на страницу поиска утечек
+    router.push("/search")
   }
 
   if (!user) {
