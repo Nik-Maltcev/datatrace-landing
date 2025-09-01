@@ -23,7 +23,8 @@ import {
   Bell,
   Lock,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Clock
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -429,18 +430,20 @@ export default function DashboardPage() {
             </p>
           </button>
 
-          <button className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-all text-left group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                <Users className="h-5 w-5 text-gray-600" />
+          <Link href="/dashboard/checks">
+            <button className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-all text-left group w-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                  <Clock className="h-5 w-5 text-gray-600" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </div>
-              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-            </div>
-            <h3 className="text-base font-light mb-2 text-gray-900">Для команд</h3>
-            <p className="text-sm text-gray-500">
-              Корпоративная защита данных
-            </p>
-          </button>
+              <h3 className="text-base font-light mb-2 text-gray-900">Мои проверки</h3>
+              <p className="text-sm text-gray-500">
+                История проверок и результаты
+              </p>
+            </button>
+          </Link>
         </div>
 
         {/* Activity Feed */}
