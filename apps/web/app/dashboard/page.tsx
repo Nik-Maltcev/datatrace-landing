@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Database, 
-  Search, 
-  Shield, 
-  Users, 
-  Activity, 
+import {
+  Database,
+  Search,
+  Shield,
+  Users,
+  Activity,
   Settings,
   LogOut,
   ExternalLink,
@@ -17,7 +17,13 @@ import {
   CheckCircle,
   Phone,
   Mail,
-  Loader2
+  Loader2,
+  ChevronRight,
+  User,
+  Bell,
+  Lock,
+  Zap,
+  ArrowRight
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -130,257 +136,380 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    return <div>Загрузка...</div>
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Загрузка...</div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-zinc-800">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Database className="h-8 w-8 text-black" />
-              <span className="text-xl font-bold text-black">DataTrace</span>
-              <Badge variant="secondary" className="ml-2">Личный кабинет</Badge>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                <Database className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-light tracking-wide">DataTrace</span>
+              <div className="h-4 w-px bg-zinc-700 mx-2" />
+              <span className="text-sm text-zinc-400">Dashboard</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Добро пожаловать, {user.name}</span>
+            <div className="flex items-center space-x-6">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                variant="ghost"
+                size="icon"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Выйти
+                <Bell className="h-5 w-5" />
               </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-full"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+              <div className="h-6 w-px bg-zinc-800" />
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-zinc-500">{user.email}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="text-zinc-400 hover:text-red-500 hover:bg-zinc-800 rounded-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">Панель управления</h1>
-          <p className="text-gray-600">Управляйте своими данными и мониторингом утечек</p>
+      <div className="container mx-auto px-6 py-8">
+        {/* Welcome Section */}
+        <div className="mb-10">
+          <h1 className="text-4xl font-extralight mb-2">
+            Добро пожаловать, <span className="font-normal">{user.name}</span>
+          </h1>
+          <p className="text-zinc-400">Мониторинг и защита ваших персональных данных</p>
         </div>
 
-        {/* User Info Card */}
-        <Card className="mb-8 border-2 border-blue-200">
-          <CardHeader>
-            <CardTitle>Ваши данные для проверки</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium text-black">{user.email}</p>
-                  </div>
-                </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center">
+                <Shield className="h-5 w-5 text-zinc-400" />
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Phone className="h-5 w-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Телефон</p>
-                    <p className="font-medium text-black">{user.phone || "Не указан"}</p>
-                  </div>
-                </div>
-              </div>
+              <span className="text-xs text-zinc-500">Активно</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Check Actions */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="border-2 border-blue-200 hover:border-blue-400 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Phone className="h-6 w-6 text-blue-600" />
-                <span>Проверить номер телефона</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Проверить утечки по вашему номеру телефона: {user.phone || "не указан"}
-              </p>
-              <Button 
-                onClick={handleCheckPhoneLeaks}
-                disabled={isCheckingPhone || !user.phone}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isCheckingPhone ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Проверяем...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    Проверить телефон
-                  </>
-                )}
-              </Button>
-              {phoneError && (
-                <p className="mt-2 text-sm text-red-600">{phoneError}</p>
-              )}
-              {phoneLeaks && (
-                <div className="mt-4 p-3 bg-gray-50 rounded">
-                  <p className="text-sm font-medium">
-                    {phoneLeaks.length > 0 
-                      ? `Найдено утечек: ${phoneLeaks.length}` 
-                      : "Утечек не найдено ✓"}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-green-200 hover:border-green-400 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mail className="h-6 w-6 text-green-600" />
-                <span>Проверить email</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Проверить утечки по вашему email: {user.email}
-              </p>
-              <Button 
-                onClick={handleCheckEmailLeaks}
-                disabled={isCheckingEmail}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-              >
-                {isCheckingEmail ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Проверяем...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    Проверить email
-                  </>
-                )}
-              </Button>
-              {emailError && (
-                <p className="mt-2 text-sm text-red-600">{emailError}</p>
-              )}
-              {emailLeaks && (
-                <div className="mt-4 p-3 bg-gray-50 rounded">
-                  <p className="text-sm font-medium">
-                    {emailLeaks.length > 0 
-                      ? `Найдено утечек: ${emailLeaks.length}` 
-                      : "Утечек не найдено ✓"}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Other Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-2 border-purple-200 hover:border-purple-400 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Search className="h-6 w-6 text-purple-600" />
-                <span>Расширенный поиск</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Поиск утечек по любым данным с расширенными параметрами
-              </p>
-              <Button 
-                onClick={handleLeakSearch}
-                variant="outline"
-                className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Открыть поиск
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-yellow-200 hover:border-yellow-400 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-6 w-6 text-yellow-600" />
-                <span>Мониторинг</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Настройте постоянный мониторинг ваших данных
-              </p>
-              <Button 
-                variant="outline"
-                className="w-full border-yellow-600 text-yellow-600 hover:bg-yellow-50"
-              >
-                Настроить мониторинг
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 border-indigo-200 hover:border-indigo-400 transition-colors">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="h-6 w-6 text-indigo-600" />
-                <span>Корпоративный доступ</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Управляйте данными сотрудников
-              </p>
-              <Button 
-                variant="outline"
-                className="w-full border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-              >
-                Подключить команду
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Последняя активность</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Activity className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium text-black">Система активна</p>
-                    <p className="text-sm text-gray-600">Готова к проверке ваших данных</p>
-                  </div>
-                </div>
-                <Badge variant="secondary">Активно</Badge>
+            <p className="text-2xl font-light mb-1">12</p>
+            <p className="text-sm text-zinc-500">Защищенных данных</p>
+          </div>
+          
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-red-600/10 rounded-full flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
+              <span className="text-xs text-red-500">Внимание</span>
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-2xl font-light mb-1">3</p>
+            <p className="text-sm text-zinc-500">Найдено утечек</p>
+          </div>
+          
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-green-600/10 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <span className="text-xs text-green-500">Успешно</span>
+            </div>
+            <p className="text-2xl font-light mb-1">5</p>
+            <p className="text-sm text-zinc-500">Удалено записей</p>
+          </div>
+          
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center">
+                <Activity className="h-5 w-5 text-zinc-400" />
+              </div>
+              <span className="text-xs text-zinc-500">24/7</span>
+            </div>
+            <p className="text-2xl font-light mb-1">15</p>
+            <p className="text-sm text-zinc-500">Источников мониторинга</p>
+          </div>
+        </div>
 
-        {/* Quick Links */}
-        <div className="mt-8 flex justify-center space-x-4">
-          <Link href="/">
-            <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-              Вернуться на главную
+        {/* User Data Section */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-light">Ваши защищенные данные</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              Изменить
             </Button>
-          </Link>
-          <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-            <Settings className="h-4 w-4 mr-2" />
-            Настройки
-          </Button>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-black border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-zinc-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Email адрес</p>
+                    <p className="font-mono text-sm">{user.email}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-black border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-zinc-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Номер телефона</p>
+                    <p className="font-mono text-sm">{user.phone || "Не указан"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-red-600/50 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center group-hover:bg-red-600/20 transition-colors">
+                  <Phone className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-light">Проверка телефона</h3>
+                  <p className="text-xs text-zinc-500 font-mono">{user.phone || "Не указан"}</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-zinc-400 mb-4">
+              Сканирование баз данных на наличие утечек вашего номера
+            </p>
+            <Button
+              onClick={handleCheckPhoneLeaks}
+              disabled={isCheckingPhone || !user.phone}
+              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCheckingPhone ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Сканирование...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Запустить проверку
+                </>
+              )}
+            </Button>
+            {phoneError && (
+              <div className="mt-4 p-3 bg-red-600/10 border border-red-600/20 rounded-xl">
+                <p className="text-sm text-red-400">{phoneError}</p>
+              </div>
+            )}
+            {phoneLeaks && (
+              <div className={`mt-4 p-3 rounded-xl border ${
+                phoneLeaks.length > 0
+                  ? 'bg-red-600/10 border-red-600/20'
+                  : 'bg-green-600/10 border-green-600/20'
+              }`}>
+                <p className="text-sm font-light">
+                  {phoneLeaks.length > 0
+                    ? <><AlertTriangle className="inline h-4 w-4 mr-1 text-red-500" /> Найдено утечек: {phoneLeaks.length}</>
+                    : <><CheckCircle className="inline h-4 w-4 mr-1 text-green-500" /> Утечек не обнаружено</>}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-red-600/50 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center group-hover:bg-red-600/20 transition-colors">
+                  <Mail className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-light">Проверка email</h3>
+                  <p className="text-xs text-zinc-500 font-mono">{user.email}</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-zinc-400 mb-4">
+              Поиск компрометации email адреса в известных утечках
+            </p>
+            <Button
+              onClick={handleCheckEmailLeaks}
+              disabled={isCheckingEmail}
+              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCheckingEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Сканирование...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Запустить проверку
+                </>
+              )}
+            </Button>
+            {emailError && (
+              <div className="mt-4 p-3 bg-red-600/10 border border-red-600/20 rounded-xl">
+                <p className="text-sm text-red-400">{emailError}</p>
+              </div>
+            )}
+            {emailLeaks && (
+              <div className={`mt-4 p-3 rounded-xl border ${
+                emailLeaks.length > 0
+                  ? 'bg-red-600/10 border-red-600/20'
+                  : 'bg-green-600/10 border-green-600/20'
+              }`}>
+                <p className="text-sm font-light">
+                  {emailLeaks.length > 0
+                    ? <><AlertTriangle className="inline h-4 w-4 mr-1 text-red-500" /> Найдено утечек: {emailLeaks.length}</>
+                    : <><CheckCircle className="inline h-4 w-4 mr-1 text-green-500" /> Утечек не обнаружено</>}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Additional Features */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <button
+            onClick={handleLeakSearch}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-all text-left group"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center group-hover:bg-zinc-700 transition-colors">
+                <Search className="h-5 w-5 text-zinc-400" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+            </div>
+            <h3 className="text-base font-light mb-2">Расширенный поиск</h3>
+            <p className="text-sm text-zinc-500">
+              Глубокое сканирование по всем параметрам
+            </p>
+          </button>
+
+          <button className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-all text-left group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center group-hover:bg-zinc-700 transition-colors">
+                <Shield className="h-5 w-5 text-zinc-400" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+            </div>
+            <h3 className="text-base font-light mb-2">Мониторинг 24/7</h3>
+            <p className="text-sm text-zinc-500">
+              Автоматическое отслеживание новых утечек
+            </p>
+          </button>
+
+          <button className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-all text-left group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-zinc-800 rounded-full flex items-center justify-center group-hover:bg-zinc-700 transition-colors">
+                <Users className="h-5 w-5 text-zinc-400" />
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+            </div>
+            <h3 className="text-base font-light mb-2">Для команд</h3>
+            <p className="text-sm text-zinc-500">
+              Корпоративная защита данных
+            </p>
+          </button>
+        </div>
+
+        {/* Activity Feed */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-light">Активность системы</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+            >
+              Все события
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3 p-3 bg-black rounded-xl border border-zinc-800">
+              <div className="w-8 h-8 bg-green-600/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-light">Система защиты активна</p>
+                <p className="text-xs text-zinc-500 mt-1">Все сервисы работают в штатном режиме</p>
+              </div>
+              <span className="text-xs text-zinc-600">Сейчас</span>
+            </div>
+            
+            <div className="flex items-start space-x-3 p-3 bg-black rounded-xl border border-zinc-800">
+              <div className="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Activity className="h-4 w-4 text-zinc-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-light">Мониторинг запущен</p>
+                <p className="text-xs text-zinc-500 mt-1">Отслеживание 15 источников данных</p>
+              </div>
+              <span className="text-xs text-zinc-600">5 мин назад</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="mt-10 pt-8 border-t border-zinc-800">
+          <div className="flex items-center justify-between">
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              >
+                ← На главную
+              </Button>
+            </Link>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              >
+                Помощь
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Настройки
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
