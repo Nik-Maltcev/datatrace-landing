@@ -19,12 +19,15 @@ import {
   Mail,
   Loader2,
   ChevronRight,
+  ChevronDown,
   User,
   Bell,
   Lock,
   Zap,
   ArrowRight,
-  Clock
+  Clock,
+  Server,
+  Globe
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -40,6 +43,16 @@ interface LeakResult {
   source: string
   data: any
   found: boolean
+  count?: number
+}
+
+interface PhoneCheckResponse {
+  ok: boolean
+  phone: string
+  totalLeaks: number
+  results: LeakResult[]
+  errors?: Array<{ source: string; error: string }>
+  message: string
 }
 
 export default function DashboardPage() {
@@ -50,6 +63,8 @@ export default function DashboardPage() {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
+  const [showPhoneDetails, setShowPhoneDetails] = useState(false)
+  const [phoneCheckResponse, setPhoneCheckResponse] = useState<PhoneCheckResponse | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -75,6 +90,7 @@ export default function DashboardPage() {
     setIsCheckingPhone(true)
     setPhoneError(null)
     setPhoneLeaks(null)
+    setPhoneCheckResponse(null)
 
     try {
       const response = await fetch("/api/leaks/check-phone", {
@@ -91,6 +107,10 @@ export default function DashboardPage() {
 
       const data = await response.json()
       setPhoneLeaks(data.results || [])
+      setPhoneCheckResponse(data)
+      if (data.totalLeaks > 0) {
+        setShowPhoneDetails(true)
+      }
     } catch (error) {
       console.error("Phone check error:", error)
       setPhoneError("Не удалось проверить утечки по номеру телефона")
@@ -331,17 +351,78 @@ export default function DashboardPage() {
                 <p className="text-sm text-red-600">{phoneError}</p>
               </div>
             )}
-            {phoneLeaks && (
-              <div className={`mt-4 p-3 rounded-xl border ${
-                phoneLeaks.length > 0
+            {phoneCheckResponse && (
+              <div className={`mt-4 rounded-xl border ${
+                phoneCheckResponse.totalLeaks > 0
                   ? 'bg-red-50 border-red-200'
                   : 'bg-green-50 border-green-200'
               }`}>
-                <p className="text-sm font-light text-gray-900">
-                  {phoneLeaks.length > 0
-                    ? <><AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" /> Найдено утечек: {phoneLeaks.length}</>
-                    : <><CheckCircle className="inline h-4 w-4 mr-1 text-green-600" /> Утечек не обнаружено</>}
-                </p>
+                <div className="p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-light text-gray-900">
+                      {phoneCheckResponse.totalLeaks > 0
+                        ? <><AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" /> Найдено утечек: {phoneCheckResponse.totalLeaks}</>
+                        : <><CheckCircle className="inline h-4 w-4 mr-1 text-green-600" /> Утечек не обнаружено</>
+                      }
+                    </p>
+                    {phoneCheckResponse.totalLeaks > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowPhoneDetails(!showPhoneDetails)}
+                        className="text-gray-600 hover:text-gray-900 p-1 h-auto"
+                      >
+                        {showPhoneDetails ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {showPhoneDetails && phoneCheckResponse.totalLeaks > 0 && (
+                    <div className="mt-3 space-y-2 border-t border-red-200 pt-3">
+                      {phoneCheckResponse.results.map((result, index) => (
+                        result.found && (
+                          <div key={index} className="bg-white rounded-lg p-3 border border-red-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                  {result.source === 'Snusbase' ? (
+                                    <Database className="h-3 w-3 text-red-600" />
+                                  ) : result.source === 'DeHashed' ? (
+                                    <Server className="h-3 w-3 text-red-600" />
+                                  ) : (
+                                    <Globe className="h-3 w-3 text-red-600" />
+                                  )}
+                                </div>
+                                <span className="text-sm font-medium text-gray-900">{result.source}</span>
+                              </div>
+                              <Badge variant="destructive" className="text-xs">
+                                {result.count || 0} записей
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600">
+                              Найдены записи с вашим номером телефона в базе данных {result.source}
+                            </p>
+                          </div>
+                        )
+                      ))}
+                      
+                      {phoneCheckResponse.errors && phoneCheckResponse.errors.length > 0 && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <p className="text-xs text-yellow-800 font-medium mb-1">Предупреждения:</p>
+                          {phoneCheckResponse.errors.map((error, index) => (
+                            <p key={index} className="text-xs text-yellow-700">
+                              {error.source}: {error.error}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
