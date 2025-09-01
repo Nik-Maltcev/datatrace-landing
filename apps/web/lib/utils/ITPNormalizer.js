@@ -109,76 +109,6 @@ class ITPNormalizer {
   }
 
   /**
-   * Нормализация номера карты (скрытие части номера)
-   * @param {string} cardNumber - Номер карты
-   * @returns {string} Частично скрытый номер карты
-   */
-  static normalizeCardNumber(cardNumber) {
-    if (!cardNumber) return null;
-    
-    const digits = cardNumber.toString().replace(/\D/g, '');
-    
-    if (digits.length >= 8) {
-      return digits.substring(0, 4) + '*'.repeat(digits.length - 8) + digits.substring(digits.length - 4);
-    }
-    
-    return '*'.repeat(digits.length);
-  }
-
-  /**
-   * Нормализация документов
-   * @param {Object} document - Документ
-   * @returns {Object} Нормализованный документ
-   */
-  static normalizeDocument(document) {
-    if (!document) return null;
-    
-    return {
-      type: document.type || 'Неизвестно',
-      serial: document.serial || null,
-      authority: document.authority || null,
-      country: document.country || 'RU',
-      dateIssue: document.date_issue ? this.normalizeBirthDate(document.date_issue) : null
-    };
-  }
-
-  /**
-   * Нормализация финансовых данных
-   * @param {Object} financial - Финансовые данные
-   * @returns {Object} Нормализованные данные
-   */
-  static normalizeFinancial(financial) {
-    if (!financial) return null;
-    
-    return {
-      cardNumber: financial.card_number ? this.normalizeCardNumber(financial.card_number) : null,
-      // Можно добавить другие финансовые поля
-    };
-  }
-
-  /**
-   * Форматирование даты для отображения
-   * @param {string} dateStr - Дата в формате ISO или другом
-   * @returns {string} Отформатированная дата
-   */
-  static formatDate(dateStr) {
-    if (!dateStr) return null;
-    
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      
-      return date.toLocaleDateString('ru-RU', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (e) {
-      return dateStr;
-    }
-  }
-
-  /**
    * Основная функция нормализации записи ITP
    * @param {Object} record - Исходная запись из ITP
    * @returns {Object} Нормализованная запись
@@ -205,13 +135,6 @@ class ITPNormalizer {
       userId: record.id || null,
       serviceUrl: record.url || null,
       serviceTitle: record.title || null,
-
-      // Документы (если есть)
-      documents: record.documents ? this.normalizeDocument(record.documents) : null,
-
-      // Финансовые данные (если есть)
-      financials: record.financials ? this.normalizeFinancial(record.financials) : null,
-      cardNumber: record.card_number ? this.normalizeCardNumber(record.card_number) : null,
 
       // Дополнительная информация
       actuality: record.actuality || null,
@@ -290,35 +213,6 @@ class ITPNormalizer {
     console.log(`✅ ITPNormalizer: Normalized ${normalized.length} records from ${allRecords.length} input records`);
     
     return normalized;
-  }
-
-  /**
-   * Получение читаемого описания типа данных
-   * @param {string} field - Название поля
-   * @returns {string} Описание
-   */
-  static getFieldDescription(field) {
-    const descriptions = {
-      name: '👤 Имя',
-      phone: '📱 Телефон',
-      email: '📧 Email',
-      address: '🏠 Адрес',
-      birthDate: '🎂 Дата рождения',
-      gender: '⚧️ Пол',
-      login: '👨‍💻 Логин',
-      password: '🔑 Пароль',
-      passwordHash: '🔐 Хеш пароля',
-      cardNumber: '💳 Номер карты',
-      documents: '📄 Документы',
-      telegramId: '📱 Telegram ID',
-      phoneCarrier: '📶 Оператор связи',
-      phoneRegion: '🌍 Регион телефона',
-      dbName: '💾 База данных',
-      createdDate: '📅 Дата создания',
-      isVip: '⭐ VIP статус'
-    };
-    
-    return descriptions[field] || field;
   }
 }
 

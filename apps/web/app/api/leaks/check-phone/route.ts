@@ -1,8 +1,225 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
 
-// Import services (we'll need to convert them to TypeScript later)
-const SnusbaseService = require('@/lib/services/SnusbaseService');
-const DeHashedService = require('@/lib/services/DeHashedService');
+// Import normalizers
+const ITPNormalizer = require('@/lib/utils/ITPNormalizer');
+const LeakOsintNormalizer = require('@/lib/utils/LeakOsintNormalizer');
+const UsersboxNormalizer = require('@/lib/utils/UsersboxNormalizer');
+const VektorNormalizer = require('@/lib/utils/VektorNormalizer');
+
+// API tokens from environment
+const TOKENS = {
+  ITP: process.env.ITP_TOKEN || '91b2c57abce2ca84f8ca068df2eda054',
+  DYXLESS: process.env.DYXLESS_TOKEN || '38a634df-2317-4c8c-beb7-7ca4fd97f1e1',
+  LEAKOSINT: process.env.LEAKOSINT_TOKEN || '466496291:r571DgY3',
+  USERSBOX: process.env.USERSBOX_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkX2F0IjoxNzUyNTg0NTk5LCJhcHBfaWQiOjE3NTI1ODQ1OTl9.FqMGisO5V1xW2Xr8Ri5mQryy5I1sdBBWzuckCEPpK58',
+  VEKTOR: process.env.VEKTOR_TOKEN || 'C45vAVuDkzNax2BF4sz8o4KEAZFBIIK'
+};
+
+const ITP_BASE = process.env.ITP_BASE || 'https://datatech.work';
+const DYXLESS_BASE = process.env.DYXLESS_BASE || 'https://api-dyxless.cfd';
+const LEAKOSINT_BASE = 'https://leakosintapi.com/';
+const USERSBOX_BASE = 'https://api.usersbox.ru/v1';
+const VEKTOR_BASE = 'https://infosearch54321.xyz';
+
+function extractUsernameIfSocial(field: string, query: string): string {
+  if (!query || (field !== 'vk' && field !== 'ok')) return query;
+  try {
+    if (/^https?:\/\//i.test(query)) {
+      const u = new URL(query);
+      const host = u.hostname.replace(/^www\./, '');
+      if (host.includes('vk.com')) {
+        const seg = u.pathname.split('/').filter(Boolean);
+        if (seg.length > 0) return seg[seg.length - 1];
+      }
+      if (host.includes('ok.ru') || host.includes('odnoklassniki.ru')) {
+        const seg = u.pathname.split('/').filter(Boolean);
+        if (seg.length > 0) return seg[seg.length - 1];
+      }
+    }
+    return query.replace(/^@+/, '');
+  } catch {
+    return query;
+  }
+}
+
+async function searchITP(query: string, field: string) {
+  try {
+    const itpTypeMap: Record<string, string> = {
+      phone: 'phone',
+      email: 'email',
+      inn: 'inn',
+      snils: 'snils',
+      vk: 'username',
+      ok: 'username'
+    };
+    const isSocial = field === 'vk' || field === 'ok';
+    const adjustedQuery = isSocial ? extractUsernameIfSocial(field, query) : query;
+    const itpType = itpTypeMap[field] || 'full_text';
+    
+    const res = await axios.post(
+      ITP_BASE + '/public-api/data/search',
+      {
+        searchOptions: [
+          { type: itpType, query: adjustedQuery }
+        ]
+      },
+      { 
+        headers: { 'x-api-key': TOKENS.ITP },
+        timeout: 15000
+      }
+    );
+    
+    const data = res.data || {};
+    const normalizedItems = data.data ? ITPNormalizer.normalizeRecords(data.data) : [];
+    
+    return { 
+      name: 'ITP', 
+      ok: true, 
+      found: normalizedItems.length > 0,
+      count: normalizedItems.length,
+      data: normalizedItems
+    };
+  } catch (err: any) {
+    return { name: 'ITP', ok: false, found: false, count: 0, error: err.message };
+  }
+}
+
+async function searchDyxless(query: string) {
+  const attempt = async () => {
+    const res = await axios.post(
+      DYXLESS_BASE + '/query',
+      { query, token: TOKENS.DYXLESS },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) DataTrace/1.0'
+        },
+        timeout: 15000
+      }
+    );
+    
+    const ct = res.headers && res.headers['content-type'];
+    if (ct && ct.includes('text/html') && typeof res.data === 'string') {
+      throw { response: { status: res.status || 521, data: 'Cloudflare HTML error page' } };
+    }
+    
+    const data = res.data || {};
+    const items = data.data || [];
+    
+    return { 
+      name: 'Dyxless', 
+      ok: !!data.status, 
+      found: items.length > 0,
+      count: items.length,
+      data: items
+    };
+  };
+
+  try {
+    return await attempt();
+  } catch (e1) {
+    await new Promise((r) => setTimeout(r, 600));
+    try {
+      return await attempt();
+    } catch (e2: any) {
+      return { name: 'Dyxless', ok: false, found: false, count: 0, error: e2.message };
+    }
+  }
+}
+
+async function searchLeakOsint(query: string) {
+  try {
+    const res = await axios.post(
+      LEAKOSINT_BASE,
+      { token: TOKENS.LEAKOSINT, request: query, limit: 100, lang: 'ru', type: 'json' },
+      { 
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 15000
+      }
+    );
+    
+    const data = res.data || {};
+    
+    if (data && (data['Error code'] || data.Error || data.error)) {
+      return { name: 'LeakOsint', ok: false, found: false, count: 0, error: data };
+    }
+    
+    const list = data.List || {};
+    const items = Object.keys(list).map((k) => ({ db: k, info: list[k]?.InfoLeak, data: list[k]?.Data }));
+    
+    if (!Object.keys(list).length) {
+      return { name: 'LeakOsint', ok: false, found: false, count: 0, error: { message: 'Нет данных или неизвестный формат ответа' } };
+    }
+    
+    const normalizedItems = LeakOsintNormalizer.normalizeRecords(items);
+    
+    return { 
+      name: 'LeakOsint', 
+      ok: true, 
+      found: normalizedItems.length > 0,
+      count: normalizedItems.length,
+      data: normalizedItems
+    };
+  } catch (err: any) {
+    return { name: 'LeakOsint', ok: false, found: false, count: 0, error: err.message };
+  }
+}
+
+async function searchUsersbox(query: string) {
+  try {
+    const res = await axios.get(
+      USERSBOX_BASE + '/search',
+      {
+        params: { q: query },
+        headers: { Authorization: TOKENS.USERSBOX },
+        timeout: 15000
+      }
+    );
+    
+    const data = res.data || {};
+    const normalizedData = UsersboxNormalizer.normalizeUsersboxData(data);
+    
+    return { 
+      name: 'Usersbox', 
+      ok: data.status === 'success', 
+      found: normalizedData.length > 0,
+      count: normalizedData.length,
+      data: normalizedData
+    };
+  } catch (err: any) {
+    return { name: 'Usersbox', ok: false, found: false, count: 0, error: err.message };
+  }
+}
+
+async function searchVektor(query: string) {
+  try {
+    const url = `${VEKTOR_BASE}/api/${encodeURIComponent(TOKENS.VEKTOR)}/search/${encodeURIComponent(query)}`;
+    const res = await axios.get(url, { timeout: 15000 });
+    const data = res.data || {};
+    
+    if (data && data.error) {
+      return { name: 'Vektor', ok: false, found: false, count: 0, error: data.error };
+    }
+    
+    if (!data || !data.result) {
+      return { name: 'Vektor', ok: false, found: false, count: 0, error: { message: 'Пустой ответ или нет поля result' } };
+    }
+    
+    const items = Array.isArray(data.result) ? data.result : [data.result];
+    
+    return { 
+      name: 'Vektor', 
+      ok: true, 
+      found: items.length > 0,
+      count: items.length,
+      data: items
+    };
+  } catch (err: any) {
+    return { name: 'Vektor', ok: false, found: false, count: 0, error: err.message };
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,70 +242,54 @@ export async function POST(request: NextRequest) {
     // Normalize phone number (remove spaces, dashes, etc.)
     const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
     
-    const results = [];
-    const errors = [];
-
-    // Check Snusbase if configured
-    if (process.env.SNUSBASE_API_KEY) {
-      try {
-        const snusbaseService = new SnusbaseService();
-        const snusbaseResult = await snusbaseService.searchByPhone(normalizedPhone);
-        
-        if (snusbaseResult.ok && snusbaseResult.data) {
-          results.push({
-            source: 'Snusbase',
-            found: snusbaseResult.data.length > 0,
-            count: snusbaseResult.data.length,
-            data: snusbaseResult.data
-          });
-        }
-      } catch (error) {
-        console.error('Snusbase search error:', error);
-        errors.push({
-          source: 'Snusbase',
-          error: 'Failed to search Snusbase'
-        });
+    console.log(`🔍 Starting comprehensive phone search for: ${normalizedPhone}`);
+    
+    // Search all sources in parallel
+    const searchPromises = [
+      searchITP(normalizedPhone, 'phone'),
+      searchDyxless(normalizedPhone),
+      searchLeakOsint(normalizedPhone),
+      searchUsersbox(normalizedPhone),
+      searchVektor(normalizedPhone)
+    ];
+    
+    const results = await Promise.allSettled(searchPromises);
+    
+    // Process results
+    const processedResults = results.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      } else {
+        const sourceNames = ['ITP', 'Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'];
+        return {
+          name: sourceNames[index],
+          ok: false,
+          found: false,
+          count: 0,
+          error: result.reason?.message || 'Unknown error'
+        };
       }
-    }
-
-    // Check DeHashed if configured
-    if (process.env.DEHASHED_API_KEY && process.env.DEHASHED_EMAIL) {
-      try {
-        const dehashedService = new DeHashedService();
-        const dehashedResult = await dehashedService.searchByPhone(normalizedPhone);
-        
-        if (dehashedResult.ok && dehashedResult.data) {
-          results.push({
-            source: 'DeHashed',
-            found: dehashedResult.data.length > 0,
-            count: dehashedResult.data.length,
-            data: dehashedResult.data
-          });
-        }
-      } catch (error) {
-        console.error('DeHashed search error:', error);
-        errors.push({
-          source: 'DeHashed',
-          error: 'Failed to search DeHashed'
-        });
-      }
-    }
+    });
 
     // Calculate total leaks found
-    const totalLeaks = results.reduce((sum, result) => sum + (result.count || 0), 0);
+    const totalLeaks = processedResults.reduce((sum, result) => sum + (result.count || 0), 0);
+    const foundSources = processedResults.filter(result => result.found).length;
+
+    console.log(`✅ Phone search completed: ${totalLeaks} total leaks from ${foundSources} sources`);
 
     return NextResponse.json({
       ok: true,
       phone: normalizedPhone,
       totalLeaks,
-      results,
-      errors: errors.length > 0 ? errors : undefined,
+      foundSources,
+      results: processedResults,
       message: totalLeaks > 0 
-        ? `Найдено ${totalLeaks} утечек по номеру телефона`
-        : 'Утечек по данному номеру телефона не найдено'
+        ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
+        : 'Утечек по данному номеру телефона не найдено',
+      timestamp: new Date().toISOString()
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Check phone endpoint error:', error);
     return NextResponse.json(
       {

@@ -40,19 +40,25 @@ interface User {
 }
 
 interface LeakResult {
-  source: string
+  name: string
+  source?: string
   data: any
   found: boolean
   count?: number
+  ok?: boolean
+  error?: any
 }
 
 interface PhoneCheckResponse {
   ok: boolean
-  phone: string
+  phone?: string
+  email?: string
   totalLeaks: number
+  foundSources?: number
   results: LeakResult[]
   errors?: Array<{ source: string; error: string }>
   message: string
+  timestamp?: string
 }
 
 export default function DashboardPage() {
@@ -64,7 +70,9 @@ export default function DashboardPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [showPhoneDetails, setShowPhoneDetails] = useState(false)
+  const [showEmailDetails, setShowEmailDetails] = useState(false)
   const [phoneCheckResponse, setPhoneCheckResponse] = useState<PhoneCheckResponse | null>(null)
+  const [emailCheckResponse, setEmailCheckResponse] = useState<PhoneCheckResponse | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -144,6 +152,10 @@ export default function DashboardPage() {
 
       const data = await response.json()
       setEmailLeaks(data.results || [])
+      setEmailCheckResponse(data)
+      if (data.totalLeaks > 0) {
+        setShowEmailDetails(true)
+      }
     } catch (error) {
       console.error("Email check error:", error)
       setEmailError("Не удалось проверить утечки по email")
