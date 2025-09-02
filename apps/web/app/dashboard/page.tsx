@@ -90,10 +90,14 @@ export default function DashboardPage() {
   }
 
   const handleCheckPhoneLeaks = async () => {
+    console.log('🚀 Starting phone check for user:', user)
+
     if (!user?.phone) {
       setPhoneError("Номер телефона не указан в профиле")
       return
     }
+
+    console.log('📱 Checking phone:', user.phone)
 
     setIsCheckingPhone(true)
     setPhoneError(null)
@@ -107,6 +111,8 @@ export default function DashboardPage() {
       if (!token) {
         throw new Error("Токен авторизации не найден")
       }
+
+      console.log('🔑 Token found, making API request...')
 
       // Используем локальный Next.js API route с логикой из основного API
       const response = await fetch('/api/check-user-phone', {
@@ -125,6 +131,9 @@ export default function DashboardPage() {
       }
 
       const data = await response.json()
+
+      console.log('📱 Phone check API response:', data)
+      console.log('📊 Phone check results:', data.results)
 
       // Данные уже приходят в правильном формате от нового API
       const transformedResults = data.results?.map((result: any) => ({
@@ -165,10 +174,14 @@ export default function DashboardPage() {
   }
 
   const handleCheckEmailLeaks = async () => {
+    console.log('🚀 Starting email check for user:', user)
+
     if (!user?.email) {
       setEmailError("Email не указан в профиле")
       return
     }
+
+    console.log('📧 Checking email:', user.email)
 
     setIsCheckingEmail(true)
     setEmailError(null)
@@ -182,6 +195,8 @@ export default function DashboardPage() {
       if (!token) {
         throw new Error("Токен авторизации не найден")
       }
+
+      console.log('🔑 Token found, making API request...')
 
       // Используем локальный Next.js API route с логикой из основного API
       const response = await fetch('/api/check-user-email', {
@@ -200,6 +215,9 @@ export default function DashboardPage() {
       }
 
       const data = await response.json()
+
+      console.log('📧 Email check API response:', data)
+      console.log('📊 Email check results:', data.results)
 
       // Данные уже приходят в правильном формате от нового API
       const transformedResults = data.results?.map((result: any) => ({
