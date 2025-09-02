@@ -101,27 +101,62 @@ export default function DashboardPage() {
     setPhoneCheckResponse(null)
 
     try {
-      const response = await fetch("/api/leaks/check-phone", {
+      // Получаем токен из localStorage
+      const userData = localStorage.getItem("user")
+      const token = userData ? JSON.parse(userData).token : null
+
+      if (!token) {
+        throw new Error("Токен авторизации не найден")
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/check-user-phone`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone: user.phone }),
+          "Authorization": `Bearer ${token}`
+        }
       })
 
       if (!response.ok) {
-        throw new Error("Ошибка при проверке телефона")
+        const errorData = await response.json()
+        throw new Error(errorData.error?.message || "Ошибка при проверке телефона")
       }
 
       const data = await response.json()
-      setPhoneLeaks(data.results || [])
-      setPhoneCheckResponse(data)
+
+      // Преобразуем результаты в формат, ожидаемый интерфейсом
+      const transformedResults = data.results?.map((result: any) => ({
+        name: result.name,
+        source: result.name,
+        found: result.ok && (
+          Array.isArray(result.items) ? result.items.length > 0 :
+          (typeof result.items === 'object' && result.items !== null) ? Object.keys(result.items).length > 0 :
+          false
+        ),
+        count: Array.isArray(result.items) ? result.items.length :
+               (typeof result.items === 'object' && result.items !== null) ?
+               Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0) : 0,
+        ok: result.ok,
+        error: result.error
+      })) || []
+
+      setPhoneLeaks(transformedResults)
+      setPhoneCheckResponse({
+        ok: data.ok,
+        phone: data.phone,
+        totalLeaks: data.totalLeaks,
+        foundSources: data.foundSources,
+        results: transformedResults,
+        message: data.message,
+        timestamp: data.timestamp
+      })
+
       if (data.totalLeaks > 0) {
         setShowPhoneDetails(true)
       }
     } catch (error) {
       console.error("Phone check error:", error)
-      setPhoneError("Не удалось проверить утечки по номеру телефона")
+      setPhoneError(error instanceof Error ? error.message : "Не удалось проверить утечки по номеру телефона")
     } finally {
       setIsCheckingPhone(false)
     }
@@ -136,29 +171,65 @@ export default function DashboardPage() {
     setIsCheckingEmail(true)
     setEmailError(null)
     setEmailLeaks(null)
+    setEmailCheckResponse(null)
 
     try {
-      const response = await fetch("/api/leaks/check-email", {
+      // Получаем токен из localStorage
+      const userData = localStorage.getItem("user")
+      const token = userData ? JSON.parse(userData).token : null
+
+      if (!token) {
+        throw new Error("Токен авторизации не найден")
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/check-user-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: user.email }),
+          "Authorization": `Bearer ${token}`
+        }
       })
 
       if (!response.ok) {
-        throw new Error("Ошибка при проверке email")
+        const errorData = await response.json()
+        throw new Error(errorData.error?.message || "Ошибка при проверке email")
       }
 
       const data = await response.json()
-      setEmailLeaks(data.results || [])
-      setEmailCheckResponse(data)
+
+      // Преобразуем результаты в формат, ожидаемый интерфейсом
+      const transformedResults = data.results?.map((result: any) => ({
+        name: result.name,
+        source: result.name,
+        found: result.ok && (
+          Array.isArray(result.items) ? result.items.length > 0 :
+          (typeof result.items === 'object' && result.items !== null) ? Object.keys(result.items).length > 0 :
+          false
+        ),
+        count: Array.isArray(result.items) ? result.items.length :
+               (typeof result.items === 'object' && result.items !== null) ?
+               Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0) : 0,
+        ok: result.ok,
+        error: result.error
+      })) || []
+
+      setEmailLeaks(transformedResults)
+      setEmailCheckResponse({
+        ok: data.ok,
+        email: data.email,
+        totalLeaks: data.totalLeaks,
+        foundSources: data.foundSources,
+        results: transformedResults,
+        message: data.message,
+        timestamp: data.timestamp
+      })
+
       if (data.totalLeaks > 0) {
         setShowEmailDetails(true)
       }
     } catch (error) {
       console.error("Email check error:", error)
-      setEmailError("Не удалось проверить утечки по email")
+      setEmailError(error instanceof Error ? error.message : "Не удалось проверить утечки по email")
     } finally {
       setIsCheckingEmail(false)
     }
@@ -476,17 +547,78 @@ export default function DashboardPage() {
                 <p className="text-sm text-red-600">{emailError}</p>
               </div>
             )}
-            {emailLeaks && (
-              <div className={`mt-4 p-3 rounded-xl border ${
-                emailLeaks.length > 0
+            {emailCheckResponse && (
+              <div className={`mt-4 rounded-xl border ${
+                emailCheckResponse.totalLeaks > 0
                   ? 'bg-red-50 border-red-200'
                   : 'bg-green-50 border-green-200'
               }`}>
-                <p className="text-sm font-light text-gray-900">
-                  {emailLeaks.length > 0
-                    ? <><AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" /> Найдено утечек: {emailLeaks.length}</>
-                    : <><CheckCircle className="inline h-4 w-4 mr-1 text-green-600" /> Утечек не обнаружено</>}
-                </p>
+                <div className="p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-light text-gray-900">
+                      {emailCheckResponse.totalLeaks > 0
+                        ? <><AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" /> Найдено утечек: {emailCheckResponse.totalLeaks}</>
+                        : <><CheckCircle className="inline h-4 w-4 mr-1 text-green-600" /> Утечек не обнаружено</>
+                      }
+                    </p>
+                    {emailCheckResponse.totalLeaks > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowEmailDetails(!showEmailDetails)}
+                        className="text-gray-600 hover:text-gray-900 p-1 h-auto"
+                      >
+                        {showEmailDetails ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
+                  {showEmailDetails && emailCheckResponse.totalLeaks > 0 && (
+                    <div className="mt-3 space-y-2 border-t border-red-200 pt-3">
+                      {emailCheckResponse.results.map((result, index) => (
+                        result.found && (
+                          <div key={index} className="bg-white rounded-lg p-3 border border-red-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                  {result.source === 'Snusbase' ? (
+                                    <Database className="h-3 w-3 text-red-600" />
+                                  ) : result.source === 'DeHashed' ? (
+                                    <Server className="h-3 w-3 text-red-600" />
+                                  ) : (
+                                    <Globe className="h-3 w-3 text-red-600" />
+                                  )}
+                                </div>
+                                <span className="text-sm font-medium text-gray-900">{result.source}</span>
+                              </div>
+                              <Badge variant="destructive" className="text-xs">
+                                {result.count || 0} записей
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600">
+                              Найдены записи с вашим email адресом в базе данных {result.source}
+                            </p>
+                          </div>
+                        )
+                      ))}
+
+                      {emailCheckResponse.errors && emailCheckResponse.errors.length > 0 && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <p className="text-xs text-yellow-800 font-medium mb-1">Предупреждения:</p>
+                          {emailCheckResponse.errors.map((error, index) => (
+                            <p key={index} className="text-xs text-yellow-700">
+                              {error.source}: {error.error}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

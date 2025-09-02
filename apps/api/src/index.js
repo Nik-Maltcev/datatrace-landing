@@ -1347,6 +1347,136 @@ app.get('/api/company', async (req, res) => {
   }
 });
 
+// Эндпоинт для автоматической проверки телефона пользователя
+app.post('/api/check-user-phone', requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('🔍 User phone check request received');
+
+    // Получаем профиль пользователя
+    const profileResult = await authService.getUserProfile(req.user.id);
+
+    if (!profileResult.ok || !profileResult.profile?.phone) {
+      return res.status(400).json({
+        ok: false,
+        error: { message: 'Номер телефона не указан в профиле пользователя' }
+      });
+    }
+
+    const phone = profileResult.profile.phone;
+    console.log(`📱 Checking phone: ${phone} for user: ${req.user.id}`);
+
+    // Используем существующую логику поиска
+    const steps = [];
+    const finalQuery = phone.replace(/[\s\-\(\)]/g, ''); // Нормализуем номер
+
+    for (const [idx, fn] of [searchITP, searchDyxless, searchLeakOsint, searchUsersbox, searchVektor].entries()) {
+      const result = idx === 0 ? await fn(finalQuery, 'phone') : await fn(finalQuery);
+      steps.push(result);
+    }
+
+    // Подсчитываем общее количество найденных утечек
+    const totalLeaks = steps.reduce((sum, step) => {
+      if (!step.ok || !step.items) return sum;
+
+      if (step.name === 'ITP' && typeof step.items === 'object') {
+        return sum + Object.values(step.items).reduce((itemSum, items) => {
+          return itemSum + (Array.isArray(items) ? items.length : 0);
+        }, 0);
+      } else if (Array.isArray(step.items)) {
+        return sum + step.items.length;
+      }
+      return sum;
+    }, 0);
+
+    const foundSources = steps.filter(step => step.ok && step.items &&
+      (Array.isArray(step.items) ? step.items.length > 0 : Object.keys(step.items).length > 0)
+    ).length;
+
+    // Сохраняем результат проверки в базу данных (если нужно)
+    // TODO: Добавить сохранение в таблицу user_checks
+
+    res.json({
+      ok: true,
+      phone: finalQuery,
+      totalLeaks,
+      foundSources,
+      results: steps,
+      message: totalLeaks > 0
+        ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
+        : 'Утечек по данному номеру телефона не найдено',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('User phone check error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
+// Эндпоинт для автоматической проверки email пользователя
+app.post('/api/check-user-email', requireAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
+  try {
+    console.log('🔍 User email check request received');
+
+    const email = req.user.email;
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        error: { message: 'Email не найден в профиле пользователя' }
+      });
+    }
+
+    console.log(`📧 Checking email: ${email} for user: ${req.user.id}`);
+
+    // Используем существующую логику поиска
+    const steps = [];
+
+    for (const [idx, fn] of [searchITP, searchDyxless, searchLeakOsint, searchUsersbox, searchVektor].entries()) {
+      const result = idx === 0 ? await fn(email, 'email') : await fn(email);
+      steps.push(result);
+    }
+
+    // Подсчитываем общее количество найденных утечек
+    const totalLeaks = steps.reduce((sum, step) => {
+      if (!step.ok || !step.items) return sum;
+
+      if (step.name === 'ITP' && typeof step.items === 'object') {
+        return sum + Object.values(step.items).reduce((itemSum, items) => {
+          return itemSum + (Array.isArray(items) ? items.length : 0);
+        }, 0);
+      } else if (Array.isArray(step.items)) {
+        return sum + step.items.length;
+      }
+      return sum;
+    }, 0);
+
+    const foundSources = steps.filter(step => step.ok && step.items &&
+      (Array.isArray(step.items) ? step.items.length > 0 : Object.keys(step.items).length > 0)
+    ).length;
+
+    // Сохраняем результат проверки в базу данных (если нужно)
+    // TODO: Добавить сохранение в таблицу user_checks
+
+    res.json({
+      ok: true,
+      email: email,
+      totalLeaks,
+      foundSources,
+      results: steps,
+      message: totalLeaks > 0
+        ? `Найдено ${totalLeaks} утечек по email адресу в ${foundSources} источниках`
+        : 'Утечек по данному email адресу не найдено',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('User email check error:', error);
+    const { statusCode, response } = ErrorHandler.formatErrorResponse(error, req);
+    res.status(statusCode).json(response);
+  }
+});
+
 // Новый эндпоинт для красивого форматирования профиля утечек через GPT-4
 app.post('/api/format-leak-profile', optionalAuth, userRateLimit(10, 15 * 60 * 1000), async (req, res) => {
   try {
