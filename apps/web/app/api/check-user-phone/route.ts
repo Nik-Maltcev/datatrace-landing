@@ -16,18 +16,7 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7)
     
-    // Проверяем токен
-    let decoded: any
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
-    } catch (error) {
-      return NextResponse.json({
-        ok: false,
-        error: { message: 'Недействительный токен' }
-      }, { status: 401 })
-    }
-
-    // Получаем профиль пользователя через API
+    // Получаем профиль пользователя через API (без проверки JWT здесь)
     const userResponse = await fetch(`${process.env.INTERNAL_API_URL || 'https://datatrace-landing-production.up.railway.app'}/api/user/profile`, {
       method: 'GET',
       headers: {
@@ -36,10 +25,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (!userResponse.ok) {
+      const errorText = await userResponse.text()
+      console.error('User profile fetch failed:', userResponse.status, errorText)
       return NextResponse.json({
         ok: false,
         error: { message: 'Не удалось получить профиль пользователя' }
-      }, { status: 400 })
+      }, { status: 401 })
     }
 
     const userProfile = await userResponse.json()
@@ -52,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     const phone = userProfile.profile.phone
-    console.log(`📱 Checking phone: ${phone} for user: ${decoded.userId}`)
+    console.log(`📱 Checking phone: ${phone} for user: ${userProfile.profile.id}`)
 
     // Делаем запрос к внешнему API (Railway)
     const apiUrl = process.env.INTERNAL_API_URL || 'https://datatrace-landing-production.up.railway.app'
