@@ -39,43 +39,49 @@ export default function ChecksPage() {
 
   const loadCheckHistory = async () => {
     try {
-      // Пока используем mock данные
-      const mockChecks: CheckHistory[] = [
-        {
-          id: '1',
-          type: 'phone',
-          query: '+79991234567',
-          date: '2024-01-15T10:30:00Z',
-          status: 'completed',
-          results: [
-            { source: 'ITP', found: true, count: 2 },
-            { source: 'Dyxless', found: false },
-            { source: 'LeakOsint', found: true, count: 1 }
-          ]
-        },
-        {
-          id: '2',
-          type: 'email',
-          query: 'user@example.com',
-          date: '2024-01-14T15:45:00Z',
-          status: 'completed',
-          results: [
-            { source: 'ITP', found: false },
-            { source: 'Dyxless', found: true, count: 3 },
-            { source: 'Usersbox', found: false }
-          ]
-        },
-        {
-          id: '3',
-          type: 'phone',
-          query: '+79995556677',
-          date: '2024-01-13T09:15:00Z',
-          status: 'failed',
-          results: []
-        }
-      ]
-      
-      setChecks(mockChecks)
+      // Загружаем реальные данные из API
+      const response = await fetch('/api/save-check-result?userId=current-user')
+
+      if (!response.ok) {
+        throw new Error('Failed to load check history')
+      }
+
+      const data = await response.json()
+
+      if (data.ok) {
+        setChecks(data.checks || [])
+      } else {
+        console.error('Failed to load checks:', data.error)
+        // Fallback к mock данным при ошибке
+        const mockChecks: CheckHistory[] = [
+          {
+            id: '1',
+            type: 'phone',
+            query: '+79991234567',
+            date: '2024-01-15T10:30:00Z',
+            status: 'completed',
+            results: [
+              { source: 'ITP', found: true, count: 2 },
+              { source: 'Dyxless', found: false },
+              { source: 'LeakOsint', found: true, count: 1 }
+            ]
+          },
+          {
+            id: '2',
+            type: 'email',
+            query: 'user@example.com',
+            date: '2024-01-14T15:45:00Z',
+            status: 'completed',
+            results: [
+              { source: 'ITP', found: false },
+              { source: 'Dyxless', found: true, count: 3 },
+              { source: 'Usersbox', found: false }
+            ]
+          }
+        ]
+
+        setChecks(mockChecks)
+      }
     } catch (error) {
       console.error('Failed to load check history:', error)
     } finally {

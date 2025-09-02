@@ -208,9 +208,34 @@ export async function POST(request: NextRequest) {
       return sum
     }, 0)
 
-    const foundSources = steps.filter(step => step.ok && step.items && 
+    const foundSources = steps.filter(step => step.ok && step.items &&
       (Array.isArray(step.items) ? step.items.length > 0 : Object.keys(step.items).length > 0)
     ).length
+
+    const message = totalLeaks > 0
+      ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
+      : 'Утечек по данному номеру телефона не найдено'
+
+    // Сохраняем результат проверки
+    try {
+      await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/save-check-result`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'phone',
+          query: finalQuery,
+          results: steps,
+          totalLeaks,
+          foundSources,
+          message,
+          userId: 'current-user' // В будущем можно получать из токена
+        })
+      })
+    } catch (saveError) {
+      console.error('Failed to save check result:', saveError)
+    }
 
     return NextResponse.json({
       ok: true,
@@ -218,9 +243,7 @@ export async function POST(request: NextRequest) {
       totalLeaks,
       foundSources,
       results: steps,
-      message: totalLeaks > 0 
-        ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
-        : 'Утечек по данному номеру телефона не найдено',
+      message,
       timestamp: new Date().toISOString()
     })
 
