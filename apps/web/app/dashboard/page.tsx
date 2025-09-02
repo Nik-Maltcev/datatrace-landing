@@ -102,8 +102,7 @@ export default function DashboardPage() {
 
     try {
       // Получаем токен из localStorage
-      const userData = localStorage.getItem("user")
-      const token = userData ? JSON.parse(userData).token : null
+      const token = localStorage.getItem("access_token")
 
       if (!token) {
         throw new Error("Токен авторизации не найден")
@@ -175,8 +174,7 @@ export default function DashboardPage() {
 
     try {
       // Получаем токен из localStorage
-      const userData = localStorage.getItem("user")
-      const token = userData ? JSON.parse(userData).token : null
+      const token = localStorage.getItem("access_token")
 
       if (!token) {
         throw new Error("Токен авторизации не найден")
