@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import axios from 'axios'
+import { saveCheckResult } from '@/lib/checkHistory'
 
 // Токены и базовые URL (копируем из основного API)
 const TOKENS = {
@@ -219,28 +220,18 @@ export async function POST(request: NextRequest) {
     // Сохраняем результат проверки
     try {
       console.log('🔄 Attempting to save phone check result...')
-      const saveResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/save-check-result`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          type: 'phone',
-          query: finalQuery,
-          results: steps,
-          totalLeaks,
-          foundSources,
-          message,
-          userId: 'current-user' // В будущем можно получать из токена
-        })
+
+      const savedCheck = saveCheckResult({
+        type: 'phone',
+        query: finalQuery,
+        results: steps,
+        totalLeaks,
+        foundSources,
+        message,
+        userId: 'current-user' // В будущем можно получать из токена
       })
 
-      if (saveResponse.ok) {
-        const saveData = await saveResponse.json()
-        console.log('✅ Phone check result saved successfully:', saveData.checkId)
-      } else {
-        console.error('❌ Failed to save phone check result:', saveResponse.status, saveResponse.statusText)
-      }
+      console.log('✅ Phone check result saved successfully:', savedCheck.id)
     } catch (saveError) {
       console.error('❌ Error saving phone check result:', saveError)
     }
