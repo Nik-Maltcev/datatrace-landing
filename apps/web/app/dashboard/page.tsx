@@ -108,13 +108,16 @@ export default function DashboardPage() {
         throw new Error("Токен авторизации не найден")
       }
 
-      // Используем локальный Next.js API route
-      const response = await fetch('/api/check-user-phone', {
+      // Прямой вызов к основному API с данными пользователя
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production.up.railway.app'}/api/search`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: user.phone,
+          field: "phone"
+        })
       })
 
       if (!response.ok) {
@@ -124,7 +127,7 @@ export default function DashboardPage() {
 
       const data = await response.json()
 
-      // Данные уже приходят в правильном формате от нового API
+      // Преобразуем результаты от /api/search в формат для интерфейса
       const transformedResults = data.results?.map((result: any) => ({
         name: result.name,
         source: result.name,
@@ -140,15 +143,21 @@ export default function DashboardPage() {
         error: result.error
       })) || []
 
+      // Подсчитываем общее количество утечек
+      const totalLeaks = transformedResults.reduce((sum: number, result: any) => sum + (result.count || 0), 0)
+      const foundSources = transformedResults.filter((result: any) => result.found).length
+
       setPhoneLeaks(transformedResults)
       setPhoneCheckResponse({
-        ok: data.ok,
-        phone: data.phone,
-        totalLeaks: data.totalLeaks,
-        foundSources: data.foundSources,
+        ok: true,
+        phone: user.phone,
+        totalLeaks,
+        foundSources,
         results: transformedResults,
-        message: data.message,
-        timestamp: data.timestamp
+        message: totalLeaks > 0
+          ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
+          : 'Утечек по данному номеру телефона не найдено',
+        timestamp: new Date().toISOString()
       })
 
       if (data.totalLeaks > 0) {
@@ -181,13 +190,16 @@ export default function DashboardPage() {
         throw new Error("Токен авторизации не найден")
       }
 
-      // Используем локальный Next.js API route
-      const response = await fetch('/api/check-user-email', {
+      // Прямой вызов к основному API с данными пользователя
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production.up.railway.app'}/api/search`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          query: user.email,
+          field: "email"
+        })
       })
 
       if (!response.ok) {
@@ -197,7 +209,7 @@ export default function DashboardPage() {
 
       const data = await response.json()
 
-      // Данные уже приходят в правильном формате от нового API
+      // Преобразуем результаты от /api/search в формат для интерфейса
       const transformedResults = data.results?.map((result: any) => ({
         name: result.name,
         source: result.name,
@@ -213,15 +225,21 @@ export default function DashboardPage() {
         error: result.error
       })) || []
 
+      // Подсчитываем общее количество утечек
+      const totalLeaks = transformedResults.reduce((sum: number, result: any) => sum + (result.count || 0), 0)
+      const foundSources = transformedResults.filter((result: any) => result.found).length
+
       setEmailLeaks(transformedResults)
       setEmailCheckResponse({
-        ok: data.ok,
-        email: data.email,
-        totalLeaks: data.totalLeaks,
-        foundSources: data.foundSources,
+        ok: true,
+        email: user.email,
+        totalLeaks,
+        foundSources,
         results: transformedResults,
-        message: data.message,
-        timestamp: data.timestamp
+        message: totalLeaks > 0
+          ? `Найдено ${totalLeaks} утечек по email адресу в ${foundSources} источниках`
+          : 'Утечек по данному email адресу не найдено',
+        timestamp: new Date().toISOString()
       })
 
       if (data.totalLeaks > 0) {
