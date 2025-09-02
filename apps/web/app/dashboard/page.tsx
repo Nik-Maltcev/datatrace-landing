@@ -108,7 +108,7 @@ export default function DashboardPage() {
         throw new Error("Токен авторизации не найден")
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/check-user-phone`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production-560f.up.railway.app'}/api/check-user-phone`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +180,7 @@ export default function DashboardPage() {
         throw new Error("Токен авторизации не найден")
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/check-user-email`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production-560f.up.railway.app'}/api/check-user-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
