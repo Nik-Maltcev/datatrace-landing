@@ -112,8 +112,7 @@ export default function DashboardPage() {
       const response = await fetch('/api/check-user-phone', {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           phone: user.phone
@@ -188,8 +187,7 @@ export default function DashboardPage() {
       const response = await fetch('/api/check-user-email', {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           email: user.email

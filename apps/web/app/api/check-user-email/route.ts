@@ -171,28 +171,6 @@ function normalizeError(err: any) {
 export async function POST(request: NextRequest) {
   try {
     console.log('🔍 User email check request received')
-    
-    // Получаем токен из заголовков
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({
-        ok: false,
-        error: { message: 'Токен авторизации не найден' }
-      }, { status: 401 })
-    }
-
-    const token = authHeader.substring(7)
-    
-    // Проверяем токен и получаем данные пользователя
-    let decoded: any
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
-    } catch (error) {
-      return NextResponse.json({
-        ok: false,
-        error: { message: 'Недействительный токен' }
-      }, { status: 401 })
-    }
 
     // Получаем тело запроса
     const body = await request.json()
@@ -205,7 +183,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log(`📧 Checking email: ${email} for user: ${decoded.userId}`)
+    console.log(`📧 Checking email: ${email}`)
 
     // Выполняем поиск по всем источникам
     const steps = []
