@@ -5,7 +5,10 @@ let checkHistory: any[] = []
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📥 Received save check result request')
     const body = await request.json()
+    console.log('📋 Request body:', JSON.stringify(body, null, 2))
+
     const { type, query, results, totalLeaks, foundSources, message, userId } = body
 
     // Создаем запись о проверке
@@ -38,6 +41,8 @@ export async function POST(request: NextRequest) {
     checkHistory.push(checkRecord)
 
     console.log(`💾 Saved check result: ${type} - ${query} - ${totalLeaks} leaks`)
+    console.log(`📊 Total checks in history: ${checkHistory.length}`)
+    console.log(`🔍 Check record:`, JSON.stringify(checkRecord, null, 2))
 
     return NextResponse.json({
       ok: true,
@@ -59,13 +64,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId') || 'anonymous'
 
+    console.log(`🔍 GET request for user: ${userId}`)
+    console.log(`📊 Total checks in history: ${checkHistory.length}`)
+    console.log(`📋 All checks:`, checkHistory.map(c => ({ id: c.id, userId: c.userId, type: c.type, query: c.query })))
+
     // Фильтруем проверки по пользователю
     const userChecks = checkHistory.filter(check => check.userId === userId)
-    
+
     // Сортируем по дате (новые сначала)
     const sortedChecks = userChecks.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     console.log(`📋 Retrieved ${sortedChecks.length} checks for user: ${userId}`)
+    console.log(`🔍 User checks:`, sortedChecks.map(c => ({ id: c.id, type: c.type, query: c.query, date: c.date })))
 
     return NextResponse.json({
       ok: true,

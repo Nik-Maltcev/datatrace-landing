@@ -218,7 +218,8 @@ export async function POST(request: NextRequest) {
 
     // Сохраняем результат проверки
     try {
-      await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/save-check-result`, {
+      console.log('🔄 Attempting to save phone check result...')
+      const saveResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/save-check-result`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -233,8 +234,15 @@ export async function POST(request: NextRequest) {
           userId: 'current-user' // В будущем можно получать из токена
         })
       })
+
+      if (saveResponse.ok) {
+        const saveData = await saveResponse.json()
+        console.log('✅ Phone check result saved successfully:', saveData.checkId)
+      } else {
+        console.error('❌ Failed to save phone check result:', saveResponse.status, saveResponse.statusText)
+      }
     } catch (saveError) {
-      console.error('Failed to save check result:', saveError)
+      console.error('❌ Error saving phone check result:', saveError)
     }
 
     return NextResponse.json({
