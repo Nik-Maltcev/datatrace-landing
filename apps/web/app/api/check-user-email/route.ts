@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,20 +27,32 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Получаем профиль пользователя
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId }
+    // Получаем профиль пользователя через API
+    const userResponse = await fetch(`${process.env.INTERNAL_API_URL || 'https://datatrace-landing-production.up.railway.app'}/api/user/profile`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     })
 
-    if (!user || !user.email) {
+    if (!userResponse.ok) {
+      return NextResponse.json({
+        ok: false,
+        error: { message: 'Не удалось получить профиль пользователя' }
+      }, { status: 400 })
+    }
+
+    const userProfile = await userResponse.json()
+
+    if (!userProfile.profile?.email) {
       return NextResponse.json({
         ok: false,
         error: { message: 'Email не найден в профиле пользователя' }
       }, { status: 400 })
     }
 
-    const email = user.email
-    console.log(`📧 Checking email: ${email} for user: ${user.id}`)
+    const email = userProfile.profile.email
+    console.log(`📧 Checking email: ${email} for user: ${decoded.userId}`)
 
     // Делаем запрос к внешнему API (Railway)
     const apiUrl = process.env.INTERNAL_API_URL || 'https://datatrace-landing-production.up.railway.app'
