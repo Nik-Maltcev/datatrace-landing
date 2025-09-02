@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 
-// Импортируем функции поиска из API
-const searchITP = require('../../../../api/src/services/itp')
-const searchDyxless = require('../../../../api/src/services/dyxless')
-const searchLeakOsint = require('../../../../api/src/services/leakosint')
-const searchUsersbox = require('../../../../api/src/services/usersbox')
-const searchVektor = require('../../../../api/src/services/vektor')
-
 const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
@@ -52,46 +45,63 @@ export async function POST(request: NextRequest) {
     const phone = user.phone
     console.log(`📱 Checking phone: ${phone} for user: ${user.id}`)
 
-    // Используем существующую логику поиска
-    const steps = []
-    const finalQuery = phone.replace(/[\s\-\(\)]/g, '') // Нормализуем номер
-    
-    for (const [idx, fn] of [searchITP, searchDyxless, searchLeakOsint, searchUsersbox, searchVektor].entries()) {
-      const result = idx === 0 ? await fn(finalQuery, 'phone') : await fn(finalQuery)
-      steps.push(result)
-    }
+    // Делаем запрос к внешнему API (Railway)
+    const apiUrl = process.env.INTERNAL_API_URL || 'https://datatrace-landing-production.up.railway.app'
 
-    // Подсчитываем общее количество найденных утечек
-    const totalLeaks = steps.reduce((sum, step) => {
-      if (!step.ok || !step.items) return sum
-      
-      if (step.name === 'ITP' && typeof step.items === 'object') {
-        return sum + Object.values(step.items).reduce((itemSum: number, items: any) => {
-          return itemSum + (Array.isArray(items) ? items.length : 0)
-        }, 0)
-      } else if (Array.isArray(step.items)) {
-        return sum + step.items.length
+    try {
+      const response = await fetch(`${apiUrl}/api/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: phone,
+          field: 'phone'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
       }
-      return sum
-    }, 0)
 
-    const foundSources = steps.filter(step => step.ok && step.items && 
-      (Array.isArray(step.items) ? step.items.length > 0 : Object.keys(step.items).length > 0)
-    ).length
+      const data = await response.json()
 
-    // TODO: Сохранить результат проверки в базу данных
+      // Подсчитываем общее количество найденных утечек
+      const totalLeaks = data.results?.reduce((sum: number, step: any) => {
+        if (!step.ok || !step.items) return sum
 
-    return NextResponse.json({
-      ok: true,
-      phone: finalQuery,
-      totalLeaks,
-      foundSources,
-      results: steps,
-      message: totalLeaks > 0 
-        ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
-        : 'Утечек по данному номеру телефона не найдено',
-      timestamp: new Date().toISOString()
-    })
+        if (step.name === 'ITP' && typeof step.items === 'object') {
+          return sum + Object.values(step.items).reduce((itemSum: number, items: any) => {
+            return itemSum + (Array.isArray(items) ? items.length : 0)
+          }, 0)
+        } else if (Array.isArray(step.items)) {
+          return sum + step.items.length
+        }
+        return sum
+      }, 0) || 0
+
+      const foundSources = data.results?.filter((step: any) => step.ok && step.items &&
+        (Array.isArray(step.items) ? step.items.length > 0 : Object.keys(step.items).length > 0)
+      ).length || 0
+
+      return NextResponse.json({
+        ok: true,
+        phone: phone,
+        totalLeaks,
+        foundSources,
+        results: data.results || [],
+        message: totalLeaks > 0
+          ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
+          : 'Утечек по данному номеру телефона не найдено',
+        timestamp: new Date().toISOString()
+      })
+    } catch (apiError) {
+      console.error('Internal API call failed:', apiError)
+      return NextResponse.json({
+        ok: false,
+        error: { message: 'Ошибка при выполнении поиска' }
+      }, { status: 500 })
+    }
 
   } catch (error) {
     console.error('User phone check error:', error)
