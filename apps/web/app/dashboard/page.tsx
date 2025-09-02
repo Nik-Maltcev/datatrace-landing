@@ -108,7 +108,8 @@ export default function DashboardPage() {
         throw new Error("Токен авторизации не найден")
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production-560f.up.railway.app'}/api/check-user-phone`, {
+      // Используем локальный Next.js API route
+      const response = await fetch('/api/check-user-phone', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +124,7 @@ export default function DashboardPage() {
 
       const data = await response.json()
 
-      // Преобразуем результаты в формат, ожидаемый интерфейсом
+      // Данные уже приходят в правильном формате от нового API
       const transformedResults = data.results?.map((result: any) => ({
         name: result.name,
         source: result.name,
@@ -180,7 +181,8 @@ export default function DashboardPage() {
         throw new Error("Токен авторизации не найден")
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://datatrace-landing-production-560f.up.railway.app'}/api/check-user-email`, {
+      // Используем локальный Next.js API route
+      const response = await fetch('/api/check-user-email', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -195,7 +197,7 @@ export default function DashboardPage() {
 
       const data = await response.json()
 
-      // Преобразуем результаты в формат, ожидаемый интерфейсом
+      // Данные уже приходят в правильном формате от нового API
       const transformedResults = data.results?.map((result: any) => ({
         name: result.name,
         source: result.name,
