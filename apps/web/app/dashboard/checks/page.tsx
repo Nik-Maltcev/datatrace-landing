@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Phone, Mail, Calendar, AlertTriangle, CheckCircle, Clock, Search } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -43,20 +42,15 @@ export default function ChecksPage() {
 
   const loadCheckHistory = async () => {
     try {
-      // Загружаем реальные данные из API
       const response = await fetch('/api/save-check-result?userId=current-user')
-
       if (!response.ok) {
         throw new Error('Failed to load check history')
       }
-
       const data = await response.json()
-
       if (data.ok) {
         setChecks(data.checks || [])
       } else {
         console.error('Failed to load checks:', data.error)
-        // Fallback к mock данным при ошибке
         const mockChecks: CheckHistory[] = [
           {
             id: '1',
@@ -83,7 +77,6 @@ export default function ChecksPage() {
             ]
           }
         ]
-
         setChecks(mockChecks)
       }
     } catch (error) {
@@ -106,10 +99,10 @@ export default function ChecksPage() {
   const getTotalFindings = (results: CheckHistory['results']) => {
     return results.reduce((total, result) => total + (result.count || 0), 0)
   }
+
   const computeStats = (panel: 'general'|'phone'|'email'|'password') => {
     const phoneChecks = checks.filter(c => c.type === 'phone')
     const emailChecks = checks.filter(c => c.type === 'email')
-
     const sumFindings = (arr: CheckHistory[]) => arr.reduce((t, c) => t + getTotalFindings(c.results), 0)
     const sumSourcesFound = (arr: CheckHistory[]) => arr.reduce((t, c) => t + c.results.filter(r => r.found).length, 0)
 
@@ -122,7 +115,6 @@ export default function ChecksPage() {
         errors: 0,
       }
     }
-
     if (panel === 'email') {
       return {
         title: 'Email',
@@ -132,11 +124,9 @@ export default function ChecksPage() {
         errors: 0,
       }
     }
-
     if (panel === 'password') {
       return { title: 'Пароль', leaks: 0, totalSources: 0, foundSources: 0, errors: 0 }
     }
-
     // general
     const all = checks
     return {
@@ -153,214 +143,220 @@ export default function ChecksPage() {
     { name: 'С утечками', value: stats.foundSources },
     { name: 'Чистые', value: Math.max(stats.totalSources - stats.foundSources, 0) }
   ]
-  const DONUT_COLORS = ['#7C3AED', '#E5E7EB']
 
   if (!user) {
     return <div>Загрузка...</div>
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-gray-100">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Назад
-              </Button>
-            </Link>
-            <div className="flex items-center space-x-3">
-              <Clock className="h-6 w-6 text-gray-600" />
-              <span className="text-xl font-light tracking-wide text-gray-900">Мои проверки</span>
-
-
+      <header className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-gray-900">Личный кабинет</h1>
+            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-gray-600 font-medium">А</span>
             </div>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="border-gray-100">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Всего проверок</p>
-                  <p className="text-2xl font-light text-gray-900">{checks.length}</p>
-                </div>
-                <Search className="h-8 w-8 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-gray-100">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Найдено утечек</p>
-                  <p className="text-2xl font-light text-red-600">
-                    {checks.reduce((total, check) => total + getTotalFindings(check.results), 0)}
-                  </p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-red-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-gray-100">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Успешных проверок</p>
-                  <p className="text-2xl font-light text-green-600">
-                    {checks.filter(check => check.status === 'completed').length}
-                  </p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-400" />
-              </div>
-
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* History */}
-        <Card className="border-gray-100">
-          <CardHeader>
-            <CardTitle className="text-lg font-light text-gray-900">История проверок</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8 text-gray-500">Загрузка...</div>
-            ) : checks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>История проверок пуста</p>
-                <Link href="/dashboard">
-                  <Button className="mt-4" variant="outline">Начать проверку</Button>
-        {/* Control Panel + Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* Left menu */}
-          <div className="md:col-span-1">
-            <div className="bg-white border border-gray-200 rounded-2xl p-2">
-              <button onClick={() => setActivePanel('general')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='general'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Общее</button>
-              <button onClick={() => setActivePanel('phone')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='phone'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Номер телефона</button>
-              <button onClick={() => setActivePanel('email')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='email'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Email</button>
-              <button onClick={() => setActivePanel('password')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='password'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Пароль</button>
+        <div className="grid grid-cols-12 gap-8">
+          {/* Left Sidebar */}
+          <div className="col-span-3">
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <nav className="space-y-2">
+                <button 
+                  onClick={() => setActivePanel('general')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                    activePanel === 'general' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Панель управления</span>
+                </button>
+                <button 
+                  onClick={() => setActivePanel('phone')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                    activePanel === 'phone' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Phone className="h-5 w-5" />
+                  <span>Номер телефона</span>
+                </button>
+                <button 
+                  onClick={() => setActivePanel('email')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                    activePanel === 'email' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Mail className="h-5 w-5" />
+                  <span>Email</span>
+                </button>
+                <button 
+                  onClick={() => setActivePanel('password')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                    activePanel === 'password' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Пароль</span>
+                </button>
+              </nav>
             </div>
           </div>
-          {/* Right summary */}
-          <div className="md:col-span-2">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
-              <div className="flex items-start justify-between mb-6">
+
+          {/* Main Content */}
+          <div className="col-span-9">
+            {/* Main Panel */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm mb-8">
+              <div className="grid grid-cols-2 gap-12 items-center">
                 <div>
-                  <h3 className="text-xl font-light text-gray-900">{stats.title}</h3>
-                  <p className="text-sm text-gray-500">Сводка по выбранному разделу</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Сделаем ваши данные безопаснее
+                  </h2>
+                  <p className="text-gray-600 mb-8 leading-relaxed">
+                    Обнаружены утечки ваших персональных данных в Telegram-ботах. 
+                    Мы поможем удалить данные Telegram
+                  </p>
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl">
+                    Удалить данные
+                  </Button>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">Найдено утечек</p>
-                  <p className="text-2xl font-light text-purple-600">{stats.leaks}</p>
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <ResponsiveContainer width={200} height={200}>
+                      <PieChart>
+                        <Pie 
+                          data={donutData} 
+                          innerRadius={70} 
+                          outerRadius={100} 
+                          dataKey="value"
+                          startAngle={90}
+                          endAngle={450}
+                        >
+                          {donutData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={index === 0 ? '#7C3AED' : '#C4B5FD'} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-gray-900">{stats.leaks}</div>
+                        <div className="text-sm text-gray-500">утечек</div>
+                      </div>
+
+            {/* History Section */}
+            <div className="bg-white rounded-2xl p-8 shadow-sm">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">История проверок</h3>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-8 mb-8">
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">{checks.length}</div>
+                  <div className="text-gray-500">Всего проверок</div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-6 w-6 text-red-500" />
+                  <div>
+                    <div className="text-3xl font-bold text-gray-900">
+                      {checks.reduce((total, check) => total + getTotalFindings(check.results), 0)}
+                    </div>
+                    <div className="text-gray-500">Найдено утечек</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                  <div>
+                    <div className="text-3xl font-bold text-gray-900">
+                      {checks.filter(check => check.status === 'completed').length}
+                    </div>
+                    <div className="text-gray-500">Успешных проверок</div>
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="h-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={donutData} innerRadius={55} outerRadius={75} dataKey="value">
-                        {donutData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-xl p-4 text-center">
-                    <p className="text-xs text-gray-500">Источников</p>
-                    <p className="text-xl font-light text-gray-900">{stats.totalSources}</p>
-                  </div>
-                  <div className="bg-purple-50 rounded-xl p-4 text-center">
-                    <p className="text-xs text-purple-600">С утечками</p>
-                    <p className="text-xl font-light text-purple-600">{stats.foundSources}</p>
-                  </div>
-                  <div className="bg-green-50 rounded-xl p-4 text-center">
-                    <p className="text-xs text-green-600">Чистых</p>
-                    <p className="text-xl font-light text-green-600">{Math.max(stats.totalSources - stats.foundSources, 0)}</p>
-                  </div>
-                  <div className="bg-yellow-50 rounded-xl p-4 text-center">
-                    <p className="text-xs text-yellow-600">Ошибок</p>
-                    <p className="text-xl font-light text-yellow-600">{stats.errors}</p>
-                  </div>
-                </div>
+
+              {/* Tabs */}
+              <div className="mb-6">
+                <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+                  <TabsList className="bg-gray-100">
+                    <TabsTrigger value="found" className="data-[state=active]:bg-white">
+                      Найденные утечки
+                    </TabsTrigger>
+                    <TabsTrigger value="deleted" className="data-[state=active]:bg-white">
+                      Удаленные утечки
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
-            </div>
-          </div>
-        </div>
-                </Link>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-                    <TabsList>
-                      <TabsTrigger value="found">Найденные утечки</TabsTrigger>
-                      <TabsTrigger value="deleted">Удаленные утечки</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+
+              {isLoading ? (
+                <div className="text-center py-12 text-gray-500">Загрузка...</div>
+              ) : checks.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>История проверок пуста</p>
+                  <Link href="/dashboard">
+                    <Button className="mt-4" variant="outline">Начать проверку</Button>
+                  </Link>
                 </div>
-                {tab === 'deleted' ? (
-                  <div className="text-center py-8 text-gray-500">Пока нет удаленных утечек</div>
-                ) : (
-                  <div className="space-y-4">
-                    {checks.map((check) => (
-                      <div key={check.id} className="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition-colors">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            {check.type === 'phone' ? (
-                              <Phone className="h-5 w-5 text-gray-500" />
-                            ) : (
-                              <Mail className="h-5 w-5 text-gray-500" />
-                            )}
-                            <div>
-                              <p className="font-medium text-gray-900">{check.query}</p>
-                              <p className="text-sm text-gray-500">{formatDate(check.date)}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {check.status === 'completed' ? (
-                              <Badge variant="secondary" className="bg-green-50 text-green-700">Завершено</Badge>
-                            ) : (
-                              <Badge variant="destructive">Ошибка</Badge>
-                            )}
+              ) : tab === 'deleted' ? (
+                <div className="text-center py-12 text-gray-500">Пока нет удаленных утечек</div>
+              ) : (
+                <div className="space-y-4">
+                  {checks.map((check) => (
+                    <div key={check.id} className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          {check.type === 'phone' ? (
+                            <Phone className="h-5 w-5 text-gray-500" />
+                          ) : (
+                            <Mail className="h-5 w-5 text-gray-500" />
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">{check.query}</p>
+                            <p className="text-sm text-gray-500">{formatDate(check.date)}</p>
                           </div>
                         </div>
-
-                        {check.status === 'completed' && (
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {check.results.map((result, index) => (
-                              <div key={index} className="text-center p-2 bg-gray-50 rounded-lg">
-                                <p className="text-xs font-medium text-gray-600">{result.source}</p>
-                                {result.found ? (
-                                  <p className="text-sm text-red-600 font-medium">{result.count || 1} найдено</p>
-                                ) : (
-                                  <p className="text-sm text-green-600">Чисто</p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-4">
+                          {check.status === 'completed' ? (
+                            <Badge className="bg-green-50 text-green-700 border-green-200">Завершено</Badge>
+                          ) : (
+                            <Badge variant="destructive">Ошибка</Badge>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+
+                      {check.status === 'completed' && (
+                        <div className="grid grid-cols-4 gap-4">
+                          {check.results.map((result, index) => (
+                            <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
+                              <p className="text-sm font-medium text-gray-900 mb-1">{result.source}</p>
+                              {result.found ? (
+                                <p className="text-sm text-red-600 font-medium">{result.count || 1} найдено</p>
+                              ) : (
+                                <p className="text-sm text-green-600">Чисто</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
-
 }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
