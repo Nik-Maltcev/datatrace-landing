@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Phone, Mail, Calendar, AlertTriangle, CheckCircle, Clock, Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -23,6 +24,7 @@ interface CheckHistory {
 
 export default function ChecksPage() {
   const [user, setUser] = useState(null)
+  const [tab, setTab] = useState<'found'|'deleted'>('found')
   const [checks, setChecks] = useState<CheckHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
@@ -141,7 +143,7 @@ export default function ChecksPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-gray-100">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -155,7 +157,7 @@ export default function ChecksPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-gray-100">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -167,6 +169,7 @@ export default function ChecksPage() {
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-400" />
               </div>
+
             </CardContent>
           </Card>
         </div>
@@ -184,63 +187,70 @@ export default function ChecksPage() {
                 <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>История проверок пуста</p>
                 <Link href="/dashboard">
-                  <Button className="mt-4" variant="outline">
-                    Начать проверку
-                  </Button>
+                  <Button className="mt-4" variant="outline">Начать проверку</Button>
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                {checks.map((check) => (
-                  <div key={check.id} className="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition-colors">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        {check.type === 'phone' ? (
-                          <Phone className="h-5 w-5 text-gray-500" />
-                        ) : (
-                          <Mail className="h-5 w-5 text-gray-500" />
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900">{check.query}</p>
-                          <p className="text-sm text-gray-500">{formatDate(check.date)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {check.status === 'completed' ? (
-                          <Badge variant="secondary" className="bg-green-50 text-green-700">
-                            Завершено
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive">
-                            Ошибка
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {check.status === 'completed' && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {check.results.map((result, index) => (
-                          <div key={index} className="text-center p-2 bg-gray-50 rounded-lg">
-                            <p className="text-xs font-medium text-gray-600">{result.source}</p>
-                            {result.found ? (
-                              <p className="text-sm text-red-600 font-medium">
-                                {result.count || 1} найдено
-                              </p>
+              <>
+                <div className="mb-4">
+                  <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+                    <TabsList>
+                      <TabsTrigger value="found">Найденные утечки</TabsTrigger>
+                      <TabsTrigger value="deleted">Удаленные утечки</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+                {tab === 'deleted' ? (
+                  <div className="text-center py-8 text-gray-500">Пока нет удаленных утечек</div>
+                ) : (
+                  <div className="space-y-4">
+                    {checks.map((check) => (
+                      <div key={check.id} className="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition-colors">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            {check.type === 'phone' ? (
+                              <Phone className="h-5 w-5 text-gray-500" />
                             ) : (
-                              <p className="text-sm text-green-600">Чисто</p>
+                              <Mail className="h-5 w-5 text-gray-500" />
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">{check.query}</p>
+                              <p className="text-sm text-gray-500">{formatDate(check.date)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {check.status === 'completed' ? (
+                              <Badge variant="secondary" className="bg-green-50 text-green-700">Завершено</Badge>
+                            ) : (
+                              <Badge variant="destructive">Ошибка</Badge>
                             )}
                           </div>
-                        ))}
+                        </div>
+
+                        {check.status === 'completed' && (
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {check.results.map((result, index) => (
+                              <div key={index} className="text-center p-2 bg-gray-50 rounded-lg">
+                                <p className="text-xs font-medium text-gray-600">{result.source}</p>
+                                {result.found ? (
+                                  <p className="text-sm text-red-600 font-medium">{result.count || 1} найдено</p>
+                                ) : (
+                                  <p className="text-sm text-green-600">Чисто</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
       </div>
     </div>
   )
+
 }

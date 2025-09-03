@@ -29,6 +29,7 @@ import {
   Server,
   Globe
 } from "lucide-react"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -72,6 +73,7 @@ export default function DashboardPage() {
   const [showPhoneDetails, setShowPhoneDetails] = useState(false)
   const [showEmailDetails, setShowEmailDetails] = useState(false)
   const [phoneCheckResponse, setPhoneCheckResponse] = useState<PhoneCheckResponse | null>(null)
+
   const [emailCheckResponse, setEmailCheckResponse] = useState<PhoneCheckResponse | null>(null)
   const router = useRouter()
 
@@ -256,7 +258,6 @@ export default function DashboardPage() {
       setIsCheckingEmail(false)
     }
   }
-
   const handleLeakSearch = () => {
     router.push("/search")
   }
@@ -339,7 +340,7 @@ export default function DashboardPage() {
             <p className="text-2xl font-light mb-1 text-gray-900">12</p>
             <p className="text-sm text-gray-500">Защищенных данных</p>
           </div>
-          
+
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
@@ -350,7 +351,7 @@ export default function DashboardPage() {
             <p className="text-2xl font-light mb-1 text-gray-900">3</p>
             <p className="text-sm text-gray-500">Найдено утечек</p>
           </div>
-          
+
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
@@ -361,7 +362,7 @@ export default function DashboardPage() {
             <p className="text-2xl font-light mb-1 text-gray-900">5</p>
             <p className="text-sm text-gray-500">Удалено записей</p>
           </div>
-          
+
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
             <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -485,7 +486,7 @@ export default function DashboardPage() {
                       </Button>
                     )}
                   </div>
-                  
+
                   {showPhoneDetails && phoneCheckResponse.totalLeaks > 0 && (
                     <div className="mt-3 space-y-2 border-t border-red-200 pt-3">
                       {phoneCheckResponse.results.map((result, index) => (
@@ -514,7 +515,7 @@ export default function DashboardPage() {
                           </div>
                         )
                       ))}
-                      
+
                       {phoneCheckResponse.errors && phoneCheckResponse.errors.length > 0 && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                           <p className="text-xs text-yellow-800 font-medium mb-1">Предупреждения:</p>
@@ -717,7 +718,7 @@ export default function DashboardPage() {
               </div>
               <span className="text-xs text-gray-400">Сейчас</span>
             </div>
-            
+
             <div className="flex items-start space-x-3 p-3 bg-white rounded-xl border border-gray-200">
               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Activity className="h-4 w-4 text-gray-600" />
