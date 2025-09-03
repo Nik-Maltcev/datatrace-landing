@@ -355,8 +355,3 @@ export default function ChecksPage() {
     </div>
   )
 }
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
