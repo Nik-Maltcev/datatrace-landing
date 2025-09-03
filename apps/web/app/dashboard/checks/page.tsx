@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Phone, Mail, Calendar, AlertTriangle, CheckCircle, Clock, Search } from "lucide-react"
 import Link from "next/link"
@@ -28,6 +29,7 @@ export default function ChecksPage() {
   const [checks, setChecks] = useState<CheckHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password'>('general')
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -104,6 +106,54 @@ export default function ChecksPage() {
   const getTotalFindings = (results: CheckHistory['results']) => {
     return results.reduce((total, result) => total + (result.count || 0), 0)
   }
+  const computeStats = (panel: 'general'|'phone'|'email'|'password') => {
+    const phoneChecks = checks.filter(c => c.type === 'phone')
+    const emailChecks = checks.filter(c => c.type === 'email')
+
+    const sumFindings = (arr: CheckHistory[]) => arr.reduce((t, c) => t + getTotalFindings(c.results), 0)
+    const sumSourcesFound = (arr: CheckHistory[]) => arr.reduce((t, c) => t + c.results.filter(r => r.found).length, 0)
+
+    if (panel === 'phone') {
+      return {
+        title: 'Номер телефона',
+        leaks: sumFindings(phoneChecks),
+        totalSources: phoneChecks.reduce((t, c) => t + c.results.length, 0),
+        foundSources: sumSourcesFound(phoneChecks),
+        errors: 0,
+      }
+    }
+
+    if (panel === 'email') {
+      return {
+        title: 'Email',
+        leaks: sumFindings(emailChecks),
+        totalSources: emailChecks.reduce((t, c) => t + c.results.length, 0),
+        foundSources: sumSourcesFound(emailChecks),
+        errors: 0,
+      }
+    }
+
+    if (panel === 'password') {
+      return { title: 'Пароль', leaks: 0, totalSources: 0, foundSources: 0, errors: 0 }
+    }
+
+    // general
+    const all = checks
+    return {
+      title: 'Общее',
+      leaks: sumFindings(all),
+      totalSources: all.reduce((t, c) => t + c.results.length, 0),
+      foundSources: sumSourcesFound(all),
+      errors: 0,
+    }
+  }
+
+  const stats = computeStats(activePanel)
+  const donutData = [
+    { name: 'С утечками', value: stats.foundSources },
+    { name: 'Чистые', value: Math.max(stats.totalSources - stats.foundSources, 0) }
+  ]
+  const DONUT_COLORS = ['#7C3AED', '#E5E7EB']
 
   if (!user) {
     return <div>Загрузка...</div>
@@ -124,6 +174,8 @@ export default function ChecksPage() {
             <div className="flex items-center space-x-3">
               <Clock className="h-6 w-6 text-gray-600" />
               <span className="text-xl font-light tracking-wide text-gray-900">Мои проверки</span>
+
+
             </div>
           </div>
         </div>
@@ -188,6 +240,64 @@ export default function ChecksPage() {
                 <p>История проверок пуста</p>
                 <Link href="/dashboard">
                   <Button className="mt-4" variant="outline">Начать проверку</Button>
+        {/* Control Panel + Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Left menu */}
+          <div className="md:col-span-1">
+            <div className="bg-white border border-gray-200 rounded-2xl p-2">
+              <button onClick={() => setActivePanel('general')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='general'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Общее</button>
+              <button onClick={() => setActivePanel('phone')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='phone'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Номер телефона</button>
+              <button onClick={() => setActivePanel('email')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='email'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Email</button>
+              <button onClick={() => setActivePanel('password')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activePanel==='password'?'bg-gray-100 text-gray-900':'text-gray-700 hover:bg-gray-50'}`}>Пароль</button>
+            </div>
+          </div>
+          {/* Right summary */}
+          <div className="md:col-span-2">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-light text-gray-900">{stats.title}</h3>
+                  <p className="text-sm text-gray-500">Сводка по выбранному разделу</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Найдено утечек</p>
+                  <p className="text-2xl font-light text-purple-600">{stats.leaks}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={donutData} innerRadius={55} outerRadius={75} dataKey="value">
+                        {donutData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-xl p-4 text-center">
+                    <p className="text-xs text-gray-500">Источников</p>
+                    <p className="text-xl font-light text-gray-900">{stats.totalSources}</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-4 text-center">
+                    <p className="text-xs text-purple-600">С утечками</p>
+                    <p className="text-xl font-light text-purple-600">{stats.foundSources}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4 text-center">
+                    <p className="text-xs text-green-600">Чистых</p>
+                    <p className="text-xl font-light text-green-600">{Math.max(stats.totalSources - stats.foundSources, 0)}</p>
+                  </div>
+                  <div className="bg-yellow-50 rounded-xl p-4 text-center">
+                    <p className="text-xs text-yellow-600">Ошибок</p>
+                    <p className="text-xl font-light text-yellow-600">{stats.errors}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
                 </Link>
               </div>
             ) : (
