@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -28,7 +28,7 @@ export default function ChecksPage() {
   const [checks, setChecks] = useState<CheckHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password'>('general')
+  const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password' | 'ai'>('general')
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -100,7 +100,7 @@ export default function ChecksPage() {
     return results.reduce((total, result) => total + (result.count || 0), 0)
   }
 
-  const computeStats = (panel: 'general'|'phone'|'email'|'password') => {
+  const computeStats = (panel: 'general'|'phone'|'email'|'password'|'ai') => {
     const phoneChecks = checks.filter(c => c.type === 'phone')
     const emailChecks = checks.filter(c => c.type === 'email')
     const sumFindings = (arr: CheckHistory[]) => arr.reduce((t, c) => t + getTotalFindings(c.results), 0)
@@ -126,6 +126,9 @@ export default function ChecksPage() {
     }
     if (panel === 'password') {
       return { title: 'Пароль', leaks: 0, totalSources: 0, foundSources: 0, errors: 0 }
+    }
+    if (panel === 'ai') {
+      return { title: 'ИИ анализ', leaks: sumFindings(checks), totalSources: checks.reduce((t, c) => t + c.results.length, 0), foundSources: sumSourcesFound(checks), errors: 0 }
     }
     // general
     const all = checks
@@ -195,7 +198,7 @@ export default function ChecksPage() {
                   <Mail className="h-5 w-5" />
                   <span>Email</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setActivePanel('password')}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
                     activePanel === 'password' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
@@ -203,6 +206,15 @@ export default function ChecksPage() {
                 >
                   <Settings className="h-5 w-5" />
                   <span>Пароль</span>
+                </button>
+                <button
+                  onClick={() => setActivePanel('ai')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                    activePanel === 'ai' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Brain className="h-5 w-5" />
+                  <span>ИИ анализ</span>
                 </button>
               </nav>
             </div>
@@ -218,11 +230,13 @@ export default function ChecksPage() {
                     Сделаем ваши данные безопаснее
                   </h2>
                   <p className="text-gray-600 mb-8 leading-relaxed">
-                    Обнаружены утечки ваших персональных данных в Telegram-ботах. 
-                    Мы поможем удалить данные Telegram
+                    {activePanel === 'ai'
+                      ? 'Запустите ИИ анализ для глубокого исследования ваших данных и получения персональных рекомендаций по безопасности.'
+                      : 'Обнаружены утечки ваших персональных данных в Telegram-ботах. Мы поможем удалить данные Telegram'
+                    }
                   </p>
                   <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl">
-                    Удалить данные
+                    {activePanel === 'ai' ? 'Запустить ИИ анализ' : 'Удалить информацию обо мне'}
                   </Button>
                 </div>
                 <div className="flex justify-center">
