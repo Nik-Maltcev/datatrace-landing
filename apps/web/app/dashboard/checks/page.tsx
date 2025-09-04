@@ -270,7 +270,9 @@ export default function ChecksPage() {
 
             {/* History Section */}
             <div className="bg-white rounded-2xl p-8 shadow-sm">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">История проверок</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                {activePanel === 'ai' ? 'ИИ анализ' : 'История проверок'}
+              </h3>
 
               {/* Stats Row */}
               <div className="grid grid-cols-3 gap-8 mb-8">
