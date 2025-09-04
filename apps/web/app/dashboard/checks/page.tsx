@@ -248,6 +248,11 @@ export default function ChecksPage() {
                         <div className="text-4xl font-bold text-gray-900">{stats.leaks}</div>
                         <div className="text-sm text-gray-500">утечек</div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* History Section */}
             <div className="bg-white rounded-2xl p-8 shadow-sm">
