@@ -618,12 +618,11 @@ export default function ChecksPage() {
                           📊 Проанализировано проверок: <span className="font-medium">{checks.length}</span>
                         </p>
                         <p className="text-sm text-gray-600">
-                          🔍 Найдено утечек: <span className="font-medium">{checks.reduce((sum, check) => sum + check.totalLeaks, 0)}</span>
+                          🔍 Найдено утечек: <span className="font-medium">{checks.reduce((sum, check) => sum + (check.totalLeaks || 0), 0)}</span>
                         </p>
                       </div>
                     </div>
                   )
-                }
                 </div>
               ) : (
                 <div>
