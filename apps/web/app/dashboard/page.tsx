@@ -123,7 +123,8 @@ export default function DashboardPage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          phone: user.phone
+          phone: user.phone,
+          userId: user.email
         })
       })
 
@@ -207,7 +208,8 @@ export default function DashboardPage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          email: user.email
+          email: user.email,
+          userId: user.email
         })
       })
 

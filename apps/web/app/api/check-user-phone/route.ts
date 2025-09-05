@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
     // Получаем тело запроса
     const body = await request.json()
     const phone = body.phone
+    const userId = body.userId || 'current-user'
 
     if (!phone) {
       return NextResponse.json({
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
         totalLeaks,
         foundSources,
         message,
-        userId: 'current-user' // В будущем можно получать из токена
+        userId: userId
       })
 
       console.log('✅ Phone check result saved successfully:', savedCheck.id)

@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
     // Получаем тело запроса
     const body = await request.json()
     const email = body.email
+    const userId = body.userId || 'current-user'
 
     if (!email) {
       return NextResponse.json({
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest) {
         totalLeaks,
         foundSources,
         message,
-        userId: 'current-user' // В будущем можно получать из токена
+        userId: userId
       })
 
       console.log('✅ Email check result saved successfully:', savedCheck.id)

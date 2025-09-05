@@ -225,15 +225,25 @@ export default function ChecksPage() {
     const userData = localStorage.getItem("user")
     if (userData) {
       setUser(JSON.parse(userData))
-      loadCheckHistory()
     } else {
       router.push("/login")
     }
   }, [router])
 
+  useEffect(() => {
+    if (user?.email) {
+      loadCheckHistory()
+    }
+  }, [user])
+
   const loadCheckHistory = async () => {
+    if (!user?.email) {
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const response = await fetch('/api/save-check-result?userId=current-user')
+      const response = await fetch(`/api/save-check-result?userId=${encodeURIComponent(user.email)}`)
       if (!response.ok) {
         throw new Error('Failed to load check history')
       }
@@ -242,36 +252,11 @@ export default function ChecksPage() {
         setChecks(data.checks || [])
       } else {
         console.error('Failed to load checks:', data.error)
-        const mockChecks: CheckHistory[] = [
-          {
-            id: '1',
-            type: 'phone',
-            query: '+79991234567',
-            date: '2024-01-15T10:30:00Z',
-            status: 'completed',
-            results: [
-              { source: 'ITP', found: true, count: 2 },
-              { source: 'Dyxless', found: false },
-              { source: 'LeakOsint', found: true, count: 1 }
-            ]
-          },
-          {
-            id: '2',
-            type: 'email',
-            query: 'user@example.com',
-            date: '2024-01-14T15:45:00Z',
-            status: 'completed',
-            results: [
-              { source: 'ITP', found: false },
-              { source: 'Dyxless', found: true, count: 3 },
-              { source: 'Usersbox', found: false }
-            ]
-          }
-        ]
-        setChecks(mockChecks)
+        setChecks([])
       }
     } catch (error) {
       console.error('Failed to load check history:', error)
+      setChecks([])
     } finally {
       setIsLoading(false)
     }
