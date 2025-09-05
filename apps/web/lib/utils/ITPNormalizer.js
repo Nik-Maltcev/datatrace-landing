@@ -103,7 +103,8 @@ class ITPNormalizer {
       return [];
     }
 
-    const allRecords = [];
+    // Возвращаем структуру с группировкой по базам данных
+    const groupedData = {};
     
     // ITP структура: { "База данных": { "data": [...] }, ... }
     for (const [dbName, dbData] of Object.entries(rawData)) {
@@ -112,24 +113,28 @@ class ITPNormalizer {
       if (dbData && dbData.data && Array.isArray(dbData.data)) {
         console.log(`📊 Found ${dbData.data.length} records in ${dbName}`);
         
-        // Добавляем имя базы данных к каждой записи
-        const dbRecords = dbData.data.map(record => ({
-          ...record,
-          source_database: dbName
-        }));
+        // Нормализуем каждую запись и добавляем информацию о базе
+        const normalizedRecords = dbData.data.map(record => {
+          const normalized = this.normalizeRecord({
+            ...record,
+            source_database: dbName,
+            dbName: dbName
+          });
+          return normalized;
+        }).filter(Boolean);
         
-        allRecords.push(...dbRecords);
+        if (normalizedRecords.length > 0) {
+          groupedData[dbName] = normalizedRecords;
+        }
       } else {
         console.log(`⚠️ Invalid structure in ${dbName}:`, typeof dbData);
       }
     }
     
-    console.log(`📊 Total records collected: ${allRecords.length}`);
+    const totalRecords = Object.values(groupedData).reduce((sum, records) => sum + records.length, 0);
+    console.log(`✅ ITPNormalizer: Normalized ${totalRecords} records in ${Object.keys(groupedData).length} databases`);
     
-    const normalized = allRecords.map(record => this.normalizeRecord(record)).filter(Boolean);
-    console.log(`✅ ITPNormalizer: Normalized ${normalized.length} records from ${allRecords.length} input records`);
-    
-    return normalized;
+    return groupedData;
   }
 }
 

@@ -45,9 +45,19 @@ function LeakSourceCard({ result }: { result: any }) {
   
   function renderLeakDetails(items: any) {
     if (Array.isArray(items)) {
-      return items.slice(0, 5).map((item, idx) => (
-        <div key={idx} className="bg-white p-3 rounded border border-red-100 text-xs">
-          <div className="space-y-1">
+      return items.slice(0, 10).map((item, idx) => (
+        <div key={idx} className="bg-white p-4 rounded-lg border border-red-200 mb-3">
+          {/* Заголовок с источником */}
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="font-medium text-gray-900 text-sm">
+                {item.dbName || item.database || item.source || 'Неизвестный источник'}
+              </span>
+            </div>
+            <span className="text-xs text-gray-500">Запись #{idx + 1}</span>
+          </div>
+          <div className="space-y-2">
             {renderItemFields(item)}
           </div>
         </div>
@@ -56,41 +66,57 @@ function LeakSourceCard({ result }: { result: any }) {
     
     if (typeof items === 'object' && items !== null) {
       return Object.entries(items).map(([dbName, dbItems]) => (
-        <div key={dbName} className="mb-3">
-          <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-            {dbName}
-          </h5>
-          <div className="space-y-2">
-            {Array.isArray(dbItems) && dbItems.slice(0, 3).map((item, idx) => (
-              <div key={idx} className="bg-white p-3 rounded border border-red-100 text-xs">
-                <div className="space-y-1">
+        <div key={dbName} className="mb-4">
+          <div className="bg-red-50 p-3 rounded-lg mb-3">
+            <h5 className="text-base font-semibold text-red-800 flex items-center">
+              <span className="w-3 h-3 bg-red-600 rounded-full mr-2"></span>
+              База данных: {dbName}
+            </h5>
+            <p className="text-sm text-red-600 mt-1">
+              Найдено записей: {Array.isArray(dbItems) ? dbItems.length : 0}
+            </p>
+          </div>
+          <div className="space-y-3">
+            {Array.isArray(dbItems) && dbItems.slice(0, 5).map((item, idx) => (
+              <div key={idx} className="bg-white p-4 rounded-lg border border-red-200">
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-700">Запись #{idx + 1}</span>
+                  <span className="text-xs text-gray-500">{dbName}</span>
+                </div>
+                <div className="space-y-2">
                   {renderItemFields(item)}
                 </div>
               </div>
             ))}
+            {Array.isArray(dbItems) && dbItems.length > 5 && (
+              <div className="text-center py-2">
+                <span className="text-sm text-gray-500">
+                  ... и еще {dbItems.length - 5} записей
+                </span>
+              </div>
+            )}
           </div>
         </div>
       ))
     }
     
-    return <div className="text-gray-500 text-sm">Нет данных для отображения</div>
+    return <div className="text-gray-500 text-sm p-4">Нет данных для отображения</div>
   }
   
   function renderItemFields(item: any) {
-    const priorityFields = ['name', 'phone', 'email', 'address', 'login', 'password', 'fullName', 'dbName']
+    const priorityFields = ['dbName', 'database', 'source', 'name', 'fullName', 'phone', 'email', 'address', 'login', 'password']
     const allFields = Object.entries(item).filter(([key, value]) => 
-      key !== '_original' && value !== null && value !== undefined && value !== ''
+      key !== '_original' && value !== null && value !== undefined && value !== '' && key !== '_id'
     )
     
     // Сначала показываем приоритетные поля
     const priority = allFields.filter(([key]) => priorityFields.includes(key))
-    const others = allFields.filter(([key]) => !priorityFields.includes(key)).slice(0, 3)
+    const others = allFields.filter(([key]) => !priorityFields.includes(key)).slice(0, 5)
     
     return [...priority, ...others].map(([key, value]) => (
-      <div key={key} className="flex justify-between items-start">
-        <span className="text-gray-500 capitalize text-xs">{getFieldLabel(key)}:</span>
-        <span className="text-gray-900 font-mono text-xs text-right max-w-[200px] truncate">
+      <div key={key} className="flex justify-between items-start py-1">
+        <span className="text-gray-600 font-medium text-sm min-w-[100px]">{getFieldLabel(key)}:</span>
+        <span className="text-gray-900 text-sm text-right max-w-[250px] break-words">
           {formatFieldValue(key, value)}
         </span>
       </div>
@@ -99,18 +125,24 @@ function LeakSourceCard({ result }: { result: any }) {
   
   function getFieldLabel(key: string): string {
     const labels: { [key: string]: string } = {
-      name: 'Имя',
-      phone: 'Телефон', 
-      email: 'Email',
-      address: 'Адрес',
-      login: 'Логин',
-      password: 'Пароль',
-      fullName: 'ФИО',
-      dbName: 'База данных',
-      birthDate: 'Дата рождения',
-      gender: 'Пол',
-      database: 'База',
-      records: 'Записи'
+      dbName: '🗄️ База данных',
+      database: '🗄️ База данных',
+      source: '🔍 Источник',
+      name: '👤 Имя',
+      fullName: '👤 ФИО',
+      phone: '📱 Телефон', 
+      email: '📧 Email',
+      address: '🏠 Адрес',
+      login: '🔑 Логин',
+      password: '🔒 Пароль',
+      birthDate: '🎂 Дата рождения',
+      gender: '⚧️ Пол',
+      records: '📋 Записи',
+      userId: '🆔 ID пользователя',
+      dataProvider: '🏢 Провайдер',
+      inn: '🏛️ ИНН',
+      snils: '🏛️ СНИЛС',
+      passport: '📄 Паспорт'
     }
     return labels[key] || key
   }
@@ -120,9 +152,14 @@ function LeakSourceCard({ result }: { result: any }) {
       return '***скрыто***'
     }
     if (typeof value === 'object') {
-      return JSON.stringify(value).slice(0, 30) + '...'
+      return JSON.stringify(value, null, 1).slice(0, 100) + '...'
     }
-    return String(value).slice(0, 30)
+    const strValue = String(value)
+    // Не обрезаем важные поля
+    if (['dbName', 'database', 'source', 'dataProvider'].includes(key)) {
+      return strValue
+    }
+    return strValue.length > 50 ? strValue.slice(0, 50) + '...' : strValue
   }
   
   return (
@@ -136,7 +173,18 @@ function LeakSourceCard({ result }: { result: any }) {
           <div>
             <p className="font-medium text-gray-900">{result.source || result.name}</p>
             <p className="text-sm text-gray-500">
-              {hasLeaks ? `${result.count || getItemsCount(result.items)} записей найдено` : 'Чисто'}
+              {hasLeaks ? (
+                <span>
+                  <span className="font-medium text-red-600">{result.count || getItemsCount(result.items)}</span> записей найдено
+                  {typeof result.items === 'object' && !Array.isArray(result.items) && (
+                    <span className="ml-2 text-xs text-gray-400">
+                      в {Object.keys(result.items).length} базах
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-green-600">Чисто</span>
+              )}
             </p>
           </div>
         </div>
