@@ -45,23 +45,37 @@ function LeakSourceCard({ result }: { result: any }) {
   
   function renderLeakDetails(items: any) {
     if (Array.isArray(items)) {
-      return items.slice(0, 10).map((item, idx) => (
-        <div key={idx} className="bg-white p-4 rounded-lg border border-red-200 mb-3">
-          {/* Заголовок с источником */}
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-              <span className="font-medium text-gray-900 text-sm">
-                {item.dbName || item.database || item.source || 'Неизвестный источник'}
+      const totalItems = items.length
+      const displayItems = items.slice(0, 50) // Увеличиваем до 50
+      
+      return (
+        <>
+          {displayItems.map((item, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-lg border border-red-200 mb-3">
+              {/* Заголовок с источником */}
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span className="font-medium text-gray-900 text-sm">
+                    {item.dbName || item.database || item.source || 'Неизвестный источник'}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">Запись #{idx + 1}</span>
+              </div>
+              <div className="space-y-2">
+                {renderItemFields(item)}
+              </div>
+            </div>
+          ))}
+          {totalItems > 50 && (
+            <div className="bg-gray-50 p-3 rounded-lg text-center border border-gray-200">
+              <span className="text-sm text-gray-600">
+                Показано {displayItems.length} из {totalItems} записей
               </span>
             </div>
-            <span className="text-xs text-gray-500">Запись #{idx + 1}</span>
-          </div>
-          <div className="space-y-2">
-            {renderItemFields(item)}
-          </div>
-        </div>
-      ))
+          )}
+        </>
+      )
     }
     
     if (typeof items === 'object' && items !== null) {
@@ -77,7 +91,7 @@ function LeakSourceCard({ result }: { result: any }) {
             </p>
           </div>
           <div className="space-y-3">
-            {Array.isArray(dbItems) && dbItems.slice(0, 5).map((item, idx) => (
+            {Array.isArray(dbItems) && dbItems.slice(0, 20).map((item, idx) => (
               <div key={idx} className="bg-white p-4 rounded-lg border border-red-200">
                 <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
                   <span className="text-sm font-medium text-gray-700">Запись #{idx + 1}</span>
@@ -88,10 +102,10 @@ function LeakSourceCard({ result }: { result: any }) {
                 </div>
               </div>
             ))}
-            {Array.isArray(dbItems) && dbItems.length > 5 && (
+            {Array.isArray(dbItems) && dbItems.length > 20 && (
               <div className="text-center py-2">
                 <span className="text-sm text-gray-500">
-                  ... и еще {dbItems.length - 5} записей
+                  ... и еще {dbItems.length - 20} записей
                 </span>
               </div>
             )}
