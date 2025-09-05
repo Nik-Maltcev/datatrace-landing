@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -371,7 +371,15 @@ export default function ChecksPage() {
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Личный кабинет</h1>
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Назад в кабинет
+                </Button>
+              </Link>
+              <h1 className="text-3xl font-bold text-gray-900">Мои проверки</h1>
+            </div>
             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
               <span className="text-gray-600 font-medium">А</span>
             </div>
