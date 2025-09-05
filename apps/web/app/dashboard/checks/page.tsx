@@ -28,7 +28,6 @@ interface CheckHistory {
   }[]
 }
 
-// Компонент для отображения источника утечек с выпадающим списком
 function LeakSourceCard({ result }: { result: any }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasLeaks = result.found && (result.count > 0 || (result.items && getItemsCount(result.items) > 0))
@@ -56,7 +55,6 @@ function LeakSourceCard({ result }: { result: any }) {
           </div>
           {items.map((item, idx) => (
             <div key={idx} className="bg-white p-4 rounded-lg border border-red-200 mb-3">
-              {/* Заголовок с источником */}
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                 <div className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-red-500 rounded-full"></span>
@@ -99,7 +97,6 @@ function LeakSourceCard({ result }: { result: any }) {
                 </div>
               </div>
             ))}
-
           </div>
         </div>
       ))
@@ -114,7 +111,6 @@ function LeakSourceCard({ result }: { result: any }) {
       key !== '_original' && value !== null && value !== undefined && value !== '' && key !== '_id'
     )
     
-    // Сначала показываем приоритетные поля
     const priority = allFields.filter(([key]) => priorityFields.includes(key))
     const others = allFields.filter(([key]) => !priorityFields.includes(key)).slice(0, 5)
     
@@ -160,7 +156,6 @@ function LeakSourceCard({ result }: { result: any }) {
       return JSON.stringify(value, null, 1).slice(0, 100) + '...'
     }
     const strValue = String(value)
-    // Не обрезаем важные поля
     if (['dbName', 'database', 'source', 'dataProvider'].includes(key)) {
       return strValue
     }
@@ -326,7 +321,6 @@ export default function ChecksPage() {
     if (panel === 'ai') {
       return { title: 'ИИ анализ', leaks: sumFindings(checks), totalSources: checks.reduce((t, c) => t + c.results.length, 0), foundSources: sumSourcesFound(checks), errors: 0 }
     }
-    // general
     const all = checks
     return {
       title: 'Общее',
@@ -389,7 +383,6 @@ export default function ChecksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
@@ -403,7 +396,6 @@ export default function ChecksPage() {
 
       <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-12 gap-8">
-          {/* Left Sidebar */}
           <div className="col-span-3">
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <nav className="space-y-2">
@@ -456,9 +448,7 @@ export default function ChecksPage() {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="col-span-9">
-            {/* Main Panel */}
             <div className="bg-white rounded-2xl p-8 shadow-sm mb-8">
               <div className="grid grid-cols-2 gap-12 items-center">
                 <div>
@@ -504,7 +494,6 @@ export default function ChecksPage() {
               </div>
             </div>
 
-            {/* History Section */}
             <div className="bg-white rounded-2xl p-8 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold text-gray-900">
@@ -531,7 +520,6 @@ export default function ChecksPage() {
                 )}
               </div>
 
-              {/* Stats Row */}
               <div className="grid grid-cols-3 gap-8 mb-8">
                 <div>
                   <div className="text-3xl font-bold text-gray-900">{checks.length}</div>
@@ -557,7 +545,6 @@ export default function ChecksPage() {
                 </div>
               </div>
 
-              {/* Tabs */}
               <div className="mb-6">
                 <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
                   <TabsList className="bg-gray-100">
@@ -622,7 +609,7 @@ export default function ChecksPage() {
                         </p>
                       </div>
                     </div>
-                  )
+                  )}
                 </div>
               ) : (
                 <div>
@@ -673,8 +660,8 @@ export default function ChecksPage() {
                         </div>
                       ))}
                     </div>
-                  )
-                }
+                  )}
+                </div>
               )}
             </div>
           </div>
