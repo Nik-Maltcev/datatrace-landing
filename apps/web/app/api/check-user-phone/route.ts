@@ -3,6 +3,11 @@ import jwt from 'jsonwebtoken'
 import axios from 'axios'
 import { saveCheckResult } from '@/lib/checkHistory'
 
+// Импортируем нормализаторы
+const ITPNormalizer = require('@/lib/utils/ITPNormalizer')
+const LeakOsintNormalizer = require('@/lib/utils/LeakOsintNormalizer')
+const { normalizeUsersboxData } = require('@/lib/utils/UsersboxNormalizer')
+
 // Токены и базовые URL (копируем из основного API)
 const TOKENS = {
   ITP: process.env.ITP_TOKEN || '91b2c57abce2ca84f8ca068df2eda054',
@@ -41,15 +46,19 @@ async function searchITP(query: string, field: string) {
     )
     const data = res.data || {}
     
+    // Нормализуем данные ITP
+    const normalizedItems = data.data ? ITPNormalizer.normalizeRecords(data.data) : []
+    
     return { 
       name: 'ITP', 
       ok: true, 
       meta: { 
         records: data.records, 
         searchId: data.searchId,
-        originalCount: data.data?.length || 0
+        originalCount: data.data?.length || 0,
+        normalizedCount: normalizedItems.length
       }, 
-      items: data.data || []
+      items: normalizedItems
     }
   } catch (err: any) {
     return { name: 'ITP', ok: false, error: normalizeError(err) }
@@ -105,7 +114,10 @@ async function searchLeakOsint(query: string) {
       return { name: 'LeakOsint', ok: false, error: { message: 'Нет данных или неизвестный формат ответа', preview: data } }
     }
     
-    return { name: 'LeakOsint', ok: true, items: items }
+    // Нормализуем данные LeakOsint
+    const normalizedItems = LeakOsintNormalizer.normalizeRecords(items)
+    
+    return { name: 'LeakOsint', ok: true, items: normalizedItems }
   } catch (err: any) {
     return { name: 'LeakOsint', ok: false, error: normalizeError(err) }
   }
@@ -122,10 +134,13 @@ async function searchUsersbox(query: string) {
     )
     const data = res.data || {}
     
+    // Нормализуем данные Usersbox
+    const normalizedData = normalizeUsersboxData(data)
+    
     return { 
       name: 'Usersbox', 
       ok: data.status === 'success', 
-      items: data.data || [], 
+      items: normalizedData, 
       meta: { count: data.data?.count } 
     }
   } catch (err: any) {

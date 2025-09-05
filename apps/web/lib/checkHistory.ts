@@ -17,6 +17,7 @@ export interface CheckRecord {
     count: number
     ok: boolean
     error?: any
+    items?: any // Добавляем поддержку детальных данных
   }>
 }
 
@@ -53,7 +54,8 @@ export function saveCheckResult(data: {
              (typeof result.items === 'object' && result.items !== null) ? 
              Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0) : 0,
       ok: result.ok,
-      error: result.error
+      error: result.error,
+      items: result.items // Сохраняем нормализованные данные
     })) || []
   }
 

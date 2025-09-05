@@ -45,7 +45,8 @@ async function searchITP(query: string, field: string) {
       ok: true, 
       found: normalizedItems.length > 0,
       count: normalizedItems.length,
-      data: normalizedItems
+      data: normalizedItems,
+      items: data.data
     };
   } catch (err: any) {
     return { name: 'ITP', ok: false, found: false, count: 0, error: err.message };
@@ -80,7 +81,8 @@ async function searchDyxless(query: string) {
       ok: !!data.status, 
       found: items.length > 0,
       count: items.length,
-      data: items
+      data: items,
+      items: items
     };
   };
 
@@ -127,7 +129,8 @@ async function searchLeakOsint(query: string) {
       ok: true, 
       found: normalizedItems.length > 0,
       count: normalizedItems.length,
-      data: normalizedItems
+      data: normalizedItems,
+      items: normalizedItems
     };
   } catch (err: any) {
     return { name: 'LeakOsint', ok: false, found: false, count: 0, error: err.message };
@@ -153,7 +156,8 @@ async function searchUsersbox(query: string) {
       ok: data.status === 'success', 
       found: normalizedData.length > 0,
       count: normalizedData.length,
-      data: normalizedData
+      data: normalizedData,
+      items: normalizedData
     };
   } catch (err: any) {
     return { name: 'Usersbox', ok: false, found: false, count: 0, error: err.message };
@@ -181,7 +185,8 @@ async function searchVektor(query: string) {
       ok: true, 
       found: items.length > 0,
       count: items.length,
-      data: items
+      data: items,
+      items: items
     };
   } catch (err: any) {
     return { name: 'Vektor', ok: false, found: false, count: 0, error: err.message };

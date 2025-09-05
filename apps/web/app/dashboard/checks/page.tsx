@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -15,11 +15,150 @@ interface CheckHistory {
   query: string
   date: string
   status: 'completed' | 'failed'
+  totalLeaks?: number
+  foundSources?: number
   results: {
-    source: string
+    name: string
+    source?: string
     found: boolean
     count?: number
+    data?: any
+    items?: any
+    error?: string
   }[]
+}
+
+// Компонент для отображения источника утечек с выпадающим списком
+function LeakSourceCard({ result }: { result: any }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const hasLeaks = result.found && (result.count > 0 || (result.items && getItemsCount(result.items) > 0))
+  
+  function getItemsCount(items: any): number {
+    if (Array.isArray(items)) return items.length
+    if (typeof items === 'object' && items !== null) {
+      return Object.values(items).reduce((sum: number, value: any) => {
+        return sum + (Array.isArray(value) ? value.length : 0)
+      }, 0)
+    }
+    return 0
+  }
+  
+  function renderLeakDetails(items: any) {
+    if (Array.isArray(items)) {
+      return items.slice(0, 5).map((item, idx) => (
+        <div key={idx} className="bg-white p-3 rounded border border-red-100 text-xs">
+          <div className="space-y-1">
+            {renderItemFields(item)}
+          </div>
+        </div>
+      ))
+    }
+    
+    if (typeof items === 'object' && items !== null) {
+      return Object.entries(items).map(([dbName, dbItems]) => (
+        <div key={dbName} className="mb-3">
+          <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+            {dbName}
+          </h5>
+          <div className="space-y-2">
+            {Array.isArray(dbItems) && dbItems.slice(0, 3).map((item, idx) => (
+              <div key={idx} className="bg-white p-3 rounded border border-red-100 text-xs">
+                <div className="space-y-1">
+                  {renderItemFields(item)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+    
+    return <div className="text-gray-500 text-sm">Нет данных для отображения</div>
+  }
+  
+  function renderItemFields(item: any) {
+    const priorityFields = ['name', 'phone', 'email', 'address', 'login', 'password', 'fullName', 'dbName']
+    const allFields = Object.entries(item).filter(([key, value]) => 
+      key !== '_original' && value !== null && value !== undefined && value !== ''
+    )
+    
+    // Сначала показываем приоритетные поля
+    const priority = allFields.filter(([key]) => priorityFields.includes(key))
+    const others = allFields.filter(([key]) => !priorityFields.includes(key)).slice(0, 3)
+    
+    return [...priority, ...others].map(([key, value]) => (
+      <div key={key} className="flex justify-between items-start">
+        <span className="text-gray-500 capitalize text-xs">{getFieldLabel(key)}:</span>
+        <span className="text-gray-900 font-mono text-xs text-right max-w-[200px] truncate">
+          {formatFieldValue(key, value)}
+        </span>
+      </div>
+    ))
+  }
+  
+  function getFieldLabel(key: string): string {
+    const labels: { [key: string]: string } = {
+      name: 'Имя',
+      phone: 'Телефон', 
+      email: 'Email',
+      address: 'Адрес',
+      login: 'Логин',
+      password: 'Пароль',
+      fullName: 'ФИО',
+      dbName: 'База данных',
+      birthDate: 'Дата рождения',
+      gender: 'Пол',
+      database: 'База',
+      records: 'Записи'
+    }
+    return labels[key] || key
+  }
+  
+  function formatFieldValue(key: string, value: any): string {
+    if (key === 'password' && value) {
+      return '***скрыто***'
+    }
+    if (typeof value === 'object') {
+      return JSON.stringify(value).slice(0, 30) + '...'
+    }
+    return String(value).slice(0, 30)
+  }
+  
+  return (
+    <div className={`border rounded-lg ${hasLeaks ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
+      <div 
+        className="p-4 cursor-pointer flex items-center justify-between"
+        onClick={() => hasLeaks && setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center space-x-3">
+          <div className={`w-3 h-3 rounded-full ${hasLeaks ? 'bg-red-500' : 'bg-green-500'}`} />
+          <div>
+            <p className="font-medium text-gray-900">{result.source || result.name}</p>
+            <p className="text-sm text-gray-500">
+              {hasLeaks ? `${result.count || getItemsCount(result.items)} записей найдено` : 'Чисто'}
+            </p>
+          </div>
+        </div>
+        {hasLeaks && (
+          <div className="flex items-center space-x-2">
+            <Badge variant={hasLeaks ? "destructive" : "secondary"}>
+              {hasLeaks ? 'Утечка' : 'Безопасно'}
+            </Badge>
+            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </div>
+        )}
+      </div>
+      
+      {isExpanded && hasLeaks && result.items && (
+        <div className="px-4 pb-4 border-t border-red-200">
+          <div className="mt-3 space-y-3 max-h-80 overflow-y-auto">
+            {renderLeakDetails(result.items)}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function ChecksPage() {
@@ -27,6 +166,7 @@ export default function ChecksPage() {
   const [tab, setTab] = useState<'found'|'deleted'>('found')
   const [checks, setChecks] = useState<CheckHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set())
   const router = useRouter()
   const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password' | 'ai'>('general')
 
@@ -352,16 +492,9 @@ export default function ChecksPage() {
                       </div>
 
                       {check.status === 'completed' && (
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="space-y-3">
                           {check.results.map((result, index) => (
-                            <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
-                              <p className="text-sm font-medium text-gray-900 mb-1">{result.source}</p>
-                              {result.found ? (
-                                <p className="text-sm text-red-600 font-medium">{result.count || 1} найдено</p>
-                              ) : (
-                                <p className="text-sm text-green-600">Чисто</p>
-                              )}
-                            </div>
+                            <LeakSourceCard key={index} result={result} />
                           ))}
                         </div>
                       )}

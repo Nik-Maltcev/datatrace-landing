@@ -36,64 +36,6 @@ class ITPNormalizer {
   }
 
   /**
-   * Нормализация даты рождения
-   * @param {string} birthDate - Исходная дата
-   * @returns {string} Нормализованная дата в формате YYYY-MM-DD
-   */
-  static normalizeBirthDate(birthDate) {
-    if (!birthDate) return null;
-    
-    const dateStr = birthDate.toString().trim();
-    
-    // Обработка формата DD.MM.YYYY
-    if (dateStr.includes('.')) {
-      const parts = dateStr.split('.');
-      if (parts.length === 3) {
-        const [day, month, year] = parts;
-        return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      }
-    }
-    
-    // Обработка формата YYYY-MM-DD (уже нормализован)
-    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return dateStr;
-    }
-    
-    // Обработка формата DD/MM/YYYY
-    if (dateStr.includes('/')) {
-      const parts = dateStr.split('/');
-      if (parts.length === 3) {
-        const [day, month, year] = parts;
-        return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      }
-    }
-    
-    return dateStr; // Возвращаем как есть, если не удалось распознать
-  }
-
-  /**
-   * Нормализация пола
-   * @param {string|number} gender - Исходное значение пола
-   * @returns {string} Нормализованное значение
-   */
-  static normalizeGender(gender) {
-    if (!gender) return null;
-    
-    const genderStr = gender.toString().toLowerCase().trim();
-    
-    // Обработка числовых значений
-    if (genderStr === '1' || genderStr === 'male' || genderStr === 'м' || genderStr === 'мужской') {
-      return 'Мужской';
-    }
-    
-    if (genderStr === '2' || genderStr === 'female' || genderStr === 'ж' || genderStr === 'женский') {
-      return 'Женский';
-    }
-    
-    return gender; // Возвращаем как есть
-  }
-
-  /**
    * Нормализация имени
    * @param {string} name - Исходное имя
    * @returns {string} Нормализованное имя
@@ -119,42 +61,17 @@ class ITPNormalizer {
     const normalized = {
       // Основная информация
       dataProvider: record.data_provider || null,
-      dbName: record.db_name || 'Неизвестно',
+      dbName: record.db_name || record.source_database || 'Неизвестно',
       name: this.normalizeName(record.name),
       phone: this.normalizePhone(record.phone),
       email: record.email || null,
       address: record.address || null,
-      birthDate: this.normalizeBirthDate(record.birth_date),
-      gender: this.normalizeGender(record.sex || record.gender),
-      isVip: Boolean(record.is_vip),
-
+      
       // Аккаунты
       login: record.login || null,
       password: record.password || null,
-      passwordHash: record.password_hash || null,
       userId: record.id || null,
-      serviceUrl: record.url || null,
-      serviceTitle: record.title || null,
-
-      // Дополнительная информация
-      actuality: record.actuality || null,
-      crmId: record.crm_id || null,
-      parentId: record.parent_id || null,
-      createdDate: record.created_date ? this.normalizeBirthDate(record.created_date) : null,
-      telegramId: record.telegram_id || null,
-      additionalNames: record.additional_names || null,
-      notes: record.notes || null,
       
-      // Технические поля
-      phoneCarrier: record.phone_carrier || null,
-      phoneRegion: record.phone_region || null,
-      postalCode: record.postal_code || null,
-      senderInn: record.sender_inn || null,
-      senderName: record.sender_name || null,
-      kpp: record.kpp || null,
-      userAgent: record.user_agent || null,
-      action: record.action || null,
-
       // Оригинальные данные для отладки
       _original: record
     };
