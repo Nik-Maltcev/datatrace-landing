@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -220,6 +220,9 @@ export default function ChecksPage() {
   const [checks, setChecks] = useState<CheckHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set())
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false)
   const router = useRouter()
   const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password' | 'ai'>('general')
 
@@ -339,6 +342,46 @@ export default function ChecksPage() {
     { name: 'С утечками', value: stats.foundSources },
     { name: 'Чистые', value: Math.max(stats.totalSources - stats.foundSources, 0) }
   ]
+
+  const handleAiAnalysis = async () => {
+    setIsAnalyzing(true)
+    try {
+      const response = await fetch('/api/ai-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          checkHistory: checks
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.ok) {
+        setAiAnalysis(data.analysis)
+      } else {
+        console.error('AI Analysis error:', data.error)
+        alert('Ошибка ИИ анализа: ' + data.error)
+      }
+    } catch (error) {
+      console.error('AI Analysis request error:', error)
+      alert('Ошибка при запросе ИИ анализа')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+  
+  const formatMarkdown = (text: string) => {
+    return text
+      .replace(/## (.*)/g, '<h2 class="text-xl font-bold mt-6 mb-3 text-gray-900">$1</h2>')
+      .replace(/### (.*)/g, '<h3 class="text-lg font-semibold mt-4 mb-2 text-gray-800">$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+      .replace(/- (.*)/g, '<li class="ml-4 mb-1">$1</li>')
+      .replace(/\n\n/g, '</p><p class="mb-3">')
+      .replace(/^/, '<p class="mb-3">')
+      .replace(/$/, '</p>')
+  }
 
   if (!user) {
     return <div>Загрузка...</div>
@@ -463,9 +506,30 @@ export default function ChecksPage() {
 
             {/* History Section */}
             <div className="bg-white rounded-2xl p-8 shadow-sm">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                {activePanel === 'ai' ? 'ИИ анализ' : 'История проверок'}
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  {activePanel === 'ai' ? 'ИИ анализ' : 'История проверок'}
+                </h3>
+                {activePanel === 'ai' && checks.length > 0 && (
+                  <Button
+                    onClick={handleAiAnalysis}
+                    disabled={isAnalyzing}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Анализирую...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-4 w-4 mr-2" />
+                        Запустить ИИ анализ
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
 
               {/* Stats Row */}
               <div className="grid grid-cols-3 gap-8 mb-8">
@@ -507,53 +571,111 @@ export default function ChecksPage() {
                 </Tabs>
               </div>
 
-              {isLoading ? (
-                <div className="text-center py-12 text-gray-500">Загрузка...</div>
-              ) : checks.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>История проверок пуста</p>
-                  <Link href="/dashboard">
-                    <Button className="mt-4" variant="outline">Начать проверку</Button>
-                  </Link>
-                </div>
-              ) : tab === 'deleted' ? (
-                <div className="text-center py-12 text-gray-500">Пока нет удаленных утечек</div>
-              ) : (
-                <div className="space-y-4">
-                  {checks.map((check) => (
-                    <div key={check.id} className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-4">
-                          {check.type === 'phone' ? (
-                            <Phone className="h-5 w-5 text-gray-500" />
-                          ) : (
-                            <Mail className="h-5 w-5 text-gray-500" />
-                          )}
-                          <div>
-                            <p className="font-medium text-gray-900">{check.query}</p>
-                            <p className="text-sm text-gray-500">{formatDate(check.date)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          {check.status === 'completed' ? (
-                            <Badge className="bg-green-50 text-green-700 border-green-200">Завершено</Badge>
-                          ) : (
-                            <Badge variant="destructive">Ошибка</Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {check.status === 'completed' && (
-                        <div className="space-y-3">
-                          {check.results.map((result, index) => (
-                            <LeakSourceCard key={index} result={result} />
-                          ))}
-                        </div>
-                      )}
+              {activePanel === 'ai' ? (
+                <div>
+                  {isLoading ? (
+                    <div className="text-center py-12 text-gray-500">Загрузка...</div>
+                  ) : checks.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Brain className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Нет данных для ИИ анализа</p>
+                      <p className="text-sm mt-2">Сначала выполните проверки утечек</p>
+                      <Link href="/dashboard">
+                        <Button className="mt-4" variant="outline">Начать проверку</Button>
+                      </Link>
                     </div>
-                  ))}
+                  ) : aiAnalysis ? (
+                    <div className="prose max-w-none">
+                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <Brain className="h-5 w-5 mr-2 text-purple-600" />
+                            ИИ Анализ безопасности
+                          </h4>
+                          <Button
+                            onClick={() => setAiAnalysis(null)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Новый анализ
+                          </Button>
+                        </div>
+                        <div 
+                          className="text-gray-700 leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: formatMarkdown(aiAnalysis) }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Brain className="h-16 w-16 mx-auto mb-4 text-purple-300" />
+                      <h4 className="text-xl font-semibold text-gray-900 mb-2">ИИ анализ безопасности</h4>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        Получите персональные рекомендации по безопасности на основе истории ваших проверок
+                      </p>
+                      <div className="bg-gray-50 rounded-lg p-4 mb-6 max-w-md mx-auto">
+                        <p className="text-sm text-gray-600">
+                          📊 Проанализировано проверок: <span className="font-medium">{checks.length}</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          🔍 Найдено утечек: <span className="font-medium">{checks.reduce((sum, check) => sum + check.totalLeaks, 0)}</span>
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
                 </div>
+              ) : (
+                <div>
+                  {isLoading ? (
+                    <div className="text-center py-12 text-gray-500">Загрузка...</div>
+                  ) : checks.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>История проверок пуста</p>
+                      <Link href="/dashboard">
+                        <Button className="mt-4" variant="outline">Начать проверку</Button>
+                      </Link>
+                    </div>
+                  ) : tab === 'deleted' ? (
+                    <div className="text-center py-12 text-gray-500">Пока нет удаленных утечек</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {checks.map((check) => (
+                        <div key={check.id} className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-4">
+                              {check.type === 'phone' ? (
+                                <Phone className="h-5 w-5 text-gray-500" />
+                              ) : (
+                                <Mail className="h-5 w-5 text-gray-500" />
+                              )}
+                              <div>
+                                <p className="font-medium text-gray-900">{check.query}</p>
+                                <p className="text-sm text-gray-500">{formatDate(check.date)}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              {check.status === 'completed' ? (
+                                <Badge className="bg-green-50 text-green-700 border-green-200">Завершено</Badge>
+                              ) : (
+                                <Badge variant="destructive">Ошибка</Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {check.status === 'completed' && (
+                            <div className="space-y-3">
+                              {check.results.map((result, index) => (
+                                <LeakSourceCard key={index} result={result} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
               )}
             </div>
           </div>
