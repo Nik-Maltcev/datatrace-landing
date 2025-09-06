@@ -68,6 +68,27 @@ export function saveCheckResult(data: {
   return checkRecord
 }
 
+export function saveCheckHistory(userId: string, data: any): void {
+  console.log(`💾 Saving check history for user: ${userId}`)
+  console.log(`📊 Data type: ${data.type}`)
+  
+  const checkRecord = {
+    id: Date.now().toString(),
+    userId: userId,
+    type: data.type,
+    query: data.query,
+    date: data.timestamp || new Date().toISOString(),
+    status: 'completed',
+    totalLeaks: data.results?.DeHashed?.count || 0,
+    foundSources: data.results?.DeHashed?.found ? 1 : 0,
+    message: data.results?.DeHashed?.found ? 'Пароль скомпрометирован' : 'Пароль безопасен',
+    results: data.results
+  }
+  
+  checkHistory.push(checkRecord)
+  console.log(`✅ Saved check history. Total records: ${checkHistory.length}`)
+}
+
 export function getCheckHistory(userId: string = 'current-user'): CheckRecord[] {
   console.log(`🔍 GET request for user: ${userId}`)
   console.log(`📊 Total checks in history: ${checkHistory.length}`)
