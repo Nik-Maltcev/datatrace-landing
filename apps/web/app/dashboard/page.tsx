@@ -264,6 +264,45 @@ export default function DashboardPage() {
     router.push("/search")
   }
 
+  const handleCheckPassword = async (password: string) => {
+    if (!password.trim()) {
+      alert('Пожалуйста, введите пароль')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/check-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          password: password,
+          userId: user?.email
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.ok) {
+        const message = data.isCompromised 
+          ? `Пароль скомпрометирован! Найдено ${data.totalBreaches} записей в ${data.breachCount} базах данных`
+          : 'Пароль не найден в известных утечках'
+        
+        alert(message)
+        
+        // Очищаем поле ввода
+        const input = document.getElementById('password-input') as HTMLInputElement
+        if (input) input.value = ''
+      } else {
+        alert('Ошибка: ' + data.error?.message)
+      }
+    } catch (error) {
+      console.error('Password check error:', error)
+      alert('Ошибка при проверке пароля')
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -646,6 +685,44 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Password Check Section */}
+        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-orange-200 transition-all group mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                <Lock className="h-6 w-6 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-light text-gray-900">Проверка пароля</h3>
+                <p className="text-xs text-gray-500">Проверка компрометации через DeHashed</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Проверьте, был ли ваш пароль скомпрометирован в известных утечках данных
+          </p>
+          <div className="flex space-x-3">
+            <input
+              type="password"
+              placeholder="Введите пароль для проверки"
+              className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              id="password-input"
+            />
+            <Button
+              onClick={() => {
+                const input = document.getElementById('password-input') as HTMLInputElement
+                if (input?.value) {
+                  handleCheckPassword(input.value)
+                }
+              }}
+              className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-6 font-light"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Проверить
+            </Button>
           </div>
         </div>
 
