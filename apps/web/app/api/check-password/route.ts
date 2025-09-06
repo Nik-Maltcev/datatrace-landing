@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import crypto from 'crypto'
+import { saveCheckHistory } from '../../../lib/checkHistory'
 
 const DEHASHED_API_KEY = process.env.DEHASHED_API_KEY || 'your_dehashed_api_key'
 const DEHASHED_BASE = 'https://api.dehashed.com'
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
     console.log('🔐 Password check request received')
 
     const body = await request.json()
-    const { password, userId } = body
+    const { password, userEmail } = body
 
     if (!password) {
       return NextResponse.json({
@@ -52,6 +53,64 @@ export async function POST(request: NextRequest) {
       const isCompromised = (data.results_found || 0) > 0
       const breachCount = data.results_found || 0
 
+      let detailedResults = []
+      let uniqueDatabases = new Set()
+
+      // Если найдены результаты, получаем детальную информацию
+      if (isCompromised) {
+        try {
+          const searchResponse = await axios.post(`${DEHASHED_BASE}/v2/search`, {
+            query: `password:${password}`,
+            page: 1,
+            size: 100,
+            de_dupe: true
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Dehashed-Api-Key': DEHASHED_API_KEY
+            },
+            timeout: 15000
+          })
+
+          detailedResults = searchResponse.data.entries || []
+          
+          // Собираем уникальные базы данных
+          detailedResults.forEach(entry => {
+            if (entry.database_name) {
+              uniqueDatabases.add(entry.database_name)
+            }
+          })
+        } catch (searchError) {
+          console.log('⚠️ Could not get detailed results:', searchError.message)
+        }
+      }
+
+      // Сохраняем результат в историю
+      if (userEmail) {
+        const historyData = {
+          type: 'password',
+          query: '***скрыто***',
+          timestamp: new Date().toISOString(),
+          results: {
+            DeHashed: {
+              found: isCompromised,
+              count: breachCount,
+              databases: Array.from(uniqueDatabases),
+              entries: detailedResults.map(entry => ({
+                ...entry,
+                password: ['***скрыто***']
+              }))
+            }
+          }
+        }
+
+        try {
+          await saveCheckHistory(userEmail, historyData)
+        } catch (historyError) {
+          console.error('Failed to save history:', historyError)
+        }
+      }
+
       // Генерируем рекомендации
       const recommendations = []
       if (isCompromised) {
@@ -59,6 +118,9 @@ export async function POST(request: NextRequest) {
         recommendations.push('Немедленно смените пароль на всех аккаунтах где он используется')
         if (breachCount > 1) {
           recommendations.push(`Пароль найден в ${breachCount} различных утечках`)
+        }
+        if (uniqueDatabases.size > 0) {
+          recommendations.push(`Найден в ${uniqueDatabases.size} различных базах данных`)
         }
         recommendations.push('Включите двухфакторную аутентификацию на важных аккаунтах')
       } else {
@@ -68,13 +130,15 @@ export async function POST(request: NextRequest) {
       recommendations.push('Рекомендуется использовать менеджер паролей')
 
       const message = isCompromised 
-        ? `Пароль скомпрометирован! Найдено ${breachCount} записей в утечках данных`
+        ? `Пароль скомпрометирован! Найдено ${breachCount} записей в ${uniqueDatabases.size || 1} базах данных`
         : 'Пароль не найден в известных утечках'
 
       return NextResponse.json({
         ok: true,
         isCompromised,
         breachCount,
+        databaseCount: uniqueDatabases.size,
+        databases: Array.from(uniqueDatabases),
         recommendations,
         message,
         timestamp: new Date().toISOString()

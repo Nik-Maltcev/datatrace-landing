@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft, Lock, Server } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -231,6 +231,7 @@ export default function ChecksPage() {
   const [showAiAnalysis, setShowAiAnalysis] = useState(false)
   const router = useRouter()
   const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password' | 'ai'>('general')
+  const [passwordChecks, setPasswordChecks] = useState<any[]>([])
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -260,14 +261,21 @@ export default function ChecksPage() {
       }
       const data = await response.json()
       if (data.ok) {
-        setChecks(data.checks || [])
+        const allChecks = data.checks || []
+        const leakChecks = allChecks.filter(check => check.type !== 'password')
+        const passwordHistory = allChecks.filter(check => check.type === 'password')
+        
+        setChecks(leakChecks)
+        setPasswordChecks(passwordHistory)
       } else {
         console.error('Failed to load checks:', data.error)
         setChecks([])
+        setPasswordChecks([])
       }
     } catch (error) {
       console.error('Failed to load check history:', error)
       setChecks([])
+      setPasswordChecks([])
     } finally {
       setIsLoading(false)
     }
@@ -312,7 +320,14 @@ export default function ChecksPage() {
       }
     }
     if (panel === 'password') {
-      return { title: 'Пароль', leaks: 0, totalSources: 0, foundSources: 0, errors: 0 }
+      const compromisedCount = passwordChecks.filter(check => check.results?.DeHashed?.found).length
+      return { 
+        title: 'Пароль', 
+        leaks: passwordChecks.reduce((sum, check) => sum + (check.results?.DeHashed?.count || 0), 0),
+        totalSources: passwordChecks.length,
+        foundSources: compromisedCount,
+        errors: 0 
+      }
     }
     if (panel === 'ai') {
       return { title: 'ИИ анализ', leaks: sumFindings(checks), totalSources: checks.reduce((t, c) => t + c.results.length, 0), foundSources: sumSourcesFound(checks), errors: 0 }
@@ -436,7 +451,7 @@ export default function ChecksPage() {
                     activePanel === 'password' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  <Settings className="h-5 w-5" />
+                  <Lock className="h-5 w-5" />
                   <span>Пароль</span>
                 </button>
                 <button
@@ -562,7 +577,91 @@ export default function ChecksPage() {
                 </Tabs>
               </div>
 
-              {activePanel === 'ai' ? (
+              {activePanel === 'password' ? (
+                <div>
+                  {isLoading ? (
+                    <div className="text-center py-12 text-gray-500">Загрузка...</div>
+                  ) : passwordChecks.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Lock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Нет проверок паролей</p>
+                      <Link href="/dashboard">
+                        <Button className="mt-4" variant="outline">Проверить пароль</Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {passwordChecks.map((check, index) => (
+                        <div key={index} className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-4">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                check.results?.DeHashed?.found ? 'bg-red-50' : 'bg-green-50'
+                              }`}>
+                                <Lock className={`h-5 w-5 ${
+                                  check.results?.DeHashed?.found ? 'text-red-600' : 'text-green-600'
+                                }`} />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">Проверка пароля</p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(check.timestamp).toLocaleString('ru-RU')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <Badge 
+                                variant={check.results?.DeHashed?.found ? "destructive" : "secondary"}
+                                className="text-xs"
+                              >
+                                {check.results?.DeHashed?.found ? 'Скомпрометирован' : 'Безопасен'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Server className="h-4 w-4 text-gray-600" />
+                                <span className="text-sm font-medium text-gray-900">DeHashed</span>
+                              </div>
+                              <div className="text-right">
+                                {check.results?.DeHashed?.found ? (
+                                  <>
+                                    <p className="text-sm font-medium text-red-600">
+                                      {check.results.DeHashed.count} записей найдено
+                                    </p>
+                                    {check.results.DeHashed.databases?.length > 0 && (
+                                      <p className="text-xs text-gray-500">
+                                        В {check.results.DeHashed.databases.length} базах данных
+                                      </p>
+                                    )}
+                                  </>
+                                ) : (
+                                  <p className="text-sm text-green-600">Не найден в утечках</p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {check.results?.DeHashed?.databases?.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs text-gray-500 mb-2">Найден в базах данных:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {check.results.DeHashed.databases.map((db, dbIndex) => (
+                                    <Badge key={dbIndex} variant="outline" className="text-xs">
+                                      {db}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : activePanel === 'ai' ? (
                 <div>
                   {isLoading ? (
                     <div className="text-center py-12 text-gray-500">Загрузка...</div>

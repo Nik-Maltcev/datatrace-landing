@@ -278,7 +278,7 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({
           password: password,
-          userId: user?.email
+          userEmail: user?.email
         })
       })
 
