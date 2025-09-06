@@ -67,6 +67,10 @@ async function searchITP(query: string, field: string) {
 
 async function searchDyxless(query: string) {
   const attempt = async () => {
+    console.log(`🔍 Dyxless: Searching for query: ${query}`)
+    console.log(`🔗 Dyxless: URL: ${DYXLESS_BASE}/query`)
+    console.log(`🔑 Dyxless: Token: ${TOKENS.DYXLESS.slice(0, 10)}...`)
+    
     const res = await axios.post(
       DYXLESS_BASE + '/query',
       { query, token: TOKENS.DYXLESS },
@@ -79,17 +83,34 @@ async function searchDyxless(query: string) {
         timeout: 15000
       }
     )
+    
+    console.log(`📊 Dyxless: Response status: ${res.status}`)
     const data = res.data || {}
-    return { name: 'Dyxless', ok: !!data.status, meta: { count: data.counts }, items: data.data }
+    console.log(`📋 Dyxless: Response data:`, JSON.stringify(data, null, 2))
+    
+    const hasData = data.data && Array.isArray(data.data) && data.data.length > 0
+    const isSuccess = data.status === true || data.status === 'success'
+    
+    console.log(`✅ Dyxless: Status check - data.status: ${data.status}, hasData: ${hasData}, isSuccess: ${isSuccess}`)
+    
+    return { 
+      name: 'Dyxless', 
+      ok: isSuccess && hasData, 
+      meta: { count: data.counts, status: data.status }, 
+      items: data.data || [] 
+    }
   }
 
   try {
     return await attempt()
   } catch (e1) {
+    console.error('❌ Dyxless: First attempt failed:', e1.message)
     await new Promise((r) => setTimeout(r, 600))
     try {
+      console.log('🔄 Dyxless: Retrying...')
       return await attempt()
     } catch (e2) {
+      console.error('❌ Dyxless: Second attempt failed:', e2.message)
       return { name: 'Dyxless', ok: false, error: normalizeError(e2) }
     }
   }
