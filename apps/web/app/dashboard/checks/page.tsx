@@ -143,7 +143,18 @@ function LeakSourceCard({ result }: { result: any }) {
       dataProvider: '🏢 Провайдер',
       inn: '🏛️ ИНН',
       snils: '🏛️ СНИЛС',
-      passport: '📄 Паспорт'
+      passport: '📄 Паспорт',
+      firstName: '👤 Имя',
+      lastName: '👤 Фамилия',
+      nickName: '👤 Ник',
+      city: '🏠 Город',
+      birth_date: '🎂 Дата рождения',
+      vkId: '🔗 VK ID',
+      collection: '📁 Коллекция',
+      accounts: '💳 Счета',
+      cards: '💳 Карты',
+      databaseInfo: 'ℹ️ Инфо о БД',
+      _score: '🎯 Релевантность'
     }
     return labels[key] || key
   }

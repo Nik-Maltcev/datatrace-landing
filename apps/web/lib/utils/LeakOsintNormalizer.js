@@ -109,7 +109,7 @@ class LeakOsintNormalizer {
   /**
    * Нормализует массив записей LeakOsint
    * @param {Array} records - массив записей
-   * @returns {Array} массив нормализованных записей
+   * @returns {Array} плоский массив нормализованных записей
    */
   static normalizeRecords(records) {
     if (!Array.isArray(records)) {
@@ -117,13 +117,25 @@ class LeakOsintNormalizer {
       return [];
     }
 
-    const normalized = records
-      .map(record => this.normalizeRecord(record))
-      .filter(record => record !== null);
-
-    console.log(`LeakOsintNormalizer: Processed ${records.length} records, normalized ${normalized.length}`);
+    const allRecords = [];
     
-    return normalized;
+    records.forEach(record => {
+      const normalized = this.normalizeRecord(record);
+      if (normalized && normalized.records && Array.isArray(normalized.records)) {
+        // Добавляем информацию о базе данных к каждой записи
+        normalized.records.forEach(item => {
+          if (item) {
+            item.database = normalized.database;
+            item.databaseInfo = normalized.databaseInfo;
+            allRecords.push(item);
+          }
+        });
+      }
+    });
+
+    console.log(`LeakOsintNormalizer: Processed ${records.length} sources, extracted ${allRecords.length} records`);
+    
+    return allRecords;
   }
 }
 

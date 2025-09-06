@@ -9,7 +9,7 @@ function normalizeUsersboxData(rawData) {
   const items = rawData.data?.items || [];
   console.log(`📋 Processing ${items.length} Usersbox sources`);
 
-  const normalizedSources = [];
+  const allRecords = [];
 
   items.forEach((sourceData, sourceIndex) => {
     if (!sourceData.source) {
@@ -24,23 +24,19 @@ function normalizeUsersboxData(rawData) {
 
     console.log(`📊 Processing source "${sourceName}" with ${sourceItems.length} items`);
 
-    // Нормализуем каждую запись в источнике
-    const normalizedItems = sourceItems.map((item, itemIndex) => {
-      return normalizeUsersboxRecord(item, itemIndex, sourceName);
-    });
-
-    normalizedSources.push({
-      source: sourceName,
-      database: database,
-      collection: collection,
-      count: hitsData.count || sourceItems.length,
-      hitsCount: hitsData.hitsCount || sourceItems.length,
-      items: normalizedItems
+    // Нормализуем каждую запись и добавляем в общий массив
+    sourceItems.forEach((item, itemIndex) => {
+      const normalizedItem = normalizeUsersboxRecord(item, itemIndex, sourceName);
+      if (normalizedItem) {
+        normalizedItem.database = database;
+        normalizedItem.collection = collection;
+        allRecords.push(normalizedItem);
+      }
     });
   });
 
-  console.log(`✅ Usersbox normalization complete: ${normalizedSources.length} sources processed`);
-  return normalizedSources;
+  console.log(`✅ Usersbox normalization complete: ${allRecords.length} records processed`);
+  return allRecords;
 }
 
 function normalizeUsersboxRecord(record, index, sourceName) {
