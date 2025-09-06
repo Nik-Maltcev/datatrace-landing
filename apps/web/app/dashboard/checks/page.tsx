@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft, Lock, Server } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft, Lock, Server, X, Trash2, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -364,6 +364,8 @@ export default function ChecksPage() {
   const router = useRouter()
   const [activePanel, setActivePanel] = useState<'general' | 'phone' | 'email' | 'password' | 'ai'>('general')
   const [passwordChecks, setPasswordChecks] = useState<any[]>([])
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedSource, setSelectedSource] = useState<string | null>(null)
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -525,6 +527,59 @@ export default function ChecksPage() {
       .replace(/$/, '</p>')
   }
 
+  const dataSources = [
+    {
+      name: 'Dyxless',
+      botUrl: 'https://t.me/datatrace1_bot',
+      instructions: [
+        'Откройте telegram бот https://t.me/datatrace1_bot',
+        'Нажмите /start',
+        'Перейдите в раздел "мой профиль"',
+        'Выберите пункт "Удалить информацию о себе"'
+      ]
+    },
+    {
+      name: 'ITP',
+      botUrl: 'https://t.me/datatrace3_bot',
+      instructions: [
+        'Откройте telegram бот https://t.me/datatrace3_bot',
+        'Нажмите /start',
+        'Перейдите в раздел "мой профиль"',
+        'Выберите пункт "Удалить информацию о себе"'
+      ]
+    },
+    {
+      name: 'Vektor',
+      botUrl: 'https://t.me/datatrace2_bot',
+      instructions: [
+        'Откройте telegram бот https://t.me/datatrace2_bot',
+        'Нажмите /start',
+        'Перейдите в раздел "мой профиль"',
+        'Выберите пункт "Удалить информацию о себе"'
+      ]
+    },
+    {
+      name: 'LeakOsint',
+      botUrl: 'https://t.me/datatrace4_bot',
+      instructions: [
+        'Откройте telegram бот https://t.me/datatrace4_bot',
+        'Нажмите /start',
+        'Перейдите в раздел "мой профиль"',
+        'Выберите пункт "Удалить информацию о себе"'
+      ]
+    },
+    {
+      name: 'Usersbox',
+      botUrl: 'https://t.me/datatrace5_bot',
+      instructions: [
+        'Откройте telegram бот https://t.me/datatrace5_bot',
+        'Нажмите /start',
+        'Перейдите в раздел "мой профиль"',
+        'Выберите пункт "Удалить информацию о себе"'
+      ]
+    }
+  ]
+
   if (!user) {
     return <div>Загрузка...</div>
   }
@@ -617,7 +672,10 @@ export default function ChecksPage() {
                       : 'Обнаружены утечки ваших персональных данных в Telegram-ботах. Мы поможем удалить данные Telegram'
                     }
                   </p>
-                  <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl">
+                  <Button 
+                    onClick={() => activePanel === 'ai' ? handleAiAnalysis() : setShowDeleteModal(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl"
+                  >
                     {activePanel === 'ai' ? 'Запустить ИИ анализ' : 'Удалить информацию обо мне'}
                   </Button>
                 </div>
@@ -873,6 +931,120 @@ export default function ChecksPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Data Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Удаление данных</h2>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setSelectedSource(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <p className="text-gray-600 mt-2">
+                Выберите источник для удаления ваших персональных данных
+              </p>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid gap-4">
+                {dataSources.map((source) => (
+                  <div key={source.name} className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+                          <Trash2 className="h-5 w-5 text-red-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">{source.name}</h3>
+                          <p className="text-sm text-gray-500">Источник данных утечек</p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => setSelectedSource(source.name)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Удалить
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions Modal */}
+      {selectedSource && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Инструкция по удалению - {selectedSource}
+                </h2>
+                <button
+                  onClick={() => setSelectedSource(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {(() => {
+                const source = dataSources.find(s => s.name === selectedSource)
+                if (!source) return null
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium mb-2">
+                        📱 Для удаления данных из {selectedSource} выполните следующие шаги:
+                      </p>
+                    </div>
+                    
+                    <ol className="space-y-3">
+                      {source.instructions.map((instruction, index) => (
+                        <li key={index} className="flex items-start space-x-3">
+                          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-xs font-medium text-purple-600">{index + 1}</span>
+                          </div>
+                          <p className="text-gray-700 text-sm leading-relaxed">{instruction}</p>
+                        </li>
+                      ))}
+                    </ol>
+                    
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <Button
+                        onClick={() => window.open(source.botUrl, '_blank')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Открыть Telegram бот
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })()
+              }
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
