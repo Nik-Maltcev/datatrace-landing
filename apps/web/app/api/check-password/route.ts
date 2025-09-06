@@ -87,6 +87,10 @@ export async function POST(request: NextRequest) {
 
       // Сохраняем результат в историю
       if (userEmail) {
+        console.log('💾 Saving password check history...')
+        console.log('📊 Detailed results count:', detailedResults.length)
+        console.log('🗄️ Unique databases:', Array.from(uniqueDatabases))
+        
         const historyData = {
           type: 'password',
           query: '***скрыто***',
@@ -96,18 +100,29 @@ export async function POST(request: NextRequest) {
               found: isCompromised,
               count: breachCount,
               databases: Array.from(uniqueDatabases),
-              entries: detailedResults.map(entry => ({
-                ...entry,
-                password: ['***скрыто***']
-              }))
+              entries: detailedResults.map(entry => {
+                console.log('📝 Processing entry:', {
+                  database_name: entry.database_name,
+                  email: entry.email,
+                  username: entry.username,
+                  hasPassword: !!entry.password
+                })
+                return {
+                  ...entry,
+                  password: ['***скрыто***']
+                }
+              })
             }
           }
         }
 
+        console.log('💾 Final history data structure:', JSON.stringify(historyData, null, 2))
+
         try {
           await saveCheckHistory(userEmail, historyData)
+          console.log('✅ Password check history saved successfully')
         } catch (historyError) {
-          console.error('Failed to save history:', historyError)
+          console.error('❌ Failed to save history:', historyError)
         }
       }
 

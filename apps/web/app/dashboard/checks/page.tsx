@@ -32,6 +32,10 @@ function PasswordLeakCard({ result }: { result: any }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasLeaks = result.found && result.count > 0
   
+  console.log('🔍 PasswordLeakCard received result:', result)
+  console.log('📊 Has leaks:', hasLeaks)
+  console.log('📊 Entries count:', result.entries?.length || 0)
+  
   return (
     <div className={`border rounded-lg ${hasLeaks ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
       <div 
@@ -390,8 +394,13 @@ export default function ChecksPage() {
       const data = await response.json()
       if (data.ok) {
         const allChecks = data.checks || []
+        console.log('📊 All checks loaded:', allChecks.length)
+        
         const leakChecks = allChecks.filter(check => check.type !== 'password')
         const passwordHistory = allChecks.filter(check => check.type === 'password')
+        
+        console.log('🔍 Password checks found:', passwordHistory.length)
+        console.log('🔍 Password checks data:', passwordHistory)
         
         setChecks(leakChecks)
         setPasswordChecks(passwordHistory)
