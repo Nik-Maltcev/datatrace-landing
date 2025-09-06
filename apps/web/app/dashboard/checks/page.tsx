@@ -167,7 +167,7 @@ function LeakSourceCard({ result }: { result: any }) {
       return JSON.stringify(value, null, 1).slice(0, 100) + '...'
     }
     const strValue = String(value)
-    if (['dbName', 'database', 'source', 'dataProvider'].includes(key)) {
+    if (['dbName', 'database', 'source', 'dataProvider', 'databaseInfo'].includes(key)) {
       return strValue
     }
     return strValue.length > 50 ? strValue.slice(0, 50) + '...' : strValue
