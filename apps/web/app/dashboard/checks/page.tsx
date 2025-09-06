@@ -527,6 +527,26 @@ export default function ChecksPage() {
       .replace(/$/, '</p>')
   }
 
+  // Получаем список скомпрометированных источников из истории проверок
+  const getCompromisedSources = () => {
+    const compromisedSources = new Set<string>()
+    
+    // Проверяем все проверки телефонов и email
+    checks.forEach(check => {
+      check.results.forEach(result => {
+        if (result.found && result.count > 0) {
+          // Нормализуем названия источников
+          const sourceName = result.source || result.name
+          if (sourceName) {
+            compromisedSources.add(sourceName)
+          }
+        }
+      })
+    })
+    
+    return Array.from(compromisedSources)
+  }
+
   const dataSources = [
     {
       name: 'Dyxless',
@@ -667,17 +687,48 @@ export default function ChecksPage() {
                     Сделаем ваши данные безопаснее
                   </h2>
                   <p className="text-gray-600 mb-8 leading-relaxed">
-                    {activePanel === 'ai'
-                      ? 'Запустите ИИ анализ для глубокого исследования ваших данных и получения персональных рекомендаций по безопасности.'
-                      : 'Обнаружены утечки ваших персональных данных в Telegram-ботах. Мы поможем удалить данные Telegram'
+                    {activePanel === 'ai' ? (
+                      'Запустите ИИ анализ для глубокого исследования ваших данных и получения персональных рекомендаций по безопасности.'
+                    ) : (() => {
+                      const compromisedSources = getCompromisedSources()
+                      const hasLeaks = compromisedSources.length > 0
+                      
+                      return hasLeaks 
+                        ? `Обнаружены утечки ваших персональных данных в ${compromisedSources.length} источниках. Мы поможем удалить данные через Telegram боты.`
+                        : 'Ваши данные в безопасности! Не обнаружено утечек, требующих удаления.'
+                    })()
                     }
                   </p>
-                  <Button 
-                    onClick={() => activePanel === 'ai' ? handleAiAnalysis() : setShowDeleteModal(true)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl"
-                  >
-                    {activePanel === 'ai' ? 'Запустить ИИ анализ' : 'Удалить информацию обо мне'}
-                  </Button>
+                  {activePanel === 'ai' ? (
+                    <Button 
+                      onClick={handleAiAnalysis}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl"
+                    >
+                      Запустить ИИ анализ
+                    </Button>
+                  ) : (() => {
+                    const compromisedSources = getCompromisedSources()
+                    const hasLeaks = compromisedSources.length > 0
+                    
+                    if (!hasLeaks) {
+                      return (
+                        <div className="text-center">
+                          <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                          <p className="text-sm text-gray-600">Нет утечек для удаления</p>
+                        </div>
+                      )
+                    }
+                    
+                    return (
+                      <Button 
+                        onClick={() => setShowDeleteModal(true)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Удалить данные ({compromisedSources.length})
+                      </Button>
+                    )
+                  })()}
                 </div>
                 <div className="flex justify-center">
                   <div className="relative">
@@ -955,32 +1006,74 @@ export default function ChecksPage() {
             </div>
             
             <div className="p-6">
-              <div className="grid gap-4">
-                {dataSources.map((source) => (
-                  <div key={source.name} className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
-                          <Trash2 className="h-5 w-5 text-red-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">{source.name}</h3>
-                          <p className="text-sm text-gray-500">Источник данных утечек</p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => setSelectedSource(source.name)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Удалить
-                      </Button>
+              {(() => {
+                const compromisedSources = getCompromisedSources()
+                const availableSources = dataSources.filter(source => 
+                  compromisedSources.includes(source.name)
+                )
+                
+                if (availableSources.length === 0) {
+                  return (
+                    <div className="text-center py-8">
+                      <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Нет утечек для удаления</h3>
+                      <p className="text-gray-600">
+                        В ваших проверках не найдено утечек данных, которые требуют удаления.
+                      </p>
+                    </div>
+                  )
+                }
+                
+                return (
+                  <div className="space-y-4">
+                    <div className="bg-yellow-50 p-4 rounded-lg mb-4">
+                      <p className="text-sm text-yellow-800">
+                        📋 Показаны только источники, где найдены ваши данные ({availableSources.length} из {dataSources.length})
+                      </p>
+                    </div>
+                    
+                    <div className="grid gap-4">
+                      {availableSources.map((source) => {
+                        // Подсчитываем количество утечек в этом источнике
+                        const leakCount = checks.reduce((total, check) => {
+                          const sourceResult = check.results.find(r => 
+                            (r.source || r.name) === source.name && r.found
+                          )
+                          return total + (sourceResult?.count || 0)
+                        }, 0)
+                        
+                        return (
+                          <div key={source.name} className="border border-red-200 bg-red-50 rounded-xl p-4 hover:border-red-300 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div>
+                                  <h3 className="font-medium text-gray-900">{source.name}</h3>
+                                  <p className="text-sm text-red-600">
+                                    Найдено {leakCount} записей с вашими данными
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                onClick={() => setSelectedSource(source.name)}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-200 hover:bg-red-100"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Удалить
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
-                ))}
-              </div>
+                )
+              })()
+              }
             </div>
           </div>
         </div>
