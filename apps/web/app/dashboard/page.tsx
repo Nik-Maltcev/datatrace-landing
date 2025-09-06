@@ -286,10 +286,10 @@ export default function DashboardPage() {
 
       if (data.ok) {
         const message = data.isCompromised 
-          ? `Пароль скомпрометирован! Найдено ${data.totalBreaches} записей в ${data.breachCount} базах данных`
+          ? `Пароль скомпрометирован! Найдено ${data.breachCount} записей в утечках данных`
           : 'Пароль не найден в известных утечках'
         
-        alert(message)
+        alert(message + '\n\nРекомендации:\n' + data.recommendations.join('\n'))
         
         // Очищаем поле ввода
         const input = document.getElementById('password-input') as HTMLInputElement

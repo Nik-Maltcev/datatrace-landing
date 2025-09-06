@@ -3,7 +3,7 @@ import axios from 'axios'
 import crypto from 'crypto'
 
 const DEHASHED_API_KEY = process.env.DEHASHED_API_KEY || 'your_dehashed_api_key'
-const DEHASHED_BASE = 'https://api.dehashed.com/search'
+const DEHASHED_BASE = 'https://api.dehashed.com'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,82 +19,74 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    if (!DEHASHED_API_KEY || DEHASHED_API_KEY === 'your_dehashed_api_key') {
+      return NextResponse.json({
+        ok: false,
+        error: { message: 'DeHashed API key не настроен' }
+      }, { status: 500 })
+    }
+
     console.log(`🔍 Checking password hash...`)
 
-    // Хешируем пароль в SHA1 для проверки
-    const passwordHash = crypto.createHash('sha1').update(password).digest('hex').toUpperCase()
-    console.log(`🔐 Password SHA1 hash: ${passwordHash.slice(0, 10)}...`)
+    // Хешируем пароль в SHA-256 для DeHashed v2 API
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex')
+    console.log(`🔐 Password SHA256 hash: ${passwordHash.slice(0, 10)}...`)
 
     try {
-      // Делаем запрос к DeHashed API
-      const response = await axios.get(DEHASHED_BASE, {
-        params: {
-          query: `hashed_password:${passwordHash}`,
-          size: 100
-        },
+      // Используем DeHashed v2 API для проверки паролей
+      const response = await axios.post(`${DEHASHED_BASE}/v2/search-password`, {
+        sha256_hashed_password: passwordHash
+      }, {
         headers: {
-          'Accept': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${DEHASHED_API_KEY}:`).toString('base64')}`
+          'Content-Type': 'application/json',
+          'Dehashed-Api-Key': DEHASHED_API_KEY
         },
         timeout: 15000
       })
 
       const data = response.data || {}
       console.log(`📊 DeHashed response:`, {
-        balance: data.balance,
-        took: data.took,
-        total: data.total,
-        entries: data.entries?.length || 0
+        results_found: data.results_found || 0
       })
 
-      const isCompromised = data.total > 0
-      const breaches = data.entries || []
+      const isCompromised = (data.results_found || 0) > 0
+      const breachCount = data.results_found || 0
 
-      // Группируем утечки по базам данных
-      const breachSummary = breaches.reduce((acc: any, entry: any) => {
-        const database = entry.database || 'Unknown'
-        if (!acc[database]) {
-          acc[database] = {
-            count: 0,
-            emails: new Set(),
-            usernames: new Set()
-          }
+      // Генерируем рекомендации
+      const recommendations = []
+      if (isCompromised) {
+        recommendations.push('🚨 КРИТИЧНО: Этот пароль найден в утечках данных!')
+        recommendations.push('Немедленно смените пароль на всех аккаунтах где он используется')
+        if (breachCount > 1) {
+          recommendations.push(`Пароль найден в ${breachCount} различных утечках`)
         }
-        acc[database].count++
-        if (entry.email) acc[database].emails.add(entry.email)
-        if (entry.username) acc[database].usernames.add(entry.username)
-        return acc
-      }, {})
-
-      // Преобразуем в массив для отображения
-      const breachList = Object.entries(breachSummary).map(([database, info]: [string, any]) => ({
-        database,
-        count: info.count,
-        emails: Array.from(info.emails),
-        usernames: Array.from(info.usernames)
-      }))
+        recommendations.push('Включите двухфакторную аутентификацию на важных аккаунтах')
+      } else {
+        recommendations.push('✅ Пароль не найден в известных утечках данных')
+        recommendations.push('Продолжайте использовать уникальные пароли для каждого сервиса')
+      }
+      recommendations.push('Рекомендуется использовать менеджер паролей')
 
       const message = isCompromised 
-        ? `Пароль скомпрометирован! Найдено ${data.total} записей в ${breachList.length} базах данных`
+        ? `Пароль скомпрометирован! Найдено ${breachCount} записей в утечках данных`
         : 'Пароль не найден в известных утечках'
 
       return NextResponse.json({
         ok: true,
         isCompromised,
-        totalBreaches: data.total,
-        breachCount: breachList.length,
-        breaches: breachList,
+        breachCount,
+        recommendations,
         message,
         timestamp: new Date().toISOString()
       })
 
     } catch (apiError: any) {
-      console.error('❌ DeHashed API error:', apiError.message)
+      console.error('❌ DeHashed API error:', apiError)
       
       if (apiError.response?.status === 401) {
         return NextResponse.json({
           ok: false,
-          error: { message: 'Ошибка авторизации DeHashed API' }
+          error: { message: 'Ошибка авторизации DeHashed API. Проверьте API ключ.' }
         }, { status: 401 })
       }
 
@@ -105,9 +97,16 @@ export async function POST(request: NextRequest) {
         }, { status: 429 })
       }
 
+      if (apiError.response?.status === 403) {
+        return NextResponse.json({
+          ok: false,
+          error: { message: 'Доступ к DeHashed API запрещен. Проверьте подписку.' }
+        }, { status: 403 })
+      }
+
       return NextResponse.json({
         ok: false,
-        error: { message: 'Ошибка при обращении к DeHashed API' }
+        error: { message: `Ошибка DeHashed API: ${apiError.message}` }
       }, { status: 500 })
     }
 
