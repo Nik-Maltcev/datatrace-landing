@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft, Lock, Server, X, Trash2, ExternalLink } from "lucide-react"
+import { Phone, Mail, AlertTriangle, CheckCircle, Clock, Settings, Plus, Brain, ChevronDown, ChevronRight, Loader2, ArrowLeft, Lock, Server, X, Trash2, ExternalLink, Check } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -366,6 +366,7 @@ export default function ChecksPage() {
   const [passwordChecks, setPasswordChecks] = useState<any[]>([])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
+  const [deletedSources, setDeletedSources] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const userData = localStorage.getItem("user")
@@ -537,7 +538,7 @@ export default function ChecksPage() {
         if (result.found && result.count > 0) {
           // Нормализуем названия источников
           const sourceName = result.source || result.name
-          if (sourceName) {
+          if (sourceName && !deletedSources.has(sourceName)) {
             compromisedSources.add(sourceName)
           }
         }
@@ -545,6 +546,11 @@ export default function ChecksPage() {
     })
     
     return Array.from(compromisedSources)
+  }
+
+  const handleMarkAsDeleted = (sourceName: string) => {
+    setDeletedSources(prev => new Set([...prev, sourceName]))
+    setSelectedSource(null)
   }
 
   const dataSources = [
@@ -939,7 +945,65 @@ export default function ChecksPage() {
                       </Link>
                     </div>
                   ) : tab === 'deleted' ? (
-                    <div className="text-center py-12 text-gray-500">Пока нет удаленных утечек</div>
+                    <div>
+                      {deletedSources.size === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                          <p>Пока нет удаленных утечек</p>
+                          <p className="text-sm mt-2">Источники, из которых вы удалите данные, появятся здесь</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="bg-green-50 p-4 rounded-lg mb-4">
+                            <p className="text-sm text-green-800">
+                              ✅ Успешно удалено данных из {deletedSources.size} источников
+                            </p>
+                          </div>
+                          
+                          <div className="grid gap-4">
+                            {Array.from(deletedSources).map((sourceName) => {
+                              const source = dataSources.find(s => s.name === sourceName)
+                              if (!source) return null
+                              
+                              return (
+                                <div key={sourceName} className="border border-green-200 bg-green-50 rounded-xl p-4">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                        <CheckCircle className="h-5 w-5 text-green-600" />
+                                      </div>
+                                      <div>
+                                        <h3 className="font-medium text-gray-900">{source.name}</h3>
+                                        <p className="text-sm text-green-600">
+                                          Данные удалены из этого источника
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Badge className="bg-green-100 text-green-700 border-green-200">
+                                        Удалено
+                                      </Badge>
+                                      <Button
+                                        onClick={() => setDeletedSources(prev => {
+                                          const newSet = new Set(prev)
+                                          newSet.delete(sourceName)
+                                          return newSet
+                                        })}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-gray-500 hover:text-gray-700"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {checks.map((check) => (
@@ -1056,15 +1120,26 @@ export default function ChecksPage() {
                                   </p>
                                 </div>
                               </div>
-                              <Button
-                                onClick={() => setSelectedSource(source.name)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 border-red-200 hover:bg-red-100"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Удалить
-                              </Button>
+                              <div className="flex space-x-2">
+                                <Button
+                                  onClick={() => setSelectedSource(source.name)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 border-red-200 hover:bg-red-100"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Удалить
+                                </Button>
+                                <Button
+                                  onClick={() => handleMarkAsDeleted(source.name)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                >
+                                  <Check className="h-4 w-4 mr-2" />
+                                  Я удалил
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         )
