@@ -46,7 +46,14 @@ function AuthCallbackContent() {
 
           // Получаем данные пользователя из токена (базовая декодировка JWT)
           try {
-            const payload = JSON.parse(atob(access_token.split('.')[1]))
+            // Правильная декодировка JWT с поддержкой UTF-8
+            const base64Payload = access_token.split('.')[1]
+            const decodedPayload = decodeURIComponent(atob(base64Payload).split('').map(function(c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            }).join(''))
+            const payload = JSON.parse(decodedPayload)
+            
+            console.log('Decoded JWT payload:', payload)
             
             // Сохраняем данные пользователя
             localStorage.setItem('user', JSON.stringify({
@@ -63,10 +70,10 @@ function AuthCallbackContent() {
             // Очищаем URL от токенов
             window.history.replaceState({}, document.title, window.location.pathname)
             
-            // Перенаправляем в дашборд через 2 секунды
+            // Перенаправляем в дашборд через 1 секунду (быстрее)
             setTimeout(() => {
               router.push('/dashboard')
-            }, 2000)
+            }, 1000)
           } catch (decodeError) {
             console.error('Error decoding token:', decodeError)
             setStatus('error')
