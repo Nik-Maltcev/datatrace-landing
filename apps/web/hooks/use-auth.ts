@@ -84,6 +84,23 @@ export function useAuth() {
     }
   }
 
+  const updateUserPlan = (plan: 'basic' | 'professional') => {
+    if (user) {
+      const planLimits = {
+        basic: 1,
+        professional: 2
+      }
+      const updatedUser = { 
+        ...user, 
+        plan, 
+        checksLimit: planLimits[plan],
+        checksUsed: 0 // Сбрасываем счетчик при покупке нового тарифа
+      }
+      setUser(updatedUser)
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+    }
+  }
+
   return {
     user,
     isAuthenticated,
@@ -91,6 +108,7 @@ export function useAuth() {
     login,
     logout,
     checkAuthStatus,
-    updateUserChecks
+    updateUserChecks,
+    updateUserPlan
   }
 }

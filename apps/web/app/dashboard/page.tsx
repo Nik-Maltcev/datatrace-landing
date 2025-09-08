@@ -65,6 +65,7 @@ interface PhoneCheckResponse {
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout, updateUserChecks } = useAuth()
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false)
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
@@ -280,6 +281,39 @@ export default function DashboardPage() {
     router.push("/search")
   }
 
+  const handlePayment = async (plan: 'basic' | 'professional') => {
+    if (!user) return
+    
+    setIsPaymentLoading(true)
+    try {
+      const response = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plan,
+          userId: user.id,
+          userEmail: user.email
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.ok) {
+        // Перенаправляем на страницу оплаты
+        window.location.href = data.paymentUrl
+      } else {
+        alert('Ошибка создания платежа: ' + data.error)
+      }
+    } catch (error) {
+      console.error('Payment error:', error)
+      alert('Ошибка при создании платежа')
+    } finally {
+      setIsPaymentLoading(false)
+    }
+  }
+
   const handleCheckPassword = async (password: string) => {
     if (!password.trim()) {
       alert('Пожалуйста, введите пароль')
@@ -392,7 +426,7 @@ export default function DashboardPage() {
               <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
                 <Zap className="h-5 w-5 text-blue-600" />
               </div>
-              <span className="text-xs text-blue-600">Тариф</span>
+              <span className="text-xs text-blue-600">Тариф {user.plan?.toUpperCase() || 'BASIC'}</span>
             </div>
             <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
             <p className="text-sm text-gray-500">Проверок использовано</p>
@@ -751,6 +785,40 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
+
+        {/* Payment Plans */}
+        {(user.checksUsed >= user.checksLimit) && (
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-light text-gray-900 mb-2">Лимит проверок исчерпан</h2>
+              <p className="text-gray-600">Выберите тариф для продолжения работы</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <h3 className="font-medium text-gray-900 mb-2">БАЗОВЫЙ</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-2">500₽</p>
+                <p className="text-sm text-gray-600 mb-4">1 проверка включена</p>
+                <Button 
+                  onClick={() => handlePayment('basic')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Оплатить
+                </Button>
+              </div>
+              <div className="bg-white border border-blue-200 rounded-xl p-4">
+                <h3 className="font-medium text-gray-900 mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-2">8 500₽</p>
+                <p className="text-sm text-gray-600 mb-4">2 проверки включены</p>
+                <Button 
+                  onClick={() => handlePayment('professional')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Оплатить
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Additional Features */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">
