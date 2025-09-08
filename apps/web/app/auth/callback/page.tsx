@@ -15,11 +15,20 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Получаем параметры из URL
-        const access_token = searchParams.get('access_token')
-        const refresh_token = searchParams.get('refresh_token')
-        const error = searchParams.get('error')
-        const error_description = searchParams.get('error_description')
+        // Supabase отправляет токены в hash fragments, а не в query parameters
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const access_token = hashParams.get('access_token') || searchParams.get('access_token')
+        const refresh_token = hashParams.get('refresh_token') || searchParams.get('refresh_token')
+        const error = hashParams.get('error') || searchParams.get('error')
+        const error_description = hashParams.get('error_description') || searchParams.get('error_description')
+        
+        console.log('Auth callback debug:', {
+          hash: window.location.hash,
+          search: window.location.search,
+          access_token: access_token ? 'present' : 'missing',
+          refresh_token: refresh_token ? 'present' : 'missing',
+          error: error
+        })
 
         if (error) {
           setStatus('error')
@@ -27,6 +36,9 @@ function AuthCallbackContent() {
           return
         }
 
+        // Проверяем тип события (подтверждение email или восстановление пароля)
+        const type = hashParams.get('type') || searchParams.get('type')
+        
         if (access_token && refresh_token) {
           // Сохраняем токены
           localStorage.setItem('access_token', access_token)
@@ -46,7 +58,10 @@ function AuthCallbackContent() {
             }))
 
             setStatus('success')
-            setMessage('Email успешно подтвержден! Перенаправляем в личный кабинет...')
+            setMessage(`Email успешно подтвержден! Перенаправляем в личный кабинет...`)
+            
+            // Очищаем URL от токенов
+            window.history.replaceState({}, document.title, window.location.pathname)
             
             // Перенаправляем в дашборд через 2 секунды
             setTimeout(() => {
@@ -57,9 +72,18 @@ function AuthCallbackContent() {
             setStatus('error')
             setMessage('Ошибка обработки данных авторизации')
           }
+        } else if (type === 'signup') {
+          // Обработка подтверждения email без токенов
+          setStatus('success')
+          setMessage('Email успешно подтвержден! Теперь вы можете войти в систему.')
+          
+          // Перенаправляем на страницу входа
+          setTimeout(() => {
+            router.push('/login')
+          }, 3000)
         } else {
           setStatus('error')
-          setMessage('Отсутствуют необходимые параметры авторизации')
+          setMessage('Отсутствуют необходимые параметры авторизации. Попробуйте войти через страницу входа.')
         }
       } catch (error) {
         console.error('Auth callback error:', error)
