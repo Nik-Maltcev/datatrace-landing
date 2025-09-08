@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,13 +9,22 @@ import { Database, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { API_ENDPOINTS, apiRequest } from "@/lib/api"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const { isAuthenticated, isLoading: isCheckingAuth, login } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    // Если пользователь уже авторизован, перенаправляем в dashboard
+    if (!isCheckingAuth && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, isCheckingAuth, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,20 +47,20 @@ export default function LoginPage() {
       })
 
       if (result.ok) {
-        // Сохраняем данные пользователя
-        localStorage.setItem("user", JSON.stringify({
+        // Используем хук для сохранения данных авторизации
+        const userData = {
           id: result.user?.id,
           email: result.user?.email,
           name: result.user?.user_metadata?.name || result.user?.email?.split("@")[0],
           phone: result.user?.user_metadata?.phone,
           isAuthenticated: true
-        }))
-        
-        // Сохраняем токены если есть
-        if (result.session) {
-          localStorage.setItem("access_token", result.session.access_token)
-          localStorage.setItem("refresh_token", result.session.refresh_token)
         }
+        
+        login(
+          userData,
+          result.session?.access_token || '',
+          result.session?.refresh_token
+        )
 
         alert(result.message || "Вход выполнен успешно!")
         router.push("/dashboard")
@@ -64,6 +73,21 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Показываем загрузку пока проверяем авторизацию
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Database className="h-8 w-8 text-black" />
+            <span className="text-xl font-bold text-black">DataTrace</span>
+          </div>
+          <p className="text-gray-600">Проверка авторизации...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

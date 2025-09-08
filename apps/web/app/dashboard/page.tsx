@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -63,7 +64,7 @@ interface PhoneCheckResponse {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth()
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
@@ -78,16 +79,13 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
-    } else {
+    if (!isAuthLoading && !isAuthenticated) {
       router.push("/login")
     }
-  }, [router])
+  }, [isAuthenticated, isAuthLoading, router])
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
+    logout()
     router.push("/")
   }
 
@@ -303,7 +301,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (!user) {
+  if (isAuthLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-900">Загрузка...</div>

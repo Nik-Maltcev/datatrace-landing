@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,7 @@ import { Database, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { API_ENDPOINTS, apiRequest } from "@/lib/api"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -20,7 +21,15 @@ export default function RegisterPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const { isAuthenticated, isLoading: isCheckingAuth } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    // Если пользователь уже авторизован, перенаправляем в dashboard
+    if (!isCheckingAuth && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, isCheckingAuth, router])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,6 +92,21 @@ export default function RegisterPage() {
       ...formData,
       [e.target.name]: e.target.value
     })
+  }
+
+  // Показываем загрузку пока проверяем авторизацию
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Database className="h-8 w-8 text-black" />
+            <span className="text-xl font-bold text-black">DataTrace</span>
+          </div>
+          <p className="text-gray-600">Проверка авторизации...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

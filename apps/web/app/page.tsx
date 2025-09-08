@@ -1,6 +1,8 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 
 const ptMono = PT_Mono({
   subsets: ["latin", "cyrillic"],
@@ -23,6 +25,17 @@ function InteractiveHeroGraphic() {
 }
 
 export default function DataTraceLanding() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
+
+  const handleDashboardClick = () => {
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    } else {
+      router.push('/login')
+    }
+  }
+
   return (
     <div className={`min-h-screen bg-white ${ptMono.className}`}>
       {/* Header */}
@@ -53,14 +66,14 @@ export default function DataTraceLanding() {
                 КОНТАКТЫ
               </Link>
             </nav>
-            <Link href="/login">
-              <Button
-                variant="outline"
-                className="border-black text-black hover:bg-black hover:text-white bg-transparent"
-              >
-                ЛИЧНЫЙ КАБИНЕТ
-              </Button>
-            </Link>
+            <Button
+              onClick={handleDashboardClick}
+              variant="outline"
+              className="border-black text-black hover:bg-black hover:text-white bg-transparent"
+              disabled={isLoading}
+            >
+              {isLoading ? "..." : isAuthenticated ? "ЛИЧНЫЙ КАБИНЕТ" : "ВОЙТИ"}
+            </Button>
           </div>
         </div>
       </header>
