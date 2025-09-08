@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Database, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const router = useRouter()
@@ -72,68 +72,83 @@ export default function AuthCallbackPage() {
   }, [searchParams, router])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Database className="h-8 w-8 text-green-600" />
-            <span className="text-xl font-bold text-black">DataTrace</span>
-          </div>
-          <CardTitle className="text-2xl font-bold">
-            {status === 'loading' && 'Подтверждение email...'}
-            {status === 'success' && 'Email подтвержден!'}
-            {status === 'error' && 'Ошибка подтверждения'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center">
-          <div className="mb-6">
-            {status === 'loading' && (
-              <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-              </div>
-            )}
-            {status === 'success' && (
-              <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
-            )}
-            {status === 'error' && (
-              <AlertCircle className="h-16 w-16 text-red-600 mx-auto" />
-            )}
-          </div>
-          
-          <p className="text-gray-600 mb-6">
-            {message}
-          </p>
-
-          {status === 'error' && (
-            <div className="space-y-3">
-              <Link 
-                href="/login" 
-                className="block w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
-              >
-                Попробовать войти
-              </Link>
-              <Link 
-                href="/register" 
-                className="block w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-4 rounded-lg transition-colors"
-              >
-                Зарегистрироваться заново
-              </Link>
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <div className="flex items-center justify-center space-x-2 mb-4">
+          <Database className="h-8 w-8 text-green-600" />
+          <span className="text-xl font-bold text-black">DataTrace</span>
+        </div>
+        <CardTitle className="text-2xl font-bold">
+          {status === 'loading' && 'Подтверждение email...'}
+          {status === 'success' && 'Email подтвержден!'}
+          {status === 'error' && 'Ошибка подтверждения'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-center">
+        <div className="mb-6">
+          {status === 'loading' && (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
             </div>
           )}
-
           {status === 'success' && (
-            <p className="text-sm text-gray-500">
-              Автоматическое перенаправление через несколько секунд...
-            </p>
+            <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
           )}
+          {status === 'error' && (
+            <AlertCircle className="h-16 w-16 text-red-600 mx-auto" />
+          )}
+        </div>
+        
+        <p className="text-gray-600 mb-6">
+          {message}
+        </p>
 
-          <div className="mt-6">
-            <Link href="/" className="text-sm text-gray-600 hover:text-black">
-              ← Вернуться на главную
+        {status === 'error' && (
+          <div className="space-y-3">
+            <Link 
+              href="/login" 
+              className="block w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
+            >
+              Попробовать войти
+            </Link>
+            <Link 
+              href="/register" 
+              className="block w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+            >
+              Зарегистрироваться заново
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {status === 'success' && (
+          <p className="text-sm text-gray-500">
+            Автоматическое перенаправление через несколько секунд...
+          </p>
+        )}
+
+        <div className="mt-6">
+          <Link href="/" className="text-sm text-gray-600 hover:text-black">
+            ← Вернуться на главную
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Suspense fallback={
+        <Card className="w-full max-w-md">
+          <CardContent className="text-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
+            <p className="text-gray-600">Загрузка...</p>
+          </CardContent>
+        </Card>
+      }>
+        <AuthCallbackContent />
+      </Suspense>
     </div>
   )
 }
