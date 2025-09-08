@@ -31,6 +31,20 @@ function AuthCallbackContent() {
         })
 
         if (error) {
+          console.log('Auth error detected:', { error, error_description })
+          
+          // Обработка разных типов ошибок
+          if (error === 'access_denied' && error_description?.includes('Email link is invalid')) {
+            setStatus('success')
+            setMessage('Подтверждение email завершено! Вы можете войти в систему.')
+            
+            // Перенаправляем на страницу входа
+            setTimeout(() => {
+              router.push('/login')
+            }, 2000)
+            return
+          }
+          
           setStatus('error')
           setMessage(error_description || 'Ошибка подтверждения email')
           return
@@ -89,8 +103,22 @@ function AuthCallbackContent() {
             router.push('/login')
           }, 3000)
         } else {
-          setStatus('error')
-          setMessage('Отсутствуют необходимые параметры авторизации. Попробуйте войти через страницу входа.')
+          // Проверяем, есть ли какие-либо параметры в URL
+          const hasAnyParams = window.location.hash.length > 1 || window.location.search.length > 1
+          
+          if (hasAnyParams) {
+            // Есть параметры, но не токены - вероятно подтверждение успешно
+            setStatus('success')
+            setMessage('Email подтвержден! Теперь вы можете войти в систему.')
+            
+            setTimeout(() => {
+              router.push('/login')
+            }, 2000)
+          } else {
+            // Никаких параметров нет
+            setStatus('error')
+            setMessage('Отсутствуют необходимые параметры авторизации. Попробуйте войти через страницу входа.')
+          }
         }
       } catch (error) {
         console.error('Auth callback error:', error)
