@@ -21,6 +21,7 @@ export default function RegisterPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const { isAuthenticated, isLoading: isCheckingAuth } = useAuth()
   const router = useRouter()
 
@@ -44,6 +45,12 @@ export default function RegisterPage() {
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
       alert("Все поля обязательны для заполнения")
+      setIsLoading(false)
+      return
+    }
+
+    if (!agreedToTerms) {
+      alert("Необходимо согласие на обработку персональных данных")
       setIsLoading(false)
       return
     }
@@ -196,10 +203,26 @@ export default function RegisterPage() {
                 required
               />
             </div>
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                required
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600">
+                Я согласен на{" "}
+                <Link href="#" className="text-black hover:underline">
+                  обработку персональных данных
+                </Link>
+              </label>
+            </div>
             <Button 
               type="submit" 
               className="w-full bg-black text-white hover:bg-gray-800"
-              disabled={isLoading}
+              disabled={isLoading || !agreedToTerms}
             >
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}
             </Button>
