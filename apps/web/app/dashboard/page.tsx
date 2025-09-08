@@ -318,7 +318,7 @@ export default function DashboardPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
                 <Database className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-light tracking-wide text-gray-900">DataTrace</span>
@@ -461,11 +461,11 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-2 gap-4 mb-8">
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-red-200 transition-all group">
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-green-200 transition-all group">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                  <Phone className="h-6 w-6 text-red-600" />
+                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                  <Phone className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-light text-gray-900">Проверка телефона</h3>
@@ -479,7 +479,7 @@ export default function DashboardPage() {
             <Button
               onClick={handleCheckPhoneLeaks}
               disabled={isCheckingPhone || !user.phone}
-              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingPhone ? (
                 <>
@@ -574,11 +574,11 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-red-200 transition-all group">
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-green-200 transition-all group">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                  <Mail className="h-6 w-6 text-red-600" />
+                <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                  <Mail className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-light text-gray-900">Проверка email</h3>
@@ -592,7 +592,7 @@ export default function DashboardPage() {
             <Button
               onClick={handleCheckEmailLeaks}
               disabled={isCheckingEmail}
-              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingEmail ? (
                 <>
@@ -689,11 +689,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Password Check Section */}
-        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-orange-200 transition-all group mb-8">
+        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-green-200 transition-all group mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                <Lock className="h-6 w-6 text-orange-600" />
+              <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                <Lock className="h-6 w-6 text-green-600" />
               </div>
               <div>
                 <h3 className="text-lg font-light text-gray-900">Проверка пароля</h3>
@@ -708,7 +708,7 @@ export default function DashboardPage() {
             <input
               type="password"
               placeholder="Введите пароль для проверки"
-              className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               id="password-input"
             />
             <Button
@@ -718,7 +718,7 @@ export default function DashboardPage() {
                   handleCheckPassword(input.value)
                 }
               }}
-              className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-6 font-light"
+              className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 font-light"
             >
               <Shield className="h-4 w-4 mr-2" />
               Проверить

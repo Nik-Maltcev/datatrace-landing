@@ -728,7 +728,7 @@ export default function ChecksPage() {
                     return (
                       <Button 
                         onClick={() => setShowDeleteModal(true)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl"
+                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Удалить данные ({compromisedSources.length})
@@ -749,7 +749,7 @@ export default function ChecksPage() {
                           endAngle={450}
                         >
                           {donutData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={index === 0 ? '#7C3AED' : '#C4B5FD'} />
+                            <Cell key={`cell-${index}`} fill={index === 0 ? '#16A34A' : '#86EFAC'} />
                           ))}
                         </Pie>
                       </PieChart>
@@ -774,7 +774,7 @@ export default function ChecksPage() {
                   <Button
                     onClick={handleAiAnalysis}
                     disabled={isAnalyzing}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     {isAnalyzing ? (
                       <>
