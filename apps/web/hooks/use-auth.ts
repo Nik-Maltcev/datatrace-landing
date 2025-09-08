@@ -8,6 +8,9 @@ interface User {
   name: string
   phone?: string
   isAuthenticated: boolean
+  plan?: 'basic' | 'professional' | 'corporate'
+  checksUsed?: number
+  checksLimit?: number
 }
 
 export function useAuth() {
@@ -52,9 +55,17 @@ export function useAuth() {
   }
 
   const login = (userData: User, accessToken: string, refreshToken?: string) => {
-    setUser(userData)
+    // Устанавливаем базовый план и лимиты по умолчанию
+    const userWithDefaults = {
+      ...userData,
+      plan: userData.plan || 'basic',
+      checksUsed: userData.checksUsed || 0,
+      checksLimit: userData.checksLimit || (userData.plan === 'professional' ? 2 : 1)
+    }
+    
+    setUser(userWithDefaults)
     setIsAuthenticated(true)
-    localStorage.setItem("user", JSON.stringify(userData))
+    localStorage.setItem("user", JSON.stringify(userWithDefaults))
     localStorage.setItem("access_token", accessToken)
     if (refreshToken) {
       localStorage.setItem("refresh_token", refreshToken)
@@ -65,12 +76,21 @@ export function useAuth() {
     clearAuth()
   }
 
+  const updateUserChecks = (checksUsed: number) => {
+    if (user) {
+      const updatedUser = { ...user, checksUsed }
+      setUser(updatedUser)
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+    }
+  }
+
   return {
     user,
     isAuthenticated,
     isLoading,
     login,
     logout,
-    checkAuthStatus
+    checkAuthStatus,
+    updateUserChecks
   }
 }

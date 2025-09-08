@@ -53,7 +53,10 @@ export default function LoginPage() {
           email: result.user?.email,
           name: result.user?.user_metadata?.name || result.user?.email?.split("@")[0],
           phone: result.user?.user_metadata?.phone,
-          isAuthenticated: true
+          isAuthenticated: true,
+          plan: 'basic' as const,
+          checksUsed: 0,
+          checksLimit: 1
         }
         
         login(

@@ -64,7 +64,7 @@ interface PhoneCheckResponse {
 }
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth()
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout, updateUserChecks } = useAuth()
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
@@ -94,6 +94,12 @@ export default function DashboardPage() {
 
     if (!user?.phone) {
       setPhoneError("Номер телефона не указан в профиле")
+      return
+    }
+
+    // Проверяем лимит проверок
+    if (user.checksUsed >= user.checksLimit) {
+      setPhoneError(`Лимит проверок исчерпан (${user.checksLimit}). Обновите тариф для продолжения.`)
       return
     }
 
@@ -163,6 +169,9 @@ export default function DashboardPage() {
         timestamp: data.timestamp
       })
 
+      // Увеличиваем счетчик использованных проверок
+      updateUserChecks((user.checksUsed || 0) + 1)
+
       if (data.totalLeaks > 0) {
         setShowPhoneDetails(true)
       }
@@ -179,6 +188,12 @@ export default function DashboardPage() {
 
     if (!user?.email) {
       setEmailError("Email не указан в профиле")
+      return
+    }
+
+    // Проверяем лимит проверок
+    if (user.checksUsed >= user.checksLimit) {
+      setEmailError(`Лимит проверок исчерпан (${user.checksLimit}). Обновите тариф для продолжения.`)
       return
     }
 
@@ -247,6 +262,9 @@ export default function DashboardPage() {
         message: data.message,
         timestamp: data.timestamp
       })
+
+      // Увеличиваем счетчик использованных проверок
+      updateUserChecks((user.checksUsed || 0) + 1)
 
       if (data.totalLeaks > 0) {
         setShowEmailDetails(true)
@@ -371,6 +389,16 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
             <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                <Zap className="h-5 w-5 text-blue-600" />
+              </div>
+              <span className="text-xs text-blue-600">Тариф</span>
+            </div>
+            <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
+            <p className="text-sm text-gray-500">Проверок использовано</p>
+          </div>
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
+            <div className="flex items-center justify-between mb-4">
               <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                 <Shield className="h-5 w-5 text-gray-600" />
               </div>
@@ -476,7 +504,7 @@ export default function DashboardPage() {
             </p>
             <Button
               onClick={handleCheckPhoneLeaks}
-              disabled={isCheckingPhone || !user.phone}
+              disabled={isCheckingPhone || !user.phone || (user.checksUsed >= user.checksLimit)}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingPhone ? (
@@ -589,7 +617,7 @@ export default function DashboardPage() {
             </p>
             <Button
               onClick={handleCheckEmailLeaks}
-              disabled={isCheckingEmail}
+              disabled={isCheckingEmail || (user.checksUsed >= user.checksLimit)}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingEmail ? (

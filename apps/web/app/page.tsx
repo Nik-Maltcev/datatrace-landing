@@ -253,6 +253,10 @@ export default function DataTraceLanding() {
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
+                    <p className="text-gray-700">1 проверка включена</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
                     <p className="text-gray-700">Поиск по всем источникам</p>
                   </div>
                   <div className="flex items-start space-x-3">
@@ -284,6 +288,10 @@ export default function DataTraceLanding() {
                   <p className="text-gray-600">за запрос</p>
                 </div>
                 <div className="space-y-4 mb-8">
+                  <div className="flex items-start space-x-3">
+                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
+                    <p className="text-gray-700">2 проверки включены</p>
+                  </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
                     <p className="text-gray-700">Поиск по всем источникам</p>
