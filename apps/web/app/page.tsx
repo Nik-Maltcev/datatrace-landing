@@ -242,12 +242,12 @@ export default function DataTraceLanding() {
           <div className="mb-12">
             <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">ТАРИФЫ</div>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">БАЗОВЫЙ</h3>
-                  <div className="text-4xl font-bold text-black mb-2">300₽</div>
+                  <div className="text-4xl font-bold text-black mb-2">500₽</div>
                   <p className="text-gray-600">за запрос</p>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -280,7 +280,7 @@ export default function DataTraceLanding() {
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
-                  <div className="text-4xl font-bold text-black mb-2">3 500₽</div>
+                  <div className="text-4xl font-bold text-black mb-2">8 500₽</div>
                   <p className="text-gray-600">за запрос</p>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -313,8 +313,8 @@ export default function DataTraceLanding() {
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">КОРПОРАТИВНЫЙ</h3>
-                  <div className="text-4xl font-bold text-black mb-2">5 000₽</div>
-                  <p className="text-gray-600">за запрос</p>
+                  <div className="text-4xl font-bold text-black mb-2">По запросу</div>
+                  <p className="text-gray-600">индивидуально</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
@@ -347,49 +347,7 @@ export default function DataTraceLanding() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-gray-100 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="bg-gradient-to-r from-black to-gray-800 text-white px-4 py-1 text-sm font-medium rounded">ВСЕ ВКЛЮЧЕНО</div>
-              </div>
-              <CardContent className="p-8">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-black mb-2">ВСЕ ВКЛЮЧЕНО</h3>
-                  <div className="text-4xl font-bold text-black mb-2">8 000₽</div>
-                  <p className="text-gray-600">за запрос</p>
-                </div>
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Все возможности корпоративного тарифа</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700 font-semibold">Детальный ручной поиск экспертами</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700 font-semibold">Удаление из всех возможных ботов</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Персональный менеджер проекта</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Гарантия полного удаления</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Консультации по цифровой безопасности</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Мониторинг в течение 6 месяцев</p>
-                  </div>
-                </div>
-                <Button className="w-full bg-black text-white hover:bg-gray-800">ВЫБРАТЬ ТАРИФ</Button>
-              </CardContent>
-            </Card>
+
           </div>
         </div>
       </section>
