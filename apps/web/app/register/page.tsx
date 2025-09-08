@@ -59,23 +59,14 @@ export default function RegisterPage() {
       })
 
       if (result.ok) {
-        // Сохраняем данные пользователя
-        localStorage.setItem("user", JSON.stringify({
-          id: result.user?.id,
-          email: result.user?.email,
-          name: result.user?.user_metadata?.name || formData.name,
-          phone: result.user?.user_metadata?.phone || formData.phone,
-          isAuthenticated: true
-        }))
-        
-        // Сохраняем токены если есть
-        if (result.session) {
-          localStorage.setItem("access_token", result.session.access_token)
-          localStorage.setItem("refresh_token", result.session.refresh_token)
-        }
+        // Не сохраняем данные пользователя до подтверждения email
+        // localStorage.setItem("user", JSON.stringify({...}))
+        // localStorage.setItem("access_token", result.session.access_token)
+        // localStorage.setItem("refresh_token", result.session.refresh_token)
 
-        alert(result.message || "Регистрация успешна!")
-        router.push("/dashboard")
+        alert(result.message || "Регистрация успешна! Проверьте email для подтверждения аккаунта.")
+        // Перенаправляем на страницу входа для последующей авторизации
+        router.push("/login")
       } else {
         alert(result.error?.message || "Ошибка регистрации")
       }
