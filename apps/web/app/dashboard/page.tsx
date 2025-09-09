@@ -282,10 +282,16 @@ export default function DashboardPage() {
   }
 
   const handlePayment = async (plan: 'basic' | 'professional') => {
-    if (!user) return
+    console.log('Payment button clicked:', plan)
+    if (!user) {
+      console.error('No user found')
+      return
+    }
     
     setIsPaymentLoading(true)
     try {
+      console.log('Creating payment for:', { plan, userId: user.id, userEmail: user.email })
+      
       const response = await fetch('/api/payment/create', {
         method: 'POST',
         headers: {
@@ -298,12 +304,16 @@ export default function DashboardPage() {
         })
       })
 
+      console.log('Payment API response status:', response.status)
       const data = await response.json()
+      console.log('Payment API response data:', data)
 
       if (data.ok) {
+        console.log('Redirecting to payment URL:', data.paymentUrl)
         // Перенаправляем на страницу оплаты
         window.location.href = data.paymentUrl
       } else {
+        console.error('Payment creation failed:', data.error)
         alert('Ошибка создания платежа: ' + data.error)
       }
     } catch (error) {
@@ -787,38 +797,54 @@ export default function DashboardPage() {
         </div>
 
         {/* Payment Plans */}
-        {(user.checksUsed >= user.checksLimit) && (
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-light text-gray-900 mb-2">Лимит проверок исчерпан</h2>
-              <p className="text-gray-600">Выберите тариф для продолжения работы</p>
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-light text-gray-900 mb-2">
+              {(user.checksUsed >= user.checksLimit) ? 'Лимит проверок исчерпан' : 'Доступные тарифы'}
+            </h2>
+            <p className="text-gray-600">
+              {(user.checksUsed >= user.checksLimit) ? 'Выберите тариф для продолжения работы' : 'Увеличьте лимит проверок'}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <h3 className="font-medium text-gray-900 mb-2">БАЗОВЫЙ</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-2">500₽</p>
+              <p className="text-sm text-gray-600 mb-4">1 проверка включена</p>
+              <Button 
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    alert('Для покупки необходимо войти в аккаунт');
+                    router.push('/login');
+                    return;
+                  }
+                  window.open('https://self.payanyway.ru/17573877087686', '_blank');
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Оплатить
+              </Button>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h3 className="font-medium text-gray-900 mb-2">БАЗОВЫЙ</h3>
-                <p className="text-2xl font-bold text-gray-900 mb-2">500₽</p>
-                <p className="text-sm text-gray-600 mb-4">1 проверка включена</p>
-                <Button 
-                  onClick={() => handlePayment('basic')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Оплатить
-                </Button>
-              </div>
-              <div className="bg-white border border-blue-200 rounded-xl p-4">
-                <h3 className="font-medium text-gray-900 mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
-                <p className="text-2xl font-bold text-gray-900 mb-2">8 500₽</p>
-                <p className="text-sm text-gray-600 mb-4">2 проверки включены</p>
-                <Button 
-                  onClick={() => handlePayment('professional')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Оплатить
-                </Button>
-              </div>
+            <div className="bg-white border border-blue-200 rounded-xl p-4">
+              <h3 className="font-medium text-gray-900 mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-2">8 500₽</p>
+              <p className="text-sm text-gray-600 mb-4">2 проверки включены</p>
+              <Button 
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    alert('Для покупки необходимо войти в аккаунт');
+                    router.push('/login');
+                    return;
+                  }
+                  window.open('ССЫЛКА_НА_ПРОФЕССИОНАЛЬНЫЙ_ТАРИФ', '_blank');
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Оплатить
+              </Button>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Additional Features */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">
