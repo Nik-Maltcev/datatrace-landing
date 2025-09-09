@@ -431,15 +431,22 @@ export default function DashboardPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 hover:border-blue-300 transition-colors">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                <Zap className="h-5 w-5 text-blue-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Zap className="h-5 w-5 text-blue-700" />
               </div>
-              <span className="text-xs text-blue-600">Тариф {user.plan?.toUpperCase() || 'BASIC'}</span>
+              <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
+                {user.plan?.toUpperCase() || 'BASIC'}
+              </span>
             </div>
             <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
-            <p className="text-sm text-gray-500">Проверок использовано</p>
+            <p className="text-sm text-gray-600">Проверок использовано</p>
+            <div className="mt-3 bg-white bg-opacity-50 rounded-lg p-2">
+              <p className="text-xs text-blue-700 font-medium">
+                Тариф: {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 'БАЗОВЫЙ'}
+              </p>
+            </div>
           </div>
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-colors">
             <div className="flex items-center justify-between mb-4">
@@ -483,6 +490,33 @@ export default function DashboardPage() {
             </div>
             <p className="text-2xl font-light mb-1 text-gray-900">15</p>
             <p className="text-sm text-gray-500">Источников мониторинга</p>
+          </div>
+        </div>
+
+        {/* Plan Info Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-light text-gray-900">Ваш тариф</h2>
+            <div className="flex items-center space-x-2">
+              <Zap className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 'БАЗОВЫЙ'}
+              </span>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-white bg-opacity-70 rounded-xl p-4">
+              <p className="text-sm text-gray-600 mb-1">Лимит проверок</p>
+              <p className="text-xl font-bold text-gray-900">{user.checksLimit || 1}</p>
+            </div>
+            <div className="bg-white bg-opacity-70 rounded-xl p-4">
+              <p className="text-sm text-gray-600 mb-1">Использовано</p>
+              <p className="text-xl font-bold text-gray-900">{user.checksUsed || 0}</p>
+            </div>
+            <div className="bg-white bg-opacity-70 rounded-xl p-4">
+              <p className="text-sm text-gray-600 mb-1">Осталось</p>
+              <p className="text-xl font-bold text-green-600">{(user.checksLimit || 1) - (user.checksUsed || 0)}</p>
+            </div>
           </div>
         </div>
 
