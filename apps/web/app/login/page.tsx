@@ -51,12 +51,12 @@ export default function LoginPage() {
         const userData = {
           id: result.user?.id,
           email: result.user?.email,
-          name: result.user?.user_metadata?.name || result.user?.email?.split("@")[0],
-          phone: result.user?.user_metadata?.phone,
+          name: result.profile?.name || result.user?.user_metadata?.name || result.user?.email?.split("@")[0],
+          phone: result.profile?.phone || result.user?.user_metadata?.phone,
           isAuthenticated: true,
-          plan: 'basic' as const,
-          checksUsed: 0,
-          checksLimit: 1
+          plan: (result.profile?.plan || 'free') as 'free' | 'basic' | 'professional',
+          checksUsed: result.profile?.checks_used || 0,
+          checksLimit: result.profile?.checks_limit || 0
         }
         
         login(

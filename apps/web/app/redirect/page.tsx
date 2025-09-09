@@ -1,11 +1,22 @@
 "use client"
 
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, Database, Zap } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function PaymentSuccessPage() {
+  const { updateUserPlan } = useAuth()
+
+  useEffect(() => {
+    // Обновляем тариф пользователя после успешной оплаты
+    // В реальном приложении здесь должна быть проверка параметров URL или API запрос
+    // Для демонстрации обновляем на базовый тариф
+    updateUserPlan('basic')
+  }, [updateUserPlan])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg border-0 shadow-2xl">

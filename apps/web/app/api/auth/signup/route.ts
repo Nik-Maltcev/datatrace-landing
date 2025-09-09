@@ -100,6 +100,9 @@ export async function POST(request: NextRequest) {
           email: data.user.email,
           name: name.trim(),
           phone: phone.trim(),
+          plan: 'free',
+          checks_used: 0,
+          checks_limit: 0,
           created_at: new Date().toISOString()
         });
     }

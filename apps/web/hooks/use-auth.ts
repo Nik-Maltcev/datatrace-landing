@@ -8,7 +8,7 @@ interface User {
   name: string
   phone?: string
   isAuthenticated: boolean
-  plan?: 'basic' | 'professional' | 'corporate'
+  plan?: 'free' | 'basic' | 'professional' | 'corporate'
   checksUsed?: number
   checksLimit?: number
 }
@@ -58,9 +58,9 @@ export function useAuth() {
     // Устанавливаем базовый план и лимиты по умолчанию
     const userWithDefaults = {
       ...userData,
-      plan: userData.plan || 'basic',
+      plan: userData.plan || 'free',
       checksUsed: userData.checksUsed || 0,
-      checksLimit: userData.checksLimit || (userData.plan === 'professional' ? 2 : 1)
+      checksLimit: userData.checksLimit || (userData.plan === 'professional' ? 2 : userData.plan === 'basic' ? 1 : 0)
     }
     
     setUser(userWithDefaults)
@@ -84,9 +84,10 @@ export function useAuth() {
     }
   }
 
-  const updateUserPlan = (plan: 'basic' | 'professional') => {
+  const updateUserPlan = (plan: 'free' | 'basic' | 'professional') => {
     if (user) {
       const planLimits = {
+        free: 0,
         basic: 1,
         professional: 2
       }

@@ -437,14 +437,14 @@ export default function DashboardPage() {
                 <Zap className="h-5 w-5 text-blue-700" />
               </div>
               <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
-                {user.plan?.toUpperCase() || 'BASIC'}
+                {user.plan === 'free' ? 'БЕСПЛАТНЫЙ' : user.plan?.toUpperCase() || 'БЕСПЛАТНЫЙ'}
               </span>
             </div>
             <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
             <p className="text-sm text-gray-600">Проверок использовано</p>
             <div className="mt-3 bg-white bg-opacity-50 rounded-lg p-2">
               <p className="text-xs text-blue-700 font-medium">
-                Тариф: {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 'БАЗОВЫЙ'}
+                Тариф: {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
               </p>
             </div>
           </div>
@@ -500,7 +500,7 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-2">
               <Zap className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
-                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 'БАЗОВЫЙ'}
+                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
               </span>
             </div>
           </div>
@@ -1009,7 +1009,7 @@ export default function DashboardPage() {
               </div>
               <h3 className="text-xl font-bold mb-2 text-gray-900">Проверки закончились!</h3>
               <p className="text-gray-600 mb-4">
-                У вас закончились проверки на тарифе "{user.plan?.toUpperCase() || 'BASIC'}". 
+                У вас закончились проверки на тарифе "{user.plan === 'free' ? 'БЕСПЛАТНЫЙ' : user.plan === 'basic' ? 'БАЗОВЫЙ' : user.plan?.toUpperCase() || 'БЕСПЛАТНЫЙ'}". 
                 Обновите тариф для продолжения работы.
               </p>
             </div>
