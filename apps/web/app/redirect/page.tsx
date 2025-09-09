@@ -8,14 +8,35 @@ import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function PaymentSuccessPage() {
-  const { updateUserPlan } = useAuth()
+  const { updateUserPlan, user } = useAuth()
 
   useEffect(() => {
-    // Обновляем тариф пользователя после успешной оплаты
-    // В реальном приложении здесь должна быть проверка параметров URL или API запрос
-    // Для демонстрации обновляем на базовый тариф
-    updateUserPlan('basic')
-  }, [updateUserPlan])
+    const updatePlan = async () => {
+      if (!user?.id) return
+      
+      // Определяем тариф по URL (в реальном приложении это должно приходить от платежной системы)
+      const urlParams = new URLSearchParams(window.location.search)
+      const planType = urlParams.get('plan') || 'basic' // По умолчанию базовый
+      
+      try {
+        // Обновляем в базе данных
+        const response = await fetch('/api/update-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, plan: planType })
+        })
+        
+        if (response.ok) {
+          // Обновляем локально
+          updateUserPlan(planType as 'basic' | 'professional')
+        }
+      } catch (error) {
+        console.error('Failed to update plan:', error)
+      }
+    }
+    
+    updatePlan()
+  }, [updateUserPlan, user?.id])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
