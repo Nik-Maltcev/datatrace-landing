@@ -12,23 +12,48 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     const updatePlan = async () => {
-      if (!user?.id) {
+      // Получаем email из PayAnyWay параметров
+      const urlParams = new URLSearchParams(window.location.search)
+      const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
+      const planType = urlParams.get('plan') || 'basic'
+      
+      let userId = user?.id
+      
+      // Если пользователь не авторизован, пытаемся найти по email
+      if (!userId && subscriberId) {
+        const decodedEmail = decodeURIComponent(subscriberId)
+        console.log('No user ID found, trying to find user by email:', decodedEmail)
+        
+        try {
+          const response = await fetch('/api/find-user-by-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: decodedEmail })
+          })
+          
+          const result = await response.json()
+          if (result.ok && result.user) {
+            userId = result.user.id
+            console.log('Found user by email:', userId)
+          }
+        } catch (error) {
+          console.error('Failed to find user by email:', error)
+        }
+      }
+      
+      if (!userId) {
         console.log('No user ID found, skipping plan update')
         return
       }
       
-      // Определяем тариф по URL
-      const urlParams = new URLSearchParams(window.location.search)
-      const planType = urlParams.get('plan') || 'basic'
-      
-      console.log('Updating plan for user:', user.id, 'to plan:', planType)
+      console.log('Updating plan for user:', userId, 'to plan:', planType)
       
       try {
         // Обновляем в базе данных
         const response = await fetch('/api/update-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, plan: planType })
+          body: JSON.stringify({ userId: userId, plan: planType })
         })
         
         const result = await response.json()
