@@ -75,8 +75,8 @@ export default function DashboardPage() {
   const [showPhoneDetails, setShowPhoneDetails] = useState(false)
   const [showEmailDetails, setShowEmailDetails] = useState(false)
   const [phoneCheckResponse, setPhoneCheckResponse] = useState<PhoneCheckResponse | null>(null)
-
   const [emailCheckResponse, setEmailCheckResponse] = useState<PhoneCheckResponse | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function DashboardPage() {
 
     // Проверяем лимит проверок
     if (user.checksUsed >= user.checksLimit) {
-      setPhoneError(`Лимит проверок исчерпан (${user.checksLimit}). Обновите тариф для продолжения.`)
+      setShowUpgradeModal(true)
       return
     }
 
@@ -194,7 +194,7 @@ export default function DashboardPage() {
 
     // Проверяем лимит проверок
     if (user.checksUsed >= user.checksLimit) {
-      setEmailError(`Лимит проверок исчерпан (${user.checksLimit}). Обновите тариф для продолжения.`)
+      setShowUpgradeModal(true)
       return
     }
 
@@ -998,6 +998,67 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Модальное окно upgrade */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-gray-900">Проверки закончились!</h3>
+              <p className="text-gray-600 mb-4">
+                У вас закончились проверки на тарифе "{user.plan?.toUpperCase() || 'BASIC'}". 
+                Обновите тариф для продолжения работы.
+              </p>
+            </div>
+            
+            {user.plan === 'basic' && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-900">ПРОФЕССИОНАЛЬНЫЙ</h4>
+                  <span className="text-lg font-bold text-blue-600">8 500₽</span>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">2 проверки включены</p>
+                <Button 
+                  onClick={() => {
+                    setShowUpgradeModal(false)
+                    const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect')
+                    window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Обновить тариф
+                </Button>
+              </div>
+            )}
+            
+            <div className="flex space-x-3">
+              <Button 
+                onClick={() => setShowUpgradeModal(false)}
+                variant="outline"
+                className="flex-1 border-gray-300 text-gray-600 hover:bg-gray-50"
+              >
+                Отмена
+              </Button>
+              {user.plan !== 'basic' && (
+                <Button 
+                  onClick={() => {
+                    setShowUpgradeModal(false)
+                    const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect')
+                    window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Купить еще
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
