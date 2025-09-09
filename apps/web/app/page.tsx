@@ -50,8 +50,7 @@ export default function DataTraceLanding() {
     if (plan === 'basic') {
       window.open('https://self.payanyway.ru/17573877087686', '_blank')
     } else if (plan === 'professional') {
-      // Здесь будет ссылка на профессиональный тариф
-      alert('Ссылка на профессиональный тариф еще не готова')
+      window.open('https://self.payanyway.ru/1757389094772', '_blank')
     } else {
       // Корпоративный - обращение к менеджеру
       alert('Для корпоративного тарифа обратитесь к менеджеру')
