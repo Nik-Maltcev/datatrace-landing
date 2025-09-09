@@ -12,17 +12,28 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     const updatePlan = async () => {
-      // Получаем email из PayAnyWay параметров
+      // Получаем параметры из URL
       const urlParams = new URLSearchParams(window.location.search)
       const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
-      const planType = urlParams.get('plan') || 'basic'
+      const amount = urlParams.get('MNT_AMOUNT')
+      
+      // Определяем тариф по сумме платежа
+      let planType = 'basic'
+      if (amount) {
+        const amountNum = parseFloat(amount)
+        if (amountNum >= 8500) {
+          planType = 'professional'
+        }
+      }
+      
+      console.log('Payment amount:', amount, 'Determined plan:', planType)
       
       let userId = user?.id
       
       // Если пользователь не авторизован, пытаемся найти по email
       if (!userId && subscriberId) {
         const decodedEmail = decodeURIComponent(subscriberId)
-        console.log('No user ID found, trying to find user by email:', decodedEmail)
+        console.log('No user ID found, trying to find user by email:', decodedEmail, 'for plan:', planType)
         
         try {
           const response = await fetch('/api/find-user-by-email', {
