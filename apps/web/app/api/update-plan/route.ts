@@ -1,63 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/config/supabase-api';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseClient();
-    
-    if (!supabase) {
-      console.error('Supabase client not available');
-      return NextResponse.json(
-        { ok: false, error: { message: 'Database not configured' } },
-        { status: 503 }
-      );
-    }
-
     const { userId, plan } = await request.json();
-    console.log('Received update plan request:', { userId, plan });
 
     if (!userId || !plan) {
-      console.error('Missing required fields:', { userId: !!userId, plan: !!plan });
       return NextResponse.json(
-        { ok: false, error: { message: 'UserId and plan are required' } },
+        { ok: false, error: { message: 'Missing userId or plan' } },
         { status: 400 }
       );
     }
 
+    // Определяем лимиты по тарифу
     const planLimits = {
-      free: 0,
       basic: 1,
       professional: 2
     };
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits];
-    console.log('Updating user plan:', { userId, plan, checksLimit });
+    const checksLimit = planLimits[plan as keyof typeof planLimits] || 1;
 
+    // Обновляем пользователя в Supabase
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .update({
-        plan,
+        plan: plan,
         checks_limit: checksLimit,
-        checks_used: 0
+        checks_used: 0 // Сбрасываем использованные проверки
       })
       .eq('id', userId)
       .select();
 
     if (error) {
-      console.error('Update plan error:', error);
+      console.error('Supabase error:', error);
       return NextResponse.json(
-        { ok: false, error: { message: 'Failed to update plan', details: error } },
+        { ok: false, error: { message: 'Database update failed', details: error } },
         { status: 500 }
       );
     }
 
-    console.log('Plan updated successfully:', data);
-    return NextResponse.json({ ok: true, data });
+    return NextResponse.json({
+      ok: true,
+      message: 'Plan updated successfully',
+      data: data?.[0]
+    });
 
   } catch (error) {
-    console.error('Update plan endpoint error:', error);
+    console.error('Update plan error:', error);
     return NextResponse.json(
-      { ok: false, error: { message: 'Internal server error' } },
+      { ok: false, error: { message: 'Failed to update plan', details: error } },
       { status: 500 }
     );
   }

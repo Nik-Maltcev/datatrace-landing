@@ -1,46 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/config/supabase-api';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseClient();
-    
-    if (!supabase) {
-      return NextResponse.json(
-        { ok: false, error: { message: 'Database not configured' } },
-        { status: 503 }
-      );
-    }
-
     const { userId } = await request.json();
 
     if (!userId) {
       return NextResponse.json(
-        { ok: false, error: { message: 'UserId is required' } },
+        { ok: false, error: { message: 'Missing userId' } },
         { status: 400 }
       );
     }
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
+    // Получаем профиль пользователя из Supabase
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('plan, checks_limit, checks_used')
       .eq('id', userId)
       .single();
 
     if (error) {
-      console.error('Get profile error:', error);
+      console.error('Supabase error:', error);
       return NextResponse.json(
-        { ok: false, error: { message: 'Failed to get profile' } },
+        { ok: false, error: { message: 'Failed to fetch profile', details: error } },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ ok: true, profile });
+    return NextResponse.json({
+      ok: true,
+      profile: data
+    });
 
   } catch (error) {
-    console.error('Get profile endpoint error:', error);
+    console.error('User profile error:', error);
     return NextResponse.json(
-      { ok: false, error: { message: 'Internal server error' } },
+      { ok: false, error: { message: 'Failed to fetch user profile', details: error } },
       { status: 500 }
     );
   }
