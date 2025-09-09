@@ -819,7 +819,7 @@ export default function DashboardPage() {
                     return;
                   }
                   const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/dashboard');
-                  window.open(`https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`, '_blank');
+                  window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&target=_parent`;
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
@@ -838,7 +838,7 @@ export default function DashboardPage() {
                     return;
                   }
                   const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/dashboard');
-                  window.open(`https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`, '_blank');
+                  window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&target=_parent`;
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
