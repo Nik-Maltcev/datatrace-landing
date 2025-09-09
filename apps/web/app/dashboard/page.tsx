@@ -818,7 +818,8 @@ export default function DashboardPage() {
                     router.push('/login');
                     return;
                   }
-                  window.open('https://self.payanyway.ru/17573877087686', '_blank');
+                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/dashboard');
+                  window.open(`https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`, '_blank');
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
@@ -836,7 +837,8 @@ export default function DashboardPage() {
                     router.push('/login');
                     return;
                   }
-                  window.open('ССЫЛКА_НА_ПРОФЕССИОНАЛЬНЫЙ_ТАРИФ', '_blank');
+                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/dashboard');
+                  window.open(`https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`, '_blank');
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >

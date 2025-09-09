@@ -47,10 +47,12 @@ export default function DataTraceLanding() {
     }
 
     // Если авторизован, открываем ссылку на оплату
+    const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/dashboard')
+    
     if (plan === 'basic') {
-      window.open('https://self.payanyway.ru/17573877087686', '_blank')
+      window.open(`https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`, '_blank')
     } else if (plan === 'professional') {
-      window.open('https://self.payanyway.ru/1757389094772', '_blank')
+      window.open(`https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`, '_blank')
     } else {
       // Корпоративный - обращение к менеджеру
       alert('Для корпоративного тарифа обратитесь к менеджеру')
