@@ -8,15 +8,20 @@ import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function PaymentSuccessPage() {
-  const { updateUserPlan, user } = useAuth()
+  const { updateUserPlan, user, refreshUserData } = useAuth()
 
   useEffect(() => {
     const updatePlan = async () => {
-      if (!user?.id) return
+      if (!user?.id) {
+        console.log('No user ID found, skipping plan update')
+        return
+      }
       
-      // Определяем тариф по URL (в реальном приложении это должно приходить от платежной системы)
+      // Определяем тариф по URL
       const urlParams = new URLSearchParams(window.location.search)
-      const planType = urlParams.get('plan') || 'basic' // По умолчанию базовый
+      const planType = urlParams.get('plan') || 'basic'
+      
+      console.log('Updating plan for user:', user.id, 'to plan:', planType)
       
       try {
         // Обновляем в базе данных
@@ -26,9 +31,18 @@ export default function PaymentSuccessPage() {
           body: JSON.stringify({ userId: user.id, plan: planType })
         })
         
-        if (response.ok) {
+        const result = await response.json()
+        console.log('API response:', result)
+        
+        if (response.ok && result.ok) {
           // Обновляем локально
           updateUserPlan(planType as 'basic' | 'professional')
+          console.log('Plan updated successfully')
+          
+          // Обновляем данные из базы
+          await refreshUserData()
+        } else {
+          console.error('Failed to update plan:', result.error)
         }
       } catch (error) {
         console.error('Failed to update plan:', error)
@@ -36,7 +50,7 @@ export default function PaymentSuccessPage() {
     }
     
     updatePlan()
-  }, [updateUserPlan, user?.id])
+  }, [updateUserPlan, refreshUserData, user?.id])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">

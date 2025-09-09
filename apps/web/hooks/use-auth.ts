@@ -97,8 +97,38 @@ export function useAuth() {
         checksLimit: planLimits[plan],
         checksUsed: 0 // Сбрасываем счетчик при покупке нового тарифа
       }
+      console.log('Updating user plan locally:', updatedUser)
       setUser(updatedUser)
       localStorage.setItem("user", JSON.stringify(updatedUser))
+    }
+  }
+
+  const refreshUserData = async () => {
+    if (!user?.id) return
+    
+    try {
+      const response = await fetch('/api/user-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        if (result.ok && result.profile) {
+          const updatedUser = {
+            ...user,
+            plan: result.profile.plan,
+            checksLimit: result.profile.checks_limit,
+            checksUsed: result.profile.checks_used
+          }
+          setUser(updatedUser)
+          localStorage.setItem("user", JSON.stringify(updatedUser))
+          console.log('User data refreshed from database:', updatedUser)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error)
     }
   }
 
@@ -110,6 +140,7 @@ export function useAuth() {
     logout,
     checkAuthStatus,
     updateUserChecks,
-    updateUserPlan
+    updateUserPlan,
+    refreshUserData
   }
 }
