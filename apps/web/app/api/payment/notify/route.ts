@@ -4,47 +4,35 @@ const PayAnyWayService = require('@/lib/services/PayAnyWayService');
 
 export async function POST(request: NextRequest) {
   try {
-    const paymentService = new PayAnyWayService();
-    
-    if (!paymentService.isConfigured()) {
-      return new Response('FAIL', { status: 200 });
-    }
-
     // Получаем параметры уведомления
     const formData = await request.formData();
     const params = Object.fromEntries(formData.entries());
 
     console.log('PayAnyWay notification received:', params);
 
-    // Проверяем подпись
-    if (!paymentService.verifyPaymentNotification(params)) {
-      console.error('Invalid PayAnyWay signature');
-      return new Response('FAIL', { status: 200 });
+    // Проверяем что это успешная покупка
+    if (params.action !== 'purchased') {
+      console.log('Not a purchase notification, ignoring');
+      return new Response('SUCCESS', { status: 200 });
     }
 
-    // Парсим transaction ID
-    const { orderId, userId } = paymentService.parseTransactionId(
-      params.MNT_TRANSACTION_ID as string
-    );
-
-    // Определяем тариф из orderId
-    const plan = orderId.replace('plan_', '');
+    // Получаем данные о платеже
+    const email = params.customerEmail as string;
+    const price = parseFloat(params.productPrice as string);
+    
+    // Определяем тариф по цене
+    const plan = price >= 8500 ? 'professional' : 'basic';
     const planLimits = {
       basic: 1,
       professional: 2
     };
 
     const checksLimit = planLimits[plan as keyof typeof planLimits];
-    if (!checksLimit) {
-      console.error('Unknown plan:', plan);
-      return new Response('FAIL', { status: 200 });
-    }
+    
+    console.log(`Processing payment: ${price} RUB for ${email}, plan: ${plan}`);
 
     // Обновляем тариф пользователя в базе данных
     try {
-      // Получаем email из MNT_SUBSCRIBER_ID
-      const email = params.MNT_SUBSCRIBER_ID ? decodeURIComponent(params.MNT_SUBSCRIBER_ID as string) : null;
-      
       if (email) {
         // Находим пользователя по email
         const userResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'https://datatrace-landing-production-6a5e.up.railway.app'}/api/find-user-by-email`, {
@@ -78,7 +66,7 @@ export async function POST(request: NextRequest) {
       console.error('Error updating user plan via webhook:', error);
     }
     
-    console.log(`Payment successful for user ${userId}, plan: ${plan}, limit: ${checksLimit}`);
+    console.log(`Payment successful for email ${email}, plan: ${plan}, limit: ${checksLimit}`);
 
     // Возвращаем SUCCESS
     return new Response('SUCCESS', { status: 200 });

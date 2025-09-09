@@ -11,82 +11,22 @@ export default function PaymentSuccessPage() {
   const { updateUserPlan, user, refreshUserData } = useAuth()
 
   useEffect(() => {
-    const updatePlan = async () => {
-      // Получаем параметры из URL
-      const urlParams = new URLSearchParams(window.location.search)
-      const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
-      const amount = urlParams.get('MNT_AMOUNT')
-      
-      // Определяем тариф по сумме платежа
-      let planType = 'basic'
-      if (amount) {
-        const amountNum = parseFloat(amount)
-        if (amountNum >= 8500) {
-          planType = 'professional'
-        }
-      }
-      
-      console.log('Payment amount:', amount, 'Determined plan:', planType)
-      
-      let userId = user?.id
-      
-      // Если пользователь не авторизован, пытаемся найти по email
-      if (!userId && subscriberId) {
-        const decodedEmail = decodeURIComponent(subscriberId)
-        console.log('No user ID found, trying to find user by email:', decodedEmail, 'for plan:', planType)
-        
-        try {
-          const response = await fetch('/api/find-user-by-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: decodedEmail })
-          })
-          
-          const result = await response.json()
-          if (result.ok && result.user) {
-            userId = result.user.id
-            console.log('Found user by email:', userId)
-          }
-        } catch (error) {
-          console.error('Failed to find user by email:', error)
-        }
-      }
-      
-      if (!userId) {
-        console.log('No user ID found, skipping plan update')
-        return
-      }
-      
-      console.log('Updating plan for user:', userId, 'to plan:', planType)
-      
-      try {
-        // Обновляем в базе данных
-        const response = await fetch('/api/update-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: userId, plan: planType })
-        })
-        
-        const result = await response.json()
-        console.log('API response:', result)
-        
-        if (response.ok && result.ok) {
-          // Обновляем локально
-          updateUserPlan(planType as 'basic' | 'professional')
-          console.log('Plan updated successfully')
-          
-          // Обновляем данные из базы
-          await refreshUserData()
-        } else {
-          console.error('Failed to update plan:', result.error)
-        }
-      } catch (error) {
-        console.error('Failed to update plan:', error)
+    // Просто обновляем данные пользователя из базы
+    // Тариф уже обновлен webhook'ом
+    const refreshData = async () => {
+      if (user?.id) {
+        console.log('Refreshing user data after payment')
+        await refreshUserData()
+      } else {
+        console.log('No user found, payment processed via webhook')
       }
     }
     
-    updatePlan()
-  }, [updateUserPlan, refreshUserData, user?.id])
+    // Обновляем данные через 2 секунды, чтобы webhook успел отработать
+    const timer = setTimeout(refreshData, 2000)
+    
+    return () => clearTimeout(timer)
+  }, [user?.id, refreshUserData])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
