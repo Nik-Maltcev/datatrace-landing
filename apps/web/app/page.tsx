@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
 import { useRouter } from "next/navigation"
@@ -27,12 +28,33 @@ function InteractiveHeroGraphic() {
 export default function DataTraceLanding() {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const handleDashboardClick = () => {
     if (isAuthenticated) {
       router.push('/dashboard')
     } else {
       router.push('/login')
+    }
+  }
+
+  const handlePlanSelect = (plan: 'basic' | 'professional' | 'corporate') => {
+    if (isLoading) return
+    
+    if (!isAuthenticated) {
+      setShowAuthModal(true)
+      return
+    }
+
+    // Если авторизован, открываем ссылку на оплату
+    if (plan === 'basic') {
+      window.open('https://self.payanyway.ru/17573877087686', '_blank')
+    } else if (plan === 'professional') {
+      // Здесь будет ссылка на профессиональный тариф
+      alert('Ссылка на профессиональный тариф еще не готова')
+    } else {
+      // Корпоративный - обращение к менеджеру
+      alert('Для корпоративного тарифа обратитесь к менеджеру')
     }
   }
 
@@ -269,6 +291,7 @@ export default function DataTraceLanding() {
                   </div>
                 </div>
                 <Button
+                  onClick={() => handlePlanSelect('basic')}
                   variant="outline"
                   className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
                 >
@@ -313,7 +336,12 @@ export default function DataTraceLanding() {
                     <p className="text-gray-700">Уведомления о новых утечках</p>
                   </div>
                 </div>
-                <Button className="w-full bg-black text-white hover:bg-gray-800">ВЫБРАТЬ ТАРИФ</Button>
+                <Button 
+                  onClick={() => handlePlanSelect('professional')}
+                  className="w-full bg-black text-white hover:bg-gray-800"
+                >
+                  ВЫБРАТЬ ТАРИФ
+                </Button>
               </CardContent>
             </Card>
 
@@ -347,6 +375,7 @@ export default function DataTraceLanding() {
                   </div>
                 </div>
                 <Button
+                  onClick={() => handlePlanSelect('corporate')}
                   variant="outline"
                   className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
                 >
@@ -487,6 +516,46 @@ export default function DataTraceLanding() {
           </div>
         </div>
       </footer>
+
+      {/* Модальное окно авторизации */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 text-center">Требуется авторизация</h3>
+            <p className="text-gray-600 mb-6 text-center">
+              Для покупки тарифа необходимо войти в аккаунт или зарегистрироваться.
+            </p>
+            <div className="flex space-x-3">
+              <Button 
+                onClick={() => {
+                  setShowAuthModal(false)
+                  router.push('/login')
+                }}
+                className="flex-1 bg-black text-white hover:bg-gray-800"
+              >
+                Войти
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowAuthModal(false)
+                  router.push('/register')
+                }}
+                variant="outline"
+                className="flex-1 border-black text-black hover:bg-black hover:text-white"
+              >
+                Регистрация
+              </Button>
+            </div>
+            <Button 
+              onClick={() => setShowAuthModal(false)}
+              variant="ghost"
+              className="w-full mt-3 text-gray-500 hover:text-gray-700"
+            >
+              Отмена
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
