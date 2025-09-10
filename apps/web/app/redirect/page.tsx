@@ -42,6 +42,7 @@ export default function PaymentSuccessPage() {
               console.log('Profile object details:', result.profile)
               console.log('Plan from profile:', result.profile?.plan)
               console.log('Checks limit from profile:', result.profile?.checks_limit)
+              console.log('Current user before update:', parsedUser)
               
               if (response.ok && result.ok && result.profile) {
                 const updatedUser = {
@@ -52,7 +53,16 @@ export default function PaymentSuccessPage() {
                 }
                 
                 console.log('Updating localStorage with new data:', updatedUser)
+                console.log('Plan in updatedUser:', updatedUser.plan)
+                console.log('checksLimit in updatedUser:', updatedUser.checksLimit)
                 localStorage.setItem("user", JSON.stringify(updatedUser))
+                
+                // Проверяем что сохранилось
+                const savedData = localStorage.getItem("user")
+                console.log('Data saved to localStorage:', savedData)
+                const parsedSaved = JSON.parse(savedData || '{}')
+                console.log('Parsed saved data:', parsedSaved)
+                console.log('Plan in saved data:', parsedSaved.plan)
                 
                 console.log('Reloading page to update state')
                 setTimeout(() => {
