@@ -39,6 +39,9 @@ export default function PaymentSuccessPage() {
               console.log('API response status:', response.status)
               const result = await response.json()
               console.log('API response data:', result)
+              console.log('Profile object details:', result.profile)
+              console.log('Plan from profile:', result.profile?.plan)
+              console.log('Checks limit from profile:', result.profile?.checks_limit)
               
               if (response.ok && result.ok && result.profile) {
                 const updatedUser = {
@@ -95,6 +98,8 @@ export default function PaymentSuccessPage() {
               
               const profileResult = await profileResponse.json()
               console.log('Profile data response:', profileResult)
+              console.log('Profile object from API:', profileResult.profile)
+              console.log('Plan value:', profileResult.profile?.plan)
               
               if (profileResponse.ok && profileResult.ok && profileResult.profile) {
                 const userData = {

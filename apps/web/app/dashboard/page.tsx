@@ -437,7 +437,8 @@ export default function DashboardPage() {
                 <Zap className="h-5 w-5 text-blue-700" />
               </div>
               <span className="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
-                {user.plan === 'free' ? 'БЕСПЛАТНЫЙ' : user.plan?.toUpperCase() || 'БЕСПЛАТНЫЙ'}
+                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 
+                 user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
               </span>
             </div>
             <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
@@ -500,7 +501,8 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-2">
               <Zap className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
-                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
+                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 
+                 user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
               </span>
             </div>
           </div>
