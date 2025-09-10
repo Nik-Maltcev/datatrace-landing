@@ -121,7 +121,7 @@ export default function PaymentSuccessPage() {
               const profileResponse = await fetch('/api/user-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: result.user.id })
+                body: JSON.stringify({ userId: result.user.user_id })
               })
               
               const profileResult = await profileResponse.json()
@@ -131,7 +131,7 @@ export default function PaymentSuccessPage() {
               
               if (profileResponse.ok && profileResult.ok && profileResult.profile) {
                 const userData = {
-                  id: result.user.id,
+                  id: result.user.user_id,
                   email: result.user.email,
                   name: result.user.name,
                   phone: result.user.phone,

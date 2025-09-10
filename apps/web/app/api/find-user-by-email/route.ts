@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // Ищем пользователя по email в Supabase
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('id, email, name, phone, plan, checks_limit, checks_used')
+      .select('id, user_id, email, name, phone, plan, checks_limit, checks_used')
       .eq('email', email)
       .single();
 

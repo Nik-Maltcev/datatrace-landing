@@ -94,9 +94,9 @@ export async function POST(request: NextRequest) {
     // Create profile
     if (data.user) {
       await supabase
-        .from('profiles')
+        .from('user_profiles')
         .insert({
-          id: data.user.id,
+          user_id: data.user.id,
           email: data.user.email,
           name: name.trim(),
           phone: phone.trim(),

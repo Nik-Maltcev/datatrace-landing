@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   email VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   phone VARCHAR(50) NOT NULL,
+  plan VARCHAR(50) DEFAULT 'free' NOT NULL,
+  checks_used INTEGER DEFAULT 0 NOT NULL,
+  checks_limit INTEGER DEFAULT 0 NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -55,3 +58,6 @@ COMMENT ON COLUMN user_profiles.user_id IS 'Ссылка на пользоват
 COMMENT ON COLUMN user_profiles.email IS 'Email адрес пользователя';
 COMMENT ON COLUMN user_profiles.name IS 'Полное имя пользователя';
 COMMENT ON COLUMN user_profiles.phone IS 'Номер телефона пользователя';
+COMMENT ON COLUMN user_profiles.plan IS 'Тарифный план пользователя (free, basic, professional)';
+COMMENT ON COLUMN user_profiles.checks_used IS 'Количество использованных проверок';
+COMMENT ON COLUMN user_profiles.checks_limit IS 'Лимит проверок для текущего тарифа';

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('user_profiles')
       .select('plan, checks_limit, checks_used')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
       
     console.log('Profile data from DB:', data);

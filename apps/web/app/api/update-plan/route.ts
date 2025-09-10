@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         checks_limit: checksLimit,
         checks_used: 0 // Сбрасываем использованные проверки
       })
-      .eq('id', userId)
+      .eq('user_id', userId)
       .select();
 
     if (error) {

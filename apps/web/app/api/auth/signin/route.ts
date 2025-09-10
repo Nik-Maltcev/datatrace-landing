@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
 
     // Get user profile
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .select('*')
-      .eq('id', data.user?.id)
+      .eq('user_id', data.user?.id)
       .single();
 
     return NextResponse.json({
