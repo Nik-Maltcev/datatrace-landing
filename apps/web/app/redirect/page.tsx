@@ -17,22 +17,28 @@ export default function PaymentSuccessPage() {
         await refreshUserData()
       } else {
         console.log('No user found, trying to refresh localStorage')
-        // Пытаемся перечитать данные из localStorage
+        
+        // Проверяем что есть в localStorage
         const userData = localStorage.getItem("user")
+        console.log('localStorage user data:', userData)
+        
         if (userData) {
           try {
             const parsedUser = JSON.parse(userData)
-            console.log('Found user in localStorage:', parsedUser)
-            // Принудительно обновляем данные из базы
+            console.log('Parsed user from localStorage:', parsedUser)
+            
             if (parsedUser.id) {
+              console.log('Making API call to refresh user profile for ID:', parsedUser.id)
+              
               const response = await fetch('/api/user-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: parsedUser.id })
               })
               
+              console.log('API response status:', response.status)
               const result = await response.json()
-              console.log('Force refresh API response:', result)
+              console.log('API response data:', result)
               
               if (response.ok && result.ok && result.profile) {
                 const updatedUser = {
@@ -42,15 +48,24 @@ export default function PaymentSuccessPage() {
                   checksUsed: result.profile.checks_used || 0
                 }
                 
-                console.log('Force updating localStorage with:', updatedUser)
+                console.log('Updating localStorage with new data:', updatedUser)
                 localStorage.setItem("user", JSON.stringify(updatedUser))
-                // Перезагружаем страницу чтобы обновить состояние
-                window.location.reload()
+                
+                console.log('Reloading page to update state')
+                setTimeout(() => {
+                  window.location.reload()
+                }, 500)
+              } else {
+                console.error('API call failed or returned invalid data')
               }
+            } else {
+              console.error('No user ID found in localStorage data')
             }
           } catch (error) {
-            console.error('Error parsing user data:', error)
+            console.error('Error parsing user data from localStorage:', error)
           }
+        } else {
+          console.log('No user data found in localStorage')
         }
       }
     }
