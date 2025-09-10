@@ -91,9 +91,17 @@ export default function PaymentSuccessPage() {
           localStorage.removeItem('refresh_token')
           console.log('Cleared old localStorage data')
           
-          // Пытаемся найти пользователя по email из последнего платежа
-          // Используем известный email из логов
-          const knownEmail = 'tomas-carter@yandex.ru' // Обновлен на актуальный email из логов
+          // Получаем email из URL параметров PayAnyWay
+          const urlParams = new URLSearchParams(window.location.search)
+          const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
+          const knownEmail = subscriberId ? decodeURIComponent(subscriberId) : null
+          
+          console.log('Email from PayAnyWay params:', knownEmail)
+          
+          if (!knownEmail) {
+            console.error('No email found in PayAnyWay parameters')
+            return
+          }
           
           try {
             console.log('Searching for user with email:', knownEmail)
