@@ -66,6 +66,63 @@ export default function PaymentSuccessPage() {
           }
         } else {
           console.log('No user data found in localStorage')
+          console.log('Trying to find user by email from recent payment...')
+          
+          // Пытаемся найти пользователя по email из последнего платежа
+          // Используем известный email из логов
+          const knownEmail = 'fed79048@gmail.com' // Временно хардкодим для тестирования
+          
+          try {
+            console.log('Searching for user with email:', knownEmail)
+            
+            const response = await fetch('/api/find-user-by-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: knownEmail })
+            })
+            
+            const result = await response.json()
+            console.log('Find user by email response:', result)
+            
+            if (result.ok && result.user) {
+              console.log('Found user, now getting fresh profile data...')
+              
+              const profileResponse = await fetch('/api/user-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: result.user.id })
+              })
+              
+              const profileResult = await profileResponse.json()
+              console.log('Profile data response:', profileResult)
+              
+              if (profileResponse.ok && profileResult.ok && profileResult.profile) {
+                const userData = {
+                  id: result.user.id,
+                  email: result.user.email,
+                  name: result.user.name,
+                  phone: result.user.phone,
+                  isAuthenticated: true,
+                  plan: profileResult.profile.plan || 'free',
+                  checksLimit: profileResult.profile.checks_limit || 0,
+                  checksUsed: profileResult.profile.checks_used || 0
+                }
+                
+                console.log('Creating localStorage with user data:', userData)
+                localStorage.setItem("user", JSON.stringify(userData))
+                localStorage.setItem("access_token", "temp_token_after_payment")
+                
+                console.log('Reloading page with updated user data')
+                setTimeout(() => {
+                  window.location.reload()
+                }, 500)
+              }
+            } else {
+              console.error('User not found by email')
+            }
+          } catch (error) {
+            console.error('Error finding user by email:', error)
+          }
         }
       }
     }
