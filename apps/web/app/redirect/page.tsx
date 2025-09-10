@@ -11,19 +11,52 @@ export default function PaymentSuccessPage() {
   const { updateUserPlan, user, refreshUserData } = useAuth()
 
   useEffect(() => {
-    // Просто обновляем данные пользователя из базы
-    // Тариф уже обновлен webhook'ом
     const refreshData = async () => {
       if (user?.id) {
         console.log('Refreshing user data after payment')
         await refreshUserData()
       } else {
-        console.log('No user found, payment processed via webhook')
+        console.log('No user found, trying to refresh localStorage')
+        // Пытаемся перечитать данные из localStorage
+        const userData = localStorage.getItem("user")
+        if (userData) {
+          try {
+            const parsedUser = JSON.parse(userData)
+            console.log('Found user in localStorage:', parsedUser)
+            // Принудительно обновляем данные из базы
+            if (parsedUser.id) {
+              const response = await fetch('/api/user-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: parsedUser.id })
+              })
+              
+              const result = await response.json()
+              console.log('Force refresh API response:', result)
+              
+              if (response.ok && result.ok && result.profile) {
+                const updatedUser = {
+                  ...parsedUser,
+                  plan: result.profile.plan || 'free',
+                  checksLimit: result.profile.checks_limit || 0,
+                  checksUsed: result.profile.checks_used || 0
+                }
+                
+                console.log('Force updating localStorage with:', updatedUser)
+                localStorage.setItem("user", JSON.stringify(updatedUser))
+                // Перезагружаем страницу чтобы обновить состояние
+                window.location.reload()
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing user data:', error)
+          }
+        }
       }
     }
     
-    // Обновляем данные через 2 секунды, чтобы webhook успел отработать
-    const timer = setTimeout(refreshData, 2000)
+    // Обновляем данные через 3 секунды, чтобы webhook успел отработать
+    const timer = setTimeout(refreshData, 3000)
     
     return () => clearTimeout(timer)
   }, [user?.id, refreshUserData])
