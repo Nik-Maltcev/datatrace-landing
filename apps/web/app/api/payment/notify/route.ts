@@ -9,6 +9,8 @@ export async function POST(request: NextRequest) {
     const params = Object.fromEntries(formData.entries());
 
     console.log('PayAnyWay notification received:', params);
+    console.log('All form data keys:', Object.keys(params));
+    console.log('Full params object:', JSON.stringify(params, null, 2));
 
     // Проверяем что это успешная покупка
     if (params.action !== 'purchased') {
@@ -17,11 +19,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Получаем данные о платеже
-    const email = params.customerEmail as string;
+    let email = params.customerEmail as string;
+    // Убираем префикс mailto: если есть
+    if (email.startsWith('mailto:')) {
+      email = email.replace('mailto:', '');
+    }
+    
     const price = parseFloat(params.productPrice as string);
     
-    // Определяем тариф по цене
-    const plan = price >= 8500 ? 'professional' : 'basic';
+    // Пока просто считаем все платежи профессиональными для теста
+    const plan = 'professional';
+    
+    console.log(`Forcing plan to: ${plan} for testing`);
     const planLimits = {
       basic: 1,
       professional: 2
