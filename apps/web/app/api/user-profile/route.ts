@@ -17,12 +17,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Fetching profile for user ID:', userId);
+    
     // Получаем профиль пользователя из Supabase
     const { data, error } = await supabase
       .from('user_profiles')
       .select('plan, checks_limit, checks_used')
       .eq('id', userId)
       .single();
+      
+    console.log('Profile data from DB:', data);
+    console.log('Profile error:', error);
 
     if (error) {
       console.error('Supabase error:', error);

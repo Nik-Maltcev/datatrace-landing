@@ -62,6 +62,8 @@ export async function POST(request: NextRequest) {
           
           const updateResult = await updateResponse.json();
           
+          console.log('Update plan API response:', updateResult);
+          
           if (updateResult.ok) {
             console.log(`Plan updated successfully for user ${userResult.user.id} (${email}) to ${plan}`);
           } else {
@@ -69,6 +71,7 @@ export async function POST(request: NextRequest) {
           }
         } else {
           console.error('User not found for email:', email);
+          console.log('User search result:', userResult);
         }
       }
     } catch (error) {

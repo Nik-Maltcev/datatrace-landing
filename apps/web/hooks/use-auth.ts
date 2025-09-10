@@ -104,28 +104,36 @@ export function useAuth() {
   }
 
   const refreshUserData = async () => {
-    if (!user?.id) return
+    if (!user?.id) {
+      console.log('No user ID for refresh')
+      return
+    }
     
     try {
+      console.log('Refreshing user data for ID:', user.id)
+      
       const response = await fetch('/api/user-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id })
       })
       
-      if (response.ok) {
-        const result = await response.json()
-        if (result.ok && result.profile) {
-          const updatedUser = {
-            ...user,
-            plan: result.profile.plan,
-            checksLimit: result.profile.checks_limit,
-            checksUsed: result.profile.checks_used
-          }
-          setUser(updatedUser)
-          localStorage.setItem("user", JSON.stringify(updatedUser))
-          console.log('User data refreshed from database:', updatedUser)
+      const result = await response.json()
+      console.log('Refresh API response:', result)
+      
+      if (response.ok && result.ok && result.profile) {
+        const updatedUser = {
+          ...user,
+          plan: result.profile.plan || 'free',
+          checksLimit: result.profile.checks_limit || 0,
+          checksUsed: result.profile.checks_used || 0
         }
+        
+        console.log('Updating user with fresh data:', updatedUser)
+        setUser(updatedUser)
+        localStorage.setItem("user", JSON.stringify(updatedUser))
+      } else {
+        console.error('Failed to refresh user data:', result)
       }
     } catch (error) {
       console.error('Failed to refresh user data:', error)
