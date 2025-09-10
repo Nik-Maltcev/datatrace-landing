@@ -91,21 +91,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create profile
-    if (data.user) {
-      await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: data.user.id,
-          email: data.user.email,
-          name: name.trim(),
-          phone: phone.trim(),
-          plan: 'free',
-          checks_used: 0,
-          checks_limit: 0,
-          created_at: new Date().toISOString()
-        });
-    }
+    // Profile will be created automatically by Supabase trigger
 
     return NextResponse.json({
       ok: true,
