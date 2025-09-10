@@ -85,9 +85,15 @@ export default function PaymentSuccessPage() {
           console.log('No user data found in localStorage')
           console.log('Trying to find user by email from recent payment...')
           
+          // Очищаем localStorage от старых данных
+          localStorage.removeItem('user')
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          console.log('Cleared old localStorage data')
+          
           // Пытаемся найти пользователя по email из последнего платежа
           // Используем известный email из логов
-          const knownEmail = 'fed79048@gmail.com' // Временно хардкодим для тестирования
+          const knownEmail = 'tomas-carter@yandex.ru' // Обновлен на актуальный email из логов
           
           try {
             console.log('Searching for user with email:', knownEmail)
