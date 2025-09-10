@@ -12,11 +12,15 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     const refreshData = async () => {
-      if (user?.id) {
-        console.log('Refreshing user data after payment')
+      // Получаем актуальные данные пользователя
+      const currentUserData = localStorage.getItem("user")
+      const currentUser = currentUserData ? JSON.parse(currentUserData) : null
+      
+      if (currentUser?.id) {
+        console.log('User found in localStorage, refreshing data for:', currentUser.id)
         await refreshUserData()
       } else {
-        console.log('No user found, trying to refresh localStorage')
+        console.log('No user found in localStorage, trying to create session')
         
         // Проверяем что есть в localStorage
         const userData = localStorage.getItem("user")
@@ -146,7 +150,7 @@ export default function PaymentSuccessPage() {
     const timer = setTimeout(refreshData, 3000)
     
     return () => clearTimeout(timer)
-  }, [user?.id, refreshUserData])
+  }, []) // Убираем зависимости чтобы избежать зацикливания
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
