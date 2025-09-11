@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let query = supabase.from('profiles').select('*');
+    let query = supabase.from('user_profiles').select('*');
     
     if (userId) {
       query = query.eq('id', userId);

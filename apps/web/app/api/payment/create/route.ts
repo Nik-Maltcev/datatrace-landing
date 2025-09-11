@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       transactionId,
       description: `Оплата тарифа ${plan.toUpperCase()} - DataTrace`,
       subscriberId: userEmail,
-      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/redirect?plan=${plan}`,
       failUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`
     };
 

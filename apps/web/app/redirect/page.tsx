@@ -12,17 +12,34 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     const refreshUserData = async () => {
-      // Получаем email из URL параметров PayAnyWay или из текущего пользователя
+      // Сначала ждем немного, чтобы webhook успел обработаться
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Получаем email из URL параметров PayAnyWay
       const urlParams = new URLSearchParams(window.location.search)
       const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
-      const emailFromUrl = subscriberId ? decodeURIComponent(subscriberId) : null
-      const email = emailFromUrl || user?.email
+      let email = null
       
-      if (!email) return
+      if (subscriberId) {
+        email = decodeURIComponent(subscriberId)
+      } else {
+        // Если нет MNT_SUBSCRIBER_ID, пробуем получить из текущего пользователя
+        email = user?.email
+      }
+      
+      console.log('Email for profile refresh:', email)
+      console.log('All URL params:', Object.fromEntries(urlParams.entries()))
+      
+      if (!email) {
+        console.log('No email found for profile refresh')
+        return
+      }
       
       try {
         const response = await fetch(`/api/user-profile?email=${encodeURIComponent(email)}`)
         const data = await response.json()
+        
+        console.log('Profile API response:', data)
         
         if (data.ok && data.profile) {
           const updatedUser = {
@@ -36,7 +53,10 @@ export default function PaymentSuccessPage() {
             checksLimit: data.profile.checksLimit
           }
           
+          console.log('Updating user data:', updatedUser)
           login(updatedUser, 'temp_token', '')
+        } else {
+          console.error('Failed to get profile:', data.error)
         }
       } catch (error) {
         console.error('Failed to refresh user data:', error)
@@ -44,7 +64,7 @@ export default function PaymentSuccessPage() {
     }
     
     refreshUserData()
-  }, [login])
+  }, [login, user?.email])
 
 
   return (
