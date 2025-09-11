@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
 
+    console.log('Find user by email request:', email);
+
     if (!email) {
       return NextResponse.json(
         { ok: false, error: { message: 'Missing email' } },
@@ -24,6 +26,8 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .single();
 
+    console.log('User search result:', { data, error });
+
     if (error) {
       console.error('Supabase error:', error);
       return NextResponse.json(
@@ -32,9 +36,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Возвращаем пользователя с правильным ID (приоритет user_id, потом id)
+    const userId = data.user_id || data.id;
+    console.log('Returning user with ID:', userId);
+
     return NextResponse.json({
       ok: true,
-      user: data
+      user: {
+        ...data,
+        id: userId // Убеждаемся, что ID корректный
+      }
     });
 
   } catch (error) {
