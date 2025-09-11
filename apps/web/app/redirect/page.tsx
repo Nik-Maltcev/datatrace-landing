@@ -77,14 +77,23 @@ export default function PaymentSuccessPage() {
           console.log('Updating user data:', updatedUser)
           login(updatedUser, 'temp_token', '')
           
+          // Также обновляем localStorage напрямую для гарантии
+          localStorage.setItem('user', JSON.stringify(updatedUser))
+          
+          // Отправляем событие для обновления других вкладок
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'user',
+            newValue: JSON.stringify(updatedUser)
+          }))
+          
           setStatus('success')
-          setMessage('Платеж успешно обработан!')
+          setMessage('Платеж успешно обработан! Можете закрыть эту вкладку и вернуться к основной.')
           setIsLoading(false)
           
-          // Перенаправляем в дашборд через 2 секунды
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 2000)
+          // Не перенаправляем автоматически, пусть пользователь сам закроет вкладку
+          // setTimeout(() => {
+          //   window.location.href = '/dashboard'
+          // }, 2000)
         } else {
           console.error('Failed to get updated profile:', data)
           setStatus('error')
@@ -144,14 +153,21 @@ export default function PaymentSuccessPage() {
                   🎉 Поздравляем! Ваш тариф активирован и готов к использованию.
                 </p>
                 <p className="text-sm text-gray-500">
-                  Перенаправляем в личный кабинет...
+                  Можете закрыть эту вкладку и вернуться к основной, ваш тариф уже обновлен.
                 </p>
               </div>
               
+              <Button 
+                onClick={() => window.close()} 
+                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white text-lg py-6 rounded-xl shadow-lg transform hover:scale-105 transition-all"
+              >
+                <Zap className="h-5 w-5 mr-2" />
+                Закрыть вкладку
+              </Button>
+              
               <a href="/dashboard" target="_blank" rel="noopener noreferrer">
-                <Button className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white text-lg py-6 rounded-xl shadow-lg transform hover:scale-105 transition-all">
-                  <Zap className="h-5 w-5 mr-2" />
-                  Перейти в кабинет
+                <Button variant="outline" className="w-full border-gray-300 text-gray-600 hover:bg-gray-50">
+                  Открыть дашборд в новой вкладке
                 </Button>
               </a>
             </>

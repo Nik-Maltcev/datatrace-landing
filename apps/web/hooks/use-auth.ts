@@ -20,6 +20,26 @@ export function useAuth() {
 
   useEffect(() => {
     checkAuthStatus()
+    
+    // Добавляем слушатель для обновлений данных пользователя из других вкладок
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user' && e.newValue) {
+        try {
+          const updatedUser = JSON.parse(e.newValue)
+          console.log('User data updated from another tab:', updatedUser)
+          setUser(updatedUser)
+          setIsAuthenticated(updatedUser.isAuthenticated)
+        } catch (error) {
+          console.error('Error parsing updated user data:', error)
+        }
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
   }, [])
 
   const checkAuthStatus = () => {
