@@ -72,6 +72,12 @@ export default function PaymentSuccessPage() {
           // Также обновляем localStorage напрямую для гарантии
           localStorage.setItem('user', JSON.stringify(updatedUser))
           
+          // Отправляем сигнал всем вкладкам о том, что нужно обновить данные
+          localStorage.setItem('refresh_user_data', 'true')
+          setTimeout(() => {
+            localStorage.removeItem('refresh_user_data')
+          }, 1000)
+          
           setStatus('success')
           setMessage('Платеж успешно обработан! Ваш тариф обновлен.')
           setIsLoading(false)

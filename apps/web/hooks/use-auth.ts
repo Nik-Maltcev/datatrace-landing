@@ -33,6 +33,28 @@ export function useAuth() {
           console.error('Error parsing updated user data:', error)
         }
       }
+      
+      // Обрабатываем команду обновления данных
+      if (e.key === 'refresh_user_data' && e.newValue === 'true') {
+        console.log('Refresh command received from another tab')
+        // Передадим обработку в другой useEffect, где refreshUserData уже доступна
+        setUser(prevUser => {
+          if (prevUser?.id) {
+            // Используем setTimeout чтобы вызвать refreshUserData асинхронно
+            setTimeout(() => {
+              const userData = localStorage.getItem("user")
+              if (userData) {
+                const currentUser = JSON.parse(userData)
+                if (currentUser?.id) {
+                  // Здесь вызовем refreshUserData через отдельный механизм
+                  window.dispatchEvent(new CustomEvent('refreshUserData'))
+                }
+              }
+            }, 500)
+          }
+          return prevUser
+        })
+      }
     }
     
     window.addEventListener('storage', handleStorageChange)
@@ -163,6 +185,17 @@ export function useAuth() {
       console.error('Failed to refresh user data:', error)
     }
   }
+
+  // Отдельный useEffect для обработки событий обновления данных
+  useEffect(() => {
+    const handleRefreshEvent = () => {
+      console.log('Custom refresh event received')
+      refreshUserData()
+    }
+    
+    window.addEventListener('refreshUserData', handleRefreshEvent)
+    return () => window.removeEventListener('refreshUserData', handleRefreshEvent)
+  }, [refreshUserData])
 
   return {
     user,
