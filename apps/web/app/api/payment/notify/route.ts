@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
     const transactionId = params.MNT_TRANSACTION_ID as string;
     
     console.log('PayAnyWay params:', params);
-    console.log('Extracted transaction ID:', transactionId);
+    console.log('Available keys:', Object.keys(params));
+    console.log('MNT_TRANSACTION_ID from params:', transactionId);
     console.log('Extracted email:', email);
     
     // Убираем префикс mailto: если есть
@@ -37,13 +38,17 @@ export async function POST(request: NextRequest) {
       email = email.replace('mailto:', '');
     }
     
+    // Если нет MNT_TRANSACTION_ID, создаем уникальный ID на основе email и времени
+    const finalTransactionId = transactionId || `payment_${email}_${Date.now()}`;
+    console.log('Final transaction ID:', finalTransactionId);
+    
     const price = parseFloat(params.productPrice as string);
     
     // Пока просто считаем все платежи профессиональными для теста
     const plan = 'professional';
     
     console.log(`Forcing plan to: ${plan} for testing`);
-    console.log(`Transaction ID: ${transactionId}`);
+    console.log(`Transaction ID: ${finalTransactionId}`);
     const planLimits = {
       basic: 1,
       professional: 2
@@ -51,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const checksLimit = planLimits[plan as keyof typeof planLimits];
     
-    console.log(`Processing payment: ${price} RUB for ${email}, plan: ${plan}, transactionId: ${transactionId}`);
+    console.log(`Processing payment: ${price} RUB for ${email}, plan: ${plan}, transactionId: ${finalTransactionId}`);
 
     // Обновляем тариф пользователя в базе данных
     try {
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest) {
             const { error: transactionError } = await supabase
               .from('payment_transactions')
               .upsert({
-                transaction_id: transactionId,
+                transaction_id: finalTransactionId,
                 user_id: userResult.user.id,
                 email: email,
                 plan: plan,

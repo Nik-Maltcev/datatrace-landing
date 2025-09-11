@@ -16,90 +16,81 @@ export default function PaymentSuccessPage() {
   useEffect(() => {
     const checkPaymentStatus = async () => {
       try {
-        // Получаем transactionId из URL (PayAnyWay передает MNT_TRANSACTION_ID)
-        const urlParams = new URLSearchParams(window.location.search)
-        const transactionId = urlParams.get('MNT_TRANSACTION_ID') || urlParams.get('transactionId')
+        console.log('Starting payment status check...')
         
-        console.log('All URL params:', Object.fromEntries(urlParams.entries()))
-        console.log('Transaction ID from URL:', transactionId)
+        // Ждем 5 секунд, чтобы webhook точно обработался
+        await new Promise(resolve => setTimeout(resolve, 5000))
         
-        if (!transactionId) {
-          console.log('No transaction ID found in URL params')
+        // Получаем email пользователя из localStorage
+        const userDataString = localStorage.getItem('user')
+        let userEmail = null
+        
+        if (userDataString) {
+          try {
+            const userData = JSON.parse(userDataString)
+            userEmail = userData.email
+            console.log('User email from localStorage:', userEmail)
+          } catch (e) {
+            console.error('Error parsing user data:', e)
+          }
+        }
+        
+        // Если нет email в localStorage, получаем из URL
+        if (!userEmail) {
+          const urlParams = new URLSearchParams(window.location.search)
+          const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
+          if (subscriberId) {
+            userEmail = decodeURIComponent(subscriberId)
+            console.log('User email from URL:', userEmail)
+          }
+        }
+        
+        if (!userEmail) {
+          console.log('No user email found')
           setStatus('error')
-          setMessage('Ошибка: не найден ID транзакции в URL')
+          setMessage('Ошибка: не найден email пользователя')
           setIsLoading(false)
           return
         }
 
-        // Проверяем статус платежа каждые 2 секунды, максимум 30 секунд
-        let attempts = 0
-        const maxAttempts = 15
-
-        const checkStatus = async (): Promise<void> => {
-          attempts++
-          console.log(`Checking payment status, attempt ${attempts}/${maxAttempts}`)
-          
-          try {
-            const response = await fetch(`/api/check-payment?transactionId=${transactionId}`)
-            const data = await response.json()
-            
-            console.log('Payment status response:', data)
-            
-            if (data.ok && data.status === 'completed' && data.profile) {
-              // Платеж успешен, обновляем данные пользователя
-              const updatedUser = {
-                id: data.profile.id,
-                email: data.profile.email,
-                name: data.profile.name,
-                phone: data.profile.phone,
-                isAuthenticated: true,
-                plan: data.profile.plan,
-                checksUsed: data.profile.checksUsed,
-                checksLimit: data.profile.checksLimit
-              }
-              
-              console.log('Updating user data:', updatedUser)
-              login(updatedUser, 'temp_token', '')
-              
-              setStatus('success')
-              setMessage('Платеж успешно обработан!')
-              setIsLoading(false)
-              
-              // Перенаправляем в дашборд через 2 секунды
-              setTimeout(() => {
-                window.location.href = '/dashboard'
-              }, 2000)
-              
-              return
-            }
-            
-            if (attempts >= maxAttempts) {
-              setStatus('error')
-              setMessage('Время ожидания истекло. Попробуйте обновить страницу.')
-              setIsLoading(false)
-              return
-            }
-            
-            // Ждем 2 секунды и проверяем снова
-            setTimeout(checkStatus, 2000)
-            
-          } catch (error) {
-            console.error('Error checking payment status:', error)
-            
-            if (attempts >= maxAttempts) {
-              setStatus('error')
-              setMessage('Ошибка при проверке статуса платежа')
-              setIsLoading(false)
-              return
-            }
-            
-            // Повторяем через 2 секунды
-            setTimeout(checkStatus, 2000)
-          }
-        }
+        // Проверяем обновленные данные пользователя
+        console.log('Fetching updated user profile for:', userEmail)
         
-        // Начинаем проверку через 3 секунды (чтобы webhook успел обработаться)
-        setTimeout(checkStatus, 3000)
+        const response = await fetch(`/api/user-profile?email=${encodeURIComponent(userEmail)}`)
+        const data = await response.json()
+        
+        console.log('User profile response:', data)
+        
+        if (data.ok && data.profile) {
+          // Обновляем данные пользователя
+          const updatedUser = {
+            id: data.profile.id,
+            email: data.profile.email,
+            name: data.profile.name,
+            phone: data.profile.phone,
+            isAuthenticated: true,
+            plan: data.profile.plan,
+            checksUsed: data.profile.checksUsed,
+            checksLimit: data.profile.checksLimit
+          }
+          
+          console.log('Updating user data:', updatedUser)
+          login(updatedUser, 'temp_token', '')
+          
+          setStatus('success')
+          setMessage('Платеж успешно обработан!')
+          setIsLoading(false)
+          
+          // Перенаправляем в дашборд через 2 секунды
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 2000)
+        } else {
+          console.error('Failed to get updated profile:', data)
+          setStatus('error')
+          setMessage('Ошибка при получении данных профиля')
+          setIsLoading(false)
+        }
         
       } catch (error) {
         console.error('Error in payment check:', error)
