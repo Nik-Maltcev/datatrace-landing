@@ -8,163 +8,43 @@ import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function PaymentSuccessPage() {
-  const { updateUserPlan, user, refreshUserData } = useAuth()
+  const { login, user } = useAuth()
 
   useEffect(() => {
-    const refreshData = async () => {
-      // Получаем актуальные данные пользователя
-      const currentUserData = localStorage.getItem("user")
-      const currentUser = currentUserData ? JSON.parse(currentUserData) : null
+    const refreshUserData = async () => {
+      if (!user?.email) return
       
-      if (currentUser?.id) {
-        console.log('User found in localStorage, refreshing data for:', currentUser.id)
-        await refreshUserData()
-      } else {
-        console.log('No user found in localStorage, trying to create session')
+      try {
+        // Получаем актуальные данные пользователя из базы
+        const response = await fetch(`/api/user-profile?email=${encodeURIComponent(user.email)}`)
+        const data = await response.json()
         
-        // Проверяем что есть в localStorage
-        const userData = localStorage.getItem("user")
-        console.log('localStorage user data:', userData)
-        
-        if (userData) {
-          try {
-            const parsedUser = JSON.parse(userData)
-            console.log('Parsed user from localStorage:', parsedUser)
-            
-            if (parsedUser.id) {
-              console.log('Making API call to refresh user profile for ID:', parsedUser.id)
-              
-              const response = await fetch('/api/user-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: parsedUser.id })
-              })
-              
-              console.log('API response status:', response.status)
-              const result = await response.json()
-              console.log('API response data:', result)
-              console.log('Profile object details:', result.profile)
-              console.log('Plan from profile:', result.profile?.plan)
-              console.log('Checks limit from profile:', result.profile?.checks_limit)
-              console.log('Current user before update:', parsedUser)
-              
-              if (response.ok && result.ok && result.profile) {
-                const updatedUser = {
-                  ...parsedUser,
-                  plan: result.profile.plan || 'free',
-                  checksLimit: result.profile.checks_limit || 0,
-                  checksUsed: result.profile.checks_used || 0
-                }
-                
-                console.log('Updating localStorage with new data:', updatedUser)
-                console.log('Plan in updatedUser:', updatedUser.plan)
-                console.log('checksLimit in updatedUser:', updatedUser.checksLimit)
-                localStorage.setItem("user", JSON.stringify(updatedUser))
-                
-                // Проверяем что сохранилось
-                const savedData = localStorage.getItem("user")
-                console.log('Data saved to localStorage:', savedData)
-                const parsedSaved = JSON.parse(savedData || '{}')
-                console.log('Parsed saved data:', parsedSaved)
-                console.log('Plan in saved data:', parsedSaved.plan)
-                
-                console.log('Reloading page to update state')
-                setTimeout(() => {
-                  window.location.reload()
-                }, 500)
-              } else {
-                console.error('API call failed or returned invalid data')
-              }
-            } else {
-              console.error('No user ID found in localStorage data')
-            }
-          } catch (error) {
-            console.error('Error parsing user data from localStorage:', error)
-          }
-        } else {
-          console.log('No user data found in localStorage')
-          console.log('Trying to find user by email from recent payment...')
-          
-          // Очищаем localStorage от старых данных
-          localStorage.removeItem('user')
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          console.log('Cleared old localStorage data')
-          
-          // Получаем email из URL параметров PayAnyWay
-          const urlParams = new URLSearchParams(window.location.search)
-          const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
-          const knownEmail = subscriberId ? decodeURIComponent(subscriberId) : null
-          
-          console.log('Email from PayAnyWay params:', knownEmail)
-          
-          if (!knownEmail) {
-            console.error('No email found in PayAnyWay parameters')
-            return
+        if (data.ok && data.profile) {
+          // Обновляем данные пользователя
+          const updatedUser = {
+            id: data.profile.id,
+            email: data.profile.email,
+            name: data.profile.name,
+            phone: data.profile.phone,
+            isAuthenticated: true,
+            plan: data.profile.plan,
+            checksUsed: data.profile.checksUsed,
+            checksLimit: data.profile.checksLimit
           }
           
-          try {
-            console.log('Searching for user with email:', knownEmail)
-            
-            const response = await fetch('/api/find-user-by-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: knownEmail })
-            })
-            
-            const result = await response.json()
-            console.log('Find user by email response:', result)
-            
-            if (result.ok && result.user) {
-              console.log('Found user, now getting fresh profile data...')
-              
-              const profileResponse = await fetch('/api/user-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: result.user.user_id })
-              })
-              
-              const profileResult = await profileResponse.json()
-              console.log('Profile data response:', profileResult)
-              console.log('Profile object from API:', profileResult.profile)
-              console.log('Plan value:', profileResult.profile?.plan)
-              
-              if (profileResponse.ok && profileResult.ok && profileResult.profile) {
-                const userData = {
-                  id: result.user.user_id,
-                  email: result.user.email,
-                  name: result.user.name,
-                  phone: result.user.phone,
-                  isAuthenticated: true,
-                  plan: profileResult.profile.plan || 'free',
-                  checksLimit: profileResult.profile.checks_limit || 0,
-                  checksUsed: profileResult.profile.checks_used || 0
-                }
-                
-                console.log('Creating localStorage with user data:', userData)
-                localStorage.setItem("user", JSON.stringify(userData))
-                localStorage.setItem("access_token", "temp_token_after_payment")
-                
-                console.log('Reloading page with updated user data')
-                setTimeout(() => {
-                  window.location.reload()
-                }, 500)
-              }
-            } else {
-              console.error('User not found by email')
-            }
-          } catch (error) {
-            console.error('Error finding user by email:', error)
-          }
+          const accessToken = localStorage.getItem('access_token') || ''
+          const refreshToken = localStorage.getItem('refresh_token')
+          
+          login(updatedUser, accessToken, refreshToken)
         }
+      } catch (error) {
+        console.error('Failed to refresh user data:', error)
       }
     }
     
-    // Обновляем данные через 3 секунды, чтобы webhook успел отработать
-    const timer = setTimeout(refreshData, 3000)
-    
-    return () => clearTimeout(timer)
-  }, []) // Убираем зависимости чтобы избежать зацикливания
+    refreshUserData()
+  }, [login, user?.email])
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">

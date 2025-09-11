@@ -1,51 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '@/lib/config/supabase-api';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await request.json();
-
-    if (!userId) {
+    const supabase = getSupabaseClient();
+    
+    if (!supabase) {
       return NextResponse.json(
-        { ok: false, error: { message: 'Missing userId' } },
+        { ok: false, error: { message: 'Database not configured' } },
+        { status: 503 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const email = searchParams.get('email');
+
+    if (!userId && !email) {
+      return NextResponse.json(
+        { ok: false, error: { message: 'UserId or email is required' } },
         { status: 400 }
       );
     }
 
-    console.log('Fetching profile for user ID:', userId);
+    let query = supabase.from('profiles').select('*');
     
-    // Получаем профиль пользователя из Supabase
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('plan, checks_limit, checks_used')
-      .eq('user_id', userId)
-      .single();
-      
-    console.log('Profile data from DB:', data);
-    console.log('Profile error:', error);
+    if (userId) {
+      query = query.eq('id', userId);
+    } else if (email) {
+      query = query.eq('email', email);
+    }
+
+    const { data: profile, error } = await query.single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('Profile fetch error:', error);
       return NextResponse.json(
-        { ok: false, error: { message: 'Failed to fetch profile', details: error } },
-        { status: 500 }
+        { ok: false, error: { message: 'Profile not found' } },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      ok: true,
-      profile: data
+    return NextResponse.json({ 
+      ok: true, 
+      profile: {
+        id: profile.id,
+        email: profile.email,
+        name: profile.name,
+        phone: profile.phone,
+        plan: profile.plan || 'free',
+        checksUsed: profile.checks_used || 0,
+        checksLimit: profile.checks_limit || 0
+      }
     });
 
   } catch (error) {
-    console.error('User profile error:', error);
+    console.error('User profile endpoint error:', error);
     return NextResponse.json(
-      { ok: false, error: { message: 'Failed to fetch user profile', details: error } },
+      { ok: false, error: { message: 'Internal server error' } },
       { status: 500 }
     );
   }
