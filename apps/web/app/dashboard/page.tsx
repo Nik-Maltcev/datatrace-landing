@@ -28,7 +28,8 @@ import {
   ArrowRight,
   Clock,
   Server,
-  Globe
+  Globe,
+  RefreshCw
 } from "lucide-react"
 
 import Link from "next/link"
@@ -64,7 +65,7 @@ interface PhoneCheckResponse {
 }
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, isLoading: isAuthLoading, logout, updateUserChecks } = useAuth()
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout, updateUserChecks, refreshUserData } = useAuth()
   const [isPaymentLoading, setIsPaymentLoading] = useState(false)
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
@@ -281,6 +282,23 @@ export default function DashboardPage() {
     router.push("/search")
   }
 
+  // Обновляем данные при фокусе на вкладку
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Window focused, refreshing user data...')
+      refreshUserData()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [refreshUserData])
+
+  // Функция принудительного обновления данных
+  const handleRefreshData = () => {
+    console.log('Manual refresh user data...')
+    refreshUserData()
+  }
+
   const handlePayment = async (plan: 'basic' | 'professional') => {
     console.log('Payment button clicked:', plan)
     if (!user) {
@@ -406,6 +424,15 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-900">{user.name}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRefreshData}
+                  className="text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-full"
+                  title="Обновить данные"
+                >
+                  <RefreshCw className="h-5 w-5" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
