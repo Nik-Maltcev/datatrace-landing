@@ -12,15 +12,19 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     const refreshUserData = async () => {
-      if (!user?.email) return
+      // Получаем email из URL параметров PayAnyWay или из текущего пользователя
+      const urlParams = new URLSearchParams(window.location.search)
+      const subscriberId = urlParams.get('MNT_SUBSCRIBER_ID')
+      const emailFromUrl = subscriberId ? decodeURIComponent(subscriberId) : null
+      const email = emailFromUrl || user?.email
+      
+      if (!email) return
       
       try {
-        // Получаем актуальные данные пользователя из базы
-        const response = await fetch(`/api/user-profile?email=${encodeURIComponent(user.email)}`)
+        const response = await fetch(`/api/user-profile?email=${encodeURIComponent(email)}`)
         const data = await response.json()
         
         if (data.ok && data.profile) {
-          // Обновляем данные пользователя
           const updatedUser = {
             id: data.profile.id,
             email: data.profile.email,
@@ -32,10 +36,7 @@ export default function PaymentSuccessPage() {
             checksLimit: data.profile.checksLimit
           }
           
-          const accessToken = localStorage.getItem('access_token') || ''
-          const refreshToken = localStorage.getItem('refresh_token')
-          
-          login(updatedUser, accessToken, refreshToken)
+          login(updatedUser, 'temp_token', '')
         }
       } catch (error) {
         console.error('Failed to refresh user data:', error)
@@ -43,7 +44,7 @@ export default function PaymentSuccessPage() {
     }
     
     refreshUserData()
-  }, [login, user?.email])
+  }, [login])
 
 
   return (
