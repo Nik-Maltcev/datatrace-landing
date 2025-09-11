@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
     let email = params.customerEmail as string;
     const transactionId = params.MNT_TRANSACTION_ID as string;
     
+    console.log('PayAnyWay params:', params);
+    console.log('Extracted transaction ID:', transactionId);
+    console.log('Extracted email:', email);
+    
     // Убираем префикс mailto: если есть
     if (email.startsWith('mailto:')) {
       email = email.replace('mailto:', '');

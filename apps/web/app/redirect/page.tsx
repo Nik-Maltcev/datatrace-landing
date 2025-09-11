@@ -16,16 +16,17 @@ export default function PaymentSuccessPage() {
   useEffect(() => {
     const checkPaymentStatus = async () => {
       try {
-        // Получаем transactionId из URL
+        // Получаем transactionId из URL (PayAnyWay передает MNT_TRANSACTION_ID)
         const urlParams = new URLSearchParams(window.location.search)
-        const transactionId = urlParams.get('transactionId')
+        const transactionId = urlParams.get('MNT_TRANSACTION_ID') || urlParams.get('transactionId')
         
+        console.log('All URL params:', Object.fromEntries(urlParams.entries()))
         console.log('Transaction ID from URL:', transactionId)
         
         if (!transactionId) {
-          console.log('No transaction ID found')
+          console.log('No transaction ID found in URL params')
           setStatus('error')
-          setMessage('Ошибка: не найден ID транзакции')
+          setMessage('Ошибка: не найден ID транзакции в URL')
           setIsLoading(false)
           return
         }
