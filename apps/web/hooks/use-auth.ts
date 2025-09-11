@@ -104,18 +104,22 @@ export function useAuth() {
   }
 
   const refreshUserData = async () => {
-    if (!user?.id) {
+    // Получаем актуальные данные из localStorage
+    const userData = localStorage.getItem("user")
+    const currentUser = userData ? JSON.parse(userData) : user
+    
+    if (!currentUser?.id) {
       console.log('No user ID for refresh')
       return
     }
     
     try {
-      console.log('Refreshing user data for ID:', user.id)
+      console.log('Refreshing user data for ID:', currentUser.id)
       
       const response = await fetch('/api/user-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
+        body: JSON.stringify({ userId: currentUser.id })
       })
       
       const result = await response.json()
@@ -123,7 +127,7 @@ export function useAuth() {
       
       if (response.ok && result.ok && result.profile) {
         const updatedUser = {
-          ...user,
+          ...currentUser,
           plan: result.profile.plan || 'free',
           checksLimit: result.profile.checks_limit || 0,
           checksUsed: result.profile.checks_used || 0
