@@ -16,10 +16,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { plan, userId, userEmail } = body;
 
+    console.log('Payment creation request:', { plan, userId, userEmail });
+
     // Определяем сумму по тарифу
     const planPrices = {
       basic: 500,
-      professional: 8500
+      professional: 10 // Сделаем 10 рублей для тестирования
     };
 
     const amount = planPrices[plan as keyof typeof planPrices];
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
       transactionId,
       description: `Оплата тарифа ${plan.toUpperCase()} - DataTrace`,
       subscriberId: userEmail,
-      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/redirect?plan=${plan}`,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/redirect?transactionId=${transactionId}&plan=${plan}`,
       failUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`
     };
 

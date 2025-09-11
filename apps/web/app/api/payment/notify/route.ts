@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 const PayAnyWayService = require('@/lib/services/PayAnyWayService');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +26,8 @@ export async function POST(request: NextRequest) {
 
     // Получаем данные о платеже
     let email = params.customerEmail as string;
+    const transactionId = params.MNT_TRANSACTION_ID as string;
+    
     // Убираем префикс mailto: если есть
     if (email.startsWith('mailto:')) {
       email = email.replace('mailto:', '');
@@ -31,6 +39,7 @@ export async function POST(request: NextRequest) {
     const plan = 'professional';
     
     console.log(`Forcing plan to: ${plan} for testing`);
+    console.log(`Transaction ID: ${transactionId}`);
     const planLimits = {
       basic: 1,
       professional: 2
@@ -38,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const checksLimit = planLimits[plan as keyof typeof planLimits];
     
-    console.log(`Processing payment: ${price} RUB for ${email}, plan: ${plan}`);
+    console.log(`Processing payment: ${price} RUB for ${email}, plan: ${plan}, transactionId: ${transactionId}`);
 
     // Обновляем тариф пользователя в базе данных
     try {
@@ -66,6 +75,25 @@ export async function POST(request: NextRequest) {
           
           if (updateResult.ok) {
             console.log(`Plan updated successfully for user ${userResult.user.id} (${email}) to ${plan}`);
+            
+            // Сохраняем информацию о транзакции
+            const { error: transactionError } = await supabase
+              .from('payment_transactions')
+              .upsert({
+                transaction_id: transactionId,
+                user_id: userResult.user.id,
+                email: email,
+                plan: plan,
+                amount: price,
+                status: 'completed',
+                processed_at: new Date().toISOString()
+              });
+              
+            if (transactionError) {
+              console.error('Error saving transaction:', transactionError);
+            } else {
+              console.log('Transaction saved successfully');
+            }
           } else {
             console.error('Failed to update plan:', updateResult.error);
           }
