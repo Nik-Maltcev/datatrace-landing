@@ -1,6 +1,6 @@
 // API configuration for DataTrace
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
-  'https://datatrace-landing-production.up.railway.app';
+  (typeof window !== 'undefined' ? window.location.origin : '');
 
 // Debug logging
 if (typeof window !== 'undefined') {
@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
 
 // Helper function for API requests
 export async function apiRequest(url: string, options: RequestInit = {}) {
-  const defaultHeaders = {
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 

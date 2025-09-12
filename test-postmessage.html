@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PostMessage Test</title>
+</head>
+<body>
+    <h1>PostMessage Test</h1>
+    <button id="openPopup">Open Test Popup</button>
+    <button id="sendMessage">Send Test Message</button>
+    <div id="messages"></div>
+    
+    <script>
+        let popup = null;
+        
+        // Listen for messages
+        window.addEventListener('message', function(event) {
+            console.log('Received message:', event.data);
+            document.getElementById('messages').innerHTML += 
+                '<p>Received: ' + JSON.stringify(event.data) + '</p>';
+        });
+        
+        document.getElementById('openPopup').onclick = function() {
+            popup = window.open('about:blank', 'testPopup', 'width=500,height=400');
+            popup.document.write(`
+                <html>
+                <head><title>Test Popup</title></head>
+                <body>
+                    <h2>Test Popup Window</h2>
+                    <button onclick="sendToParent()">Send Message to Parent</button>
+                    <script>
+                        function sendToParent() {
+                            if (window.opener) {
+                                window.opener.postMessage({
+                                    type: 'PAYMENT_SUCCESS',
+                                    user: {
+                                        plan: 'professional',
+                                        email: 'test@example.com'
+                                    }
+                                }, '*');
+                                console.log('Message sent to parent');
+                            }
+                        }
+                    </script>
+                </body>
+                </html>
+            `);
+        };
+        
+        document.getElementById('sendMessage').onclick = function() {
+            if (popup && !popup.closed) {
+                popup.postMessage({type: 'TEST', data: 'Hello from parent'}, '*');
+            }
+        };
+    </script>
+</body>
+</html>

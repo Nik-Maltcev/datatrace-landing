@@ -15,10 +15,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const email = searchParams.get('email');
+    const userIdParam = searchParams.get('user_id'); // Добавляем поддержку user_id
 
-    if (!userId && !email) {
+    if (!userId && !email && !userIdParam) {
       return NextResponse.json(
-        { ok: false, error: { message: 'UserId or email is required' } },
+        { ok: false, error: { message: 'UserId, user_id, or email is required' } },
         { status: 400 }
       );
     }
@@ -27,6 +28,8 @@ export async function GET(request: NextRequest) {
     
     if (userId) {
       query = query.eq('id', userId);
+    } else if (userIdParam) {
+      query = query.eq('user_id', userIdParam);
     } else if (email) {
       query = query.eq('email', email);
     }
