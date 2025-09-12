@@ -79,7 +79,7 @@ export default function DashboardPage() {
       })
       refreshUserData()
     }
-  }, [user?.email, isAuthLoading, refreshUserData])
+  }, [user?.email, isAuthLoading])
   const [isPaymentLoading, setIsPaymentLoading] = useState(false)
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
@@ -305,7 +305,7 @@ export default function DashboardPage() {
     
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [refreshUserData])
+  }, [])
 
   // Слушаем сообщения от popup окон (платежные страницы)
   useEffect(() => {
@@ -334,7 +334,7 @@ export default function DashboardPage() {
     
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [refreshUserData])
+  }, [])
 
   // Функция принудительного обновления данных
   const handleRefreshData = () => {

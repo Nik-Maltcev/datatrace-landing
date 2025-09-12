@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface User {
   id: string
@@ -145,7 +145,7 @@ export function useAuth() {
     }
   }
 
-  const refreshUserData = async () => {
+  const refreshUserData = useCallback(async () => {
     // Получаем актуальные данные из localStorage
     const userData = localStorage.getItem("user")
     const currentUser = userData ? JSON.parse(userData) : user
@@ -183,7 +183,7 @@ export function useAuth() {
     } catch (error) {
       console.error('Failed to refresh user data:', error)
     }
-  }
+  }, [])
 
   // Отдельный useEffect для обработки событий обновления данных
   useEffect(() => {
@@ -194,7 +194,7 @@ export function useAuth() {
     
     window.addEventListener('refreshUserData', handleRefreshEvent)
     return () => window.removeEventListener('refreshUserData', handleRefreshEvent)
-  }, [refreshUserData])
+  }, [])
 
   return {
     user,
