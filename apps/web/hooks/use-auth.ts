@@ -150,18 +150,17 @@ export function useAuth() {
     const userData = localStorage.getItem("user")
     const currentUser = userData ? JSON.parse(userData) : user
     
-    if (!currentUser?.id) {
-      console.log('No user ID for refresh')
+    if (!currentUser?.email) {
+      console.log('No user email for refresh')
       return
     }
     
     try {
-      console.log('Refreshing user data for ID:', currentUser.id)
+      console.log('Refreshing user data for email:', currentUser.email)
       
-      const response = await fetch('/api/user-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id })
+      // Используем GET метод с email параметром
+      const response = await fetch(`/api/user-profile?email=${encodeURIComponent(currentUser.email)}`, {
+        method: 'GET'
       })
       
       const result = await response.json()

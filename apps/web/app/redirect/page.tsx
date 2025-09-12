@@ -78,6 +78,23 @@ export default function PaymentSuccessPage() {
             localStorage.removeItem('refresh_user_data')
           }, 1000)
           
+          // Отправляем сообщение родительскому окну (если это popup)
+          if (window.opener) {
+            console.log('Sending postMessage to opener window')
+            window.opener.postMessage({
+              type: 'PAYMENT_SUCCESS',
+              user: updatedUser
+            }, '*')
+          }
+          
+          // Также отправляем сообщение всем окнам на том же домене
+          if (window.parent !== window) {
+            window.parent.postMessage({
+              type: 'PAYMENT_SUCCESS', 
+              user: updatedUser
+            }, '*')
+          }
+          
           setStatus('success')
           setMessage('Платеж успешно обработан! Ваш тариф обновлен.')
           setIsLoading(false)

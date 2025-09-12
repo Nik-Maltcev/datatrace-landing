@@ -66,6 +66,14 @@ interface PhoneCheckResponse {
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout, updateUserChecks, refreshUserData } = useAuth()
+
+  // Принудительно обновляем данные при загрузке компонента
+  useEffect(() => {
+    if (user?.email && !isAuthLoading) {
+      console.log('Dashboard loaded, refreshing user data to ensure latest info')
+      refreshUserData()
+    }
+  }, [user?.email, isAuthLoading, refreshUserData])
   const [isPaymentLoading, setIsPaymentLoading] = useState(false)
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
@@ -291,6 +299,35 @@ export default function DashboardPage() {
     
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
+  }, [refreshUserData])
+
+  // Слушаем сообщения от popup окон (платежные страницы)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      console.log('Received postMessage:', event.data)
+      
+      if (event.data?.type === 'PAYMENT_SUCCESS') {
+        console.log('Payment success message received, updating user data')
+        
+        if (event.data.user) {
+          // Обновляем данные пользователя из сообщения
+          const updatedUser = event.data.user
+          console.log('Updating user from postMessage:', updatedUser)
+          
+          // Обновляем localStorage
+          localStorage.setItem('user', JSON.stringify(updatedUser))
+          
+          // Принудительно обновляем данные из API для гарантии
+          setTimeout(() => {
+            console.log('Refreshing user data after postMessage')
+            refreshUserData()
+          }, 1000)
+        }
+      }
+    }
+    
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
   }, [refreshUserData])
 
   // Функция принудительного обновления данных
