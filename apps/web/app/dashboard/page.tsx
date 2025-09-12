@@ -28,8 +28,8 @@ import {
   ArrowRight,
   Clock,
   Server,
-  Globe,
-  RefreshCw
+  RefreshCw,
+  Globe
 } from "lucide-react"
 
 import Link from "next/link"
@@ -576,26 +576,37 @@ export default function DashboardPage() {
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-light text-gray-900">Ваш тариф</h2>
-            <div className="flex items-center space-x-2">
-              <Zap className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
-                {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 
-                 user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
-              </span>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshData}
+                className="text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Обновить
+              </Button>
+              <div className="flex items-center space-x-2">
+                <Zap className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                  {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 
+                   user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
+                </span>
+              </div>
             </div>
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="bg-white bg-opacity-70 rounded-xl p-4">
               <p className="text-sm text-gray-600 mb-1">Лимит проверок</p>
-              <p className="text-xl font-bold text-gray-900">{user.checksLimit || 1}</p>
+              <p className="text-xl font-bold text-gray-900">{user.checksLimit ?? 0}</p>
             </div>
             <div className="bg-white bg-opacity-70 rounded-xl p-4">
               <p className="text-sm text-gray-600 mb-1">Использовано</p>
-              <p className="text-xl font-bold text-gray-900">{user.checksUsed || 0}</p>
+              <p className="text-xl font-bold text-gray-900">{user.checksUsed ?? 0}</p>
             </div>
             <div className="bg-white bg-opacity-70 rounded-xl p-4">
               <p className="text-sm text-gray-600 mb-1">Осталось</p>
-              <p className="text-xl font-bold text-green-600">{(user.checksLimit || 1) - (user.checksUsed || 0)}</p>
+              <p className="text-xl font-bold text-green-600">{(user.checksLimit ?? 0) - (user.checksUsed ?? 0)}</p>
             </div>
           </div>
         </div>
