@@ -165,16 +165,28 @@ export function useAuth() {
       
       const result = await response.json()
       console.log('Refresh API response:', result)
+      console.log('Profile data from API:', {
+        plan: result.profile?.plan,
+        checks_limit: result.profile?.checks_limit,
+        checks_used: result.profile?.checks_used,
+        checksLimit: result.profile?.checksLimit,
+        checksUsed: result.profile?.checksUsed
+      })
       
       if (response.ok && result.ok && result.profile) {
         const updatedUser = {
           ...currentUser,
           plan: result.profile.plan || 'free',
-          checksLimit: result.profile.checks_limit || 0,
-          checksUsed: result.profile.checks_used || 0
+          checksLimit: result.profile.checksLimit || result.profile.checks_limit || 0,
+          checksUsed: result.profile.checksUsed || result.profile.checks_used || 0
         }
         
         console.log('Updating user with fresh data:', updatedUser)
+        console.log('Final user state:', {
+          plan: updatedUser.plan,
+          checksLimit: updatedUser.checksLimit,
+          checksUsed: updatedUser.checksUsed
+        })
         setUser(updatedUser)
         localStorage.setItem("user", JSON.stringify(updatedUser))
       } else {
