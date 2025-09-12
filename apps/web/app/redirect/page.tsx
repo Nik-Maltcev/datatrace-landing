@@ -161,7 +161,7 @@ export default function PaymentSuccessPage() {
                 </p>
               </div>
               
-              <a href="/dashboard">
+              <a href="/dashboard" target="_blank" rel="noopener noreferrer">
                 <Button className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white text-lg py-6 rounded-xl shadow-lg transform hover:scale-105 transition-all">
                   <Zap className="h-5 w-5 mr-2" />
                   Перейти в дашборд
