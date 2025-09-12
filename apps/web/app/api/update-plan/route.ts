@@ -21,11 +21,12 @@ export async function POST(request: NextRequest) {
 
     // Определяем лимиты по тарифу
     const planLimits = {
+      free: 0,
       basic: 1,
       professional: 2
     };
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits] || 1;
+    const checksLimit = planLimits[plan as keyof typeof planLimits] || 0;
 
     console.log(`Updating user ${userId} to plan ${plan} with limit ${checksLimit}`);
 

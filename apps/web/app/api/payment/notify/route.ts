@@ -50,11 +50,12 @@ export async function POST(request: NextRequest) {
     console.log(`Forcing plan to: ${plan} for testing`);
     console.log(`Transaction ID: ${finalTransactionId}`);
     const planLimits = {
+      free: 0,
       basic: 1,
       professional: 2
     };
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits];
+    const checksLimit = planLimits[plan as keyof typeof planLimits] || 0;
     
     console.log(`Processing payment: ${price} RUB for ${email}, plan: ${plan}, transactionId: ${finalTransactionId}`);
 

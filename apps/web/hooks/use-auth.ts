@@ -98,11 +98,18 @@ export function useAuth() {
 
   const login = (userData: User, accessToken: string, refreshToken?: string) => {
     // Устанавливаем базовый план и лимиты по умолчанию
+    const planLimits = {
+      free: 0,
+      basic: 1,
+      professional: 2
+    }
+    
+    const plan = userData.plan || 'free'
     const userWithDefaults = {
       ...userData,
-      plan: userData.plan || 'free',
+      plan,
       checksUsed: userData.checksUsed || 0,
-      checksLimit: userData.checksLimit || (userData.plan === 'professional' ? 2 : userData.plan === 'basic' ? 1 : 0)
+      checksLimit: userData.checksLimit || planLimits[plan as keyof typeof planLimits] || 0
     }
     
     setUser(userWithDefaults)
