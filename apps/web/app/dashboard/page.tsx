@@ -511,7 +511,7 @@ export default function DashboardPage() {
                  user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
               </span>
             </div>
-            <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
+            <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed ?? 0}/{user.checksLimit ?? 0}</p>
             <p className="text-sm text-gray-600">Проверок использовано</p>
             
             {/* Debug info - временно для диагностики */}
