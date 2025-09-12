@@ -9,12 +9,20 @@ import Link from "next/link"
 function AuthCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
+  const [processed, setProcessed] = useState(false) // Флаг для предотвращения повторной обработки
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
+    // Предотвращаем повторную обработку
+    if (processed) {
+      return
+    }
+
     const handleAuthCallback = async () => {
       try {
+        setProcessed(true) // Устанавливаем флаг сразу
+        
         // Supabase отправляет токены в hash fragments, а не в query parameters
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const access_token = hashParams.get('access_token') || searchParams.get('access_token')
@@ -58,12 +66,14 @@ function AuthCallbackContent() {
             setStatus('success')
             setMessage('Email успешно подтвержден! Перенаправляем в личный кабинет...')
             
-            // Очищаем URL от токенов
-            window.history.replaceState({}, document.title, window.location.pathname)
+            // Очищаем URL от токенов через небольшую задержку
+            setTimeout(() => {
+              window.history.replaceState({}, document.title, window.location.pathname)
+            }, 500)
             
             setTimeout(() => {
               router.push('/dashboard')
-            }, 1000)
+            }, 1500)
             return
           } catch (decodeError) {
             console.error('Error decoding token:', decodeError)
@@ -117,7 +127,7 @@ function AuthCallbackContent() {
     }
 
     handleAuthCallback()
-  }, [searchParams, router])
+  }, [searchParams, router, processed])
 
   return (
     <Card className="w-full max-w-md">
