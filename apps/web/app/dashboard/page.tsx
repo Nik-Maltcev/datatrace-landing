@@ -71,6 +71,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user?.email && !isAuthLoading) {
       console.log('Dashboard loaded, refreshing user data to ensure latest info')
+      console.log('Current user data:', {
+        plan: user.plan,
+        checksUsed: user.checksUsed, 
+        checksLimit: user.checksLimit,
+        email: user.email
+      })
       refreshUserData()
     }
   }, [user?.email, isAuthLoading, refreshUserData])
@@ -507,6 +513,14 @@ export default function DashboardPage() {
             </div>
             <p className="text-2xl font-light mb-1 text-gray-900">{user.checksUsed || 0}/{user.checksLimit || 1}</p>
             <p className="text-sm text-gray-600">Проверок использовано</p>
+            
+            {/* Debug info - временно для диагностики */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-2 p-2 bg-yellow-50 rounded text-xs text-yellow-800">
+                DEBUG: checksUsed={user.checksUsed}, checksLimit={user.checksLimit}, plan={user.plan}
+              </div>
+            )}
+            
             <div className="mt-3 bg-white bg-opacity-50 rounded-lg p-2">
               <p className="text-xs text-blue-700 font-medium">
                 Тариф: {user.plan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : user.plan === 'basic' ? 'БАЗОВЫЙ' : 'БЕСПЛАТНЫЙ'}
