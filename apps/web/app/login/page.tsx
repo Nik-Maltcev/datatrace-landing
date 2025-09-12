@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,12 +10,15 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { API_ENDPOINTS, apiRequest } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const captcha = useRef<HCaptcha>(null)
   const { isAuthenticated, isLoading: isCheckingAuth, login } = useAuth()
   const router = useRouter()
 
@@ -36,13 +39,22 @@ export default function LoginPage() {
       setIsLoading(false)
       return
     }
+
+    if (!captchaToken) {
+      alert("Пожалуйста, подтвердите, что вы не робот")
+      setIsLoading(false)
+      return
+    }
     
     try {
       const { response, data: result } = await apiRequest(API_ENDPOINTS.AUTH.SIGNIN, {
         method: 'POST',
         body: JSON.stringify({
           email: email.trim(),
-          password: password
+          password: password,
+          options: {
+            captchaToken
+          }
         })
       })
 
@@ -69,10 +81,20 @@ export default function LoginPage() {
         router.push("/dashboard")
       } else {
         alert(result.error?.message || "Ошибка входа")
+        // Сбрасываем captcha при ошибке
+        if (captcha.current) {
+          captcha.current.resetCaptcha()
+        }
+        setCaptchaToken(null)
       }
     } catch (error) {
       console.error('Login error:', error)
       alert("Ошибка соединения с сервером")
+      // Сбрасываем captcha при ошибке
+      if (captcha.current) {
+        captcha.current.resetCaptcha()
+      }
+      setCaptchaToken(null)
     } finally {
       setIsLoading(false)
     }
@@ -142,10 +164,28 @@ export default function LoginPage() {
                 </Button>
               </div>
             </div>
+            
+            {/* hCaptcha */}
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={captcha}
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY || ""}
+                onVerify={(token) => {
+                  setCaptchaToken(token)
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null)
+                }}
+                onError={() => {
+                  setCaptchaToken(null)
+                }}
+              />
+            </div>
+            
             <Button 
               type="submit" 
               className="w-full bg-black text-white hover:bg-gray-800"
-              disabled={isLoading}
+              disabled={isLoading || !captchaToken}
             >
               {isLoading ? "Вход..." : "Войти"}
             </Button>

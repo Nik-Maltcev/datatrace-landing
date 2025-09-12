@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, captchaToken } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -28,6 +28,20 @@ export async function POST(request: NextRequest) {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Email and password are required'
+          }
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate captcha token
+    if (!captchaToken) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Please complete the captcha verification'
           }
         },
         { status: 400 }

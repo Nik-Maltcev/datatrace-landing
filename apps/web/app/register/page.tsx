@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +10,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { API_ENDPOINTS, apiRequest } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -22,6 +23,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const captcha = useRef<HCaptcha>(null)
   const { isAuthenticated, isLoading: isCheckingAuth } = useAuth()
   const router = useRouter()
 
@@ -55,6 +58,12 @@ export default function RegisterPage() {
       return
     }
 
+    if (!captchaToken) {
+      alert("Пожалуйста, подтвердите, что вы не робот")
+      setIsLoading(false)
+      return
+    }
+
     // Валидация номера телефона
     const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
     if (!phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
@@ -70,7 +79,10 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           name: formData.name,
-          phone: formData.phone
+          phone: formData.phone,
+          options: {
+            captchaToken
+          }
         })
       })
 
@@ -85,10 +97,20 @@ export default function RegisterPage() {
         router.push("/login")
       } else {
         alert(result.error?.message || "Ошибка регистрации")
+        // Сбрасываем captcha при ошибке
+        if (captcha.current) {
+          captcha.current.resetCaptcha()
+        }
+        setCaptchaToken(null)
       }
     } catch (error) {
       console.error('Registration error:', error)
       alert("Ошибка соединения с сервером")
+      // Сбрасываем captcha при ошибке
+      if (captcha.current) {
+        captcha.current.resetCaptcha()
+      }
+      setCaptchaToken(null)
     } finally {
       setIsLoading(false)
     }
@@ -219,10 +241,28 @@ export default function RegisterPage() {
                 </Link>
               </label>
             </div>
+            
+            {/* hCaptcha */}
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={captcha}
+                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITEKEY || ""}
+                onVerify={(token) => {
+                  setCaptchaToken(token)
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null)
+                }}
+                onError={() => {
+                  setCaptchaToken(null)
+                }}
+              />
+            </div>
+            
             <Button 
               type="submit" 
               className="w-full bg-black text-white hover:bg-gray-800"
-              disabled={isLoading || !agreedToTerms}
+              disabled={isLoading || !agreedToTerms || !captchaToken}
             >
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}
             </Button>
