@@ -52,9 +52,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: email.trim(),
           password: password,
-          options: {
-            captchaToken
-          }
+          captchaToken
         })
       })
 

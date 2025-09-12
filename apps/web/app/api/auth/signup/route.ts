@@ -1,33 +1,4 @@
-import { NextRequest    const body = await request.json();
-    const { email, password, name, phone, captchaToken, ...additionalData } = body;
-
-    // Validation
-    if (!email || !password || !name || !phone) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Email, password, name, and phone are required'
-          }
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate captcha token
-    if (!captchaToken) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Please complete the captcha verification'
-          }
-        },
-        { status: 400 }
-      );
-    } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/config/supabase-api';
 
 export async function POST(request: NextRequest) {
