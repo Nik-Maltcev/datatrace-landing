@@ -65,15 +65,19 @@ async function searchITP(query: string, field: string) {
   }
 }
 
-async function searchDyxless(query: string) {
+async function searchDyxless(query: string, type: string = 'standart') {
   const attempt = async () => {
-    console.log(`🔍 Dyxless: Searching for query: ${query}`)
+    console.log(`🔍 Dyxless: Searching for query: ${query} with type: ${type}`)
     console.log(`🔗 Dyxless: URL: ${DYXLESS_BASE}/query`)
     console.log(`🔑 Dyxless: Token: ${TOKENS.DYXLESS.slice(0, 10)}...`)
     
     const res = await axios.post(
       DYXLESS_BASE + '/query',
-      { query, token: TOKENS.DYXLESS },
+      { 
+        token: TOKENS.DYXLESS,
+        query: query,
+        type: type // 'standart' (2₽) or 'telegram' (10₽)
+      },
       {
         headers: {
           'Content-Type': 'application/json',
@@ -88,16 +92,24 @@ async function searchDyxless(query: string) {
     const data = res.data || {}
     console.log(`📋 Dyxless: Response data:`, JSON.stringify(data, null, 2))
     
-    const hasData = data.data && Array.isArray(data.data) && data.data.length > 0
-    const isSuccess = data.status === true || data.status === 'success'
+    // Handle error responses based on new API format
+    if (!data.status) {
+      const errorMessage = data.message || 'Unknown error from Dyxless API';
+      throw new Error(`Dyxless API Error: ${errorMessage}`);
+    }
     
-    console.log(`✅ Dyxless: Status check - data.status: ${data.status}, hasData: ${hasData}, isSuccess: ${isSuccess}`)
+    const items = data.data || [];
+    const count = data.counts || items.length || 0;
+    const hasData = items.length > 0;
+    const isSuccess = data.status === true;
+    
+    console.log(`✅ Dyxless: Status check - data.status: ${data.status}, hasData: ${hasData}, count: ${count}, isSuccess: ${isSuccess}`)
     
     return { 
       name: 'Dyxless', 
       ok: isSuccess && hasData, 
-      meta: { count: data.counts, status: data.status }, 
-      items: data.data || [] 
+      meta: { count: count, status: data.status }, 
+      items: items 
     }
   }
 
@@ -228,7 +240,9 @@ export async function POST(request: NextRequest) {
     const finalQuery = phone.replace(/[\s\-\(\)]/g, '') // Нормализуем номер
     
     for (const [idx, fn] of [searchITP, searchDyxless, searchLeakOsint, searchUsersbox, searchVektor].entries()) {
-      const result = idx === 0 ? await fn(finalQuery, 'phone') : await fn(finalQuery)
+      const result = idx === 0 ? await fn(finalQuery, 'phone') : 
+                     idx === 1 ? await fn(finalQuery, 'standart') : // Dyxless with standart type
+                     await fn(finalQuery)
       steps.push(result)
     }
 

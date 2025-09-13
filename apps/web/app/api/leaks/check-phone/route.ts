@@ -86,11 +86,15 @@ async function searchITP(query: string, field: string) {
   }
 }
 
-async function searchDyxless(query: string) {
+async function searchDyxless(query: string, type: string = 'standart') {
   const attempt = async () => {
     const res = await axios.post(
       DYXLESS_BASE + '/query',
-      { query, token: TOKENS.DYXLESS },
+      { 
+        token: TOKENS.DYXLESS,
+        query: query,
+        type: type // 'standart' (2₽) or 'telegram' (10₽)
+      },
       {
         headers: {
           'Content-Type': 'application/json',
@@ -107,13 +111,21 @@ async function searchDyxless(query: string) {
     }
     
     const data = res.data || {};
+    
+    // Handle error responses based on new API format
+    if (!data.status) {
+      const errorMessage = data.message || 'Unknown error from Dyxless API';
+      throw new Error(`Dyxless API Error: ${errorMessage}`);
+    }
+    
     const items = data.data || [];
+    const count = data.counts || items.length || 0;
     
     return { 
       name: 'Dyxless', 
-      ok: !!data.status, 
-      found: items.length > 0,
-      count: items.length,
+      ok: data.status === true, 
+      found: count > 0,
+      count: count,
       data: items,
       items: items
     };
@@ -121,12 +133,25 @@ async function searchDyxless(query: string) {
 
   try {
     return await attempt();
-  } catch (e1) {
+  } catch (e1: any) {
+    // Handle specific error cases from new API
+    if (e1.response?.status === 401) {
+      return { name: 'Dyxless', ok: false, found: false, count: 0, error: 'Неверный токен Dyxless API' };
+    }
+    if (e1.response?.status === 403) {
+      const errorData = e1.response.data || {};
+      return { name: 'Dyxless', ok: false, found: false, count: 0, error: errorData.message || 'Недостаточно средств на балансе' };
+    }
+    if (e1.response?.status === 404) {
+      return { name: 'Dyxless', ok: true, found: false, count: 0, data: [], items: [] };
+    }
+    
+    // Retry once after 600ms for other errors
     await new Promise((r) => setTimeout(r, 600));
     try {
       return await attempt();
     } catch (e2: any) {
-      return { name: 'Dyxless', ok: false, found: false, count: 0, error: e2.message };
+      return { name: 'Dyxless', ok: false, found: false, count: 0, error: e2.message || 'Connection timeout' };
     }
   }
 }
@@ -252,7 +277,7 @@ export async function POST(request: NextRequest) {
     // Search all sources in parallel
     const searchPromises = [
       searchITP(normalizedPhone, 'phone'),
-      searchDyxless(normalizedPhone),
+      searchDyxless(normalizedPhone, 'standart'), // Use 'standart' type for phone searches (2₽)
       searchLeakOsint(normalizedPhone),
       searchUsersbox(normalizedPhone),
       searchVektor(normalizedPhone)

@@ -65,7 +65,7 @@ async function searchITP(query: string, field: string) {
   }
 }
 
-async function searchDyxless(query: string) {
+async function searchDyxless(query: string, type: string = 'standart') {
   const attempt = async () => {
     console.log(`🔍 Dyxless: Searching for query: ${query}`)
     console.log(`🔗 Dyxless: URL: ${DYXLESS_BASE}/query`)
@@ -227,7 +227,9 @@ export async function POST(request: NextRequest) {
     const steps = []
     
     for (const [idx, fn] of [searchITP, searchDyxless, searchLeakOsint, searchUsersbox, searchVektor].entries()) {
-      const result = idx === 0 ? await fn(email, 'email') : await fn(email)
+      const result = idx === 0 ? await fn(email, 'email') : 
+                     idx === 1 ? await fn(email, 'standart') : // Dyxless with standart type
+                     await fn(email)
       steps.push(result)
     }
 

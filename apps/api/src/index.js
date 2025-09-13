@@ -162,11 +162,15 @@ async function searchITP(query, field) {
   }
 }
 
-async function searchDyxless(query) {
+async function searchDyxless(query, type = 'standart') {
   const attempt = async () => {
     const res = await axios.post(
       DYXLESS_BASE + '/query',
-      { query, token: TOKENS.DYXLESS },
+      { 
+        token: TOKENS.DYXLESS,
+        query: query,
+        type: type // 'standart' (2₽) or 'telegram' (10₽)
+      },
       {
         headers: {
           'Content-Type': 'application/json',
@@ -181,14 +185,42 @@ async function searchDyxless(query) {
     if (ct && ct.includes('text/html') && typeof res.data === 'string') {
       throw { response: { status: res.status || 521, data: 'Cloudflare HTML error page' } };
     }
+    
     const data = res.data || {};
-    return { name: 'Dyxless', ok: !!data.status, meta: { count: data.counts }, items: data.data };
+    
+    // Handle error responses based on new API format
+    if (!data.status) {
+      const errorMessage = data.message || 'Unknown error from Dyxless API';
+      throw new Error(`Dyxless API Error: ${errorMessage}`);
+    }
+    
+    const items = data.data || [];
+    const count = data.counts || items.length || 0;
+    
+    return { 
+      name: 'Dyxless', 
+      ok: data.status === true, 
+      meta: { count: count }, 
+      items: items
+    };
   };
 
   try {
     return await attempt();
   } catch (e1) {
-    // quick retry on 52x / network errors
+    // Handle specific error cases from new API
+    if (e1.response?.status === 401) {
+      return { name: 'Dyxless', ok: false, error: 'Неверный токен Dyxless API' };
+    }
+    if (e1.response?.status === 403) {
+      const errorData = e1.response?.data || {};
+      return { name: 'Dyxless', ok: false, error: errorData.message || 'Недостаточно средств на балансе' };
+    }
+    if (e1.response?.status === 404) {
+      return { name: 'Dyxless', ok: true, meta: { count: 0 }, items: [] };
+    }
+    
+    // Retry once after 600ms for other errors
     await new Promise((r) => setTimeout(r, 600));
     try {
       return await attempt();
