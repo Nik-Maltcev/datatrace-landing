@@ -136,15 +136,21 @@ async function searchLeakOsint(query: string) {
     
     const data = res.data || {};
     
+    // Debug logging to understand the structure
+    console.log('🔍 LeakOsint response data:', JSON.stringify(data, null, 2));
+    
     if (data && (data['Error code'] || data.Error || data.error)) {
       return { name: 'LeakOsint', ok: false, found: false, count: 0, error: data };
     }
     
     // Check for "No results found" message - this means no leaks were found
     const responseText = JSON.stringify(data).toLowerCase();
+    console.log('🔍 LeakOsint response text (for checking):', responseText.substring(0, 200));
+    
     if (responseText.includes('no results found') || 
         responseText.includes('не найдено результатов') ||
         responseText.includes('нет результатов')) {
+      console.log('✅ LeakOsint: Detected "No results found" in response');
       return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
     }
     
@@ -152,22 +158,40 @@ async function searchLeakOsint(query: string) {
     const items = Object.keys(list).map((k) => ({ db: k, info: list[k]?.InfoLeak, data: list[k]?.Data }));
     
     if (!Object.keys(list).length) {
+      console.log('✅ LeakOsint: No List property or empty List');
       return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
     }
     
-    // Filter out items that contain "No results found" in their data
+    // More detailed filtering - check inside InfoLeak and Data fields
     const validItems = items.filter(item => {
       const itemText = JSON.stringify(item).toLowerCase();
-      return !itemText.includes('no results found') && 
-             !itemText.includes('не найдено результатов') &&
-             !itemText.includes('нет результатов');
+      const hasNoResults = itemText.includes('no results found') || 
+                          itemText.includes('не найдено результатов') ||
+                          itemText.includes('нет результатов') ||
+                          itemText.includes('по вашему запросу не найдено результатов');
+      
+      if (hasNoResults) {
+        console.log(`🚫 LeakOsint: Filtering out item with "No results": ${item.db}`);
+        return false;
+      }
+      
+      // Also check if Data field is empty or contains only info messages
+      if (item.data && Array.isArray(item.data) && item.data.length === 0) {
+        console.log(`🚫 LeakOsint: Filtering out item with empty data array: ${item.db}`);
+        return false;
+      }
+      
+      return true;
     });
     
     if (validItems.length === 0) {
+      console.log('✅ LeakOsint: All items filtered out as empty/no results');
       return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
     }
     
     const normalizedItems = LeakOsintNormalizer.normalizeRecords(validItems);
+    
+    console.log(`📊 LeakOsint: Found ${normalizedItems.length} valid records after filtering ${items.length - validItems.length} empty items`);
     
     return { 
       name: 'LeakOsint', 
