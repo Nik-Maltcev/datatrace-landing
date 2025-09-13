@@ -13,6 +13,24 @@ class LeakOsintNormalizer {
       return null;
     }
 
+    // Проверяем на "No results found" сообщения
+    const recordText = JSON.stringify(record).toLowerCase();
+    const hasNoResults = recordText.includes('no results found') || 
+                        recordText.includes('не найдено результатов') ||
+                        recordText.includes('нет результатов') ||
+                        recordText.includes('по вашему запросу не найдено результатов');
+    
+    if (hasNoResults) {
+      console.log(`🚫 LeakOsintNormalizer: Skipping record with "No results": ${record.db}`);
+      return null;
+    }
+
+    // Проверяем если data пустой или содержит только пустые элементы
+    if (record.data && Array.isArray(record.data) && record.data.length === 0) {
+      console.log(`🚫 LeakOsintNormalizer: Skipping record with empty data: ${record.db}`);
+      return null;
+    }
+
     const normalized = {};
 
     // Основная информация о базе данных
@@ -21,7 +39,13 @@ class LeakOsintNormalizer {
 
     // Если есть массив данных, обрабатываем каждый элемент
     if (record.data && Array.isArray(record.data)) {
-      normalized.records = record.data.map(dataItem => this.normalizeDataItem(dataItem));
+      normalized.records = record.data.map(dataItem => this.normalizeDataItem(dataItem)).filter(item => item !== null);
+      
+      // Если после фильтрации ничего не осталось, возвращаем null
+      if (normalized.records.length === 0) {
+        console.log(`🚫 LeakOsintNormalizer: No valid data items after filtering: ${record.db}`);
+        return null;
+      }
     }
 
     return normalized;
@@ -118,10 +142,12 @@ class LeakOsintNormalizer {
     }
 
     const allRecords = [];
+    let processedSources = 0;
     
     records.forEach(record => {
       const normalized = this.normalizeRecord(record);
       if (normalized && normalized.records && Array.isArray(normalized.records)) {
+        processedSources++;
         // Добавляем информацию о базе данных к каждой записи
         normalized.records.forEach(item => {
           if (item) {
@@ -133,7 +159,7 @@ class LeakOsintNormalizer {
       }
     });
 
-    console.log(`LeakOsintNormalizer: Processed ${records.length} sources, extracted ${allRecords.length} records`);
+    console.log(`LeakOsintNormalizer: Processed ${processedSources} valid sources from ${records.length} total, extracted ${allRecords.length} records`);
     
     return allRecords;
   }
