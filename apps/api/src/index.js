@@ -252,17 +252,40 @@ async function searchLeakOsint(query) {
     if (data && (data['Error code'] || data.Error || data.error)) {
       return { name: 'LeakOsint', ok: false, error: data };
     }
+    
+    // Check for "No results found" message - this means no leaks were found
+    const responseText = JSON.stringify(data).toLowerCase();
+    if (responseText.includes('no results found') || 
+        responseText.includes('не найдено результатов') ||
+        responseText.includes('нет результатов')) {
+      console.log(`✅ LeakOsint: No results found - returning empty result`);
+      return { name: 'LeakOsint', ok: true, items: [] };
+    }
+    
     // Normal path
     const list = data.List || {};
     const items = Object.keys(list).map((k) => ({ db: k, info: list[k]?.InfoLeak, data: list[k]?.Data }));
     if (!Object.keys(list).length) {
-      return { name: 'LeakOsint', ok: false, error: { message: 'Нет данных или неизвестный формат ответа', preview: data } };
+      return { name: 'LeakOsint', ok: true, items: [] };
+    }
+    
+    // Filter out items that contain "No results found" in their data
+    const validItems = items.filter(item => {
+      const itemText = JSON.stringify(item).toLowerCase();
+      return !itemText.includes('no results found') && 
+             !itemText.includes('не найдено результатов') &&
+             !itemText.includes('нет результатов');
+    });
+    
+    if (validItems.length === 0) {
+      console.log(`✅ LeakOsint: All items filtered out as "No results found"`);
+      return { name: 'LeakOsint', ok: true, items: [] };
     }
     
     // Нормализуем данные LeakOsint
-    const normalizedItems = LeakOsintNormalizer.normalizeRecords(items);
+    const normalizedItems = LeakOsintNormalizer.normalizeRecords(validItems);
     
-    console.log(`📊 LeakOsint normalized ${normalizedItems.length} records from ${items.length} original records`);
+    console.log(`📊 LeakOsint normalized ${normalizedItems.length} records from ${validItems.length} valid items (filtered from ${items.length} total)`);
     
     return { name: 'LeakOsint', ok: true, items: normalizedItems };
   } catch (err) {

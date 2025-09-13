@@ -173,14 +173,34 @@ async function searchLeakOsint(query: string) {
       return { name: 'LeakOsint', ok: false, found: false, count: 0, error: data };
     }
     
+    // Check for "No results found" message - this means no leaks were found
+    const responseText = JSON.stringify(data).toLowerCase();
+    if (responseText.includes('no results found') || 
+        responseText.includes('не найдено результатов') ||
+        responseText.includes('нет результатов')) {
+      return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
+    }
+    
     const list = data.List || {};
     const items = Object.keys(list).map((k) => ({ db: k, info: list[k]?.InfoLeak, data: list[k]?.Data }));
     
     if (!Object.keys(list).length) {
-      return { name: 'LeakOsint', ok: false, found: false, count: 0, error: { message: 'Нет данных или неизвестный формат ответа' } };
+      return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
     }
     
-    const normalizedItems = LeakOsintNormalizer.normalizeRecords(items);
+    // Filter out items that contain "No results found" in their data
+    const validItems = items.filter(item => {
+      const itemText = JSON.stringify(item).toLowerCase();
+      return !itemText.includes('no results found') && 
+             !itemText.includes('не найдено результатов') &&
+             !itemText.includes('нет результатов');
+    });
+    
+    if (validItems.length === 0) {
+      return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
+    }
+    
+    const normalizedItems = LeakOsintNormalizer.normalizeRecords(validItems);
     
     return { 
       name: 'LeakOsint', 
