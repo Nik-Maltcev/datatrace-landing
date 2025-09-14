@@ -390,6 +390,57 @@ export default function DataTraceLanding() {
         </div>
       </section>
 
+      {/* Contacts Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Остались вопросы?</h2>
+          <p className="text-xl text-gray-600 mb-12">
+            Мы готовы помочь! Свяжитесь с нами любым удобным способом
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center justify-center mb-6">
+                <div className="bg-black text-white p-4 rounded-full">
+                  <Mail className="h-8 w-8" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Напишите нам</h3>
+              <p className="text-gray-600 mb-6">
+                Отправьте ваш вопрос на почту поддержки, и мы ответим в течение 24 часов
+              </p>
+              <a
+                href="mailto:support@datatrace.tech"
+                className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                support@datatrace.tech
+              </a>
+            </div>
+
+            <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center justify-center mb-6">
+                <div className="bg-black text-white p-4 rounded-full">
+                  <MessageSquare className="h-8 w-8" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Telegram поддержка</h3>
+              <p className="text-gray-600 mb-6">
+                Свяжитесь с нами в Telegram для быстрого получения ответа на ваши вопросы
+              </p>
+              <a
+                href="https://t.me/datatrace_support_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Написать в Telegram
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-black text-white py-16">
         <div className="container mx-auto px-4">
