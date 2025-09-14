@@ -192,7 +192,14 @@ class DyxlessNormalizer {
    * @returns {Object} нормализованный ответ
    */
   static normalizeResponse(response) {
+    console.log('🔧 DyxlessNormalizer.normalizeResponse called with:', {
+      hasResponse: !!response,
+      name: response?.name,
+      itemsCount: response?.items?.length || 0
+    });
+
     if (!response || typeof response !== 'object') {
+      console.log('⚠️ DyxlessNormalizer: Invalid response, returning as-is');
       return response;
     }
 
@@ -200,8 +207,11 @@ class DyxlessNormalizer {
 
     // Нормализуем массив items если он есть
     if (normalized.items && Array.isArray(normalized.items)) {
+      console.log(`🔄 DyxlessNormalizer: Starting normalization of ${normalized.items.length} items`);
       normalized.items = this.normalizeItems(normalized.items);
-      console.log(`DyxlessNormalizer: Normalized ${normalized.items.length} Dyxless records`);
+      console.log(`✅ DyxlessNormalizer: Normalized ${normalized.items.length} Dyxless records`);
+    } else {
+      console.log('⚠️ DyxlessNormalizer: No items array found in response');
     }
 
     return normalized;

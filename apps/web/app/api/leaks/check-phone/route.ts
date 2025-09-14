@@ -132,6 +132,13 @@ async function searchDyxless(query: string, type: string = 'standart') {
       items: items
     };
     
+    console.log('🎯 About to call DyxlessNormalizer.normalizeResponse with:', {
+      itemsLength: items.length,
+      count: count,
+      normalizerExists: typeof DyxlessNormalizer !== 'undefined',
+      normalizeFuncExists: typeof DyxlessNormalizer?.normalizeResponse === 'function'
+    });
+    
     return DyxlessNormalizer.normalizeResponse(normalizedResponse);
   };
 
