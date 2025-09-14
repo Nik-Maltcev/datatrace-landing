@@ -139,7 +139,16 @@ async function searchDyxless(query: string, type: string = 'standart') {
       normalizeFuncExists: typeof DyxlessNormalizer?.normalizeResponse === 'function'
     });
     
-    return DyxlessNormalizer.normalizeResponse(normalizedResponse);
+    try {
+      const result = DyxlessNormalizer.normalizeResponse(normalizedResponse);
+      console.log('✅ DyxlessNormalizer completed successfully');
+      return result;
+    } catch (error: any) {
+      console.error('❌ DyxlessNormalizer error:', error.message);
+      console.error('📋 Stack trace:', error.stack);
+      // Fallback - return non-normalized response
+      return normalizedResponse;
+    }
   };
 
   try {

@@ -5,6 +5,7 @@ import { saveCheckResult } from '@/lib/checkHistory'
 
 // Импортируем нормализаторы
 const ITPNormalizer = require('@/lib/utils/ITPNormalizer')
+const DyxlessNormalizer = require('@/lib/utils/DyxlessNormalizer')
 const LeakOsintNormalizer = require('@/lib/utils/LeakOsintNormalizer')
 const { normalizeUsersboxData } = require('@/lib/utils/UsersboxNormalizer')
 
@@ -105,23 +106,45 @@ async function searchDyxless(query: string, type: string = 'standart') {
     
     console.log(`✅ Dyxless: Status check - data.status: ${data.status}, hasData: ${hasData}, count: ${count}, isSuccess: ${isSuccess}`)
     
-    return { 
+    // Нормализуем ответ Dyxless для красивого отображения
+    const normalizedResponse = {
       name: 'Dyxless', 
       ok: isSuccess && hasData, 
-      meta: { count: count, status: data.status }, 
-      items: items 
+      found: hasData,
+      count: count,
+      data: items,
+      items: items,
+      meta: { count: count, status: data.status }
+    };
+    
+    console.log('🎯 About to call DyxlessNormalizer.normalizeResponse with:', {
+      itemsLength: items.length,
+      count: count,
+      normalizerExists: typeof DyxlessNormalizer !== 'undefined',
+      normalizeFuncExists: typeof DyxlessNormalizer?.normalizeResponse === 'function'
+    });
+    
+    try {
+      const result = DyxlessNormalizer.normalizeResponse(normalizedResponse);
+      console.log('✅ DyxlessNormalizer completed successfully');
+      return result;
+    } catch (error: any) {
+      console.error('❌ DyxlessNormalizer error:', error.message);
+      console.error('📋 Stack trace:', error.stack);
+      // Fallback - return non-normalized response
+      return normalizedResponse;
     }
   }
 
   try {
     return await attempt()
-  } catch (e1) {
+  } catch (e1: any) {
     console.error('❌ Dyxless: First attempt failed:', e1.message)
     await new Promise((r) => setTimeout(r, 600))
     try {
       console.log('🔄 Dyxless: Retrying...')
       return await attempt()
-    } catch (e2) {
+    } catch (e2: any) {
       console.error('❌ Dyxless: Second attempt failed:', e2.message)
       return { name: 'Dyxless', ok: false, error: normalizeError(e2) }
     }
