@@ -88,6 +88,10 @@ export default function DashboardPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [showPhoneDetails, setShowPhoneDetails] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoDiscount, setPromoDiscount] = useState(0)
+  const [promoMessage, setPromoMessage] = useState('')
+  const [isCheckingPromo, setIsCheckingPromo] = useState(false)
   const [showEmailDetails, setShowEmailDetails] = useState(false)
   const [phoneCheckResponse, setPhoneCheckResponse] = useState<PhoneCheckResponse | null>(null)
   const [emailCheckResponse, setEmailCheckResponse] = useState<PhoneCheckResponse | null>(null)
@@ -336,6 +340,42 @@ export default function DashboardPage() {
   const handleRefreshData = () => {
     console.log('Manual refresh user data...')
     refreshUserData()
+  }
+
+  // Функция проверки промокода
+  const handlePromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoMessage('Введите промокод')
+      return
+    }
+
+    setIsCheckingPromo(true)
+    setPromoMessage('')
+    setPromoDiscount(0)
+
+    try {
+      // Здесь можно добавить API запрос для проверки промокода
+      // Пока делаем простую проверку
+      const validPromoCodes: { [key: string]: { discount: number; message: string } } = {
+        'SAVE10': { discount: 10, message: 'Скидка 10% применена!' },
+        'SAVE20': { discount: 20, message: 'Скидка 20% применена!' },
+        'NEWUSER': { discount: 15, message: 'Скидка для новых пользователей 15%!' },
+        'DATATRACE2025': { discount: 25, message: 'Новогодняя скидка 25%!' }
+      }
+
+      const promo = validPromoCodes[promoCode.toUpperCase()]
+      if (promo) {
+        setPromoDiscount(promo.discount)
+        setPromoMessage(promo.message)
+      } else {
+        setPromoMessage('Промокод не найден или недействителен')
+      }
+    } catch (error) {
+      console.error('Error checking promo code:', error)
+      setPromoMessage('Ошибка при проверке промокода')
+    } finally {
+      setIsCheckingPromo(false)
+    }
   }
 
   const handlePayment = async (plan: 'basic' | 'professional') => {
@@ -917,6 +957,54 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Promo Code Section */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-light text-gray-900 mb-2">Есть промокод?</h3>
+            <p className="text-gray-600 text-sm">Введите промокод для получения скидки на тарифы</p>
+          </div>
+          
+          <div className="max-w-md mx-auto">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Введите промокод"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isCheckingPromo}
+              />
+              <Button 
+                onClick={handlePromoCode}
+                disabled={isCheckingPromo || !promoCode.trim()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+              >
+                {isCheckingPromo ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Применить'
+                )}
+              </Button>
+            </div>
+            
+            {promoMessage && (
+              <div className={`mt-3 text-center text-sm ${
+                promoDiscount > 0 ? 'text-green-600' : 'text-red-500'
+              }`}>
+                {promoMessage}
+              </div>
+            )}
+            
+            {promoDiscount > 0 && (
+              <div className="mt-2 text-center">
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  Скидка {promoDiscount}% активирована
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Payment Plans */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8">
           <div className="text-center mb-6">
@@ -930,7 +1018,18 @@ export default function DashboardPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <h3 className="font-medium text-gray-900 mb-2">БАЗОВЫЙ</h3>
-              <p className="text-2xl font-bold text-gray-900 mb-2">500₽</p>
+              <div className="mb-2">
+                {promoDiscount > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg text-gray-500 line-through">500₽</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      {Math.round(500 * (1 - promoDiscount / 100))}₽
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">500₽</p>
+                )}
+              </div>
               <p className="text-sm text-gray-600 mb-4">1 проверка включена</p>
               <Button 
                 onClick={() => {
@@ -949,7 +1048,18 @@ export default function DashboardPage() {
             </div>
             <div className="bg-white border border-blue-200 rounded-xl p-4">
               <h3 className="font-medium text-gray-900 mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
-              <p className="text-2xl font-bold text-gray-900 mb-2">8 500₽</p>
+              <div className="mb-2">
+                {promoDiscount > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg text-gray-500 line-through">8 500₽</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      {Math.round(8500 * (1 - promoDiscount / 100))}₽
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">8 500₽</p>
+                )}
+              </div>
               <p className="text-sm text-gray-600 mb-4">2 проверки включены</p>
               <Button 
                 onClick={() => {
