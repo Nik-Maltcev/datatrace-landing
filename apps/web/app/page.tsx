@@ -557,24 +557,7 @@ export default function DataTraceLanding() {
           </div>
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="flex flex-col space-y-2">
-                <p className="text-gray-400 text-sm">DataTrace 2025 © Все права защищены</p>
-                <p className="text-gray-400 text-sm">
-                  Есть вопросы? Свяжитесь с нами: 
-                  <a href="mailto:support@datatrace.tech" className="text-white ml-1 hover:underline">
-                    support@datatrace.tech
-                  </a>
-                  {' '}или{' '}
-                  <a 
-                    href="https://t.me/datatrace_support_bot" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-white hover:underline"
-                  >
-                    Telegram бот поддержки
-                  </a>
-                </p>
-              </div>
+              <p className="text-gray-400 text-sm">DataTrace 2025 © Все права защищены</p>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <Link href="#" className="text-gray-400 hover:text-white text-sm">
                   Политика конфиденциальности
