@@ -12,7 +12,7 @@ const ptMono = PT_Mono({
 })
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, ArrowRight, Database } from "lucide-react"
+import { Check, ArrowRight, Database, Mail, MessageSquare } from "lucide-react"
 import Link from "next/link"
 
 function InteractiveHeroGraphic() {
@@ -479,29 +479,51 @@ export default function DataTraceLanding() {
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">ОТРАСЛИ</h4>
+              <h4 className="font-bold mb-4">КОНТАКТЫ</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Государственный сектор
-                  </Link>
+                <li className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4" />
+                  <a 
+                    href="mailto:support@datatrace.tech" 
+                    className="hover:text-white"
+                  >
+                    support@datatrace.tech
+                  </a>
                 </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Бизнес-разведка
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Электронная разведка
-                  </Link>
+                <li className="flex items-center space-x-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <a 
+                    href="https://t.me/datatrace_support_bot" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:text-white"
+                  >
+                    Telegram Support
+                  </a>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">DataTrace 2025 © Все права защищены</p>
+              <div className="flex flex-col space-y-2">
+                <p className="text-gray-400 text-sm">DataTrace 2025 © Все права защищены</p>
+                <p className="text-gray-400 text-sm">
+                  Есть вопросы? Свяжитесь с нами: 
+                  <a href="mailto:support@datatrace.tech" className="text-white ml-1 hover:underline">
+                    support@datatrace.tech
+                  </a>
+                  {' '}или{' '}
+                  <a 
+                    href="https://t.me/datatrace_support_bot" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white hover:underline"
+                  >
+                    Telegram бот поддержки
+                  </a>
+                </p>
+              </div>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <Link href="#" className="text-gray-400 hover:text-white text-sm">
                   Политика конфиденциальности
