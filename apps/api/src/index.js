@@ -103,6 +103,7 @@ function extractUsernameIfSocial(field, query) {
 
 // Import normalizers
 const ITPNormalizer = require('./utils/ITPNormalizer');
+const DyxlessNormalizer = require('./utils/DyxlessNormalizer');
 const LeakOsintNormalizer = require('./utils/LeakOsintNormalizer');
 const UsersboxNormalizer = require('./utils/UsersboxNormalizer');
 
@@ -197,12 +198,15 @@ async function searchDyxless(query, type = 'standart') {
     const items = data.data || [];
     const count = data.counts || items.length || 0;
     
-    return { 
+    // Нормализуем ответ Dyxless для красивого отображения
+    const normalizedResponse = {
       name: 'Dyxless', 
       ok: data.status === true, 
       meta: { count: count }, 
       items: items
     };
+    
+    return DyxlessNormalizer.normalizeResponse(normalizedResponse);
   };
 
   try {

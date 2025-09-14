@@ -3,6 +3,7 @@ import axios from 'axios';
 
 // Import normalizers
 const ITPNormalizer = require('@/lib/utils/ITPNormalizer');
+const DyxlessNormalizer = require('@/lib/utils/DyxlessNormalizer');
 const LeakOsintNormalizer = require('@/lib/utils/LeakOsintNormalizer');
 const UsersboxNormalizer = require('@/lib/utils/UsersboxNormalizer');
 const VektorNormalizer = require('@/lib/utils/VektorNormalizer');
@@ -88,7 +89,8 @@ async function searchDyxless(query: string, type: string = 'standart') {
     const items = data.data || [];
     const count = data.counts || items.length || 0;
     
-    return { 
+    // Нормализуем ответ Dyxless для красивого отображения
+    const normalizedResponse = {
       name: 'Dyxless', 
       ok: data.status === true, 
       found: count > 0,
@@ -96,6 +98,8 @@ async function searchDyxless(query: string, type: string = 'standart') {
       data: items,
       items: items
     };
+    
+    return DyxlessNormalizer.normalizeResponse(normalizedResponse);
   };
 
   try {
