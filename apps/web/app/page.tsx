@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
+import Image from "next/image"
 
 const ptMono = PT_Mono({
   subsets: ["latin", "cyrillic"],
@@ -12,7 +13,7 @@ const ptMono = PT_Mono({
 })
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, ArrowRight, Database, Mail, MessageSquare } from "lucide-react"
+import { Check, ArrowRight, Mail, MessageSquare } from "lucide-react"
 import Link from "next/link"
 
 function InteractiveHeroGraphic() {
@@ -66,7 +67,13 @@ export default function DataTraceLanding() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Database className="h-8 w-8 text-black" />
+              <Image 
+                src="/datatrace-logo.png" 
+                alt="DataTrace" 
+                width={32} 
+                height={32} 
+                className="h-8 w-8"
+              />
               <span className="text-xl font-bold text-black">DataTrace</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
@@ -447,7 +454,13 @@ export default function DataTraceLanding() {
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-2 mb-6">
-                <Database className="h-8 w-8 text-white" />
+                <Image 
+                  src="/datatrace-logo.png" 
+                  alt="DataTrace" 
+                  width={32} 
+                  height={32} 
+                  className="h-8 w-8 brightness-0 invert"
+                />
                 <span className="text-xl font-bold">DataTrace</span>
               </div>
               <p className="text-gray-400 mb-6">
