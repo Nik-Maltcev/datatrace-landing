@@ -477,7 +477,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Image 
-                src="/datatrace-logo.png" 
+                src="/image-removebg-preview.png" 
                 alt="DataTrace" 
                 width={100} 
                 height={32} 

@@ -68,7 +68,7 @@ export default function DataTraceLanding() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Image 
-                src="/datatrace-logo.png" 
+                src="/image-removebg-preview.png" 
                 alt="DataTrace" 
                 width={120} 
                 height={40} 
@@ -454,7 +454,7 @@ export default function DataTraceLanding() {
             <div className="lg:col-span-2">
               <div className="mb-6">
                 <Image 
-                  src="/datatrace-logo.png" 
+                  src="/image-removebg-preview.png" 
                   alt="DataTrace" 
                   width={120} 
                   height={40} 
