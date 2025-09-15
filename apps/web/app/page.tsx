@@ -66,15 +66,14 @@ export default function DataTraceLanding() {
       <header className="border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center">
               <Image 
                 src="/datatrace-logo.png" 
                 alt="DataTrace" 
-                width={32} 
-                height={32} 
-                className="h-8 w-8"
+                width={120} 
+                height={40} 
+                className="h-10"
               />
-              <span className="text-xl font-bold text-black">DataTrace</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
@@ -453,15 +452,14 @@ export default function DataTraceLanding() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
             <div className="lg:col-span-2">
-              <div className="flex items-center space-x-2 mb-6">
+              <div className="mb-6">
                 <Image 
                   src="/datatrace-logo.png" 
                   alt="DataTrace" 
-                  width={32} 
-                  height={32} 
-                  className="h-8 w-8 brightness-0 invert"
+                  width={120} 
+                  height={40} 
+                  className="h-10 brightness-0 invert"
                 />
-                <span className="text-xl font-bold">DataTrace</span>
               </div>
               <p className="text-gray-400 mb-6">
                 Получите ценную стратегию, культуру и тренд-анализ, адаптированный под ваши цели.

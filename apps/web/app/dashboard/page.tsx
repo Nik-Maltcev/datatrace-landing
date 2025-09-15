@@ -476,16 +476,13 @@ export default function DashboardPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center p-1">
-                <Image 
-                  src="/datatrace-logo.png" 
-                  alt="DataTrace" 
-                  width={24} 
-                  height={24} 
-                  className="h-6 w-6 brightness-0 invert"
-                />
-              </div>
-              <span className="text-xl font-light tracking-wide text-gray-900">DataTrace</span>
+              <Image 
+                src="/datatrace-logo.png" 
+                alt="DataTrace" 
+                width={100} 
+                height={32} 
+                className="h-8"
+              />
               <div className="h-4 w-px bg-gray-200 mx-2" />
               <span className="text-sm text-gray-500">Dashboard</span>
             </div>
