@@ -484,7 +484,7 @@ export default function DashboardPage() {
                 className="h-14"
               />
               <div className="h-4 w-px bg-gray-200 mx-2" />
-              <span className="text-sm text-gray-500">Dashboard</span>
+              <span className="text-sm text-gray-500">Личный кабинет</span>
             </div>
             <div className="flex items-center space-x-6">
               <Button

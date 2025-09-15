@@ -70,7 +70,7 @@ export default function DataTraceLanding() {
               <Image 
                 src="/image-removebg-preview.png" 
                 alt="DataTrace" 
-                width={180} 
+                width={200} 
                 height={60} 
                 className="h-14"
               />
@@ -456,7 +456,7 @@ export default function DataTraceLanding() {
                 <Image 
                   src="/image-removebg-preview.png" 
                   alt="DataTrace" 
-                  width={180} 
+                  width={200} 
                   height={60} 
                   className="h-14 brightness-0 invert"
                 />
