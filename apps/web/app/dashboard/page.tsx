@@ -479,9 +479,9 @@ export default function DashboardPage() {
               <Image 
                 src="/image-removebg-preview.png" 
                 alt="DataTrace" 
-                width={100} 
-                height={32} 
-                className="h-8"
+                width={150} 
+                height={48} 
+                className="h-12"
               />
               <div className="h-4 w-px bg-gray-200 mx-2" />
               <span className="text-sm text-gray-500">Dashboard</span>

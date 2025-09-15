@@ -70,9 +70,9 @@ export default function DataTraceLanding() {
               <Image 
                 src="/image-removebg-preview.png" 
                 alt="DataTrace" 
-                width={120} 
-                height={40} 
-                className="h-10"
+                width={180} 
+                height={60} 
+                className="h-14"
               />
             </div>
             <nav className="hidden md:flex items-center space-x-8">
@@ -456,9 +456,9 @@ export default function DataTraceLanding() {
                 <Image 
                   src="/image-removebg-preview.png" 
                   alt="DataTrace" 
-                  width={120} 
-                  height={40} 
-                  className="h-10 brightness-0 invert"
+                  width={180} 
+                  height={60} 
+                  className="h-14 brightness-0 invert"
                 />
               </div>
               <p className="text-gray-400 mb-6">
