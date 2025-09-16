@@ -88,12 +88,18 @@ export default function DataTraceLanding() {
                 РЕШЕНИЯ
               </Link>
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
-                ОТРАСЛИ
+                БЛОГ
               </Link>
-              <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
-                РЕСУРСЫ
-              </Link>
-              <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
+              <Link 
+                href="#contacts" 
+                className="text-sm font-medium text-gray-700 hover:text-black"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('contacts')?.scrollIntoView({ 
+                    behavior: 'smooth' 
+                  });
+                }}
+              >
                 КОНТАКТЫ
               </Link>
             </nav>
@@ -172,54 +178,6 @@ export default function DataTraceLanding() {
           </div>
         </div>
       </section>
-
-      {/* Industries Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="mb-12">
-            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">ОТРАСЛИ</div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-8">
-              <div>
-                <div className="text-6xl font-bold text-black mb-4">01</div>
-                <h3 className="text-xl font-bold text-black mb-3">ГОСУДАРСТВЕННЫЙ СЕКТОР</h3>
-                <p className="text-gray-700">
-                  Проведение оценки информационной среды и защита государственных организаций и граждан от
-                  информационных угроз с помощью DataTrace.
-                </p>
-              </div>
-              <div>
-                <div className="text-6xl font-bold text-black mb-4">03</div>
-                <h3 className="text-xl font-bold text-black mb-3">ОБНАРУЖЕНИЕ НЕКИНЕТИЧЕСКИХ ОПЕРАЦИЙ</h3>
-                <p className="text-gray-700">
-                  Информационные атаки могут использоваться как часть некинетических операций в современной войне. Это
-                  имеет основополагающее значение для оценки информационной среды для их обнаружения вовремя.
-                </p>
-              </div>
-            </div>
-            <div className="space-y-8">
-              <div>
-                <div className="text-6xl font-bold text-black mb-4">02</div>
-                <h3 className="text-xl font-bold text-black mb-3">БИЗНЕС</h3>
-                <p className="text-gray-700">
-                  Защитите бренды и активы от информационных угроз. Получите рыночные инсайты из нарративов вашей
-                  целевой аудитории.
-                </p>
-              </div>
-              <div>
-                <div className="text-6xl font-bold text-black mb-4">04</div>
-                <h3 className="text-xl font-bold text-black mb-3">БЕЗОПАСНОСТЬ</h3>
-                <p className="text-gray-700">
-                  Выявление, анализ и противодействие информационным манипуляциям и вмешательству (FMI), дезинформации и
-                  координированному неаутентичному поведению (CIB) с помощью DataTrace на уровне медиа-разведки.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Solutions Section */}
       <section id="solutions" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -395,7 +353,7 @@ export default function DataTraceLanding() {
       </section>
 
       {/* Contacts Section */}
-      <section className="py-16 bg-gray-50">
+      <section id="contacts" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-8">Остались вопросы?</h2>
           <p className="text-xl text-gray-600 mb-12">
