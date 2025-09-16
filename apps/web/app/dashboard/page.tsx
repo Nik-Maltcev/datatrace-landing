@@ -729,6 +729,7 @@ export default function DashboardPage() {
           onVerified={handlePhoneVerified}
           isVerified={isPhoneVerified}
           userPhone={user?.phone}
+          userPlan={user?.plan}
         />
 
         {/* Quick Actions */}
@@ -750,7 +751,7 @@ export default function DashboardPage() {
             </p>
             <Button
               onClick={handleCheckPhoneLeaks}
-              disabled={isCheckingPhone || !user.phone || (user.checksUsed >= user.checksLimit) || !isPhoneVerified}
+              disabled={isCheckingPhone || !user.phone || (user.checksUsed >= user.checksLimit) || !isPhoneVerified || user.plan === 'free'}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingPhone ? (
@@ -762,6 +763,11 @@ export default function DashboardPage() {
                 <>
                   <Shield className="h-4 w-4 mr-2" />
                   Требуется подтверждение номера
+                </>
+              ) : user.plan === 'free' ? (
+                <>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Требуется платный тариф
                 </>
               ) : (
                 <>
@@ -868,13 +874,18 @@ export default function DashboardPage() {
             </p>
             <Button
               onClick={handleCheckEmailLeaks}
-              disabled={isCheckingEmail || (user.checksUsed >= user.checksLimit)}
+              disabled={isCheckingEmail || (user.checksUsed >= user.checksLimit) || user.plan === 'free'}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingEmail ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Сканирование...
+                </>
+              ) : user.plan === 'free' ? (
+                <>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Требуется платный тариф
                 </>
               ) : (
                 <>

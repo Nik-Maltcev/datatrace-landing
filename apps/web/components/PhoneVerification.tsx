@@ -11,9 +11,10 @@ interface PhoneVerificationProps {
   onVerified: (token: string) => void;
   isVerified: boolean;
   userPhone?: string; // Номер телефона из профиля пользователя
+  userPlan?: string;
 }
 
-export default function PhoneVerification({ onVerified, isVerified, userPhone }: PhoneVerificationProps) {
+export default function PhoneVerification({ onVerified, isVerified, userPhone, userPlan }: PhoneVerificationProps) {
   const [phone, setPhone] = useState(userPhone || '');
   const [code, setCode] = useState('');
   const [sessionId, setSessionId] = useState('');
@@ -186,6 +187,8 @@ export default function PhoneVerification({ onVerified, isVerified, userPhone }:
   };
 
   if (isVerified) {
+    const isPaidPlan = userPlan && userPlan !== 'free';
+    
     return (
       <Card className="mb-6">
         <CardHeader>
@@ -207,6 +210,30 @@ export default function PhoneVerification({ onVerified, isVerified, userPhone }:
               Сменить номер
             </Button>
           </div>
+          
+          {userPlan === 'free' && (
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <div className="flex items-center gap-2 text-orange-800">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-medium">Требуется покупка тарифа</span>
+              </div>
+              <p className="text-sm text-orange-700 mt-1">
+                Для активации функции поиска приобретите платный тариф в разделе "Тарифы".
+              </p>
+            </div>
+          )}
+          
+          {isPaidPlan && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center gap-2 text-green-800">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="font-medium">Готов к использованию</span>
+              </div>
+              <p className="text-sm text-green-700 mt-1">
+                Тариф "{userPlan === 'professional' ? 'ПРОФЕССИОНАЛЬНЫЙ' : 'БАЗОВЫЙ'}" активен. Можете начать поиск.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
