@@ -468,32 +468,12 @@ export default function DataTraceLanding() {
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link href="#" className="hover:text-white">
-                    Телеграм
+                    Обнаружение и удаление скомпрометированной личной информации
                   </Link>
                 </li>
                 <li>
                   <Link href="#" className="hover:text-white">
-                    Коммерческие
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Правительство
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Безопасность
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    OSINT
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Мониторинг медиа
+                    Мониторинг глубинного интернета и даркнета
                   </Link>
                 </li>
               </ul>
