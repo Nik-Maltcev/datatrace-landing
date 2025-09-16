@@ -87,6 +87,18 @@ export default function DataTraceLanding() {
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
                 РЕШЕНИЯ
               </Link>
+              <Link 
+                href="#pricing" 
+                className="text-sm font-medium text-gray-700 hover:text-black"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('pricing')?.scrollIntoView({ 
+                    behavior: 'smooth' 
+                  });
+                }}
+              >
+                ТАРИФЫ
+              </Link>
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
                 БЛОГ
               </Link>
@@ -216,7 +228,7 @@ export default function DataTraceLanding() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20">
+      <section id="pricing" className="py-20">
         <div className="container mx-auto px-4">
           <div className="mb-12">
             <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">ТАРИФЫ</div>
@@ -437,16 +449,6 @@ export default function DataTraceLanding() {
                 <li>
                   <Link href="#" className="hover:text-white">
                     О нас
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Новости
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    Партнеры
                   </Link>
                 </li>
                 <li>
