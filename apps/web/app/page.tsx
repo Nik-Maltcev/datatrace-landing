@@ -82,9 +82,6 @@ export default function DataTraceLanding() {
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
                 ГЛАВНАЯ
               </Link>
-              <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
-                О НАС
-              </Link>
               <div 
                 className="relative"
                 onMouseEnter={() => setShowSolutionsDropdown(true)}
@@ -100,14 +97,28 @@ export default function DataTraceLanding() {
                   <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                     <div className="py-2">
                       <Link 
-                        href="#" 
+                        href="#solutions" 
                         className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black border-b border-gray-100"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          document.getElementById('solutions')?.scrollIntoView({ 
+                            behavior: 'smooth' 
+                          });
+                          setShowSolutionsDropdown(false);
+                        }}
                       >
                         Обнаружение и удаление скомпрометированной личной информации
                       </Link>
                       <Link 
-                        href="#" 
+                        href="#solutions" 
                         className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          document.getElementById('solutions')?.scrollIntoView({ 
+                            behavior: 'smooth' 
+                          });
+                          setShowSolutionsDropdown(false);
+                        }}
                       >
                         Мониторинг глубинного интернета и даркнета
                       </Link>
@@ -474,11 +485,6 @@ export default function DataTraceLanding() {
             <div>
               <h4 className="font-bold mb-4">КОМПАНИЯ</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    О нас
-                  </Link>
-                </li>
                 <li>
                   <Link href="#" className="hover:text-white">
                     Блог
