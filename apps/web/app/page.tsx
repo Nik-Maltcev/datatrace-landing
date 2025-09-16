@@ -418,7 +418,7 @@ export default function DataTraceLanding() {
                 />
               </div>
               <p className="text-gray-400 mb-6">
-                Получите ценную стратегию, культуру и тренд-анализ, адаптированный под ваши цели.
+                Подпишись на наш блог
               </p>
               <div className="flex space-x-4">
                 <input
