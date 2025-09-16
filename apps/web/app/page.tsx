@@ -125,8 +125,13 @@ export default function DataTraceLanding() {
                 <Button
                   variant="outline"
                   className="border-black text-black hover:bg-black hover:text-white px-8 py-3 bg-transparent"
+                  onClick={() => {
+                    document.getElementById('solutions')?.scrollIntoView({ 
+                      behavior: 'smooth' 
+                    });
+                  }}
                 >
-                  {"ОСТАВИТЬ ЗАЯВКУ"}
+                  {"УЗНАТЬ ПОДРОБНЕЕ"}
                 </Button>
               </div>
             </div>
@@ -218,7 +223,7 @@ export default function DataTraceLanding() {
       </section>
 
       {/* Solutions Section */}
-      <section className="py-20 bg-gray-50">
+      <section id="solutions" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="mb-12">
             <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">РЕШЕНИЯ</div>
