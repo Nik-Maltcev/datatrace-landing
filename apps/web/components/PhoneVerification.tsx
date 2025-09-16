@@ -22,6 +22,7 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
   const [success, setSuccess] = useState('');
   const [debugCode, setDebugCode] = useState(''); // Для режима разработки
   const [botUsername, setBotUsername] = useState(''); // Имя бота для инструкций
+  const [otpSent, setOtpSent] = useState(false); // Был ли код отправлен в Telegram
 
   const sendCode = async () => {
     if (!phone.trim()) {
@@ -43,13 +44,18 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
 
       if (data.success) {
         setSessionId(data.sessionId);
-        setStep('code');
         setBotUsername(data.botUsername || '');
+        setOtpSent(data.otpSent || false);
         
-        if (data.botUsername) {
-          setSuccess(`Найдите бота @${data.botUsername} в Telegram, напишите /start и получите код!`);
+        if (data.otpSent) {
+          setStep('code');
+          setSuccess('Код отправлен в Telegram!');
+        } else if (data.botUsername) {
+          setStep('code'); // Переходим к коду даже если не отправлен
+          setSuccess(`Привяжите номер к боту @${data.botUsername}, затем нажмите "Отправить код еще раз"`);
         } else {
-          setSuccess('Код сгенерирован!');
+          setStep('code');
+          setSuccess('Код сгенерирован');
         }
         
         // В режиме разработки показываем код
@@ -113,8 +119,50 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
     setSuccess('');
     setDebugCode('');
     setBotUsername('');
+    setOtpSent(false);
     localStorage.removeItem('phone_verification_token');
     localStorage.removeItem('verified_phone');
+  };
+
+  const resendCode = async () => {
+    if (!phone.trim()) {
+      setError('Номер телефона не указан');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/telegram-otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone.trim() })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSessionId(data.sessionId);
+        setOtpSent(data.otpSent || false);
+        
+        if (data.otpSent) {
+          setSuccess('Новый код отправлен в Telegram!');
+        } else {
+          setSuccess('Код сгенерирован. Привяжите номер к боту для получения в Telegram.');
+        }
+        
+        if (data.debug_code) {
+          setDebugCode(data.debug_code);
+        }
+      } else {
+        setError(data.error || 'Ошибка повторной отправки');
+      }
+    } catch (err) {
+      setError('Ошибка сети');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isVerified) {
@@ -193,15 +241,34 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
                   <strong>Режим разработки:</strong> Код для тестирования: {debugCode}
                 </div>
               )}
-              {botUsername && (
+              
+              {botUsername && !otpSent && (
                 <div className="text-sm text-orange-600 p-3 bg-orange-50 rounded-md mb-2">
-                  <div className="font-medium mb-2">📱 Инструкция для получения кода:</div>
-                  <ol className="list-decimal list-inside space-y-1 text-xs">
-                    <li>Откройте Telegram</li>
-                    <li>Найдите бота: <strong>@{botUsername}</strong></li>
-                    <li>Нажмите "Start" или напишите <strong>/start</strong></li>
-                    <li>Получите код и введите его здесь</li>
+                  <div className="font-medium mb-2 flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Настройте Telegram бота:
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-xs mb-3">
+                    <li>Откройте Telegram и найдите: <strong>@{botUsername}</strong></li>
+                    <li>Нажмите "Start" или отправьте <strong>/start</strong></li>
+                    <li>Отправьте боту ваш номер: <strong>{phone}</strong></li>
+                    <li>После привязки нажмите кнопку "Отправить код еще раз"</li>
                   </ol>
+                  <Button 
+                    onClick={resendCode} 
+                    disabled={loading}
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                  >
+                    {loading ? 'Отправка...' : 'Отправить код еще раз'}
+                  </Button>
+                </div>
+              )}
+              
+              {otpSent && (
+                <div className="text-sm text-green-600 p-2 bg-green-50 rounded-md mb-2">
+                  ✅ Код отправлен в Telegram! Проверьте чат с ботом.
                 </div>
               )}
             </div>

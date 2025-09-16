@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     
     // Инициализируем Telegram Gateway
     const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+    let otpSent = false;
     let botUsername = null;
     
     if (telegramBotToken) {
@@ -49,11 +50,18 @@ export async function POST(request: NextRequest) {
       // Проверяем подключение к боту
       const botValid = await telegramGateway.validateBot();
       if (botValid) {
-        // Пытаемся получить информацию о боте
+        // Пытаемся отправить OTP код
         const otpResult = await telegramGateway.sendOTPCode(phone, code);
+        otpSent = otpResult.success;
         botUsername = otpResult.botUsername;
+        
+        if (otpSent) {
+          console.log('✅ OTP код успешно отправлен в Telegram');
+        } else {
+          console.log('❌ OTP код НЕ отправлен. Номер не привязан к боту.');
+        }
       } else {
-        console.warn('⚠️ Telegram Bot недоступен, код отправлен только в логи');
+        console.warn('⚠️ Telegram Bot недоступен');
       }
     } else {
       console.warn('⚠️ TELEGRAM_BOT_TOKEN не настроен');
@@ -65,9 +73,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true,
       sessionId,
-      message: botUsername 
-        ? `Найдите бота @${botUsername} в Telegram и напишите /start, затем получите код`
-        : 'Код сгенерирован',
+      message: otpSent 
+        ? 'Код отправлен в Telegram!' 
+        : botUsername 
+          ? `Сначала привяжите номер к боту @${botUsername}` 
+          : 'Код сгенерирован',
+      otpSent,
       botUsername,
       // В режиме разработки возвращаем код для тестирования
       ...(process.env.NODE_ENV === 'development' && { debug_code: code })
