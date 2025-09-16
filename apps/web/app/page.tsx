@@ -39,7 +39,7 @@ export default function DataTraceLanding() {
     }
   }
 
-  const handlePlanSelect = (plan: 'basic' | 'professional' | 'corporate') => {
+  const handlePlanSelect = (plan: 'basic' | 'professional-6m' | 'professional-12m') => {
     if (isLoading) return
     
     if (!isAuthenticated) {
@@ -51,12 +51,14 @@ export default function DataTraceLanding() {
     const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect')
     
     if (plan === 'basic') {
-      window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`
-    } else if (plan === 'professional') {
-      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`
-    } else {
-      // Корпоративный - обращение к менеджеру
-      alert('Для корпоративного тарифа обратитесь к менеджеру')
+      // Базовый тариф - 350₽
+      window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&productPrice=350`
+    } else if (plan === 'professional-6m') {
+      // Профессиональный 6 месяцев - 5000₽
+      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=5000`
+    } else if (plan === 'professional-12m') {
+      // Профессиональный 12 месяцев - 8500₽
+      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=8500`
     }
   }
 
@@ -221,7 +223,7 @@ export default function DataTraceLanding() {
           <div className="mb-12">
             <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">РЕШЕНИЯ</div>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-4xl font-bold text-black mb-4">01</div>
@@ -248,19 +250,6 @@ export default function DataTraceLanding() {
                 </Button>
               </CardContent>
             </Card>
-            <Card className="border-2 border-gray-200 hover:border-black transition-colors">
-              <CardContent className="p-8">
-                <div className="text-4xl font-bold text-black mb-4">03</div>
-                <h3 className="text-2xl font-bold text-black mb-6">Корпоративный модуль</h3>
-                <p className="text-gray-700 mb-8">
-                  Корпоративный модуль DataTrace специализируется на поиске и удалении корпоративных утечек данных,
-                  защищая конфиденциальную информацию компании и её сотрудников.
-                </p>
-                <Button variant="ghost" className="text-black hover:bg-black hover:text-white p-0">
-                  УЗНАТЬ БОЛЬШЕ <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
@@ -276,7 +265,7 @@ export default function DataTraceLanding() {
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">БАЗОВЫЙ</h3>
-                  <div className="text-4xl font-bold text-black mb-2">500₽</div>
+                  <div className="text-4xl font-bold text-black mb-2">350₽</div>
                   <p className="text-gray-600">за запрос</p>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -314,8 +303,9 @@ export default function DataTraceLanding() {
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
-                  <div className="text-4xl font-bold text-black mb-2">8 500₽</div>
-                  <p className="text-gray-600">за запрос</p>
+                  <p className="text-lg text-gray-700 mb-2">6 месяцев</p>
+                  <div className="text-4xl font-bold text-black mb-2">5 000₽</div>
+                  <p className="text-gray-600">единовременно</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
@@ -332,19 +322,19 @@ export default function DataTraceLanding() {
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Повторная проверка</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Постоянный мониторинг</p>
+                    <p className="text-gray-700">Мониторинг утечек 6 месяцев</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
                     <p className="text-gray-700">Уведомления о новых утечках</p>
                   </div>
+                  <div className="flex items-start space-x-3">
+                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
+                    <p className="text-gray-700">Детальные отчеты</p>
+                  </div>
                 </div>
                 <Button 
-                  onClick={() => handlePlanSelect('professional')}
+                  onClick={() => handlePlanSelect('professional-6m')}
                   className="w-full bg-black text-white hover:bg-gray-800"
                 >
                   ВЫБРАТЬ ТАРИФ
@@ -355,26 +345,31 @@ export default function DataTraceLanding() {
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-black mb-2">КОРПОРАТИВНЫЙ</h3>
-                  <div className="text-4xl font-bold text-black mb-2">По запросу</div>
-                  <p className="text-gray-600">индивидуально</p>
+                  <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+                  <p className="text-lg text-gray-700 mb-2">12 месяцев</p>
+                  <div className="text-4xl font-bold text-black mb-2">8 500₽</div>
+                  <p className="text-gray-600">единовременно</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Все возможности профессионального тарифа</p>
+                    <p className="text-gray-700">2 проверки включены</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Поиск скомпрометированных данных сотрудников</p>
+                    <p className="text-gray-700">Поиск по всем источникам</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Удаление данных сотрудников</p>
+                    <p className="text-gray-700">Удаление из всех источников</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Корпоративная панель управления</p>
+                    <p className="text-gray-700">Мониторинг утечек 12 месяцев</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
+                    <p className="text-gray-700">Уведомления о новых утечках</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
@@ -382,11 +377,11 @@ export default function DataTraceLanding() {
                   </div>
                 </div>
                 <Button
-                  onClick={() => handlePlanSelect('corporate')}
+                  onClick={() => handlePlanSelect('professional-12m')}
                   variant="outline"
                   className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
                 >
-                  СВЯЗАТЬСЯ С НАМИ
+                  ВЫБРАТЬ ТАРИФ
                 </Button>
               </CardContent>
             </Card>

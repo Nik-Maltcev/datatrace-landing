@@ -44,10 +44,18 @@ export async function POST(request: NextRequest) {
     
     const price = parseFloat(params.productPrice as string);
     
-    // Пока просто считаем все платежи профессиональными для теста
-    const plan = 'professional';
+    // Определяем план по цене
+    let plan = 'professional'; // по умолчанию
     
-    console.log(`Forcing plan to: ${plan} for testing`);
+    if (price <= 350) {
+      plan = 'basic';
+    } else if (price <= 5000) {
+      plan = 'professional';
+    } else if (price <= 8500) {
+      plan = 'professional'; // Пока используем тот же план для обоих профессиональных тарифов
+    }
+    
+    console.log(`Plan determined by price ${price}: ${plan}`);
     console.log(`Transaction ID: ${finalTransactionId}`);
     const planLimits = {
       free: 0,
