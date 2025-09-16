@@ -41,14 +41,17 @@ export async function POST(request: NextRequest) {
     
     // Инициализируем Telegram Gateway
     const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+    let botUsername = null;
+    
     if (telegramBotToken) {
       const telegramGateway = new TelegramGateway(telegramBotToken);
       
       // Проверяем подключение к боту
       const botValid = await telegramGateway.validateBot();
       if (botValid) {
-        // Пытаемся отправить OTP код
-        await telegramGateway.sendOTPCode(phone, code);
+        // Пытаемся получить информацию о боте
+        const otpResult = await telegramGateway.sendOTPCode(phone, code);
+        botUsername = otpResult.botUsername;
       } else {
         console.warn('⚠️ Telegram Bot недоступен, код отправлен только в логи');
       }
@@ -62,7 +65,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true,
       sessionId,
-      message: 'Код отправлен в Telegram',
+      message: botUsername 
+        ? `Найдите бота @${botUsername} в Telegram и напишите /start, затем получите код`
+        : 'Код сгенерирован',
+      botUsername,
       // В режиме разработки возвращаем код для тестирования
       ...(process.env.NODE_ENV === 'development' && { debug_code: code })
     });

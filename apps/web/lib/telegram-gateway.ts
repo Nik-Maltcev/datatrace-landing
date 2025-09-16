@@ -27,10 +27,20 @@ export class TelegramGateway {
   }
 
   // Для отправки OTP кода пользователю
-  async sendOTPCode(phone: string, code: string): Promise<boolean> {
-    // В реальной реализации нужно будет найти chat_id по номеру телефона
-    // Пока что этот метод требует дополнительной настройки бота
-    
+  async sendOTPCode(phone: string, code: string, chatId?: string): Promise<{ success: boolean, botUsername?: string }> {
+    if (!chatId) {
+      // Если нет chatId, возвращаем информацию о боте для инструкций
+      try {
+        const botInfo = await axios.get(`${this.baseURL}/bot${this.botToken}/getMe`);
+        return {
+          success: false,
+          botUsername: botInfo.data.result.username
+        };
+      } catch (error) {
+        return { success: false };
+      }
+    }
+
     const message = `🔐 <b>Код подтверждения DataTrace:</b> 
     
 <code>${code}</code>
@@ -39,13 +49,12 @@ export class TelegramGateway {
 
 ⏰ Код действителен 5 минут.`;
 
-    // TODO: Реализовать поиск chat_id по номеру телефона
-    // Для этого нужно настроить базу данных связей phone -> chat_id
-    
-    console.log(`📱 OTP код для ${phone}: ${code}`);
-    console.log(`💬 Сообщение для отправки: ${message}`);
-    
-    return true; // Пока возвращаем true для тестирования
+    try {
+      const result = await this.sendMessage(chatId, message);
+      return { success: result };
+    } catch (error) {
+      return { success: false };
+    }
   }
 
   // Проверка токена бота

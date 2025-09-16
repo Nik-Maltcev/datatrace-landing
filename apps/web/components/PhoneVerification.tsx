@@ -21,6 +21,7 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [debugCode, setDebugCode] = useState(''); // Для режима разработки
+  const [botUsername, setBotUsername] = useState(''); // Имя бота для инструкций
 
   const sendCode = async () => {
     if (!phone.trim()) {
@@ -43,7 +44,14 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
       if (data.success) {
         setSessionId(data.sessionId);
         setStep('code');
-        setSuccess('Код отправлен в Telegram!');
+        setBotUsername(data.botUsername || '');
+        
+        if (data.botUsername) {
+          setSuccess(`Найдите бота @${data.botUsername} в Telegram, напишите /start и получите код!`);
+        } else {
+          setSuccess('Код сгенерирован!');
+        }
+        
         // В режиме разработки показываем код
         if (data.debug_code) {
           setDebugCode(data.debug_code);
@@ -104,6 +112,7 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
     setError('');
     setSuccess('');
     setDebugCode('');
+    setBotUsername('');
     localStorage.removeItem('phone_verification_token');
     localStorage.removeItem('verified_phone');
   };
@@ -182,6 +191,17 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
               {debugCode && (
                 <div className="text-sm text-blue-600 p-2 bg-blue-50 rounded-md mb-2">
                   <strong>Режим разработки:</strong> Код для тестирования: {debugCode}
+                </div>
+              )}
+              {botUsername && (
+                <div className="text-sm text-orange-600 p-3 bg-orange-50 rounded-md mb-2">
+                  <div className="font-medium mb-2">📱 Инструкция для получения кода:</div>
+                  <ol className="list-decimal list-inside space-y-1 text-xs">
+                    <li>Откройте Telegram</li>
+                    <li>Найдите бота: <strong>@{botUsername}</strong></li>
+                    <li>Нажмите "Start" или напишите <strong>/start</strong></li>
+                    <li>Получите код и введите его здесь</li>
+                  </ol>
                 </div>
               )}
             </div>
