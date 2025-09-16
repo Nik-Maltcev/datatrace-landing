@@ -10,10 +10,11 @@ import { Phone, Shield, CheckCircle2, AlertTriangle } from 'lucide-react';
 interface PhoneVerificationProps {
   onVerified: (token: string) => void;
   isVerified: boolean;
+  userPhone?: string; // Номер телефона из профиля пользователя
 }
 
-export default function PhoneVerification({ onVerified, isVerified }: PhoneVerificationProps) {
-  const [phone, setPhone] = useState('');
+export default function PhoneVerification({ onVerified, isVerified, userPhone }: PhoneVerificationProps) {
+  const [phone, setPhone] = useState(userPhone || '');
   const [code, setCode] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
@@ -24,9 +25,22 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
   const [botUsername, setBotUsername] = useState(''); // Имя бота для инструкций
   const [otpSent, setOtpSent] = useState(false); // Был ли код отправлен в Telegram
 
+  // Обновляем номер телефона если изменился в профиле
+  React.useEffect(() => {
+    if (userPhone && userPhone !== phone) {
+      setPhone(userPhone);
+    }
+  }, [userPhone]);
+
   const sendCode = async () => {
     if (!phone.trim()) {
       setError('Введите номер телефона');
+      return;
+    }
+
+    // Проверяем, что введенный номер совпадает с номером в профиле
+    if (userPhone && phone.trim() !== userPhone.trim()) {
+      setError('Номер телефона должен совпадать с номером в вашем профиле');
       return;
     }
 
@@ -130,6 +144,12 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
       return;
     }
 
+    // Проверяем, что номер совпадает с профилем
+    if (userPhone && phone.trim() !== userPhone.trim()) {
+      setError('Номер телефона должен совпадать с номером в вашем профиле');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -200,7 +220,7 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
           Подтверждение номера телефона
         </CardTitle>
         <CardDescription>
-          Для защиты от злоупотреблений необходимо подтвердить ваш номер телефона через Telegram
+          Для защиты от злоупотреблений необходимо подтвердить ваш номер телефона из профиля через Telegram
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -208,15 +228,26 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
           <>
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Ваш номер телефона
+                Номер телефона из вашего профиля
               </label>
               <Input
                 type="tel"
                 placeholder="+7 (999) 123-45-67"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="mb-4"
+                disabled={!!userPhone} // Отключаем редактирование если номер из профиля
+                className="mb-2"
               />
+              {userPhone && (
+                <p className="text-xs text-gray-500 mb-4">
+                  📱 Используется номер из вашего профиля. Для изменения обновите профиль.
+                </p>
+              )}
+              {!userPhone && (
+                <p className="text-xs text-orange-600 mb-4">
+                  ⚠️ В вашем профиле не указан номер телефона. Введите его здесь.
+                </p>
+              )}
             </div>
             <Button onClick={sendCode} disabled={loading} className="w-full">
               {loading ? 'Отправка...' : 'Отправить код в Telegram'}
@@ -251,8 +282,8 @@ export default function PhoneVerification({ onVerified, isVerified }: PhoneVerif
                   <ol className="list-decimal list-inside space-y-1 text-xs mb-3">
                     <li>Откройте Telegram и найдите: <strong>@{botUsername}</strong></li>
                     <li>Нажмите "Start" или отправьте <strong>/start</strong></li>
-                    <li>Отправьте боту ваш номер: <strong>{phone}</strong></li>
-                    <li>После привязки нажмите кнопку "Отправить код еще раз"</li>
+                    <li>Отправьте боту этот номер: <strong>{phone}</strong></li>
+                    <li>После подтверждения привязки нажмите кнопку ниже</li>
                   </ol>
                   <Button 
                     onClick={resendCode} 

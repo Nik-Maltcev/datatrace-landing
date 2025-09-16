@@ -89,10 +89,18 @@ export default function DashboardPage() {
   // Проверяем верификацию телефона при загрузке
   useEffect(() => {
     const verificationToken = localStorage.getItem('phone_verification_token')
-    if (verificationToken) {
+    const verifiedPhone = localStorage.getItem('verified_phone')
+    
+    // Если есть токен, но номер телефона в профиле изменился - сбрасываем верификацию
+    if (verificationToken && verifiedPhone && user?.phone && verifiedPhone !== user.phone) {
+      console.log('📱 Номер телефона изменился, сбрасываем верификацию')
+      localStorage.removeItem('phone_verification_token')
+      localStorage.removeItem('verified_phone')
+      setIsPhoneVerified(false)
+    } else if (verificationToken && (!user?.phone || verifiedPhone === user?.phone)) {
       setIsPhoneVerified(true)
     }
-  }, [])
+  }, [user?.phone])
 
   const handlePhoneVerified = (token: string) => {
     setIsPhoneVerified(true)
@@ -720,6 +728,7 @@ export default function DashboardPage() {
         <PhoneVerification 
           onVerified={handlePhoneVerified}
           isVerified={isPhoneVerified}
+          userPhone={user?.phone}
         />
 
         {/* Quick Actions */}
