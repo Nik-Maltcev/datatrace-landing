@@ -30,6 +30,7 @@ export default function DataTraceLanding() {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
 
   const handleDashboardClick = () => {
     if (isAuthenticated) {
@@ -84,9 +85,36 @@ export default function DataTraceLanding() {
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
                 О НАС
               </Link>
-              <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
-                РЕШЕНИЯ
-              </Link>
+              <div 
+                className="relative"
+                onMouseEnter={() => setShowSolutionsDropdown(true)}
+                onMouseLeave={() => setShowSolutionsDropdown(false)}
+              >
+                <button className="text-sm font-medium text-gray-700 hover:text-black flex items-center">
+                  РЕШЕНИЯ
+                  <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showSolutionsDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div className="py-2">
+                      <Link 
+                        href="#" 
+                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black border-b border-gray-100"
+                      >
+                        Обнаружение и удаление скомпрометированной личной информации
+                      </Link>
+                      <Link 
+                        href="#" 
+                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
+                      >
+                        Мониторинг глубинного интернета и даркнета
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Link 
                 href="#pricing" 
                 className="text-sm font-medium text-gray-700 hover:text-black"
