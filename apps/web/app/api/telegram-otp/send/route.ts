@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { TelegramGateway } from '@/lib/telegram-gateway';
 
 // Временное хранилище кодов (в продакшене лучше использовать Redis)
 declare global {
@@ -38,11 +39,24 @@ export async function POST(request: NextRequest) {
       global.otpStorage.delete(otpKey);
     }, 5 * 60 * 1000);
     
-    // TODO: Интеграция с Telegram Gateway
-    // const telegramGateway = new TelegramGateway(process.env.TELEGRAM_BOT_TOKEN);
-    // await telegramGateway.sendVerificationCode(phone, code);
+    // Инициализируем Telegram Gateway
+    const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (telegramBotToken) {
+      const telegramGateway = new TelegramGateway(telegramBotToken);
+      
+      // Проверяем подключение к боту
+      const botValid = await telegramGateway.validateBot();
+      if (botValid) {
+        // Пытаемся отправить OTP код
+        await telegramGateway.sendOTPCode(phone, code);
+      } else {
+        console.warn('⚠️ Telegram Bot недоступен, код отправлен только в логи');
+      }
+    } else {
+      console.warn('⚠️ TELEGRAM_BOT_TOKEN не настроен');
+    }
     
-    // Пока что логируем код для тестирования
+    // Логируем код для тестирования
     console.log(`🔐 OTP код для ${phone}: ${code} (sessionId: ${sessionId})`);
     
     return NextResponse.json({ 

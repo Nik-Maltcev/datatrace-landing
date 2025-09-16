@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
           verified: true,
           verifiedAt: Date.now()
         },
-        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+        process.env.JWT_SECRET || 'your-super-secure-jwt-secret-for-production-2025',
         { expiresIn: '24h' }
       );
       
