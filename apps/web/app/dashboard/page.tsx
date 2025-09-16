@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import PhoneVerification from "@/components/PhoneVerification"
 import {
   Database,
   Search,
@@ -68,6 +69,9 @@ interface PhoneCheckResponse {
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout, updateUserChecks, refreshUserData } = useAuth()
 
+  // Состояние верификации телефона
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false)
+
   // Принудительно обновляем данные при загрузке компонента
   useEffect(() => {
     if (user?.email && !isAuthLoading) {
@@ -81,6 +85,18 @@ export default function DashboardPage() {
       refreshUserData()
     }
   }, [user?.email, isAuthLoading])
+  
+  // Проверяем верификацию телефона при загрузке
+  useEffect(() => {
+    const verificationToken = localStorage.getItem('phone_verification_token')
+    if (verificationToken) {
+      setIsPhoneVerified(true)
+    }
+  }, [])
+
+  const handlePhoneVerified = (token: string) => {
+    setIsPhoneVerified(true)
+  }
   const [isPaymentLoading, setIsPaymentLoading] = useState(false)
   const [phoneLeaks, setPhoneLeaks] = useState<LeakResult[] | null>(null)
   const [emailLeaks, setEmailLeaks] = useState<LeakResult[] | null>(null)
@@ -112,6 +128,12 @@ export default function DashboardPage() {
 
   const handleCheckPhoneLeaks = async () => {
     console.log('🚀 Starting phone check for user:', user)
+
+    // Проверяем верификацию телефона
+    if (!isPhoneVerified) {
+      setPhoneError("Сначала подтвердите ваш номер телефона")
+      return
+    }
 
     if (!user?.phone) {
       setPhoneError("Номер телефона не указан в профиле")
@@ -694,6 +716,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Phone Verification */}
+        <PhoneVerification 
+          onVerified={handlePhoneVerified}
+          isVerified={isPhoneVerified}
+        />
+
         {/* Quick Actions */}
         <div className="grid md:grid-cols-2 gap-4 mb-8">
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 hover:border-green-200 transition-all group">
@@ -713,13 +741,18 @@ export default function DashboardPage() {
             </p>
             <Button
               onClick={handleCheckPhoneLeaks}
-              disabled={isCheckingPhone || !user.phone || (user.checksUsed >= user.checksLimit)}
+              disabled={isCheckingPhone || !user.phone || (user.checksUsed >= user.checksLimit) || !isPhoneVerified}
               className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-11 font-light disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCheckingPhone ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Сканирование...
+                </>
+              ) : !isPhoneVerified ? (
+                <>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Требуется подтверждение номера
                 </>
               ) : (
                 <>
