@@ -201,29 +201,29 @@ export default function DataTraceLanding() {
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             <div className="space-y-6">
               <p className="text-lg text-gray-700 leading-relaxed">
-                DataTrace предоставляет платформу на основе искусственного интеллекта для аналитиков и лиц, принимающих
-                решения в бизнесе, правительстве и гражданском обществе. Наша платформа усиливает медиа-аналитику,
-                укрепляет анализ открытых источников и защищает от информационных угроз.
+                DataTrace представляет платформу на основе искусственного интеллекта и уникальных технических решений, которая позволяет нашим клиентам обнаружить, удалить и мониторить в режиме реального времени скомпрометированную (украденную) личную информацию из баз данных злоумышленников.
               </p>
             </div>
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">Анализ данных открытых источников в информационной среде</p>
+                <p className="text-gray-700">Анализ данных из открытых источников</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">Выявление и оценка нарративов</p>
+                <p className="text-gray-700">Анализ данных из глубинного интернета и даркнета</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">Идентификация и противодействие информационным угрозам</p>
+                <p className="text-gray-700">Мониторинг личной информации</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">
-                  Защита от переманивания сотрудников через предотвращение поиска их скомпрометированных контактов
-                </p>
+                <p className="text-gray-700">Выявление и оценка негативных сценариев</p>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
+                <p className="text-gray-700">Противодействие фишингу и вторичным атакам</p>
               </div>
             </div>
           </div>
@@ -544,9 +544,6 @@ export default function DataTraceLanding() {
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <Link href="#" className="text-gray-400 hover:text-white text-sm">
                   Политика конфиденциальности
-                </Link>
-                <Link href="#" className="text-gray-400 hover:text-white text-sm">
-                  Условия использования
                 </Link>
                 <Link href="#" className="text-gray-400 hover:text-white text-sm">
                   Соглашение об обработке данных
