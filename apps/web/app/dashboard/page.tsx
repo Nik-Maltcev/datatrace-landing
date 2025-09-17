@@ -74,7 +74,10 @@ export default function Dashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phone: user.phone }),
+        body: JSON.stringify({ 
+          phone: user.phone, 
+          userId: user.email // Добавляем email для сохранения истории
+        }),
       })
       const data = await response.json()
       
@@ -109,7 +112,10 @@ export default function Dashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: user.email }),
+        body: JSON.stringify({ 
+          email: user.email, 
+          userId: user.email // Добавляем email для сохранения истории
+        }),
       })
       const data = await response.json()
       setEmailResult(data)

@@ -328,7 +328,7 @@ async function searchVektor(query: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { phone } = body;
+    const { phone, userId } = body;
 
     if (!phone) {
       return NextResponse.json(
@@ -419,7 +419,7 @@ export async function POST(request: NextRequest) {
         totalLeaks: responseData.totalLeaks,
         foundSources: responseData.foundSources,
         message: responseData.message,
-        userId: 'current-user'
+        userId: userId || 'current-user' // Используем переданный userId или fallback
       });
       console.log('✅ Phone check result saved to history');
     } catch (historyError: any) {

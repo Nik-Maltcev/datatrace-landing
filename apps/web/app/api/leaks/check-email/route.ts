@@ -270,7 +270,7 @@ async function searchVektor(query: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, userId } = body;
 
     if (!email) {
       return NextResponse.json(
@@ -357,7 +357,7 @@ export async function POST(request: NextRequest) {
         totalLeaks: responseData.totalLeaks,
         foundSources: responseData.foundSources,
         message: responseData.message,
-        userId: 'current-user'
+        userId: userId || 'current-user' // Используем переданный userId или fallback
       });
       console.log('✅ Email check result saved to history');
     } catch (historyError: any) {
