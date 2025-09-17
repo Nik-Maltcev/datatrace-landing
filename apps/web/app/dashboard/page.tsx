@@ -1120,7 +1120,7 @@ export default function DashboardPage() {
                   <p className="text-2xl font-bold text-gray-900">5 000₽</p>
                 )}
               </div>
-              <p className="text-sm text-gray-600 mb-4">Неограниченные проверки</p>
+              <p className="text-sm text-gray-600 mb-4">2 проверки + 6 месяцев мониторинга</p>
               <Button 
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -1153,7 +1153,7 @@ export default function DashboardPage() {
                   <p className="text-2xl font-bold text-gray-900">8 500₽</p>
                 )}
               </div>
-              <p className="text-sm text-gray-600 mb-4">Неограниченные проверки</p>
+              <p className="text-sm text-gray-600 mb-4">2 проверки + 12 месяцев мониторинга</p>
               <Button 
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -1295,7 +1295,7 @@ export default function DashboardPage() {
                     <h4 className="font-medium text-gray-900">ПРОФЕССИОНАЛЬНЫЙ (6 мес)</h4>
                     <span className="text-lg font-bold text-blue-600">5 000₽</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">Неограниченные проверки</p>
+                  <p className="text-sm text-gray-600 mb-3">2 проверки + 6 месяцев мониторинга</p>
                   <Button 
                     onClick={() => {
                       setShowUpgradeModal(false)
@@ -1314,7 +1314,7 @@ export default function DashboardPage() {
                     <h4 className="font-medium text-gray-900">ПРОФЕССИОНАЛЬНЫЙ (12 мес)</h4>
                     <span className="text-lg font-bold text-purple-600">8 500₽</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">Неограниченные проверки</p>
+                  <p className="text-sm text-gray-600 mb-3">2 проверки + 12 месяцев мониторинга</p>
                   <Button 
                     onClick={() => {
                       setShowUpgradeModal(false)
