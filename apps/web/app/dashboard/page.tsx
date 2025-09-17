@@ -12,6 +12,7 @@ import {
   Shield,
   Activity,
   AlertTriangle,
+  CheckCircle,
   Phone,
   Mail,
   Loader2,
@@ -21,11 +22,32 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
+interface LeakResult {
+  name: string
+  source?: string
+  found: boolean
+  count?: number
+  ok?: boolean
+  error?: any
+}
+
+interface CheckResponse {
+  ok?: boolean
+  phone?: string
+  email?: string
+  totalLeaks?: number
+  foundSources?: number
+  results?: LeakResult[]
+  message?: string
+  found?: boolean
+  error?: string
+}
+
 export default function Dashboard() {
   const { user, logout } = useAuth()
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
-  const [phoneResult, setPhoneResult] = useState(null)
-  const [emailResult, setEmailResult] = useState(null)
+  const [phoneResult, setPhoneResult] = useState<CheckResponse | null>(null)
+  const [emailResult, setEmailResult] = useState<CheckResponse | null>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
 
@@ -36,44 +58,186 @@ export default function Dashboard() {
     }
   }, [user])
 
-  const handleCheckPhoneLeaks = async () => {
-    if (!user?.phone || isCheckingPhone) return
+  // Проверяем верификацию телефона при загрузке
+  useEffect(() => {
+    const verificationToken = localStorage.getItem('phone_verification_token')
+    const verifiedPhone = localStorage.getItem('verified_phone')
     
-    setIsCheckingPhone(true)
-    try {
-      const response = await fetch('/api/check-phone', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone: user.phone }),
-      })
-      const data = await response.json()
-      setPhoneResult(data)
-    } catch (error) {
-      console.error('Phone check error:', error)
+    // Если есть токен, но номер телефона в профиле изменился - сбрасываем верификацию
+    if (verificationToken && verifiedPhone && user?.phone && verifiedPhone !== user.phone) {
+      console.log('📱 Номер телефона изменился, сбрасываем верификацию')
+      localStorage.removeItem('phone_verification_token')
+      localStorage.removeItem('verified_phone')
+      setIsPhoneVerified(false)
+    } else if (verificationToken && (!user?.phone || verifiedPhone === user?.phone)) {
+      setIsPhoneVerified(true)
     }
-    setIsCheckingPhone(false)
+  }, [user?.phone])
+
+  const handleCheckPhoneLeaks = async () => {
+    console.log('🚀 Starting phone check for user:', user)
+
+    // Проверяем верификацию телефона
+    if (!isPhoneVerified) {
+      setPhoneResult({ error: "Сначала подтвердите ваш номер телефона" })
+      return
+    }
+
+    if (!user?.phone) {
+      setPhoneResult({ error: "Номер телефона не указан в профиле" })
+      return
+    }
+
+    // Проверяем лимит проверок
+    if (user.checksUsed >= user.checksLimit) {
+      alert('Лимит проверок исчерпан. Обновите тариф для продолжения работы.')
+      return
+    }
+
+    console.log('📱 Checking phone:', user.phone)
+
+    setIsCheckingPhone(true)
+    setPhoneResult(null)
+
+    try {
+      // Используем правильный API endpoint
+      const response = await fetch('/api/check-user-phone', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          phone: user.phone,
+          userId: user.email
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error?.message || "Ошибка при проверке телефона")
+      }
+
+      const data = await response.json()
+      console.log('📱 Phone check API response:', data)
+
+      // Преобразуем результаты для отображения
+      const transformedResults = data.results?.map((result: any) => ({
+        name: result.name,
+        source: result.name,
+        found: result.ok && (
+          Array.isArray(result.items) ? result.items.length > 0 :
+          (typeof result.items === 'object' && result.items !== null) ? Object.keys(result.items).length > 0 :
+          false
+        ),
+        count: Array.isArray(result.items) ? result.items.length :
+               (typeof result.items === 'object' && result.items !== null) ?
+               Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0) : 0,
+        ok: result.ok,
+        error: result.error
+      })) || []
+
+      setPhoneResult({
+        ok: data.ok,
+        phone: data.phone,
+        totalLeaks: data.totalLeaks,
+        foundSources: data.foundSources,
+        results: transformedResults,
+        message: data.message,
+        found: data.totalLeaks > 0
+      })
+
+      // Обновляем счетчик проверок в localStorage
+      if (user) {
+        const updatedUser = { ...user, checksUsed: (user.checksUsed || 0) + 1 }
+        localStorage.setItem('user', JSON.stringify(updatedUser))
+      }
+
+    } catch (error) {
+      console.error("Phone check error:", error)
+      setPhoneResult({ error: error instanceof Error ? error.message : "Не удалось проверить утечки по номеру телефона" })
+    } finally {
+      setIsCheckingPhone(false)
+    }
   }
 
   const handleCheckEmailLeaks = async () => {
-    if (!user?.email || isCheckingEmail) return
-    
-    setIsCheckingEmail(true)
-    try {
-      const response = await fetch('/api/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: user.email }),
-      })
-      const data = await response.json()
-      setEmailResult(data)
-    } catch (error) {
-      console.error('Email check error:', error)
+    console.log('🚀 Starting email check for user:', user)
+
+    if (!user?.email) {
+      setEmailResult({ error: "Email не указан в профиле" })
+      return
     }
-    setIsCheckingEmail(false)
+
+    // Проверяем лимит проверок
+    if (user.checksUsed >= user.checksLimit) {
+      alert('Лимит проверок исчерпан. Обновите тариф для продолжения работы.')
+      return
+    }
+
+    console.log('📧 Checking email:', user.email)
+
+    setIsCheckingEmail(true)
+    setEmailResult(null)
+
+    try {
+      // Используем правильный API endpoint
+      const response = await fetch('/api/check-user-email', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: user.email,
+          userId: user.email
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error?.message || "Ошибка при проверке email")
+      }
+
+      const data = await response.json()
+      console.log('📧 Email check API response:', data)
+
+      // Преобразуем результаты для отображения
+      const transformedResults = data.results?.map((result: any) => ({
+        name: result.name,
+        source: result.name,
+        found: result.ok && (
+          Array.isArray(result.items) ? result.items.length > 0 :
+          (typeof result.items === 'object' && result.items !== null) ? Object.keys(result.items).length > 0 :
+          false
+        ),
+        count: Array.isArray(result.items) ? result.items.length :
+               (typeof result.items === 'object' && result.items !== null) ?
+               Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0) : 0,
+        ok: result.ok,
+        error: result.error
+      })) || []
+
+      setEmailResult({
+        ok: data.ok,
+        email: data.email,
+        totalLeaks: data.totalLeaks,
+        foundSources: data.foundSources,
+        results: transformedResults,
+        message: data.message,
+        found: data.totalLeaks > 0
+      })
+
+      // Обновляем счетчик проверок в localStorage
+      if (user) {
+        const updatedUser = { ...user, checksUsed: (user.checksUsed || 0) + 1 }
+        localStorage.setItem('user', JSON.stringify(updatedUser))
+      }
+
+    } catch (error) {
+      console.error("Email check error:", error)
+      setEmailResult({ error: error instanceof Error ? error.message : "Не удалось проверить утечки по email" })
+    } finally {
+      setIsCheckingEmail(false)
+    }
   }
 
   if (!user) {
@@ -171,13 +335,23 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckPhoneLeaks}
-              disabled={!user.phone || isCheckingPhone}
+              disabled={!user.phone || isCheckingPhone || !isPhoneVerified || (user.checksUsed >= user.checksLimit)}
               className="w-full"
             >
               {isCheckingPhone ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
+                </>
+              ) : !isPhoneVerified ? (
+                <>
+                  Требуется подтверждение номера
+                  <Shield className="h-4 w-4 ml-2" />
+                </>
+              ) : (user.checksUsed >= user.checksLimit) ? (
+                <>
+                  Лимит проверок исчерпан
+                  <AlertTriangle className="h-4 w-4 ml-2" />
                 </>
               ) : (
                 <>
@@ -187,11 +361,49 @@ export default function Dashboard() {
               )}
             </Button>
             {phoneResult && (
-              <Alert className="mt-3">
-                <AlertDescription>
-                  {phoneResult.found ? "Найдены утечки!" : "Данные в безопасности"}
-                </AlertDescription>
-              </Alert>
+              <div className={`mt-3 p-4 rounded-lg border ${
+                phoneResult.error ? 'bg-red-50 border-red-200' :
+                phoneResult.found ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+              }`}>
+                {phoneResult.error ? (
+                  <p className="text-sm text-red-600">{phoneResult.error}</p>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">
+                        {phoneResult.found ? (
+                          <>
+                            <AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" />
+                            Найдено утечек: {phoneResult.totalLeaks}
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="inline h-4 w-4 mr-1 text-green-600" />
+                            Утечек не обнаружено
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    {phoneResult.found && phoneResult.results && (
+                      <div className="mt-3 space-y-2">
+                        {phoneResult.results.filter(r => r.found).map((result, idx) => (
+                          <div key={idx} className="bg-white p-3 rounded border">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm">{result.source}</span>
+                              <Badge variant="destructive" className="text-xs">
+                                {result.count} записей
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Найдены записи с вашим номером телефона
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -214,7 +426,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckEmailLeaks}
-              disabled={isCheckingEmail}
+              disabled={isCheckingEmail || (user.checksUsed >= user.checksLimit)}
               className="w-full"
               variant="outline"
             >
@@ -222,6 +434,11 @@ export default function Dashboard() {
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
+                </>
+              ) : (user.checksUsed >= user.checksLimit) ? (
+                <>
+                  Лимит проверок исчерпан
+                  <AlertTriangle className="h-4 w-4 ml-2" />
                 </>
               ) : (
                 <>
@@ -231,11 +448,49 @@ export default function Dashboard() {
               )}
             </Button>
             {emailResult && (
-              <Alert className="mt-3">
-                <AlertDescription>
-                  {emailResult.found ? "Найдены утечки!" : "Данные в безопасности"}
-                </AlertDescription>
-              </Alert>
+              <div className={`mt-3 p-4 rounded-lg border ${
+                emailResult.error ? 'bg-red-50 border-red-200' :
+                emailResult.found ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+              }`}>
+                {emailResult.error ? (
+                  <p className="text-sm text-red-600">{emailResult.error}</p>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">
+                        {emailResult.found ? (
+                          <>
+                            <AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" />
+                            Найдено утечек: {emailResult.totalLeaks}
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="inline h-4 w-4 mr-1 text-green-600" />
+                            Утечек не обнаружено
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    {emailResult.found && emailResult.results && (
+                      <div className="mt-3 space-y-2">
+                        {emailResult.results.filter(r => r.found).map((result, idx) => (
+                          <div key={idx} className="bg-white p-3 rounded border">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm">{result.source}</span>
+                              <Badge variant="destructive" className="text-xs">
+                                {result.count} записей
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Найдены записи с вашим email адресом
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
