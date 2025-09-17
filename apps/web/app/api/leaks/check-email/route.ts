@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
+import { saveCheckResult } from '@/lib/checkHistory';
 
 // Import normalizers
 const ITPNormalizer = require('@/lib/utils/ITPNormalizer');
@@ -334,8 +335,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Email search completed: ${totalLeaks} total leaks from ${foundSources} sources`);
 
-    return NextResponse.json({
+    const responseData = {
       ok: true,
+      found: totalLeaks > 0,  // Добавляем поле found для фронтенда
       email: email,
       totalLeaks,
       foundSources,
@@ -344,7 +346,25 @@ export async function POST(request: NextRequest) {
         ? `Найдено ${totalLeaks} утечек по email адресу в ${foundSources} источниках`
         : 'Утечек по данному email адресу не найдено',
       timestamp: new Date().toISOString()
-    });
+    };
+
+    // Сохранение результата в историю проверок
+    try {
+      await saveCheckResult({
+        type: 'email',
+        query: email,
+        results: responseData.results,
+        totalLeaks: responseData.totalLeaks,
+        foundSources: responseData.foundSources,
+        message: responseData.message,
+        userId: 'current-user'
+      });
+      console.log('✅ Email check result saved to history');
+    } catch (historyError: any) {
+      console.error('❌ Failed to save email check to history:', historyError.message);
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (error: any) {
     console.error('Check email endpoint error:', error);

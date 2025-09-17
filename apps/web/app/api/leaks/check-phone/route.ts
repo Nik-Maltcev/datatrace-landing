@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
+import { saveCheckResult } from '@/lib/checkHistory';
 
 // Import normalizers
 const ITPNormalizer = require('@/lib/utils/ITPNormalizer');
@@ -72,15 +73,24 @@ async function searchITP(query: string, field: string) {
     );
     
     const data = res.data || {};
-    const normalizedItems = data.data ? ITPNormalizer.normalizeRecords(data.data) : [];
+    const normalizedData = data.data ? ITPNormalizer.normalizeRecords(data.data) : {};
+    
+    // ITPNormalizer возвращает объект с группировкой по базам данных
+    // Преобразуем в плоский массив для подсчета
+    const allRecords = [];
+    for (const [dbName, records] of Object.entries(normalizedData)) {
+      if (Array.isArray(records)) {
+        allRecords.push(...records);
+      }
+    }
     
     return { 
       name: 'ITP', 
       ok: true, 
-      found: normalizedItems.length > 0,
-      count: normalizedItems.length,
-      data: normalizedItems,
-      items: data.data // Сохраняем оригинальную структуру для совместимости
+      found: allRecords.length > 0,
+      count: allRecords.length,
+      data: normalizedData, // Сохраняем группированную структуру
+      items: allRecords // Плоский массив для фронтенда
     };
   } catch (err: any) {
     return { name: 'ITP', ok: false, found: false, count: 0, error: err.message };
@@ -399,6 +409,22 @@ export async function POST(request: NextRequest) {
         itemsCount: r.items ? r.items.length : 0
       }))
     });
+
+    // Сохранение результата в историю проверок
+    try {
+      await saveCheckResult({
+        type: 'phone',
+        query: normalizedPhone,
+        results: responseData.results,
+        totalLeaks: responseData.totalLeaks,
+        foundSources: responseData.foundSources,
+        message: responseData.message,
+        userId: 'current-user'
+      });
+      console.log('✅ Phone check result saved to history');
+    } catch (historyError: any) {
+      console.error('❌ Failed to save phone check to history:', historyError.message);
+    }
 
     return NextResponse.json(responseData);
 
