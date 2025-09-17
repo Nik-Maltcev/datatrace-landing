@@ -1072,19 +1072,19 @@ export default function DashboardPage() {
               {(user.checksUsed >= user.checksLimit) ? 'Выберите тариф для продолжения работы' : 'Увеличьте лимит проверок'}
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <h3 className="font-medium text-gray-900 mb-2">БАЗОВЫЙ</h3>
               <div className="mb-2">
                 {promoDiscount > 0 ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-lg text-gray-500 line-through">500₽</span>
+                    <span className="text-lg text-gray-500 line-through">350₽</span>
                     <span className="text-2xl font-bold text-green-600">
-                      {Math.round(500 * (1 - promoDiscount / 100))}₽
+                      {Math.round(350 * (1 - promoDiscount / 100))}₽
                     </span>
                   </div>
                 ) : (
-                  <p className="text-2xl font-bold text-gray-900">500₽</p>
+                  <p className="text-2xl font-bold text-gray-900">350₽</p>
                 )}
               </div>
               <p className="text-sm text-gray-600 mb-4">1 проверка включена</p>
@@ -1103,8 +1103,44 @@ export default function DashboardPage() {
                 Оплатить
               </Button>
             </div>
-            <div className="bg-white border border-blue-200 rounded-xl p-4">
-              <h3 className="font-medium text-gray-900 mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+            <div className="bg-white border border-blue-200 rounded-xl p-4 relative">
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">6 месяцев</span>
+              </div>
+              <h3 className="font-medium text-gray-900 mb-2 mt-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+              <div className="mb-2">
+                {promoDiscount > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg text-gray-500 line-through">5 000₽</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      {Math.round(5000 * (1 - promoDiscount / 100))}₽
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">5 000₽</p>
+                )}
+              </div>
+              <p className="text-sm text-gray-600 mb-4">Неограниченные проверки</p>
+              <Button 
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    alert('Для покупки необходимо войти в аккаунт');
+                    router.push('/login');
+                    return;
+                  }
+                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional');
+                  window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`;
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Оплатить
+              </Button>
+            </div>
+            <div className="bg-white border border-purple-200 rounded-xl p-4 relative">
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full">12 месяцев</span>
+              </div>
+              <h3 className="font-medium text-gray-900 mb-2 mt-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
               <div className="mb-2">
                 {promoDiscount > 0 ? (
                   <div className="flex items-center gap-2">
@@ -1117,7 +1153,7 @@ export default function DashboardPage() {
                   <p className="text-2xl font-bold text-gray-900">8 500₽</p>
                 )}
               </div>
-              <p className="text-sm text-gray-600 mb-4">2 проверки включены</p>
+              <p className="text-sm text-gray-600 mb-4">Неограниченные проверки</p>
               <Button 
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -1125,10 +1161,10 @@ export default function DashboardPage() {
                     router.push('/login');
                     return;
                   }
-                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional');
-                  window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`;
+                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional_12m');
+                  window.location.href = `https://self.payanyway.ru/1757389094773?MNT_SUCCESS_URL=${successUrl}`;
                 }}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               >
                 Оплатить
               </Button>
@@ -1253,23 +1289,44 @@ export default function DashboardPage() {
             </div>
             
             {user.plan === 'basic' && (
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-gray-900">ПРОФЕССИОНАЛЬНЫЙ</h4>
-                  <span className="text-lg font-bold text-blue-600">8 500₽</span>
+              <div className="space-y-4 mb-6">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900">ПРОФЕССИОНАЛЬНЫЙ (6 мес)</h4>
+                    <span className="text-lg font-bold text-blue-600">5 000₽</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Неограниченные проверки</p>
+                  <Button 
+                    onClick={() => {
+                      setShowUpgradeModal(false)
+                      const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional')
+                      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Обновить тариф
+                  </Button>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">2 проверки включены</p>
-                <Button 
-                  onClick={() => {
-                    setShowUpgradeModal(false)
-                    const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional')
-                    window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`
-                  }}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Обновить тариф
-                </Button>
+                
+                <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900">ПРОФЕССИОНАЛЬНЫЙ (12 мес)</h4>
+                    <span className="text-lg font-bold text-purple-600">8 500₽</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Неограниченные проверки</p>
+                  <Button 
+                    onClick={() => {
+                      setShowUpgradeModal(false)
+                      const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional_12m')
+                      window.location.href = `https://self.payanyway.ru/1757389094773?MNT_SUCCESS_URL=${successUrl}`
+                    }}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Обновить тариф
+                  </Button>
+                </div>
               </div>
             )}
             
