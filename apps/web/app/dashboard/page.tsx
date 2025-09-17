@@ -152,32 +152,122 @@ export default function Dashboard() {
       </div>
 
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Search className="h-6 w-6 text-blue-600" />
+                <Phone className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Проверить данные</CardTitle>
-                <p className="text-sm text-gray-500">Поиск утечек в базах данных</p>
+                <CardTitle className="text-lg">Проверить телефон</CardTitle>
+                <p className="text-sm text-gray-500">Поиск утечек номера телефона</p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              Выполните проверку своих email, телефона или других данных на предмет утечек
+              {user.phone ? `Проверить ${user.phone}` : "Введите номер для проверки"}
+            </p>
+            <Button 
+              onClick={handleCheckPhoneLeaks}
+              disabled={!user.phone || isCheckingPhone}
+              className="w-full"
+            >
+              {isCheckingPhone ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Проверяю...
+                </>
+              ) : (
+                <>
+                  Проверить номер
+                  <Phone className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+            {phoneResult && (
+              <Alert className="mt-3">
+                <AlertDescription>
+                  {phoneResult.found ? "Найдены утечки!" : "Данные в безопасности"}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <Mail className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Проверить Email</CardTitle>
+                <p className="text-sm text-gray-500">Поиск утечек email адреса</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Проверить {user.email}
+            </p>
+            <Button 
+              onClick={handleCheckEmailLeaks}
+              disabled={isCheckingEmail}
+              className="w-full"
+              variant="outline"
+            >
+              {isCheckingEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Проверяю...
+                </>
+              ) : (
+                <>
+                  Проверить email
+                  <Mail className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+            {emailResult && (
+              <Alert className="mt-3">
+                <AlertDescription>
+                  {emailResult.found ? "Найдены утечки!" : "Данные в безопасности"}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <Search className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">История проверок</CardTitle>
+                <p className="text-sm text-gray-500">Просмотр всех проверок</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Посмотрите результаты предыдущих проверок и управляйте данными
             </p>
             <Link href="/dashboard/checks">
-              <Button className="w-full">
-                Перейти к проверкам
+              <Button variant="outline" className="w-full">
+                Открыть историю
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Additional Services */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
@@ -200,6 +290,29 @@ export default function Dashboard() {
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <Shield className="h-6 w-6 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Защита данных</CardTitle>
+                <p className="text-sm text-gray-500">Безопасность и конфиденциальность</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Управляйте настройками безопасности и защитой персональных данных
+            </p>
+            <Button variant="outline" className="w-full" disabled>
+              Скоро доступно
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
           </CardContent>
         </Card>
       </div>
