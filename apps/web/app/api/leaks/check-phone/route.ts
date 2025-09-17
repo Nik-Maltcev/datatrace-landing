@@ -371,8 +371,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Phone search completed: ${totalLeaks} total leaks from ${foundSources} sources`);
 
-    return NextResponse.json({
+    // Подробное логирование структуры ответа для отладки фронтенда
+    const responseData = {
       ok: true,
+      found: totalLeaks > 0,  // Добавляем поле found для совместимости с фронтендом
       phone: normalizedPhone,
       totalLeaks,
       foundSources,
@@ -381,7 +383,24 @@ export async function POST(request: NextRequest) {
         ? `Найдено ${totalLeaks} утечек по номеру телефона в ${foundSources} источниках`
         : 'Утечек по данному номеру телефона не найдено',
       timestamp: new Date().toISOString()
+    };
+
+    console.log('📤 Final API Response Structure:', {
+      ok: responseData.ok,
+      found: responseData.found,
+      totalLeaks: responseData.totalLeaks,
+      foundSources: responseData.foundSources,
+      resultsCount: responseData.results.length,
+      resultsSample: responseData.results.map(r => ({
+        name: r.name,
+        found: r.found,
+        count: r.count,
+        hasItems: !!(r.items && r.items.length > 0),
+        itemsCount: r.items ? r.items.length : 0
+      }))
     });
+
+    return NextResponse.json(responseData);
 
   } catch (error: any) {
     console.error('Check phone endpoint error:', error);

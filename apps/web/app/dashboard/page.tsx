@@ -77,6 +77,21 @@ export default function Dashboard() {
         body: JSON.stringify({ phone: user.phone }),
       })
       const data = await response.json()
+      
+      // Детальное логирование для отладки
+      console.log('📱 Phone check response:', {
+        ok: data.ok,
+        found: data.found,
+        totalLeaks: data.totalLeaks,
+        resultsLength: data.results?.length,
+        results: data.results?.map((r: any) => ({
+          name: r.name,
+          found: r.found,
+          count: r.count,
+          hasItems: !!(r.items && r.items.length > 0)
+        }))
+      })
+      
       setPhoneResult(data)
     } catch (error) {
       console.error('Phone check error:', error)
