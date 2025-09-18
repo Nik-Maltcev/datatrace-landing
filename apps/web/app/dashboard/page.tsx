@@ -41,25 +41,35 @@ export default function Dashboard() {
   }, [user])
 
   const togglePhoneSource = (sourceName: string) => {
+    console.log('togglePhoneSource called with:', sourceName)
     setExpandedPhoneSources(prev => {
+      console.log('Previous expanded sources:', Array.from(prev))
       const newSet = new Set(prev)
       if (newSet.has(sourceName)) {
+        console.log('Removing source from expanded')
         newSet.delete(sourceName)
       } else {
+        console.log('Adding source to expanded')
         newSet.add(sourceName)
       }
+      console.log('New expanded sources:', Array.from(newSet))
       return newSet
     })
   }
 
   const toggleEmailSource = (sourceName: string) => {
+    console.log('toggleEmailSource called with:', sourceName)
     setExpandedEmailSources(prev => {
+      console.log('Previous expanded email sources:', Array.from(prev))
       const newSet = new Set(prev)
       if (newSet.has(sourceName)) {
+        console.log('Removing email source from expanded')
         newSet.delete(sourceName)
       } else {
+        console.log('Adding email source to expanded')
         newSet.add(sourceName)
       }
+      console.log('New expanded email sources:', Array.from(newSet))
       return newSet
     })
   }
@@ -261,6 +271,7 @@ export default function Dashboard() {
                         {phoneResult.results.filter((r: any) => r.found).map((result: any, idx: number) => {
                           const sourceName = result.source || result.name
                           const isExpanded = expandedPhoneSources.has(sourceName)
+                          console.log('Rendering source:', sourceName, 'isExpanded:', isExpanded, 'expandedPhoneSources:', Array.from(expandedPhoneSources))
                           
                           return (
                             <div key={idx} className="bg-white rounded-lg border border-red-200">
