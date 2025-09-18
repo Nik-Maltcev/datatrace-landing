@@ -59,7 +59,7 @@ export default function DataTraceLanding() {
       window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=5000`
     } else if (plan === 'professional-12m') {
       // Профессиональный 12 месяцев - 8500₽
-      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=8500`
+      window.location.href = `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}&productPrice=8500`
     }
   }
 

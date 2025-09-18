@@ -37,27 +37,25 @@ export default function PaymentPage() {
     setLoading(planId)
     
     try {
-      const response = await fetch('/api/create-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          planId,
-          email: user?.email,
-          promoCode: promoApplied ? 'DATATRACE25' : null,
-          discount: promoApplied ? 25 : 0
-        }),
-      })
-
-      const data = await response.json()
+      const successUrl = encodeURIComponent(`${window.location.origin}/dashboard?payment=success`)
       
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl
-      } else {
-        console.error('Payment URL not received')
-        setLoading(null)
+      // Рассчитываем итоговую цену с учетом промокода
+      const plan = plans.find(p => p.id === planId)
+      if (!plan) return
+      
+      const finalPrice = promoApplied 
+        ? Math.round(parseInt(plan.price.replace(/\s/g, '')) * 0.75)
+        : parseInt(plan.price.replace(/\s/g, ''))
+      
+      // Прямые ссылки на платежные страницы
+      if (planId === 'basic') {
+        window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&productPrice=${finalPrice}`
+      } else if (planId === 'professional-6m') {
+        window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=${finalPrice}`
+      } else if (planId === 'professional-12m') {
+        window.location.href = `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}&productPrice=${finalPrice}`
       }
+      
     } catch (error) {
       console.error('Payment error:', error)
       setLoading(null)
