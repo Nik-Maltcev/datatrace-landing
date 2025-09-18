@@ -51,15 +51,25 @@ export async function POST(request: NextRequest) {
     const price = parseFloat((params.productPrice || params.MNT_AMOUNT) as string) || 0;
     console.log('Extracted price:', price, 'from productPrice:', params.productPrice, 'or MNT_AMOUNT:', params.MNT_AMOUNT);
     
-    // Определяем план по цене
+    // Определяем план по MNT_CUSTOM1 (ID плана) или цене как резерв
     let plan = 'professional'; // по умолчанию
+    const planId = params.MNT_CUSTOM1 as string;
     
-    if (price <= 350) {
+    console.log('Plan ID from MNT_CUSTOM1:', planId);
+    
+    if (planId === '1') {
       plan = 'basic';
-    } else if (price <= 5000) {
+    } else if (planId === '2' || planId === '3') {
       plan = 'professional';
-    } else if (price <= 8500) {
-      plan = 'professional'; // Пока используем тот же план для обоих профессиональных тарифов
+    } else {
+      // Резервная логика по цене для совместимости
+      if (price <= 350) {
+        plan = 'basic';
+      } else if (price <= 5000) {
+        plan = 'professional';
+      } else if (price <= 8500) {
+        plan = 'professional';
+      }
     }
     
     console.log(`Plan determined by price ${price}: ${plan}`);

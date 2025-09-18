@@ -50,21 +50,8 @@ export default function PaymentSuccessPage() {
 
         console.log('Fetching updated user profile for:', userEmail)
         
-        // Обновляем план пользователя
-        const updateResponse = await fetch('/api/payment-success', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: userEmail,
-            plan: plan
-          }),
-        })
-        
-        const updateData = await updateResponse.json()
-        console.log('Plan update response:', updateData)
-        
+        // Не обновляем план здесь - webhook уже это сделал
+        // Просто получаем обновлённые данные пользователя
         const response = await fetch(`/api/user-profile?email=${encodeURIComponent(userEmail)}`)
         const data = await response.json()
         
