@@ -461,9 +461,10 @@ export default function ChecksPage() {
                                         )}
                                       </>
                                     ) : (
-                                      <Badge variant="secondary" className="text-xs">
-                                        Чисто
-                                      </Badge>
+                                      <div className="flex items-center space-x-2 px-3 py-1 bg-green-100 rounded-md border border-green-200">
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                        <span className="text-green-700 font-medium text-sm">Чисто</span>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
