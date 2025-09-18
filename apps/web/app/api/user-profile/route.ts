@@ -65,3 +65,93 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = getSupabaseClient();
+    
+    if (!supabase) {
+      return NextResponse.json(
+        { ok: false, error: { message: 'Database not configured' } },
+        { status: 503 }
+      );
+    }
+
+    const body = await request.json();
+    const { userId, email, plan, checksLimit } = body;
+
+    if (!userId && !email) {
+      return NextResponse.json(
+        { ok: false, error: { message: 'UserId or email is required' } },
+        { status: 400 }
+      );
+    }
+
+    if (!plan) {
+      return NextResponse.json(
+        { ok: false, error: { message: 'Plan is required' } },
+        { status: 400 }
+      );
+    }
+
+    // Определяем лимит проверок в зависимости от плана
+    let finalChecksLimit = checksLimit;
+    if (!finalChecksLimit) {
+      switch (plan) {
+        case 'basic':
+          finalChecksLimit = 1;
+          break;
+        case 'professional-6m':
+        case 'professional-12m':
+          finalChecksLimit = 2;
+          break;
+        default:
+          finalChecksLimit = 0;
+      }
+    }
+
+    let query = supabase
+      .from('user_profiles')
+      .update({ 
+        plan,
+        checks_limit: finalChecksLimit,
+        updated_at: new Date().toISOString()
+      });
+    
+    if (userId) {
+      query = query.eq('id', userId);
+    } else if (email) {
+      query = query.eq('email', email);
+    }
+
+    const { data, error } = await query.select().single();
+
+    if (error) {
+      console.error('Profile update error:', error);
+      return NextResponse.json(
+        { ok: false, error: { message: 'Failed to update profile' } },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ 
+      ok: true, 
+      profile: {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        phone: data.phone,
+        plan: data.plan || 'free',
+        checksUsed: data.checks_used || 0,
+        checksLimit: data.checks_limit || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('User profile update error:', error);
+    return NextResponse.json(
+      { ok: false, error: { message: 'Internal server error' } },
+      { status: 500 }
+    );
+  }
+}

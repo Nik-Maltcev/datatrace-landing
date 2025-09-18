@@ -18,11 +18,14 @@ export default function PaymentSuccessPage() {
       try {
         console.log('Payment success page loaded')
         
+        // Получаем plan из URL
+        const urlParams = new URLSearchParams(window.location.search)
+        const plan = urlParams.get('plan') || 'basic'
+        
         // Ждем 3 секунды, чтобы webhook точно обработался
         await new Promise(resolve => setTimeout(resolve, 3000))
         
         // Получаем email пользователя из URL или localStorage
-        const urlParams = new URLSearchParams(window.location.search)
         const emailFromUrl = urlParams.get('email')
         
         let userEmail = emailFromUrl
@@ -39,14 +42,28 @@ export default function PaymentSuccessPage() {
         }
         
         if (!userEmail) {
-          console.log('No user email found, assuming payment was successful anyway')
-          setStatus('success')
-          setMessage('Платеж обработан! Обновите страницу дашборда.')
-          setIsLoading(false)
+          console.log('No user email found, redirecting to dashboard with plan')
+          // Перенаправляем в дашборд с plan
+          window.location.href = `/dashboard?payment=success&plan=${plan}`
           return
         }
 
         console.log('Fetching updated user profile for:', userEmail)
+        
+        // Обновляем план пользователя
+        const updateResponse = await fetch('/api/payment-success', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            plan: plan
+          }),
+        })
+        
+        const updateData = await updateResponse.json()
+        console.log('Plan update response:', updateData)
         
         const response = await fetch(`/api/user-profile?email=${encodeURIComponent(userEmail)}`)
         const data = await response.json()

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,11 +36,63 @@ import Link from "next/link"
 
 export default function Dashboard() {
   const { user, logout, refreshUserData, updateUserChecks } = useAuth()
+  const searchParams = useSearchParams()
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [phoneResult, setPhoneResult] = useState<any>(null)
   const [emailResult, setEmailResult] = useState<any>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
+
+  // Обработка успешного платежа
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment')
+    const plan = searchParams.get('plan') || 'basic'
+    
+    if (paymentStatus === 'success' && user?.email) {
+      setPaymentSuccess(true)
+      
+      // Вызываем API для обновления плана пользователя
+      const updateUserPlan = async () => {
+        try {
+          const response = await fetch('/api/payment-success', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: user.email,
+              plan: plan
+            }),
+          })
+          
+          const data = await response.json()
+          
+          if (data.ok) {
+            console.log('Plan updated successfully')
+            // Обновляем данные пользователя
+            refreshUserData()
+          } else {
+            console.error('Failed to update plan:', data.error)
+          }
+        } catch (error) {
+          console.error('Error updating plan:', error)
+        }
+      }
+      
+      // Обновляем план
+      updateUserPlan()
+      
+      // Убираем параметры из URL через 5 секунд
+      setTimeout(() => {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('payment')
+        url.searchParams.delete('plan')
+        window.history.replaceState({}, '', url.toString())
+        setPaymentSuccess(false)
+      }, 5000)
+    }
+  }, [searchParams, refreshUserData, user?.email])
 
 
   useEffect(() => {
@@ -165,6 +218,16 @@ export default function Dashboard() {
 
   return (
     <div className="p-8">
+      {/* Payment Success Alert */}
+      {paymentSuccess && (
+        <Alert className="mb-6 border-green-200 bg-green-50">
+          <Shield className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <strong>Оплата прошла успешно!</strong> Ваш тарифный план обновляется. Обновите страницу через несколько секунд.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">

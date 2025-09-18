@@ -37,7 +37,7 @@ export default function PaymentPage() {
     setLoading(planId)
     
     try {
-      const successUrl = encodeURIComponent(`${window.location.origin}/dashboard?payment=success`)
+      const successUrl = encodeURIComponent(`${window.location.origin}/redirect?plan=${planId}`)
       
       // Рассчитываем итоговую цену с учетом промокода
       const plan = plans.find(p => p.id === planId)
