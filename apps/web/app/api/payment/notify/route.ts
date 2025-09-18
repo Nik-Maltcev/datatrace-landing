@@ -25,7 +25,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Получаем данные о платеже
-    let email = params.customerEmail as string;
+    let email = (params.customerEmail || params.MNT_SUBSCRIBER_ID) as string;
+    
+    // Декодируем URL-encoded email
+    if (email) {
+      email = decodeURIComponent(email);
+    }
+    
     const transactionId = params.MNT_TRANSACTION_ID as string;
     
     console.log('PayAnyWay params:', params);
@@ -42,7 +48,8 @@ export async function POST(request: NextRequest) {
     const finalTransactionId = transactionId || `payment_${email}_${Date.now()}`;
     console.log('Final transaction ID:', finalTransactionId);
     
-    const price = parseFloat(params.productPrice as string);
+    const price = parseFloat((params.productPrice || params.MNT_AMOUNT) as string) || 0;
+    console.log('Extracted price:', price, 'from productPrice:', params.productPrice, 'or MNT_AMOUNT:', params.MNT_AMOUNT);
     
     // Определяем план по цене
     let plan = 'professional'; // по умолчанию
