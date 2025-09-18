@@ -54,6 +54,12 @@ export default function Dashboard() {
   const handleCheckPhoneLeaks = async () => {
     if (!user?.phone || isCheckingPhone) return
     
+    // Проверяем лимит проверок
+    if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
+      console.log('❌ Checks limit reached');
+      return;
+    }
+    
     setIsCheckingPhone(true)
     try {
       const response = await fetch('/api/leaks/check-phone', {
@@ -97,6 +103,12 @@ export default function Dashboard() {
 
   const handleCheckEmailLeaks = async () => {
     if (!user?.email || isCheckingEmail) return
+    
+    // Проверяем лимит проверок
+    if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
+      console.log('❌ Checks limit reached');
+      return;
+    }
     
     setIsCheckingEmail(true)
     try {
@@ -219,7 +231,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckPhoneLeaks}
-              disabled={!user.phone || isCheckingPhone}
+              disabled={!user.phone || isCheckingPhone || (user.checksUsed || 0) >= (user.checksLimit || 0)}
               className="w-full"
             >
               {isCheckingPhone ? (
@@ -227,6 +239,8 @@ export default function Dashboard() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
                 </>
+              ) : (user.checksUsed || 0) >= (user.checksLimit || 0) ? (
+                'Лимит проверок исчерпан'
               ) : (
                 <>
                   Проверить номер
@@ -303,7 +317,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckEmailLeaks}
-              disabled={isCheckingEmail}
+              disabled={isCheckingEmail || (user.checksUsed || 0) >= (user.checksLimit || 0)}
               className="w-full"
               variant="outline"
             >
@@ -312,6 +326,8 @@ export default function Dashboard() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
                 </>
+              ) : (user.checksUsed || 0) >= (user.checksLimit || 0) ? (
+                'Лимит проверок исчерпан'
               ) : (
                 <>
                   Проверить email
