@@ -423,99 +423,90 @@ export default function ChecksPage() {
                                         <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
                                         {Array.isArray(result.items) ? (
                                           // Dyxless format: простой массив записей
-                                          result.items.slice(0, 5).map((item: any, itemIdx: number) => (
-                                            <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
-                                              {Object.entries(item)
-                                                .filter(([key, value]) => 
-                                                  value && key !== 'id' && key !== 'user_id' && key !== '_original' &&
-                                                  String(value).length > 0 && String(value) !== 'null'
-                                                )
-                                                .slice(0, 6)
-                                                .map(([key, value]) => (
-                                                  <div key={key} className="flex justify-between py-1">
-                                                    <span className="font-medium text-gray-600">{key}:</span>
-                                                    <span className="text-gray-800 break-all">{String(value)}</span>
-                                                  </div>
-                                                ))
-                                              }
+                                          <>
+                                            {result.items.map((item: any, itemIdx: number) => (
+                                              <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
+                                                {Object.entries(item)
+                                                  .filter(([key, value]) => 
+                                                    value && key !== 'id' && key !== 'user_id' && key !== '_original' &&
+                                                    String(value).length > 0 && String(value) !== 'null'
+                                                  )
+                                                  .map(([key, value]) => (
+                                                    <div key={key} className="flex justify-between py-1">
+                                                      <span className="font-medium text-gray-600">{
+                                                        key === 'name' ? 'Имя' :
+                                                        key === 'phone' ? 'Телефон' :
+                                                        key === 'email' ? 'Email' :
+                                                        key === 'address' ? 'Адрес' :
+                                                        key === 'login' ? 'Логин' :
+                                                        key === 'password' ? 'Пароль' :
+                                                        key === 'source' ? 'Источник' :
+                                                        key
+                                                      }:</span>
+                                                      <span className="text-gray-800 break-all">{String(value)}</span>
+                                                    </div>
+                                                  ))
+                                                }
+                                              </div>
+                                            ))}
+                                            <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-100 rounded">
+                                              📊 Всего показано: {result.items.length} записей
                                             </div>
-                                          ))
+                                          </>
                                         ) : result.data && typeof result.data === 'object' ? (
                                           // ITP format: группированные данные по базам
-                                          Object.entries(result.data).slice(0, 4).map(([dbName, dbRecords]: [string, any], dbIdx: number) => (
-                                            <div key={dbIdx} className="bg-gray-50 p-3 rounded text-xs border-l-4 border-blue-200">
-                                              <div className="font-medium text-gray-700 mb-2 text-sm">📊 {dbName}</div>
-                                              {Array.isArray(dbRecords) && dbRecords.slice(0, 2).map((record: any, recordIdx: number) => (
-                                                <div key={recordIdx} className="ml-2 mb-2 p-2 bg-white rounded border-l-2 border-gray-200">
-                                                  {Object.entries(record)
-                                                    .filter(([key, value]) => 
-                                                      value && key !== 'id' && key !== 'user_id' && key !== '_original' &&
-                                                      key !== 'dbName' && key !== 'dataProvider' &&
-                                                      String(value).length > 0 && String(value) !== 'null'
-                                                    )
-                                                    .slice(0, 5)
-                                                    .map(([key, value]) => (
-                                                      <div key={key} className="flex justify-between py-0.5">
-                                                        <span className="font-medium text-gray-600 capitalize">{
-                                                          key === 'name' ? 'Имя' :
-                                                          key === 'phone' ? 'Телефон' :
-                                                          key === 'email' ? 'Email' :
-                                                          key === 'address' ? 'Адрес' :
-                                                          key === 'login' ? 'Логин' :
-                                                          key
-                                                        }:</span>
-                                                        <span className="text-gray-800 break-all text-right">{String(value)}</span>
-                                                      </div>
-                                                    ))
-                                                  }
-                                                </div>
-                                              ))}
-                                              {Array.isArray(dbRecords) && dbRecords.length > 2 && (
-                                                <div className="text-xs text-blue-600 ml-2 italic">
-                                                  ... ещё {dbRecords.length - 2} записей в этой базе
-                                                </div>
-                                              )}
-                                            </div>
-                                          ))
-                                        ) : (
-                                          typeof result.items === 'object' && result.items !== null ? (
-                                            Object.entries(result.items).slice(0, 3).map(([db, items]: [string, any], itemIdx: number) => (
-                                              <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
-                                                <div className="font-medium text-gray-700 mb-1">База: {db}</div>
-                                                {Array.isArray(items) && items.slice(0, 2).map((item: any, subIdx: number) => (
-                                                  <div key={subIdx} className="ml-2 border-l-2 border-gray-300 pl-2 mb-1">
-                                                    {Object.entries(item)
+                                          <>
+                                            {Object.entries(result.data).map(([dbName, dbRecords]: [string, any], dbIdx: number) => (
+                                              <div key={dbIdx} className="bg-gray-50 p-3 rounded text-xs border-l-4 border-blue-200 mb-3">
+                                                <div className="font-medium text-gray-700 mb-2 text-sm">📊 {dbName}</div>
+                                                {Array.isArray(dbRecords) && dbRecords.map((record: any, recordIdx: number) => (
+                                                  <div key={recordIdx} className="ml-2 mb-2 p-2 bg-white rounded border-l-2 border-gray-200">
+                                                    {Object.entries(record)
                                                       .filter(([key, value]) => 
-                                                        value && key !== 'id' && key !== 'user_id' && 
-                                                        String(value).length > 0 && String(value) !== 'null'
+                                                        value && 
+                                                        key !== 'id' && 
+                                                        key !== 'user_id' && 
+                                                        key !== '_original' &&
+                                                        key !== 'dataProvider' &&
+                                                        key !== 'source_database' &&
+                                                        key !== 'userId' &&
+                                                        String(value).length > 0 && 
+                                                        String(value) !== 'null' &&
+                                                        String(value) !== 'undefined'
                                                       )
-                                                      .slice(0, 3)
                                                       .map(([key, value]) => (
                                                         <div key={key} className="flex justify-between py-0.5">
-                                                          <span className="font-medium text-gray-600">{key}:</span>
-                                                          <span className="text-gray-800">{String(value)}</span>
+                                                          <span className="font-medium text-gray-600 capitalize">{
+                                                            key === 'name' ? 'Имя' :
+                                                            key === 'phone' ? 'Телефон' :
+                                                            key === 'email' ? 'Email' :
+                                                            key === 'address' ? 'Адрес' :
+                                                            key === 'login' ? 'Логин' :
+                                                            key === 'password' ? 'Пароль' :
+                                                            key === 'dbName' ? 'База данных' :
+                                                            key
+                                                          }:</span>
+                                                          <span className="text-gray-800 break-all text-right max-w-xs">{String(value)}</span>
                                                         </div>
                                                       ))
                                                     }
                                                   </div>
                                                 ))}
+                                                <div className="text-xs text-blue-600 ml-2 italic">
+                                                  Записей в этой базе: {Array.isArray(dbRecords) ? dbRecords.length : 0}
+                                                </div>
                                               </div>
-                                            ))
-                                          ) : (
-                                            <div className="text-xs text-gray-500">Детали недоступны</div>
-                                          )
-                                        )}
-                                        {/* Показать общий счетчик */}
-                                        {result.data && typeof result.data === 'object' && !Array.isArray(result.data) ? (
-                                          <div className="text-xs text-gray-600 mt-2 p-2 bg-blue-50 rounded">
-                                            📈 Общий итог: {Object.values(result.data).reduce((total: number, dbRecords: any) => 
-                                              total + (Array.isArray(dbRecords) ? dbRecords.length : 0), 0
-                                            )} записей в {Object.keys(result.data).length} базах данных
+                                            ))}
+                                            <div className="text-xs text-gray-600 mt-2 p-3 bg-blue-50 rounded border border-blue-200">
+                                              📈 Общий итог: {Object.values(result.data).reduce((total: number, dbRecords: any) => 
+                                                total + (Array.isArray(dbRecords) ? dbRecords.length : 0), 0
+                                              )} записей в {Object.keys(result.data).length} базах данных
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+                                            ❌ Детали недоступны или неизвестный формат данных
                                           </div>
-                                        ) : Array.isArray(result.items) && result.items.length > 5 && (
-                                          <p className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
-                                            📊 Показано первых 5 из {result.items.length} записей
-                                          </p>
                                         )}
                                       </div>
                                     </div>
