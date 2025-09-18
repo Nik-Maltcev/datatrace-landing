@@ -1,50 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { saveCheckResult } from '@/lib/checkHistory';
-import { getSupabaseClient } from '@/lib/config/supabase-api';
-
-// Функция для увеличения счетчика проверок
-async function incrementChecksUsed(userId: string) {
-  try {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      console.error('❌ Supabase client not available for incrementing checks');
-      return false;
-    }
-
-    // Сначала получаем текущее значение
-    const { data: profile, error: selectError } = await supabase
-      .from('user_profiles')
-      .select('checks_used')
-      .eq('email', userId)
-      .single();
-
-    if (selectError) {
-      console.error('❌ Error fetching current checks_used:', selectError);
-      return false;
-    }
-
-    // Обновляем счетчик
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ 
-        checks_used: (profile.checks_used || 0) + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('email', userId);
-    
-    if (error) {
-      console.error('❌ Error incrementing checks used:', error);
-      return false;
-    }
-    
-    console.log('✅ Successfully incremented checks used for user:', userId);
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to increment checks used:', error);
-    return false;
-  }
-}
 
 // Import normalizers
 const ITPNormalizer = require('@/lib/utils/ITPNormalizer');
@@ -404,11 +360,6 @@ export async function POST(request: NextRequest) {
         userId: userId || 'current-user' // Используем переданный userId или fallback
       });
       console.log('✅ Email check result saved to history');
-      
-      // Увеличиваем счетчик использованных проверок
-      if (userId) {
-        await incrementChecksUsed(userId);
-      }
     } catch (historyError: any) {
       console.error('❌ Failed to save email check to history:', historyError.message);
     }
