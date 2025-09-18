@@ -29,6 +29,7 @@ import {
   Clock,
   Zap,
   ChevronDown,
+  Monitor,
   ChevronRight,
   Trash2
 } from "lucide-react"
@@ -538,21 +539,30 @@ export default function Dashboard() {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <Shield className="h-6 w-6 text-orange-600" />
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Monitor className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Защита данных</CardTitle>
-                <p className="text-sm text-gray-500">Безопасность и конфиденциальность</p>
+                <CardTitle className="text-lg">Мониторинг утечек</CardTitle>
+                <p className="text-sm text-gray-500">Автоматическое отслеживание и удаление</p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              Управляйте настройками безопасности и защитой персональных данных
+              Активируйте Telegram-бота для получения уведомлений о новых утечках ваших данных и возможности их удаления в режиме реального времени
             </p>
-            <Button variant="outline" className="w-full" disabled>
-              Скоро доступно
+            <Button 
+              variant={user?.plan === 'professional' ? "default" : "outline"} 
+              className="w-full" 
+              disabled={user?.plan !== 'professional'}
+              onClick={() => {
+                if (user?.plan === 'professional') {
+                  window.open('https://t.me/your_bot_username', '_blank')
+                }
+              }}
+            >
+              {user?.plan === 'professional' ? 'Запустить мониторинг' : 'Доступно в Professional'}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
