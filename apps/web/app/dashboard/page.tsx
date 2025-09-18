@@ -44,14 +44,16 @@ export default function Dashboard() {
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [paymentProcessed, setPaymentProcessed] = useState(false)
 
   // Обработка успешного платежа
   useEffect(() => {
     const paymentStatus = searchParams.get('payment')
     const plan = searchParams.get('plan') || 'basic'
     
-    if (paymentStatus === 'success' && user?.email) {
+    if (paymentStatus === 'success' && user?.email && !paymentProcessed) {
       setPaymentSuccess(true)
+      setPaymentProcessed(true)
       
       // Вызываем API для обновления плана пользователя
       const updateUserPlan = async () => {
@@ -91,9 +93,10 @@ export default function Dashboard() {
         url.searchParams.delete('plan')
         window.history.replaceState({}, '', url.toString())
         setPaymentSuccess(false)
+        setPaymentProcessed(false)
       }, 5000)
     }
-  }, [searchParams, refreshUserData, user?.email])
+  }, [searchParams, user?.email, paymentProcessed])
 
 
   useEffect(() => {
