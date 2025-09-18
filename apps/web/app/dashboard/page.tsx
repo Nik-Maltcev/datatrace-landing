@@ -558,7 +558,7 @@ export default function Dashboard() {
               disabled={user?.plan !== 'professional'}
               onClick={() => {
                 if (user?.plan === 'professional') {
-                  window.open('https://t.me/your_bot_username', '_blank')
+                  window.open('https://t.me/datatrace_monitor_bot', '_blank')
                 }
               }}
             >
