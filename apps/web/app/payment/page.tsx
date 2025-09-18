@@ -5,12 +5,33 @@ import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Star, ArrowLeft, Check } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { CheckCircle, Star, ArrowLeft, Check, Tag } from "lucide-react"
 import Link from "next/link"
 
 export default function PaymentPage() {
   const { user } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoApplied, setPromoApplied] = useState(false)
+  const [promoError, setPromoError] = useState('')
+
+  const applyPromoCode = () => {
+    if (promoCode.toUpperCase() === 'DATATRACE25') {
+      setPromoApplied(true)
+      setPromoError('')
+    } else {
+      setPromoApplied(false)
+      setPromoError('Неверный промокод')
+    }
+  }
+
+  const calculateDiscountedPrice = (price: string) => {
+    if (!promoApplied) return price
+    const originalPrice = parseInt(price.replace(/\s/g, ''))
+    const discountedPrice = Math.round(originalPrice * 0.75) // 25% скидка
+    return discountedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  }
 
   const handlePayment = async (planId: string) => {
     setLoading(planId)
@@ -23,7 +44,9 @@ export default function PaymentPage() {
         },
         body: JSON.stringify({ 
           planId,
-          email: user?.email 
+          email: user?.email,
+          promoCode: promoApplied ? 'DATATRACE25' : null,
+          discount: promoApplied ? 25 : 0
         }),
       })
 
@@ -114,6 +137,42 @@ export default function PaymentPage() {
           </div>
         </div>
 
+        {/* Promo Code Section */}
+        <Card className="mb-8 max-w-md mx-auto">
+          <CardContent className="p-6">
+            <div className="flex items-center mb-4">
+              <Tag className="h-5 w-5 text-gray-600 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">Промокод</h3>
+            </div>
+            <div className="flex gap-2 mb-2">
+              <Input
+                placeholder="Введите промокод"
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value.toUpperCase())
+                  setPromoError('')
+                  setPromoApplied(false)
+                }}
+                className="flex-1"
+              />
+              <Button onClick={applyPromoCode} variant="outline">
+                Применить
+              </Button>
+            </div>
+            {promoApplied && (
+              <div className="flex items-center text-green-600 text-sm">
+                <Check className="h-4 w-4 mr-1" />
+                Скидка 25% применена!
+              </div>
+            )}
+            {promoError && (
+              <div className="text-red-600 text-sm">
+                {promoError}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Current Plan */}
         {user?.plan && user.plan !== 'free' && (
           <Card className="mb-8 border-green-200 bg-green-50">
@@ -149,7 +208,21 @@ export default function PaymentPage() {
                   {plan.period && plan.period !== 'за запрос' && (
                     <p className="text-lg text-gray-700 mb-2">{plan.period}</p>
                   )}
-                  <div className="text-4xl font-bold text-black mb-2">{plan.price}₽</div>
+                  <div className="text-center mb-2">
+                    {promoApplied && (
+                      <div className="text-2xl text-gray-400 line-through mb-1">
+                        {plan.price}₽
+                      </div>
+                    )}
+                    <div className={`text-4xl font-bold ${promoApplied ? 'text-green-600' : 'text-black'}`}>
+                      {calculateDiscountedPrice(plan.price)}₽
+                    </div>
+                    {promoApplied && (
+                      <Badge className="bg-green-100 text-green-800 text-xs mt-1">
+                        Скидка 25%
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-gray-600">{plan.pricePeriod || plan.period}</p>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -228,6 +301,23 @@ export default function PaymentPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Promo Info */}
+        <div className="mt-8 text-center">
+          <Card className="max-w-md mx-auto border-dashed border-2 border-gray-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center mb-4">
+                <Tag className="h-8 w-8 text-gray-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Промокод DATATRACE25
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Скидка 25% на все тарифы. Введите промокод выше для активации скидки.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
