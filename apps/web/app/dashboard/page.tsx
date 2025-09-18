@@ -30,8 +30,7 @@ export default function Dashboard() {
   const [emailResult, setEmailResult] = useState<any>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
-  const [expandedPhoneSources, setExpandedPhoneSources] = useState<Set<string>>(new Set())
-  const [expandedEmailSources, setExpandedEmailSources] = useState<Set<string>>(new Set())
+
 
   useEffect(() => {
     if (user?.phone) {
@@ -40,39 +39,7 @@ export default function Dashboard() {
     }
   }, [user])
 
-  const togglePhoneSource = (sourceName: string) => {
-    console.log('togglePhoneSource called with:', sourceName)
-    setExpandedPhoneSources(prev => {
-      console.log('Previous expanded sources:', Array.from(prev))
-      const newSet = new Set(prev)
-      if (newSet.has(sourceName)) {
-        console.log('Removing source from expanded')
-        newSet.delete(sourceName)
-      } else {
-        console.log('Adding source to expanded')
-        newSet.add(sourceName)
-      }
-      console.log('New expanded sources:', Array.from(newSet))
-      return newSet
-    })
-  }
 
-  const toggleEmailSource = (sourceName: string) => {
-    console.log('toggleEmailSource called with:', sourceName)
-    setExpandedEmailSources(prev => {
-      console.log('Previous expanded email sources:', Array.from(prev))
-      const newSet = new Set(prev)
-      if (newSet.has(sourceName)) {
-        console.log('Removing email source from expanded')
-        newSet.delete(sourceName)
-      } else {
-        console.log('Adding email source to expanded')
-        newSet.add(sourceName)
-      }
-      console.log('New expanded email sources:', Array.from(newSet))
-      return newSet
-    })
-  }
 
   const handleCheckPhoneLeaks = async () => {
     if (!user?.phone || isCheckingPhone) return
@@ -270,82 +237,20 @@ export default function Dashboard() {
                       <div className="mt-3 space-y-2">
                         {phoneResult.results.filter((r: any) => r.found).map((result: any, idx: number) => {
                           const sourceName = result.source || result.name
-                          const isExpanded = expandedPhoneSources.has(sourceName)
-                          console.log('Rendering source:', sourceName, 'isExpanded:', isExpanded, 'expandedPhoneSources:', Array.from(expandedPhoneSources))
                           
                           return (
-                            <div key={idx} className="bg-white rounded-lg border border-red-200">
-                              <div 
-                                className="p-3 cursor-pointer hover:bg-red-50 transition-colors"
-                                onClick={() => togglePhoneSource(sourceName)}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                                      <AlertTriangle className="h-3 w-3 text-red-600" />
-                                    </div>
-                                    <span className="font-medium text-sm">{sourceName}</span>
+                            <div key={idx} className="bg-white rounded-lg border border-red-200 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                    <AlertTriangle className="h-3 w-3 text-red-600" />
                                   </div>
-                                  <div className="flex items-center space-x-2">
-                                    <Badge variant="destructive" className="text-xs">
-                                      {result.count || 0} записей
-                                    </Badge>
-                                    {isExpanded ? (
-                                      <ChevronDown className="h-4 w-4 text-gray-500" />
-                                    ) : (
-                                      <ChevronRight className="h-4 w-4 text-gray-500" />
-                                    )}
-                                  </div>
+                                  <span className="font-medium text-sm">{sourceName}</span>
                                 </div>
+                                <Badge variant="destructive" className="text-xs">
+                                  {result.count || 0} записей
+                                </Badge>
                               </div>
-                              
-                              {isExpanded && (
-                                <div className="border-t border-red-200 p-3 bg-red-25">
-                                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                                    Детали утечки:
-                                  </h4>
-                                  <div className="space-y-2 text-sm text-gray-600">
-                                    <p>• Источник: {sourceName}</p>
-                                    <p>• Количество записей: {result.count || 0}</p>
-                                    
-                                    {/* Отображаем нормализованные данные */}
-                                    {result.items && result.items.length > 0 && (
-                                      <div className="mt-3 space-y-2">
-                                        <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
-                                        {result.items.slice(0, 3).map((item: any, itemIdx: number) => (
-                                          <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
-                                            {Object.entries(item)
-                                              .filter(([key, value]) => 
-                                                value && key !== 'id' && key !== 'user_id' && 
-                                                String(value).length > 0 && String(value) !== 'null'
-                                              )
-                                              .slice(0, 5)
-                                              .map(([key, value]) => (
-                                                <div key={key} className="flex justify-between py-1">
-                                                  <span className="font-medium text-gray-600">{key}:</span>
-                                                  <span className="text-gray-800">{String(value)}</span>
-                                                </div>
-                                              ))
-                                            }
-                                          </div>
-                                        ))}
-                                        {result.items.length > 3 && (
-                                          <p className="text-xs text-gray-500">
-                                            ... и ещё {result.items.length - 3} записей
-                                          </p>
-                                        )}
-                                      </div>
-                                    )}
-                                    
-                                    <p>• Рекомендуется сменить пароли для аккаунтов, связанных с этим номером</p>
-                                  </div>
-                                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                                    <p className="text-xs text-yellow-800">
-                                      ⚠️ Для получения подробной информации об утечке обратитесь в службу поддержки
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )
                         })}
@@ -417,81 +322,20 @@ export default function Dashboard() {
                       <div className="mt-3 space-y-2">
                         {emailResult.results.filter((r: any) => r.found).map((result: any, idx: number) => {
                           const sourceName = result.source || result.name
-                          const isExpanded = expandedEmailSources.has(sourceName)
                           
                           return (
-                            <div key={idx} className="bg-white rounded-lg border border-red-200">
-                              <div 
-                                className="p-3 cursor-pointer hover:bg-red-50 transition-colors"
-                                onClick={() => toggleEmailSource(sourceName)}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                                      <AlertTriangle className="h-3 w-3 text-red-600" />
-                                    </div>
-                                    <span className="font-medium text-sm">{sourceName}</span>
+                            <div key={idx} className="bg-white rounded-lg border border-red-200 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                    <AlertTriangle className="h-3 w-3 text-red-600" />
                                   </div>
-                                  <div className="flex items-center space-x-2">
-                                    <Badge variant="destructive" className="text-xs">
-                                      {result.count || 0} записей
-                                    </Badge>
-                                    {isExpanded ? (
-                                      <ChevronDown className="h-4 w-4 text-gray-500" />
-                                    ) : (
-                                      <ChevronRight className="h-4 w-4 text-gray-500" />
-                                    )}
-                                  </div>
+                                  <span className="font-medium text-sm">{sourceName}</span>
                                 </div>
+                                <Badge variant="destructive" className="text-xs">
+                                  {result.count || 0} записей
+                                </Badge>
                               </div>
-                              
-                              {isExpanded && (
-                                <div className="border-t border-red-200 p-3 bg-red-25">
-                                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                                    Детали утечки:
-                                  </h4>
-                                  <div className="space-y-2 text-sm text-gray-600">
-                                    <p>• Источник: {sourceName}</p>
-                                    <p>• Количество записей: {result.count || 0}</p>
-                                    
-                                    {/* Отображаем нормализованные данные */}
-                                    {result.items && result.items.length > 0 && (
-                                      <div className="mt-3 space-y-2">
-                                        <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
-                                        {result.items.slice(0, 3).map((item: any, itemIdx: number) => (
-                                          <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
-                                            {Object.entries(item)
-                                              .filter(([key, value]) => 
-                                                value && key !== 'id' && key !== 'user_id' && 
-                                                String(value).length > 0 && String(value) !== 'null'
-                                              )
-                                              .slice(0, 5)
-                                              .map(([key, value]) => (
-                                                <div key={key} className="flex justify-between py-1">
-                                                  <span className="font-medium text-gray-600">{key}:</span>
-                                                  <span className="text-gray-800">{String(value)}</span>
-                                                </div>
-                                              ))
-                                            }
-                                          </div>
-                                        ))}
-                                        {result.items.length > 3 && (
-                                          <p className="text-xs text-gray-500">
-                                            ... и ещё {result.items.length - 3} записей
-                                          </p>
-                                        )}
-                                      </div>
-                                    )}
-                                    
-                                    <p>• Рекомендуется сменить пароли для аккаунтов с этим email</p>
-                                  </div>
-                                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                                    <p className="text-xs text-yellow-800">
-                                      ⚠️ Для получения подробной информации об утечке обратитесь в службу поддержки
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )
                         })}

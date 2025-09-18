@@ -17,7 +17,9 @@ import {
   AlertTriangle,
   CheckCircle,
   TrendingUp,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
@@ -44,6 +46,20 @@ export default function ChecksPage() {
   const [checks, setChecks] = useState<CheckHistory[]>([])
   const [passwordChecks, setPasswordChecks] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set())
+
+  const toggleSource = (checkId: string, sourceName: string) => {
+    const key = `${checkId}-${sourceName}`
+    setExpandedSources(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(key)) {
+        newSet.delete(key)
+      } else {
+        newSet.add(key)
+      }
+      return newSet
+    })
+  }
 
   useEffect(() => {
     if (user?.email) {
@@ -339,36 +355,100 @@ export default function ChecksPage() {
                       <div className="space-y-2">
                         <h4 className="text-sm font-medium text-gray-900">Источники утечек:</h4>
                         <div className="space-y-2">
-                          {check.results.map((result, idx) => (
-                            <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${
-                              result.found ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'
-                            }`}>
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-3 h-3 rounded-full ${
-                                  result.found ? 'bg-red-500' : 'bg-gray-400'
-                                }`} />
-                                <span className="text-sm font-medium">
-                                  {result.source || result.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                {result.found ? (
-                                  <>
-                                    <Badge variant="destructive" className="text-xs">
-                                      {result.count || 0} записей
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs text-red-600">
-                                      Утечка
-                                    </Badge>
-                                  </>
-                                ) : (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Чисто
-                                  </Badge>
+                          {check.results.map((result, idx) => {
+                            const sourceName = result.source || result.name
+                            const key = `${check.id}-${sourceName}`
+                            const isExpanded = expandedSources.has(key)
+                            
+                            return (
+                              <div key={idx} className={`rounded-lg border ${
+                                result.found ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'
+                              }`}>
+                                <div 
+                                  className={`flex items-center justify-between p-3 ${
+                                    result.found && result.data && result.data.items ? 'cursor-pointer hover:bg-red-100 transition-colors' : ''
+                                  }`}
+                                  onClick={() => {
+                                    if (result.found && result.data && result.data.items) {
+                                      toggleSource(check.id, sourceName)
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className={`w-3 h-3 rounded-full ${
+                                      result.found ? 'bg-red-500' : 'bg-gray-400'
+                                    }`} />
+                                    <span className="text-sm font-medium">
+                                      {sourceName}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    {result.found ? (
+                                      <>
+                                        <Badge variant="destructive" className="text-xs">
+                                          {result.count || 0} записей
+                                        </Badge>
+                                        <Badge variant="outline" className="text-xs text-red-600">
+                                          Утечка
+                                        </Badge>
+                                        {result.data && result.data.items && (
+                                          <>
+                                            {isExpanded ? (
+                                              <ChevronDown className="h-4 w-4 text-gray-500" />
+                                            ) : (
+                                              <ChevronRight className="h-4 w-4 text-gray-500" />
+                                            )}
+                                          </>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <Badge variant="secondary" className="text-xs">
+                                        Чисто
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {isExpanded && result.found && result.data && result.data.items && (
+                                  <div className="border-t border-red-200 p-3 bg-red-25">
+                                    <h5 className="text-sm font-medium text-gray-900 mb-2">
+                                      Детали утечки:
+                                    </h5>
+                                    <div className="space-y-2 text-sm text-gray-600">
+                                      <p>• Источник: {sourceName}</p>
+                                      <p>• Количество записей: {result.count || 0}</p>
+                                      
+                                      <div className="mt-3 space-y-2">
+                                        <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
+                                        {result.data.items.slice(0, 3).map((item: any, itemIdx: number) => (
+                                          <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
+                                            {Object.entries(item)
+                                              .filter(([key, value]) => 
+                                                value && key !== 'id' && key !== 'user_id' && 
+                                                String(value).length > 0 && String(value) !== 'null'
+                                              )
+                                              .slice(0, 5)
+                                              .map(([key, value]) => (
+                                                <div key={key} className="flex justify-between py-1">
+                                                  <span className="font-medium text-gray-600">{key}:</span>
+                                                  <span className="text-gray-800">{String(value)}</span>
+                                                </div>
+                                              ))
+                                            }
+                                          </div>
+                                        ))}
+                                        {result.data.items.length > 3 && (
+                                          <p className="text-xs text-gray-500">
+                                            ... и ещё {result.data.items.length - 3} записей
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                     </CardContent>
