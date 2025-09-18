@@ -45,6 +45,8 @@ export default function Dashboard() {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [paymentProcessed, setPaymentProcessed] = useState(false)
+  const [transactionId, setTransactionId] = useState('')
+  const [isCheckingTransaction, setIsCheckingTransaction] = useState(false)
 
   // Обработка успешного платежа
   useEffect(() => {
@@ -112,6 +114,47 @@ export default function Dashboard() {
       }
     }
   }, [user])
+
+  const handleCheckTransaction = async () => {
+    if (!transactionId.trim()) {
+      alert('Пожалуйста, введите ID транзакции')
+      return
+    }
+
+    if (!user?.email) {
+      alert('Ошибка: пользователь не найден')
+      return
+    }
+
+    setIsCheckingTransaction(true)
+    try {
+      const response = await fetch('/api/check-transaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionId: transactionId.trim(),
+          email: user.email
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.ok) {
+        alert(`Успешно! Ваш тариф обновлён до ${data.plan}`)
+        refreshUserData()
+        setTransactionId('')
+      } else {
+        alert(`Ошибка: ${data.error.message}`)
+      }
+    } catch (error) {
+      console.error('Error checking transaction:', error)
+      alert('Произошла ошибка при проверке транзакции')
+    } finally {
+      setIsCheckingTransaction(false)
+    }
+  }
 
 
 
@@ -231,6 +274,37 @@ export default function Dashboard() {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Transaction Check Section */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">Обновить тариф после оплаты</h3>
+        <p className="text-sm text-blue-700 mb-3">
+          Если вы оплатили тариф, но он не обновился автоматически, введите ID транзакции из письма об оплате:
+        </p>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Введите ID транзакции"
+            value={transactionId}
+            onChange={(e) => setTransactionId(e.target.value)}
+            className="flex-1 px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <Button 
+            onClick={handleCheckTransaction}
+            disabled={isCheckingTransaction || !transactionId.trim()}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isCheckingTransaction ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Проверяю...
+              </>
+            ) : (
+              'Обновить тариф'
+            )}
+          </Button>
+        </div>
+      </div>
 
       {/* Welcome Section */}
       <div className="mb-8 flex items-center justify-between">
