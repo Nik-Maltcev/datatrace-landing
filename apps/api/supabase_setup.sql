@@ -52,6 +52,25 @@ CREATE POLICY "Users can insert own profile" ON user_profiles
 CREATE POLICY "Users can delete own profile" ON user_profiles
   FOR DELETE USING (auth.uid() = user_id);
 
+-- Функция для увеличения счетчика использованных проверок
+CREATE OR REPLACE FUNCTION increment_checks_used(user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE user_profiles 
+  SET checks_used = COALESCE(checks_used, 0) + 1,
+      updated_at = NOW()
+  WHERE id = user_id OR user_profiles.user_id = user_id;
+  
+  -- Если записи не существует, создаем её
+  INSERT INTO user_profiles (id, user_id, email, name, phone, checks_used, checks_limit, plan, created_at, updated_at)
+  SELECT user_id, user_id, '', '', '', 1, 2, 'professional', NOW(), NOW()
+  WHERE NOT EXISTS (
+    SELECT 1 FROM user_profiles 
+    WHERE id = user_id OR user_profiles.user_id = user_id
+  );
+END;
+$$ LANGUAGE plpgsql;
+
 -- Комментарии к таблице и столбцам
 COMMENT ON TABLE user_profiles IS 'Расширенные профили пользователей с дополнительной информацией';
 COMMENT ON COLUMN user_profiles.user_id IS 'Ссылка на пользователя в auth.users';

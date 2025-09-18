@@ -34,7 +34,7 @@ import {
 import Link from "next/link"
 
 export default function Dashboard() {
-  const { user, logout } = useAuth()
+  const { user, logout, refreshUserData } = useAuth()
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [phoneResult, setPhoneResult] = useState<any>(null)
   const [emailResult, setEmailResult] = useState<any>(null)
@@ -83,6 +83,16 @@ export default function Dashboard() {
       })
       
       setPhoneResult(data)
+      
+      // Обновляем данные пользователя после успешной проверки
+      if (data.ok) {
+        try {
+          await refreshUserData?.();
+          console.log('✅ User data updated after phone check');
+        } catch (updateError) {
+          console.error('❌ Failed to update user data:', updateError);
+        }
+      }
     } catch (error) {
       console.error('Phone check error:', error)
     }
@@ -106,6 +116,16 @@ export default function Dashboard() {
       })
       const data = await response.json()
       setEmailResult(data)
+      
+      // Обновляем данные пользователя после успешной проверки
+      if (data.ok) {
+        try {
+          await refreshUserData?.();
+          console.log('✅ User data updated after email check');
+        } catch (updateError) {
+          console.error('❌ Failed to update user data:', updateError);
+        }
+      }
     } catch (error) {
       console.error('Email check error:', error)
     }
