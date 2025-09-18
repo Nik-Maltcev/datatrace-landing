@@ -5,15 +5,15 @@ import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Star, ArrowLeft } from "lucide-react"
+import { CheckCircle, Star, ArrowLeft, Check } from "lucide-react"
 import Link from "next/link"
 
 export default function PaymentPage() {
   const { user } = useAuth()
   const [loading, setLoading] = useState<string | null>(null)
 
-  const handlePayment = async (plan: 'basic' | 'professional') => {
-    setLoading(plan)
+  const handlePayment = async (planId: string) => {
+    setLoading(planId)
     
     try {
       const response = await fetch('/api/create-payment', {
@@ -22,7 +22,7 @@ export default function PaymentPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          plan,
+          planId,
           email: user?.email 
         }),
       })
@@ -45,30 +45,50 @@ export default function PaymentPage() {
     {
       id: 'basic',
       name: 'БАЗОВЫЙ',
-      price: '299',
+      price: '350',
+      period: 'за запрос',
       checks: '1',
       features: [
-        'Проверка телефона и email',
-        'Базовые источники данных',
-        'Простые результаты',
-        'Техподдержка'
+        '1 проверка включена',
+        'Поиск по всем источникам',
+        'Детальный отчет о найденных данных',
+        'Анализ уровня компрометации'
       ],
       popular: false
     },
     {
-      id: 'professional',
-      name: 'ПРОФЕССИОНАЛЬНЫЙ', 
-      price: '599',
+      id: 'professional-6m',
+      name: 'ПРОФЕССИОНАЛЬНЫЙ',
+      period: '6 месяцев',
+      price: '5 000',
+      pricePeriod: 'единовременно',
       checks: '2',
       features: [
-        'Проверка телефона и email',
-        'Все источники данных',
-        'Детализированные результаты',
-        'История проверок',
-        'Экспорт данных',
-        'Приоритетная поддержка'
+        '2 проверки включены',
+        'Поиск по всем источникам',
+        'Удаление из всех источников',
+        'Мониторинг утечек 6 месяцев',
+        'Уведомления о новых утечках',
+        'Детальные отчеты'
       ],
       popular: true
+    },
+    {
+      id: 'professional-12m',
+      name: 'ПРОФЕССИОНАЛЬНЫЙ',
+      period: '12 месяцев',
+      price: '8 500',
+      pricePeriod: 'единовременно',
+      checks: '2',
+      features: [
+        '2 проверки включены',
+        'Поиск по всем источникам',
+        'Удаление из всех источников',
+        'Мониторинг утечек 12 месяцев',
+        'Уведомления о новых утечках',
+        'Приоритетная поддержка'
+      ],
+      popular: false
     }
   ] as const
 
@@ -114,47 +134,45 @@ export default function PaymentPage() {
         )}
 
         {/* Pricing Plans */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan) => (
-            <Card key={plan.id} className={`relative ${plan.popular ? 'border-blue-500 shadow-lg scale-105' : ''}`}>
+            <Card key={plan.id} className={`border-2 ${plan.popular ? 'border-black bg-gray-50 relative' : 'border-gray-200 hover:border-black transition-colors'}`}>
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-500 text-white px-4 py-1">
-                    <Star className="h-3 w-3 mr-1" />
-                    Популярный
-                  </Badge>
+                  <div className="bg-black text-white px-4 py-1 text-sm font-medium rounded">ПОПУЛЯРНЫЙ</div>
                 </div>
               )}
               
-              <CardHeader className="text-center pb-8">
-                <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                <CardDescription className="text-3xl font-bold text-gray-900">
-                  {plan.price}₽
-                  <span className="text-sm font-normal text-gray-500 ml-1">
-                    / {plan.checks} {plan.checks === '1' ? 'проверка' : 'проверки'}
-                  </span>
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                <ul className="space-y-3 mb-8">
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-black mb-2">{plan.name}</h3>
+                  {plan.period && plan.period !== 'за запрос' && (
+                    <p className="text-lg text-gray-700 mb-2">{plan.period}</p>
+                  )}
+                  <div className="text-4xl font-bold text-black mb-2">{plan.price}₽</div>
+                  <p className="text-gray-600">{plan.pricePeriod || plan.period}</p>
+                </div>
+                <div className="space-y-4 mb-8">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
+                    <div key={index} className="flex items-start space-x-3">
+                      <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
+                      <p className="text-gray-700">{feature}</p>
+                    </div>
                   ))}
-                </ul>
-
+                </div>
                 <Button
-                  onClick={() => handlePayment(plan.id as 'basic' | 'professional')}
+                  onClick={() => handlePayment(plan.id)}
                   disabled={loading !== null || (user?.plan === plan.id)}
-                  className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                  className={`w-full ${
+                    plan.popular 
+                      ? 'bg-black text-white hover:bg-gray-800'
+                      : 'border-black text-black hover:bg-black hover:text-white bg-transparent'
+                  }`}
                   variant={plan.popular ? 'default' : 'outline'}
                 >
                   {loading === plan.id ? 'Переход к оплате...' : 
                    user?.plan === plan.id ? 'Текущий тариф' :
-                   `Выбрать ${plan.name}`}
+                   'ВЫБРАТЬ ТАРИФ'}
                 </Button>
               </CardContent>
             </Card>
