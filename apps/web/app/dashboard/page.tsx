@@ -8,6 +8,15 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import PhoneVerification from "@/components/PhoneVerification"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
   Search,
   Shield,
   Activity,
@@ -19,7 +28,8 @@ import {
   Clock,
   Zap,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from "lucide-react"
 import Link from "next/link"
 

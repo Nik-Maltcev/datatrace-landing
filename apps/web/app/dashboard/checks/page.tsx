@@ -6,6 +6,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { 
   Search, 
   Phone, 
@@ -48,6 +57,8 @@ export default function ChecksPage() {
   const [passwordChecks, setPasswordChecks] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set())
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const toggleSource = (checkId: string, sourceName: string) => {
     const key = `${checkId}-${sourceName}`
@@ -60,6 +71,35 @@ export default function ChecksPage() {
       }
       return newSet
     })
+  }
+
+  const handleDeleteData = async () => {
+    setIsDeleting(true)
+    try {
+      // Здесь будет API для удаления данных
+      const response = await fetch('/api/delete-user-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: user?.email,
+          sources: Array.from(compromisedSources)
+        }),
+      })
+      
+      if (response.ok) {
+        // Показать сообщение об успехе
+        alert('Запрос на удаление данных отправлен. Мы свяжемся с вами для подтверждения.')
+        setIsDeleteModalOpen(false)
+      } else {
+        alert('Ошибка при отправке запроса на удаление данных')
+      }
+    } catch (error) {
+      console.error('Delete data error:', error)
+      alert('Ошибка при отправке запроса на удаление данных')
+    }
+    setIsDeleting(false)
   }
 
   useEffect(() => {
@@ -546,9 +586,68 @@ export default function ChecksPage() {
                   <p className="text-sm text-gray-600 mb-3">
                     Найдены утечки в {compromisedSources.length} источниках
                   </p>
-                  <Button size="sm" variant="outline" className="text-red-600 border-red-200">
-                    Начать удаление
-                  </Button>
+                  <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                        Начать удаление
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center text-red-600">
+                          <AlertTriangle className="h-5 w-5 mr-2" />
+                          Удалить персональные данные
+                        </DialogTitle>
+                        <DialogDescription className="text-left">
+                          Вы собираетесь отправить запрос на удаление ваших персональных данных из следующих источников:
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="py-4">
+                        <div className="space-y-2">
+                          {Array.from(compromisedSources).map((source, idx) => (
+                            <div key={idx} className="flex items-center p-2 bg-red-50 rounded-lg border border-red-200">
+                              <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
+                              <span className="text-sm font-medium text-red-700">{source}</span>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            <strong>⚠️ Важно:</strong> Процесс удаления данных может занять от 7 до 30 дней. 
+                            Мы свяжемся с вами для подтверждения личности и дальнейших инструкций.
+                          </p>
+                        </div>
+                      </div>
+
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsDeleteModalOpen(false)}
+                          disabled={isDeleting}
+                        >
+                          Отмена
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={handleDeleteData}
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Отправляем...
+                            </>
+                          ) : (
+                            'Подтвердить удаление'
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               )}
               
