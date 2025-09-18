@@ -38,6 +38,7 @@ interface CheckHistory {
     found: boolean
     count?: number
     data?: any
+    items?: any // Добавляем поддержку items
   }[]
 }
 
@@ -114,7 +115,7 @@ export default function ChecksPage() {
     
     checks.forEach(check => {
       check.results.forEach(result => {
-        if (result.found && result.count > 0) {
+        if (result.found && (result.count || 0) > 0) {
           const sourceName = result.source || result.name
           if (sourceName) {
             compromisedSources.add(sourceName)
@@ -366,10 +367,10 @@ export default function ChecksPage() {
                               }`}>
                                 <div 
                                   className={`flex items-center justify-between p-3 ${
-                                    result.found && result.data && result.data.items ? 'cursor-pointer hover:bg-red-100 transition-colors' : ''
+                                    result.found && result.items ? 'cursor-pointer hover:bg-red-100 transition-colors' : ''
                                   }`}
                                   onClick={() => {
-                                    if (result.found && result.data && result.data.items) {
+                                    if (result.found && result.items) {
                                       toggleSource(check.id, sourceName)
                                     }
                                   }}
@@ -391,7 +392,7 @@ export default function ChecksPage() {
                                         <Badge variant="outline" className="text-xs text-red-600">
                                           Утечка
                                         </Badge>
-                                        {result.data && result.data.items && (
+                                        {result.items && (
                                           <>
                                             {isExpanded ? (
                                               <ChevronDown className="h-4 w-4 text-gray-500" />
@@ -409,7 +410,7 @@ export default function ChecksPage() {
                                   </div>
                                 </div>
                                 
-                                {isExpanded && result.found && result.data && result.data.items && (
+                                {isExpanded && result.found && result.items && (
                                   <div className="border-t border-red-200 p-3 bg-red-25">
                                     <h5 className="text-sm font-medium text-gray-900 mb-2">
                                       Детали утечки:
@@ -420,26 +421,55 @@ export default function ChecksPage() {
                                       
                                       <div className="mt-3 space-y-2">
                                         <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
-                                        {result.data.items.slice(0, 3).map((item: any, itemIdx: number) => (
-                                          <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
-                                            {Object.entries(item)
-                                              .filter(([key, value]) => 
-                                                value && key !== 'id' && key !== 'user_id' && 
-                                                String(value).length > 0 && String(value) !== 'null'
-                                              )
-                                              .slice(0, 5)
-                                              .map(([key, value]) => (
-                                                <div key={key} className="flex justify-between py-1">
-                                                  <span className="font-medium text-gray-600">{key}:</span>
-                                                  <span className="text-gray-800">{String(value)}</span>
-                                                </div>
-                                              ))
-                                            }
-                                          </div>
-                                        ))}
-                                        {result.data.items.length > 3 && (
+                                        {Array.isArray(result.items) ? (
+                                          result.items.slice(0, 3).map((item: any, itemIdx: number) => (
+                                            <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
+                                              {Object.entries(item)
+                                                .filter(([key, value]) => 
+                                                  value && key !== 'id' && key !== 'user_id' && 
+                                                  String(value).length > 0 && String(value) !== 'null'
+                                                )
+                                                .slice(0, 5)
+                                                .map(([key, value]) => (
+                                                  <div key={key} className="flex justify-between py-1">
+                                                    <span className="font-medium text-gray-600">{key}:</span>
+                                                    <span className="text-gray-800">{String(value)}</span>
+                                                  </div>
+                                                ))
+                                              }
+                                            </div>
+                                          ))
+                                        ) : (
+                                          typeof result.items === 'object' && result.items !== null ? (
+                                            Object.entries(result.items).slice(0, 3).map(([db, items]: [string, any], itemIdx: number) => (
+                                              <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
+                                                <div className="font-medium text-gray-700 mb-1">База: {db}</div>
+                                                {Array.isArray(items) && items.slice(0, 2).map((item: any, subIdx: number) => (
+                                                  <div key={subIdx} className="ml-2 border-l-2 border-gray-300 pl-2 mb-1">
+                                                    {Object.entries(item)
+                                                      .filter(([key, value]) => 
+                                                        value && key !== 'id' && key !== 'user_id' && 
+                                                        String(value).length > 0 && String(value) !== 'null'
+                                                      )
+                                                      .slice(0, 3)
+                                                      .map(([key, value]) => (
+                                                        <div key={key} className="flex justify-between py-0.5">
+                                                          <span className="font-medium text-gray-600">{key}:</span>
+                                                          <span className="text-gray-800">{String(value)}</span>
+                                                        </div>
+                                                      ))
+                                                    }
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ))
+                                          ) : (
+                                            <div className="text-xs text-gray-500">Детали недоступны</div>
+                                          )
+                                        )}
+                                        {(Array.isArray(result.items) && result.items.length > 3) && (
                                           <p className="text-xs text-gray-500">
-                                            ... и ещё {result.data.items.length - 3} записей
+                                            ... и ещё {result.items.length - 3} записей
                                           </p>
                                         )}
                                       </div>
