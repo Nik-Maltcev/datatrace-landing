@@ -442,13 +442,13 @@ export default function ChecksPage() {
                                         <Button 
                                           size="sm" 
                                           variant="outline" 
-                                          className="text-xs px-2 py-1 h-6 text-red-600 border-red-200 hover:bg-red-50"
+                                          className="text-xs px-3 py-1 h-7 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ml-1"
                                           onClick={(e) => {
                                             e.stopPropagation()
                                             openDeleteInstructions(sourceName)
                                           }}
                                         >
-                                          Удалить
+                                          🗑️ Удалить
                                         </Button>
                                         {result.items && (
                                           <>
@@ -688,69 +688,70 @@ export default function ChecksPage() {
 
       {/* Delete Instructions Modal */}
       <Dialog open={deleteInstructionsOpen} onOpenChange={setDeleteInstructionsOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center text-red-600">
-              <AlertTriangle className="h-5 w-5 mr-2" />
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto bg-white border-2 border-gray-300 shadow-2xl">
+          <DialogHeader className="bg-red-50 p-4 -mt-6 -mx-6 mb-4 border-b border-red-200">
+            <DialogTitle className="flex items-center text-red-600 text-lg font-bold">
+              <AlertTriangle className="h-6 w-6 mr-2" />
               Инструкция по удалению данных из {selectedSourceForDeletion}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-red-700 font-medium">
               Следуйте этим шагам для удаления ваших персональных данных из источника {selectedSourceForDeletion}.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="py-4 bg-white">
             <div className="space-y-4">
               {selectedSourceForDeletion === 'ITP' && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Инструкция для ITP:</h4>
-                  <p className="text-sm text-gray-600">Напишите инструкции для ITP здесь...</p>
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для ITP:</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для ITP здесь...</p>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'Dyxless' && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Инструкция для Dyxless:</h4>
-                  <p className="text-sm text-gray-600">Напишите инструкции для Dyxless здесь...</p>
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Dyxless:</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для Dyxless здесь...</p>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'LeakOsint' && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Инструкция для LeakOsint:</h4>
-                  <p className="text-sm text-gray-600">Напишите инструкции для LeakOsint здесь...</p>
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для LeakOsint:</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для LeakOsint здесь...</p>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'Usersbox' && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Инструкция для Usersbox:</h4>
-                  <p className="text-sm text-gray-600">Напишите инструкции для Usersbox здесь...</p>
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Usersbox:</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для Usersbox здесь...</p>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'Vektor' && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Инструкция для Vektor:</h4>
-                  <p className="text-sm text-gray-600">Напишите инструкции для Vektor здесь...</p>
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Vektor:</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для Vektor здесь...</p>
                 </div>
               )}
               
               {/* Fallback для неизвестных источников */}
               {!['ITP', 'Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'].includes(selectedSourceForDeletion) && (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Общая инструкция:</h4>
-                  <p className="text-sm text-gray-600">Свяжитесь с нашей службой поддержки для получения инструкций по удалению данных из источника {selectedSourceForDeletion}.</p>
+                <div className="space-y-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <h4 className="font-bold text-gray-900 text-lg">Общая инструкция:</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">Свяжитесь с нашей службой поддержки для получения инструкций по удалению данных из источника {selectedSourceForDeletion}.</p>
                 </div>
               )}
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="bg-gray-50 p-4 -mb-6 -mx-6 border-t border-gray-200">
             <Button
               type="button"
               variant="outline"
               onClick={() => setDeleteInstructionsOpen(false)}
+              className="bg-white border-gray-300 text-gray-700 hover:bg-gray-100 px-6"
             >
               Закрыть
             </Button>
