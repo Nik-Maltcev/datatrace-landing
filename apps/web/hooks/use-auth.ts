@@ -183,6 +183,8 @@ export function useAuth() {
       if (response.ok && result.ok && result.profile) {
         const updatedUser = {
           ...currentUser,
+          name: result.profile.name || currentUser.name,
+          phone: result.profile.phone || currentUser.phone,
           plan: result.profile.plan || 'free',
           checksLimit: result.profile.checksLimit || result.profile.checks_limit || 0,
           checksUsed: result.profile.checksUsed || result.profile.checks_used || 0

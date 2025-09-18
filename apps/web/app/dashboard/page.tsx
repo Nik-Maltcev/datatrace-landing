@@ -477,6 +477,8 @@ export default function Dashboard() {
             <PhoneVerification 
               onVerified={(token: string) => setIsPhoneVerified(true)}
               isVerified={isPhoneVerified}
+              userPhone={user.phone}
+              userPlan={user.plan}
             />
           </CardContent>
         </Card>
