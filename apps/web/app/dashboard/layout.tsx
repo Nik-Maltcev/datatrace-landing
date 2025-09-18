@@ -9,7 +9,8 @@ import {
   User, 
   Search, 
   LogOut,
-  Home
+  Home,
+  Brain
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -81,6 +82,16 @@ export default function DashboardLayout({
               >
                 <Search className="h-4 w-4 mr-3" />
                 Мои проверки
+              </Button>
+            </Link>
+
+            <Link href="/dashboard/ai-analysis">
+              <Button
+                variant={isActive('/dashboard/ai-analysis') ? "default" : "ghost"}
+                className={`w-full justify-start ${isActive('/dashboard/ai-analysis') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
+              >
+                <Brain className="h-4 w-4 mr-3" />
+                ИИ анализ
               </Button>
             </Link>
           </nav>

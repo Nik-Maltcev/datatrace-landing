@@ -31,7 +31,8 @@ import {
   ChevronDown,
   Monitor,
   ChevronRight,
-  Trash2
+  Trash2,
+  Brain
 } from "lucide-react"
 import Link from "next/link"
 
