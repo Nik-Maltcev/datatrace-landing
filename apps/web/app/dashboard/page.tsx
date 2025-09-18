@@ -229,11 +229,21 @@ export default function Dashboard() {
       )}
 
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Добро пожаловать, {user.name}
-        </h1>
-        <p className="text-gray-600">Мониторинг и защита ваших персональных данных</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Добро пожаловать, {user.name}
+          </h1>
+          <p className="text-gray-600">Мониторинг и защита ваших персональных данных</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Link href="/">
+            <Button variant="outline" className="border-gray-300 hover:bg-gray-50">
+              <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
+              Вернуться на сайт
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Quick Stats */}
