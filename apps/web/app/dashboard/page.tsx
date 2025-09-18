@@ -44,8 +44,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user?.phone) {
-      // Check if phone is verified
-      setIsPhoneVerified(false)  // Заглушка - проверка через PhoneVerification компонент
+      // Проверяем верификацию телефона из localStorage
+      const phoneToken = localStorage.getItem('phone_verification_token')
+      const verifiedPhone = localStorage.getItem('verified_phone')
+      if (phoneToken && verifiedPhone && verifiedPhone === user.phone) {
+        console.log('Phone verification found in localStorage')
+        setIsPhoneVerified(true)
+      } else {
+        setIsPhoneVerified(false)  // Заглушка - проверка через PhoneVerification компонент
+      }
     }
   }, [user])
 
@@ -53,6 +60,12 @@ export default function Dashboard() {
 
   const handleCheckPhoneLeaks = async () => {
     if (!user?.phone || isCheckingPhone) return
+    
+    // Проверяем верификацию телефона
+    if (!isPhoneVerified) {
+      console.log('❌ Phone verification required');
+      return;
+    }
     
     // Проверяем лимит проверок
     if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
@@ -103,6 +116,12 @@ export default function Dashboard() {
 
   const handleCheckEmailLeaks = async () => {
     if (!user?.email || isCheckingEmail) return
+    
+    // Проверяем верификацию телефона
+    if (!isPhoneVerified) {
+      console.log('❌ Phone verification required');
+      return;
+    }
     
     // Проверяем лимит проверок
     if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
@@ -231,7 +250,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckPhoneLeaks}
-              disabled={!user.phone || isCheckingPhone || (user.checksUsed || 0) >= (user.checksLimit || 0)}
+              disabled={!user.phone || isCheckingPhone || (user.checksUsed || 0) >= (user.checksLimit || 0) || !isPhoneVerified}
               className="w-full"
             >
               {isCheckingPhone ? (
@@ -239,6 +258,8 @@ export default function Dashboard() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
                 </>
+              ) : !isPhoneVerified ? (
+                'Подтвердите номер телефона'
               ) : (user.checksUsed || 0) >= (user.checksLimit || 0) ? (
                 'Лимит проверок исчерпан'
               ) : (
@@ -317,7 +338,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckEmailLeaks}
-              disabled={isCheckingEmail || (user.checksUsed || 0) >= (user.checksLimit || 0)}
+              disabled={isCheckingEmail || (user.checksUsed || 0) >= (user.checksLimit || 0) || !isPhoneVerified}
               className="w-full"
               variant="outline"
             >
@@ -326,6 +347,8 @@ export default function Dashboard() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
                 </>
+              ) : !isPhoneVerified ? (
+                'Подтвердите номер телефона'
               ) : (user.checksUsed || 0) >= (user.checksLimit || 0) ? (
                 'Лимит проверок исчерпан'
               ) : (
