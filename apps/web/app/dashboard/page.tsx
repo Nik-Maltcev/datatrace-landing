@@ -168,8 +168,8 @@ export default function Dashboard() {
       return;
     }
     
-    // Проверяем лимит проверок
-    if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
+    // Проверяем лимит проверок - ВРЕМЕННО ОТКЛЮЧЕНО для безлимитного режима
+    if (false) { // Было: if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
       console.log('❌ Checks limit reached');
       return;
     }
@@ -224,8 +224,8 @@ export default function Dashboard() {
       return;
     }
     
-    // Проверяем лимит проверок
-    if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
+    // Проверяем лимит проверок - ВРЕМЕННО ОТКЛЮЧЕНО для безлимитного режима
+    if (false) { // Было: if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
       console.log('❌ Checks limit reached');
       return;
     }
@@ -341,9 +341,9 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-gray-900 mb-1">
-              {user.checksUsed ?? 0}/{user.checksLimit ?? 0}
+              {user.checksUsed ?? 0}/∞
             </p>
-            <p className="text-sm text-blue-700">Проверок использовано</p>
+            <p className="text-sm text-blue-700">Проверок использовано (безлимит)</p>
           </CardContent>
         </Card>
 
@@ -402,7 +402,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckPhoneLeaks}
-              disabled={!user.phone || isCheckingPhone || (user.checksUsed || 0) >= (user.checksLimit || 0) || !isPhoneVerified}
+              disabled={!user.phone || isCheckingPhone || !isPhoneVerified}
               className="w-full"
             >
               {isCheckingPhone ? (
@@ -412,8 +412,6 @@ export default function Dashboard() {
                 </>
               ) : !isPhoneVerified ? (
                 'Подтвердите номер телефона'
-              ) : (user.checksUsed || 0) >= (user.checksLimit || 0) ? (
-                'Лимит проверок исчерпан'
               ) : (
                 <>
                   Проверить номер
@@ -490,7 +488,7 @@ export default function Dashboard() {
             </p>
             <Button 
               onClick={handleCheckEmailLeaks}
-              disabled={isCheckingEmail || (user.checksUsed || 0) >= (user.checksLimit || 0) || !isPhoneVerified}
+              disabled={isCheckingEmail || !isPhoneVerified}
               className="w-full"
               variant="outline"
             >
@@ -501,8 +499,6 @@ export default function Dashboard() {
                 </>
               ) : !isPhoneVerified ? (
                 'Подтвердите номер телефона'
-              ) : (user.checksUsed || 0) >= (user.checksLimit || 0) ? (
-                'Лимит проверок исчерпан'
               ) : (
                 <>
                   Проверить email
