@@ -26,25 +26,28 @@ export async function POST(request: NextRequest) {
     let plan: string;
     let checksLimit: number;
 
+    console.log('🎯 Payment success processing plan:', planParam);
+
     switch (planParam) {
       case 'basic':
         plan = 'basic';
         checksLimit = 1;
         break;
+      case 'professional':
       case 'professional-6m':
-        plan = 'professional';
-        checksLimit = 2;
-        break;
       case 'professional-12m':
         plan = 'professional';
         checksLimit = 2;
         break;
       default:
-        return NextResponse.json(
-          { ok: false, error: { message: 'Invalid plan' } },
-          { status: 400 }
-        );
+        // Fallback: если план не распознан, делаем professional
+        console.log('⚠️ Unknown plan, defaulting to professional:', planParam);
+        plan = 'professional';
+        checksLimit = 2;
+        break;
     }
+
+    console.log(`✅ Plan mapped: ${planParam} → ${plan} (limit: ${checksLimit})`);
 
     // Обновляем профиль пользователя
     const { data, error } = await supabase
