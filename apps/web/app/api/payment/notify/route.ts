@@ -55,24 +55,24 @@ export async function POST(request: NextRequest) {
     console.log('💰 Extracted price:', price, 'from productPrice:', params.productPrice, 'or MNT_AMOUNT:', params.MNT_AMOUNT);
     
     // Определяем план по MNT_CUSTOM1 (ID плана) или цене как резерв
-    let plan = 'professional'; // по умолчанию
+    let plan = 'professional'; // по умолчанию professional
     const planId = params.MNT_CUSTOM1 as string;
     
     console.log('🎯 Plan determination:');
     console.log('  - MNT_CUSTOM1:', planId);
+    console.log('  - Available params:', Object.keys(params));
     
     if (planId === '1') {
       plan = 'basic';
     } else if (planId === '2' || planId === '3') {
       plan = 'professional';
     } else {
-      // Резервная логика по цене для совместимости
-      if (price <= 350) {
-        plan = 'basic';
-      } else if (price <= 5000) {
-        plan = 'professional';
-      } else if (price <= 8500) {
-        plan = 'professional';
+      // Исправленная резервная логика по цене
+      console.log('  - Using fallback price logic for price:', price);
+      if (price <= 1) {
+        plan = 'basic';  // Только очень маленькие суммы = basic
+      } else {
+        plan = 'professional';  // Все остальное = professional
       }
       console.log('  - Used fallback price logic');
     }
