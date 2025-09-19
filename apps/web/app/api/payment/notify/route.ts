@@ -80,12 +80,12 @@ export async function POST(request: NextRequest) {
     console.log('  - Final plan:', plan);
     
     const planLimits = {
-      free: 0,
-      basic: 1,
-      professional: 2
+      free: 999,        // Безлимит для free
+      basic: 999,       // Безлимит для basic  
+      professional: 999 // Безлимит для professional
     };
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits] || 0;
+    const checksLimit = planLimits[plan as keyof typeof planLimits] || 999;
     
     console.log(`🎯 Processing payment: ${price} RUB for ${email}, plan: ${plan}, limit: ${checksLimit}, transactionId: ${finalTransactionId}`);
 

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .from('user_profiles')
       .update({ 
         plan: transaction.plan,
-        checks_limit: transaction.plan === 'professional' ? 2 : 1,
+        checks_limit: 999,  // Безлимит для всех планов
         updated_at: new Date().toISOString()
       })
       .eq('email', email)

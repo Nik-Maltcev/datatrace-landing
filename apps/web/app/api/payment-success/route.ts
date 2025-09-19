@@ -31,19 +31,19 @@ export async function POST(request: NextRequest) {
     switch (planParam) {
       case 'basic':
         plan = 'basic';
-        checksLimit = 1;
+        checksLimit = 999;  // Безлимит для basic
         break;
       case 'professional':
       case 'professional-6m':
       case 'professional-12m':
         plan = 'professional';
-        checksLimit = 2;
+        checksLimit = 999;  // Безлимит для professional
         break;
       default:
         // Fallback: если план не распознан, делаем professional
         console.log('⚠️ Unknown plan, defaulting to professional:', planParam);
         plan = 'professional';
-        checksLimit = 2;
+        checksLimit = 999;  // Безлимит по умолчанию
         break;
     }
 

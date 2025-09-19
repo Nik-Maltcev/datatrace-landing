@@ -19,14 +19,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Определяем лимиты по тарифу
+    // Определяем лимиты по тарифу - теперь все безлимитные
     const planLimits = {
-      free: 0,
-      basic: 1,
-      professional: 2
+      free: 999,
+      basic: 999,
+      professional: 999
     };
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits] || 0;
+    const checksLimit = planLimits[plan as keyof typeof planLimits] || 999;
 
     console.log(`Updating user ${userId} to plan ${plan} with limit ${checksLimit}`);
 
