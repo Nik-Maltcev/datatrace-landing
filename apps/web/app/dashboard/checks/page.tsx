@@ -705,40 +705,62 @@ export default function ChecksPage() {
               {selectedSourceForDeletion === 'ITP' && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="font-bold text-gray-900 text-lg">Инструкция для ITP:</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для ITP здесь...</p>
+                  <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
+                    <p><strong>1.</strong> Откройте бота <a href="https://t.me/datatrace3_bot" target="_blank" className="text-blue-600 underline">t.me/datatrace3_bot</a> и запустите командой /start</p>
+                    <p><strong>2.</strong> Затем выберите "профиль"</p>
+                    <p><strong>3.</strong> Выберите раздел "Удалить информацию о себе" и выбираем что нужно удалить</p>
+                    <p><strong>4.</strong> Оформляем запрос</p>
+                  </div>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'Dyxless' && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="font-bold text-gray-900 text-lg">Инструкция для Dyxless:</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для Dyxless здесь...</p>
+                  <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
+                    <p><strong>1.</strong> Откройте бота <a href="https://t.me/datatrace1_bot" target="_blank" className="text-blue-600 underline">t.me/datatrace1_bot</a> и запустите командой /start</p>
+                    <p><strong>2.</strong> Затем выберите "мой профиль"</p>
+                    <p><strong>3.</strong> Выберите раздел "Удалить информацию о себе"</p>
+                    <p><strong>4.</strong> Далее заполните форму которая будет указана в сообщении</p>
+                  </div>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'LeakOsint' && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="font-bold text-gray-900 text-lg">Инструкция для LeakOsint:</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для LeakOsint здесь...</p>
+                  <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
+                    <p><strong>1.</strong> Откройте бота <a href="https://t.me/vfsrfrb_bot" target="_blank" className="text-blue-600 underline">t.me/vfsrfrb_bot</a> и запустите командой /start</p>
+                    <p><strong>2.</strong> Затем выберите "меню"</p>
+                    <p><strong>3.</strong> Выберите раздел "Удалить себя" и выбираем что нужно удалить</p>
+                  </div>
                 </div>
               )}
               
-              {selectedSourceForDeletion === 'Usersbox' && (
+              {selectedSourceForDeletion === 'Userbox' && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
-                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Usersbox:</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для Usersbox здесь...</p>
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Userbox:</h4>
+                  <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
+                    <p><strong>1.</strong> Откройте бота <a href="https://t.me/datatrace5_bot" target="_blank" className="text-blue-600 underline">t.me/datatrace5_bot</a> и запустите командой /start</p>
+                    <p><strong>2.</strong> Затем напишите команду /me</p>
+                    <p><strong>3.</strong> Выберите раздел "Скрытие информации"</p>
+                  </div>
                 </div>
               )}
               
               {selectedSourceForDeletion === 'Vektor' && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="font-bold text-gray-900 text-lg">Инструкция для Vektor:</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">Напишите инструкции для Vektor здесь...</p>
+                  <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
+                    <p><strong>1.</strong> Откройте бота <a href="https://t.me/datatrace2_bot" target="_blank" className="text-blue-600 underline">t.me/datatrace2_bot</a> и запустите командой /start</p>
+                    <p><strong>2.</strong> Затем выберите "мой профиль"</p>
+                    <p><strong>3.</strong> Выберите раздел "Скрытие информации"</p>
+                  </div>
                 </div>
               )}
               
               {/* Fallback для неизвестных источников */}
-              {!['ITP', 'Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'].includes(selectedSourceForDeletion) && (
+              {!['ITP', 'Dyxless', 'LeakOsint', 'Userbox', 'Vektor'].includes(selectedSourceForDeletion) && (
                 <div className="space-y-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                   <h4 className="font-bold text-gray-900 text-lg">Общая инструкция:</h4>
                   <p className="text-sm text-gray-700 leading-relaxed">Свяжитесь с нашей службой поддержки для получения инструкций по удалению данных из источника {selectedSourceForDeletion}.</p>
