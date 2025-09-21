@@ -1089,7 +1089,7 @@ export default function DashboardPage() {
                     router.push('/login');
                     return;
                   }
-                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=basic');
+                  const successUrl = encodeURIComponent('https://www.datatrace.tech/redirect?plan=basic');
                   window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`;
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -1122,7 +1122,7 @@ export default function DashboardPage() {
                     router.push('/login');
                     return;
                   }
-                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional');
+                  const successUrl = encodeURIComponent('https://www.datatrace.tech/redirect?plan=professional');
                   window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`;
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -1155,7 +1155,7 @@ export default function DashboardPage() {
                     router.push('/login');
                     return;
                   }
-                  const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional_12m');
+                  const successUrl = encodeURIComponent('https://www.datatrace.tech/redirect?plan=professional_12m');
                   window.location.href = `https://self.payanyway.ru/1757389094773?MNT_SUCCESS_URL=${successUrl}`;
                 }}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white"
@@ -1293,7 +1293,7 @@ export default function DashboardPage() {
                   <Button 
                     onClick={() => {
                       setShowUpgradeModal(false)
-                      const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional')
+                      const successUrl = encodeURIComponent('https://www.datatrace.tech/redirect?plan=professional')
                       window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`
                     }}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -1312,7 +1312,7 @@ export default function DashboardPage() {
                   <Button 
                     onClick={() => {
                       setShowUpgradeModal(false)
-                      const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=professional_12m')
+                      const successUrl = encodeURIComponent('https://www.datatrace.tech/redirect?plan=professional_12m')
                       window.location.href = `https://self.payanyway.ru/1757389094773?MNT_SUCCESS_URL=${successUrl}`
                     }}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
@@ -1336,7 +1336,7 @@ export default function DashboardPage() {
                 <Button 
                   onClick={() => {
                     setShowUpgradeModal(false)
-                    const successUrl = encodeURIComponent('https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=basic')
+                    const successUrl = encodeURIComponent('https://www.datatrace.tech/redirect?plan=basic')
                     window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"

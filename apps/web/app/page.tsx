@@ -49,7 +49,7 @@ export default function DataTraceLanding() {
     }
 
     // Если авторизован, открываем ссылку на оплату
-    const successUrl = encodeURIComponent(`https://datatrace-landing-production-6a5e.up.railway.app/redirect?plan=${plan}`)
+    const successUrl = encodeURIComponent(`https://www.datatrace.tech/redirect?plan=${plan}`)
     
     if (plan === 'basic') {
       // Базовый тариф - 350₽
