@@ -13,7 +13,7 @@ const ptMono = PT_Mono({
 })
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, ArrowRight, Mail, MessageSquare } from "lucide-react"
+import { Check, ArrowRight, Mail, MessageSquare, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 
 function InteractiveHeroGraphic() {
@@ -23,6 +23,230 @@ function InteractiveHeroGraphic() {
         <img src="/images/geometric-triangle.png" alt="Geometric Triangle" className="w-full h-full object-contain" />
       </div>
     </div>
+  )
+}
+
+function DataFlowShowcase() {
+  const dataSources = [
+    {
+      label: "????????-????",
+      description: "????-??????????, ??? ?????????? ?????? ????? ? ??????????",
+      accent: "from-sky-400 to-blue-500",
+      glow: "shadow-[0_0_22px_rgba(56,189,248,0.35)]",
+      delay: 0
+    },
+    {
+      label: "OSINT-???????????",
+      description: "????? ?? ???????? ?????????? ? ???????? ??????",
+      accent: "from-indigo-400 to-sky-500",
+      glow: "shadow-[0_0_22px_rgba(129,140,248,0.35)]",
+      delay: 0.6
+    },
+    {
+      label: "???????-??????",
+      description: "?????????? ???????? ???????? ? ???????????? ?????????",
+      accent: "from-purple-400 to-fuchsia-500",
+      glow: "shadow-[0_0_22px_rgba(168,85,247,0.35)]",
+      delay: 1.2
+    },
+    {
+      label: "???????? ?? ?????????????????",
+      description: "??????? ????? ????????? ? ????????????? ??????????",
+      accent: "from-emerald-400 to-teal-500",
+      glow: "shadow-[0_0_22px_rgba(16,185,129,0.35)]",
+      delay: 1.8
+    }
+  ]
+
+  const dataDestinations = [
+    {
+      label: "???????? ????????",
+      description: "???????? ????? ?????????? ?????????? ? ?????? ?? ????????????",
+      accent: "from-teal-400 to-emerald-500",
+      glow: "shadow-[0_0_22px_rgba(16,185,129,0.35)]",
+      delay: 0.4
+    },
+    {
+      label: "??????????? ???????",
+      description: "????????? ????? ?? ???????????? ??????? ? ??????? ??????",
+      accent: "from-sky-400 to-cyan-500",
+      glow: "shadow-[0_0_22px_rgba(14,165,233,0.35)]",
+      delay: 1.0
+    },
+    {
+      label: "?????? ?????",
+      description: "???????????? ?? ???????? ?????? ? ????????? ??????",
+      accent: "from-indigo-400 to-violet-500",
+      glow: "shadow-[0_0_22px_rgba(129,140,248,0.35)]",
+      delay: 1.6
+    },
+    {
+      label: "?????????? ????????",
+      description: "?????????????? ???????? ?? ??-????????? ??????",
+      accent: "from-purple-400 to-pink-500",
+      glow: "shadow-[0_0_22px_rgba(236,72,153,0.35)]",
+      delay: 2.0
+    }
+  ]
+
+  const legend = [
+    { label: "????????? ????????", accent: "from-teal-400 to-emerald-500" },
+    { label: "????????? DataTrace", accent: "from-sky-400 to-blue-500" },
+    { label: "???????? ? ????????", accent: "from-indigo-400 to-violet-500" }
+  ]
+
+  return (
+    <>
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 py-24 text-white">
+        <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 right-0 h-[420px] w-[420px] rounded-full bg-sky-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5" />
+        <div className="relative container mx-auto px-6 lg:px-8">
+          <div className="mx-auto mb-16 max-w-3xl text-center">
+            <span className="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.45em] text-white/70">
+              ??????? ????????
+            </span>
+            <h2 className="mt-6 text-4xl font-bold lg:text-5xl">
+              ????????, ?????? ???????? ??????, ? ??????? ????????? ?? ?????????
+            </h2>
+            <p className="mt-4 text-lg text-white/70">
+              ?? ????????? ??????? ?? ??????????? ?????????? ? ??????????? ??????????? DataTrace, ????? ?????? ???????? ? ??????? ???????????? ?????? ??? ??????? ??????? ????.
+            </p>
+          </div>
+
+          <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto_1fr]">
+            <div className="space-y-8">
+              {dataSources.map((source) => (
+                <div key={source.label} className="group flex items-center justify-end gap-4">
+                  <div className="text-right">
+                    <p className="text-lg font-semibold">{source.label}</p>
+                    <p className="text-sm text-white/60">{source.description}</p>
+                  </div>
+                  <div className="flow-line" aria-hidden="true">
+                    <span className="flow-particle" style={{ animationDelay: `${source.delay}s` }} />
+                  </div>
+                  <div className={`h-3 w-3 rounded-full bg-gradient-to-br ${source.accent} ${source.glow}`} />
+                </div>
+              ))}
+            </div>
+
+            <div className="relative flex justify-center">
+              <div className="relative flex h-72 w-72 items-center justify-center">
+                <div className="data-ring data-ring-outer absolute inset-2 rounded-full border border-white/10" />
+                <div className="data-ring data-ring-middle absolute inset-8 rounded-full border border-white/15" />
+                <div className="data-ring data-ring-inner absolute inset-16 rounded-full border border-white/25" />
+
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/25 bg-white/10 backdrop-blur">
+                    <ShieldCheck className="h-10 w-10 text-sky-200" />
+                  </div>
+                  <p className="mt-4 text-xs uppercase tracking-[0.45em] text-white/50">DataTrace</p>
+                  <p className="text-lg font-semibold text-white">??????? ????????</p>
+                </div>
+
+                <div className="absolute -top-10 right-6 h-4 w-4 rounded-full bg-cyan-400/70 blur-[1px] animate-ping" />
+                <div className="absolute -bottom-6 left-12 h-5 w-5 rounded-full bg-purple-500/70 blur-[1px] animate-[ping_4s_ease-in-out_infinite]" />
+                <div className="absolute top-1/2 left-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70" />
+                <div className="absolute top-1/2 right-0 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70" />
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              {dataDestinations.map((destination) => (
+                <div key={destination.label} className="group flex items-center gap-4">
+                  <div className={`h-3 w-3 rounded-full bg-gradient-to-br ${destination.accent} ${destination.glow}`} />
+                  <div className="flow-line" aria-hidden="true">
+                    <span className="flow-particle" style={{ animationDelay: `${destination.delay}s` }} />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold">{destination.label}</p>
+                    <p className="text-sm text-white/60">{destination.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
+            {legend.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span className={`inline-flex h-3 w-3 rounded-full bg-gradient-to-br ${item.accent}`} />
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <style jsx>{`
+        .flow-line {
+          position: relative;
+          width: 104px;
+          height: 2px;
+          overflow: hidden;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+        }
+        .flow-particle {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          width: 36px;
+          height: 36px;
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.6);
+          background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.25) 55%, rgba(255,255,255,0) 70%);
+          animation: flowMove 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+        }
+        .data-ring {
+          animation: ringPulse 9s ease-in-out infinite;
+        }
+        .data-ring-middle {
+          animation-delay: 1.2s;
+        }
+        .data-ring-inner {
+          animation-delay: 2.4s;
+        }
+        @keyframes flowMove {
+          0% {
+            left: 0%;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.4);
+          }
+          15% {
+            opacity: 1;
+          }
+          85% {
+            opacity: 1;
+          }
+          100% {
+            left: 100%;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.85);
+          }
+        }
+        @keyframes ringPulse {
+          0%, 100% {
+            transform: scale(0.96);
+            opacity: 0.55;
+          }
+          50% {
+            transform: scale(1.04);
+            opacity: 1;
+          }
+        }
+        @media (max-width: 1024px) {
+          .flow-line {
+            width: 80px;
+          }
+        }
+        @media (max-width: 640px) {
+          .flow-line {
+            width: 64px;
+          }
+        }
+      `}</style>
+    </>
   )
 }
 
@@ -194,6 +418,8 @@ export default function DataTraceLanding() {
           </div>
         </div>
       </section>
+
+      <DataFlowShowcase />
 
       {/* Description Section */}
       <section className="py-16 bg-gray-50">
@@ -596,3 +822,4 @@ export default function DataTraceLanding() {
     </div>
   )
 }
+
