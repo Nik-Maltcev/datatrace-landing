@@ -97,7 +97,7 @@ function DataFlowShowcase() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 py-24 text-white">
+      <section className={`relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 py-24 text-white ${ptMono.className}`}>
         <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 right-0 h-[420px] w-[420px] rounded-full bg-sky-500/25 blur-3xl" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5" />
@@ -119,8 +119,8 @@ function DataFlowShowcase() {
               {dataSources.map((source) => (
                 <div key={source.label} className="group flex items-center justify-end gap-4">
                   <div className="text-right">
-                    <p className="text-lg font-semibold">{source.label}</p>
-                    <p className="text-sm text-white/60">{source.description}</p>
+                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white">{source.label}</p>
+                    <p className="text-xs text-white/60 leading-relaxed">{source.description}</p>
                   </div>
                   <div className="flow-line" aria-hidden="true">
                     <span className="flow-particle" style={{ animationDelay: `${source.delay}s` }} />
@@ -141,7 +141,7 @@ function DataFlowShowcase() {
                     <ShieldCheck className="h-10 w-10 text-sky-200" />
                   </div>
                   <p className="mt-4 text-xs uppercase tracking-[0.45em] text-white/50">DataTrace</p>
-                  <p className="text-lg font-semibold text-white">??????? ????????</p>
+                  <p className="mt-1 text-sm uppercase tracking-[0.35em] text-white">??????? ????????</p>
                 </div>
 
                 <div className="absolute -top-10 right-6 h-4 w-4 rounded-full bg-cyan-400/70 blur-[1px] animate-ping" />
@@ -159,15 +159,15 @@ function DataFlowShowcase() {
                     <span className="flow-particle" style={{ animationDelay: `${destination.delay}s` }} />
                   </div>
                   <div>
-                    <p className="text-lg font-semibold">{destination.label}</p>
-                    <p className="text-sm text-white/60">{destination.description}</p>
+                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white">{destination.label}</p>
+                    <p className="text-xs text-white/60 leading-relaxed">{destination.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs uppercase tracking-[0.3em] text-white/60">
             {legend.map((item) => (
               <div key={item.label} className="flex items-center gap-2">
                 <span className={`inline-flex h-3 w-3 rounded-full bg-gradient-to-br ${item.accent}`} />
@@ -419,7 +419,6 @@ export default function DataTraceLanding() {
         </div>
       </section>
 
-      <DataFlowShowcase />
 
       {/* Description Section */}
       <section className="py-16 bg-gray-50">
@@ -491,6 +490,8 @@ export default function DataTraceLanding() {
           </div>
         </div>
       </section>
+
+      <DataFlowShowcase />
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20">
