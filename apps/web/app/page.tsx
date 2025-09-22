@@ -26,58 +26,63 @@ function InteractiveHeroGraphic() {
   )
 }
 
+const DATA_FLOW_SOURCES = [
+  {
+    code: 'SRC-01',
+    label: 'Телеграм-боты',
+    description: 'Боты-агрегаторы, где появляются свежие сливы и обсуждения.'
+  },
+  {
+    code: 'SRC-02',
+    label: 'OSINT-инструменты',
+    description: 'Поиск по открытым источникам, индексам утечек и историческим дампам.'
+  },
+  {
+    code: 'SRC-03',
+    label: 'Даркнет-форумы',
+    description: 'Мониторинг закрытых площадок с нелегальными продажами и обсуждениями.'
+  },
+  {
+    code: 'SRC-04',
+    label: 'Партнёры по кибербезопасности',
+    description: 'Этичный обмен сигналами с вендорами и подтверждение инцидентов.'
+  }
+];
+
+const DATA_FLOW_DESTINATIONS = [
+  {
+    code: 'ACT-01',
+    label: 'Точечное удаление',
+    description: 'Обратная связь владельцам источников и контроль заявок на деиндексацию.'
+  },
+  {
+    code: 'ACT-02',
+    label: 'Уведомление клиента',
+    description: 'Подробный отчёт об обработанных утечках, статусе и SLA.'
+  },
+  {
+    code: 'ACT-03',
+    label: 'Защита следа',
+    description: 'Рекомендации по усилению защиты, ротации ключей и политик.'
+  },
+  {
+    code: 'ACT-04',
+    label: 'Мониторинг повторов',
+    description: 'Автоматические проверки на повторное появление данных и их блокировку.'
+  }
+];
+
+const DATA_FLOW_LEGEND = [
+  'Этичная проверка',
+  'Аналитика DataTrace',
+  'Удаление и контроль'
+];
+
+
 function DataFlowShowcase() {
-  const dataSources = [
-    {
-      code: 'SRC-01',
-      label: 'Телеграм-боты',
-      description: 'Боты-агрегаторы, где появляются свежие сливы и обсуждения.'
-    },
-    {
-      code: 'SRC-02',
-      label: 'OSINT-инструменты',
-      description: 'Поиск по открытым источникам, индексам утечек и историческим дампам.'
-    },
-    {
-      code: 'SRC-03',
-      label: 'Даркнет-форумы',
-      description: 'Мониторинг закрытых площадок с нелегальными продажами и обсуждениями.'
-    },
-    {
-      code: 'SRC-04',
-      label: 'Партнёры по кибербезопасности',
-      description: 'Этичный обмен сигналами с вендорами и подтверждение инцидентов.'
-    }
-  ];
-
-  const dataDestinations = [
-    {
-      code: 'ACT-01',
-      label: 'Точечное удаление',
-      description: 'Обратная связь владельцам источников и контроль заявок на деиндексацию.'
-    },
-    {
-      code: 'ACT-02',
-      label: 'Уведомление клиента',
-      description: 'Подробный отчёт об обработанных утечках, статусе и SLA.'
-    },
-    {
-      code: 'ACT-03',
-      label: 'Защита следа',
-      description: 'Рекомендации по усилению защиты, ротации ключей и политик.'
-    },
-    {
-      code: 'ACT-04',
-      label: 'Мониторинг повторов',
-      description: 'Автоматические проверки на повторное появление данных и их блокировку.'
-    }
-  ];
-
-  const legend = [
-    'Этичная проверка',
-    'Аналитика DataTrace',
-    'Удаление и контроль'
-  ];
+  const dataSources = DATA_FLOW_SOURCES;
+  const dataDestinations = DATA_FLOW_DESTINATIONS;
+  const legend = DATA_FLOW_LEGEND;
 
   return (
     <section className={`relative overflow-hidden bg-[#050607] py-24 text-white ${ptMono.className}`}>
@@ -153,11 +158,11 @@ function DataFlowShowcase() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs uppercase tracking-[0.3em] text-white/60">
           {legend.map((item) => (
-            <span key={item} className="inline-flex items-center gap-3 rounded-full border border-emerald-400/40 px-4 py-2">
-              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-200" />
-              {item}
+            <span key={item} className="flex items-center gap-2">
+              <span className="inline-flex h-3 w-3 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-200" />
+              <span>{item}</span>
             </span>
           ))}
         </div>
@@ -169,8 +174,8 @@ function DataFlowShowcase() {
         }
         .grid-overlay {
           background-image:
-            linear-gradient(to right, rgba(78, 247, 170, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(78, 247, 170, 0.08) 1px, transparent 1px);
+            linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
           background-size: 36px 36px;
           mix-blend-mode: lighten;
         }
@@ -193,6 +198,130 @@ function DataFlowShowcase() {
     </section>
   );
 }
+
+
+function DataFlowShowcaseLight() {
+  const dataSources = DATA_FLOW_SOURCES;
+
+  const dataDestinations = DATA_FLOW_DESTINATIONS;
+
+  const legend = DATA_FLOW_LEGEND;
+
+  return (
+    <section className={`relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-emerald-50 py-24 text-slate-900 ${ptMono.className}`}>
+      <div className="absolute inset-0 light-noise-mask opacity-30" />
+      <div className="absolute inset-0 light-grid-overlay" />
+      <div className="absolute inset-0 light-radial" />
+
+      <div className="relative container mx-auto px-6 lg:px-12">
+        <div className="mx-auto max-w-3xl text-center space-y-6">
+          <span className="inline-flex items-center justify-center rounded-full border border-emerald-300/80 bg-white/70 px-5 py-1 text-[11px] uppercase tracking-[0.45em] text-emerald-600 shadow-[0_8px_20px_rgba(34,197,94,0.15)]">
+            этичное удаление
+          </span>
+          <h2 className="text-4xl font-bold leading-tight text-slate-900 lg:text-5xl">
+            Понимаем, откуда приходят утечки, и бережно закрываем их источники
+          </h2>
+          <p className="text-base text-slate-600">
+            Мы соединяем сигналы от проверенных источников с внутренними протоколами DataTrace, чтобы быстро находить и удалять персональные данные без участия теневых схем.
+          </p>
+        </div>
+
+        <div className="mt-16 grid items-center gap-12 lg:grid-cols-[1fr_auto_1fr]">
+          <div className="space-y-8">
+            {dataSources.map((source, index) => (
+              <div key={source.code} className="group relative flex items-start justify-end gap-6">
+                <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-l from-emerald-300/70 to-transparent lg:block">
+                  <span
+                    className="trace-line-light"
+                    style={{ animationDelay: `${index * 0.6}s` }}
+                  />
+                </div>
+                <div className="max-w-sm text-right">
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-400">{source.code}</p>
+                  <p className="mt-2 text-lg text-slate-900">{source.label}</p>
+                  <p className="mt-2 text-sm text-slate-600">{source.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative flex items-center justify-center">
+            <div className="absolute h-[340px] w-[340px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
+            <div className="absolute h-[420px] w-[420px] rounded-full border border-emerald-200/70 blur-sm" />
+            <div className="absolute h-[480px] w-[480px] rounded-full border border-emerald-100/60" />
+            <div className="relative z-10 flex flex-col items-center gap-3 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/50 bg-white">
+                <ShieldCheck className="h-10 w-10 text-emerald-400" strokeWidth={1.3} />
+              </div>
+              <p className="text-[11px] uppercase tracking-[0.5em] text-emerald-500/70">datatrace</p>
+              <p className="text-base font-semibold text-slate-900">Этичное удаление</p>
+              <div className="mt-4 grid gap-1 text-[11px] text-slate-500">
+                <p>Журнал действий • Шифрование • SLA 24/7</p>
+                <p>Контроль повторных появлений</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {dataDestinations.map((item, index) => (
+              <div key={item.code} className="group relative flex items-start gap-6">
+                <div className="max-w-sm">
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-400">{item.code}</p>
+                  <p className="mt-2 text-lg text-slate-900">{item.label}</p>
+                  <p className="mt-2 text-sm text-slate-600">{item.description}</p>
+                </div>
+                <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-r from-emerald-300/70 to-transparent lg:block">
+                  <span
+                    className="trace-line-light"
+                    style={{ animationDelay: `${index * 0.6 + 0.3}s` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600">
+          {legend.map((item) => (
+            <span key={item} className="inline-flex items-center gap-3 rounded-full border border-emerald-200/80 px-4 py-2 bg-white/90 shadow-[0_10px_30px_rgba(34,197,94,0.12)]">
+              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-200" />
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .light-noise-mask {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+        }
+        .light-grid-overlay {
+          background-image:
+            linear-gradient(to right, rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(34, 197, 94, 0.1) 1px, transparent 1px);
+          background-size: 42px 42px;
+          mix-blend-mode: multiply;
+        }
+        .light-radial {
+          background: radial-gradient(circle at center, rgba(34, 197, 94, 0.18), transparent 60%);
+        }
+        .trace-line-light {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.65), transparent);
+          animation: sweep-light 3.6s linear infinite;
+        }
+        @keyframes sweep-light {
+          0% { transform: translateX(-100%); opacity: 0; }
+          25% { opacity: 1; }
+          75% { opacity: 1; }
+          100% { transform: translateX(100%); opacity: 0; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
 
 export default function DataTraceLanding() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -436,6 +565,10 @@ export default function DataTraceLanding() {
       </section>
 
       <DataFlowShowcase />
+
+      <div className="mt-24">
+        <DataFlowShowcaseLight />
+      </div>
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20">
@@ -767,5 +900,6 @@ export default function DataTraceLanding() {
     </div>
   )
 }
+
 
 
