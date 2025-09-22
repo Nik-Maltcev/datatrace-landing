@@ -617,12 +617,12 @@ export default function DataTraceLanding() {
                   <MessageSquare className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Telegram поддержка</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Задать вопрос основателю сервиса</h3>
               <p className="text-gray-600 mb-6">
                 Свяжитесь с нами в Telegram для быстрого получения ответа на ваши вопросы
               </p>
               <a
-                href="https://t.me/datatrace_support_bot"
+                href="https://t.me/nik_maltcev"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
@@ -708,12 +708,12 @@ export default function DataTraceLanding() {
                 <li className="flex items-center space-x-2">
                   <MessageSquare className="h-4 w-4" />
                   <a 
-                    href="https://t.me/datatrace_support_bot" 
+                    href="https://t.me/nik_maltcev" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="hover:text-white"
                   >
-                    Telegram Support
+                    Задать вопрос основателю сервиса
                   </a>
                 </li>
               </ul>
