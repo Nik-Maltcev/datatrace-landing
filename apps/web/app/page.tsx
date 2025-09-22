@@ -29,226 +29,172 @@ function InteractiveHeroGraphic() {
 function DataFlowShowcase() {
   const dataSources = [
     {
-      label: "Телеграм-боты",
-      description: "Боты-агрегаторы, где появляются свежие сливы и обсуждения",
-      accent: "from-sky-400 to-blue-500",
-      glow: "shadow-[0_0_22px_rgba(56,189,248,0.35)]",
-      delay: 0
+      code: 'SRC-01',
+      label: '\u0422\u0435\u043b\u0435\u0433\u0440\u0430\u043c-\u0431\u043e\u0442\u044b',
+      description: '\u0411\u043e\u0442\u044b-\u0430\u0433\u0440\u0435\u0433\u0430\u0442\u043e\u0440\u044b, \u0433\u0434\u0435 \u043f\u043e\u044f\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0441\u0432\u0435\u0436\u0438\u0435 \u0441\u043b\u0438\u0432\u044b \u0438 \u043e\u0431\u0441\u0443\u0436\u0434\u0435\u043d\u0438\u044f.'
     },
     {
-      label: "OSINT-инструменты",
-      description: "Поиск по открытым источникам и индексам утечек",
-      accent: "from-indigo-400 to-sky-500",
-      glow: "shadow-[0_0_22px_rgba(129,140,248,0.35)]",
-      delay: 0.6
+      code: 'SRC-02',
+      label: 'OSINT-\u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u044b',
+      description: '\u041f\u043e\u0438\u0441\u043a \u043f\u043e \u043e\u0442\u043a\u0440\u044b\u0442\u044b\u043c \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0430\u043c, \u0438\u043d\u0434\u0435\u043a\u0441\u0430\u043c \u0443\u0442\u0435\u0447\u0435\u043a \u0438 \u0438\u0441\u0442\u043e\u0440\u0438\u0447\u0435\u0441\u043a\u0438\u043c \u0434\u0430\u043c\u043f\u0430\u043c.'
     },
     {
-      label: "Даркнет-форумы",
-      description: "Мониторинг закрытых площадо#a с нелегальными продажа#cи",
-      accent: "from-purple-400 to-fuchsia-500",
-      glow: "shadow-[0_0_22px_rgba(168,85,247,0.35)]",
-      delay: 1.2
+      code: 'SRC-03',
+      label: '\u0414\u0430\u0440\u043a\u043d\u0435\u0442-\u0444\u043e\u0440\u0443\u043c\u044b',
+      description: '\u041c\u043e\u043d\u0438\u0442\u043e\u0440\u0438\u043d\u0433 \u0437\u0430\u043a\u0440\u044b\u0442\u044b\u0445 \u043f\u043b\u043e\u0449\u0430\u0434\u043e\u043a \u0441 \u043d\u0435\u043b\u0435\u0433\u0430\u043b\u044c\u043d\u044b\u043c\u0438 \u043f\u0440\u043e\u0434\u0430\u0436\u0430\u043c\u0438 \u0438 \u043e\u0431\u0441\u0443\u0436\u0434\u0435\u043d\u0438\u044f\u043c\u0438.'
     },
     {
-      label: "Партёры по кибербезопасности",
-      description: "Этичный обмен сигналами и подтверждение инцидентов",
-      accent: "from-emerald-400 to-teal-500",
-      glow: "shadow-[0_0_22px_rgba(16,185,129,0.35)]",
-      delay: 1.8
-    },
+      code: 'SRC-04',
+      label: '\u041f\u0430\u0440\u0442\u043d\u0451\u0440\u044b \u043f\u043e \u043a\u0438\u0431\u0435\u0440\u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438',
+      description: '\u042d\u0442\u0438\u0447\u043d\u044b\u0439 \u043e\u0431\u043c\u0435\u043d \u0441\u0438\u0433\u043d\u0430\u043b\u0430\u043c\u0438 \u0441 \u0432\u0435\u043d\u0434\u043e\u0440\u0430\u043c\u0438 \u0438 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u0435 \u0438\u043d\u0446\u0438\u0434\u0435\u043d\u0442\u043e\u0432.'
+    }
   ]
 
   const dataDestinations = [
     {
-      label: "Точечное удаление",
-      description: "Обратная связь владельца#c источников и заявки на деиндексацию",
-      accent: "from-teal-400 to-emerald-500",
-      glow: "shadow-[0_0_22px_rgba(16,185,129,0.35)]",
-      delay: 0.4
+      code: 'ACT-01',
+      label: '\u0422\u043e\u0447\u0435\u0447\u043d\u043e\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',
+      description: '\u041e\u0431\u0440\u0430\u0442\u043d\u0430\u044f \u0441\u0432\u044f\u0437\u044c \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430\u043c \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u043e\u0432 \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0437\u0430\u044f\u0432\u043e\u043a \u043d\u0430 \u0434\u0435\u0438\u043d\u0434\u0435\u043a\u0441\u0430\u0446\u0438\u044e.'
     },
     {
-      label: "Уведомление клиента",
-      description: "Подробный отчёт об обработанных утечках и статусе заявок",
-      accent: "from-sky-400 to-cyan-500",
-      glow: "shadow-[0_0_22px_rgba(14,165,233,0.35)]",
-      delay: 1.0
+      code: 'ACT-02',
+      label: '\u0423\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435 \u043a\u043b\u0438\u0435\u043d\u0442\u0430',
+      description: '\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u044b\u0439 \u043e\u0442\u0447\u0451\u0442 \u043e\u0431 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043d\u044b\u0445 \u0443\u0442\u0435\u0447\u043a\u0430\u0445, \u0441\u0442\u0430\u0442\u0443\u0441\u0435 \u0438 SLA.'
     },
     {
-      label: "Защита следа",
-      description: "Рекомендации по усилению защиты и ревокации ключей",
-      accent: "from-indigo-400 to-violet-500",
-      glow: "shadow-[0_0_22px_rgba(129,140,248,0.35)]",
-      delay: 1.6
+      code: 'ACT-03',
+      label: '\u0417\u0430\u0449\u0438\u0442\u0430 \u0441\u043b\u0435\u0434\u0430',
+      description: '\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0430\u0446\u0438\u0438 \u043f\u043e \u0443\u0441\u0438\u043b\u0435\u043d\u0438\u044e \u0437\u0430\u0449\u0438\u0442\u044b, \u0440\u043e\u0442\u0430\u0446\u0438\u0438 \u043a\u043b\u044e\u0447\u0435\u0439 \u0438 \u043f\u043e\u043b\u0438\u0442\u0438\u043a.'
     },
     {
-      label: "Мониторинг повторов",
-      description: "Автоматические проверки на ре-появление данных",
-      accent: "from-purple-400 to-pink-500",
-      glow: "shadow-[0_0_22px_rgba(236,72,153,0.35)]",
-      delay: 2.0
-    },
+      code: 'ACT-04',
+      label: '\u041c\u043e\u043d\u0438\u0442\u043e\u0440\u0438\u043d\u0433 \u043f\u043e\u0432\u0442\u043e\u0440\u043e\u0432',
+      description: '\u0410\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u043d\u0430 \u0440\u0435-\u043f\u043e\u044f\u0432\u043b\u0435\u043d\u0438\u0435 \u0434\u0430\u043d\u043d\u044b\u0445 \u0438 \u0438\u0445 \u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u043a\u0443.'
+    }
   ]
 
   const legend = [
-    { label: "Этическая проверка", accent: "from-teal-400 to-emerald-500" },
-    { label: "Аналитика DataTrace", accent: "from-sky-400 to-blue-500" },
-    { label: "Удаление и контроль", accent: "from-indigo-400 to-violet-500" },
+    '\u042d\u0442\u0438\u0447\u043d\u0430\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430',
+    '\u0410\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0430 DataTrace',
+    '\u0423\u0434\u0430\u043b\u0435\u043d\u0438\u0435 \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c'
   ]
 
   return (
-    <>
-      <section className={`relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 py-24 text-white ${ptMono.className}`}>
-        <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 right-0 h-[420px] w-[420px] rounded-full bg-sky-500/25 blur-3xl" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5" />
-        <div className="relative container mx-auto px-6 lg:px-8">
-          <div className="mx-auto mb-16 max-w-3xl text-center">
-            <span className="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.45em] text-white/70">
-              Этичное удаление
-            </span>
-            <h2 className="mt-6 text-4xl font-bold lg:text-5xl">
-              Понимаем, откуда приходят утечки, и бережно закрываем их источники
-            </h2>
-            <p className="mt-4 text-lg text-white/70">
-              Мы соединяем сигналы от проверенных источников с внутренними протоколами DataTrace, чтобы быстро находить и удалять персо#dа#bьны#5 данные без участия теневых схем.
-            </p>
+    <section className={
+elative overflow-hidden bg-[#050607] py-24 text-white }>
+      <div className="absolute inset-0 noise-mask opacity-30" />
+      <div className="absolute inset-0 grid-overlay" />
+      <div className="absolute inset-0 bg-radial" />
+
+      <div className="relative container mx-auto px-6 lg:px-12">
+        <div className="mx-auto max-w-3xl text-center space-y-6">
+          <span className="inline-flex items-center justify-center rounded-full border border-emerald-400/40 px-5 py-1 text-[11px] uppercase tracking-[0.45em] text-emerald-200">
+            \u044d\u0442\u0438\u0447\u043d\u043e\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435
+          </span>
+          <h2 className="text-4xl font-bold leading-tight text-slate-50 lg:text-5xl">
+            \u041f\u043e\u043d\u0438\u043c\u0430\u0435\u043c, \u043e\u0442\u043a\u0443\u0434\u0430 \u043f\u0440\u0438\u0445\u043e\u0434\u044f\u0442 \u0443\u0442\u0435\u0447\u043a\u0438, \u0438 \u0431\u0435\u0440\u0435\u0436\u043d\u043e \u0437\u0430\u043a\u0440\u044b\u0432\u0430\u0435\u043c \u0438\u0445 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0438
+          </h2>
+          <p className="text-base text-slate-300">
+            \u041c\u044b \u0441\u043e\u0435\u0434\u0438\u043d\u044f\u0435\u043c \u0441\u0438\u0433\u043d\u0430\u043b\u044b \u043e\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u043d\u044b\u0445 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u043e\u0432 \u0441 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u0438\u043c\u0438 \u043f\u0440\u043e\u0442\u043e\u043a\u043e\u043b\u0430\u043c\u0438 DataTrace, \u0447\u0442\u043e\u0431\u044b \u0431\u044b\u0441\u0442\u0440\u043e \u043d\u0430\u0445\u043e\u0434\u0438\u0442\u044c \u0438 \u0443\u0434\u0430\u043b\u044f\u0442\u044c \u043f\u0435\u0440\u0441\u043e\u043d\u0430\u043b\u044c\u043d\u044b\u0435 \u0434\u0430\u043d\u043d\u044b\u0435 \u0431\u0435\u0437 \u0443\u0447\u0430\u0441\u0442\u0438\u044f \u0442\u0435\u043d\u0435\u0432\u044b\u0445 \u0441\u0445\u0435\u043c.
+          </p>
+        </div>
+
+        <div className="mt-16 grid items-center gap-12 lg:grid-cols-[1fr_auto_1fr]">
+          <div className="space-y-8">
+            {dataSources.map((source, index) => (
+              <div key={source.code} className="group relative flex items-start justify-end gap-6">
+                <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-l from-emerald-400/70 to-transparent lg:block">
+                  <span
+                    className="trace-line"
+                    style={{ animationDelay: `${index * 0.6}s` }}
+                  />
+                </div>
+                <div className="max-w-sm text-right">
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-300/80">{source.code}</p>
+                  <p className="mt-2 text-lg text-slate-100">{source.label}</p>
+                  <p className="mt-2 text-sm text-slate-400">{source.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="grid items-center gap-12 lg:grid-cols-[1fr_auto_1fr]">
-            <div className="space-y-8">
-              {dataSources.map((source) => (
-                <div key={source.label} className="group flex items-center justify-end gap-4">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white">{source.label}</p>
-                    <p className="text-xs text-white/60 leading-relaxed">{source.description}</p>
-                  </div>
-                  <div className="flow-line" aria-hidden="true">
-                    <span className="flow-particle" style={{ animationDelay: `${source.delay}s` }} />
-                  </div>
-                  <div className={`h-3 w-3 rounded-full bg-gradient-to-br ${source.accent} ${source.glow}`} />
-                </div>
-              ))}
-            </div>
-
-            <div className="relative flex justify-center">
-              <div className="relative flex h-72 w-72 items-center justify-center">
-                <div className="data-ring data-ring-outer absolute inset-2 rounded-full border border-white/10" />
-                <div className="data-ring data-ring-middle absolute inset-8 rounded-full border border-white/15" />
-                <div className="data-ring data-ring-inner absolute inset-16 rounded-full border border-white/25" />
-
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/25 bg-white/10 backdrop-blur">
-                    <ShieldCheck className="h-10 w-10 text-sky-200" />
-                  </div>
-                  <p className="mt-4 text-xs uppercase tracking-[0.45em] text-white/50">DataTrace</p>
-                  <p className="mt-1 text-sm uppercase tracking-[0.35em] text-white">Этичное удаление</p>
-                </div>
-
-                <div className="absolute -top-10 right-6 h-4 w-4 rounded-full bg-cyan-400/70 blur-[1px] animate-ping" />
-                <div className="absolute -bottom-6 left-12 h-5 w-5 rounded-full bg-purple-500/70 blur-[1px] animate-[ping_4s_ease-in-out_infinite]" />
-                <div className="absolute top-1/2 left-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70" />
-                <div className="absolute top-1/2 right-0 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70" />
+          <div className="relative flex items-center justify-center">
+            <div className="absolute h-[340px] w-[340px] rounded-[2.5rem] border border-emerald-500/30 bg-black/40 backdrop-blur-md shadow-[0_0_60px_rgba(34,197,94,0.18)]" />
+            <div className="absolute h-[420px] w-[420px] rounded-full border border-emerald-500/10 blur-sm" />
+            <div className="absolute h-[480px] w-[480px] rounded-full border border-emerald-500/5" />
+            <div className="relative z-10 flex flex-col items-center gap-3 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/50 bg-black/60">
+                <ShieldCheck className="h-10 w-10 text-emerald-400" strokeWidth={1.3} />
+              </div>
+              <p className="text-[11px] uppercase tracking-[0.5em] text-emerald-200/80">datatrace</p>
+              <p className="text-base font-semibold text-slate-100">\u042d\u0442\u0438\u0447\u043d\u043e\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435</p>
+              <div className="mt-4 grid gap-1 text-[11px] text-emerald-200/70">
+                <p>\u0416\u0443\u0440\u043d\u0430\u043b \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439 ? \u0428\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0438\u0435 ? SLA 24/7</p>
+                <p>\u041a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u043f\u043e\u0432\u0442\u043e\u0440\u043d\u044b\u0445 \u043f\u043e\u044f\u0432\u043b\u0435\u043d\u0438\u0439</p>
               </div>
             </div>
-
-            <div className="space-y-8">
-              {dataDestinations.map((destination) => (
-                <div key={destination.label} className="group flex items-center gap-4">
-                  <div className={`h-3 w-3 rounded-full bg-gradient-to-br ${destination.accent} ${destination.glow}`} />
-                  <div className="flow-line" aria-hidden="true">
-                    <span className="flow-particle" style={{ animationDelay: `${destination.delay}s` }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white">{destination.label}</p>
-                    <p className="text-xs text-white/60 leading-relaxed">{destination.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs uppercase tracking-[0.3em] text-white/60">
-            {legend.map((item) => (
-              <div key={item.label} className="flex items-center gap-2">
-                <span className={`inline-flex h-3 w-3 rounded-full bg-gradient-to-br ${item.accent}`} />
-                <span>{item.label}</span>
+          <div className="space-y-8">
+            {dataDestinations.map((item, index) => (
+              <div key={item.code} className="group relative flex items-start gap-6">
+                <div className="max-w-sm">
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-emerald-300/80">{item.code}</p>
+                  <p className="mt-2 text-lg text-slate-100">{item.label}</p>
+                  <p className="mt-2 text-sm text-slate-400">{item.description}</p>
+                </div>
+                <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-r from-emerald-400/70 to-transparent lg:block">
+                  <span
+                    className="trace-line"
+                    style={{ animationDelay: `${index * 0.6 + 0.3}s` }}
+                  />
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      <style jsx>{`
-        .flow-line {
-          position: relative;
-          width: 104px;
-          height: 2px;
-          overflow: hidden;
-          border-radius: 9999px;
-          background: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
+          {legend.map((item) => (
+            <span key={item} className="inline-flex items-center gap-3 rounded-full border border-emerald-400/40 px-4 py-2">
+              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-200" />
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <style jsx>{
+        .noise-mask {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
         }
-        .flow-particle {
+        .grid-overlay {
+          background-image:
+            linear-gradient(to right, rgba(78, 247, 170, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(78, 247, 170, 0.08) 1px, transparent 1px);
+          background-size: 36px 36px;
+          mix-blend-mode: lighten;
+        }
+        .bg-radial {
+          background: radial-gradient(circle at center, rgba(34, 197, 94, 0.22), transparent 55%);
+        }
+        .trace-line {
           position: absolute;
-          top: 50%;
-          left: 0;
-          width: 36px;
-          height: 36px;
-          opacity: 0;
-          transform: translate(-50%, -50%) scale(0.6);
-          background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.25) 55%, rgba(255,255,255,0) 70%);
-          animation: flowMove 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.85), transparent);
+          animation: sweep 3.4s linear infinite;
         }
-        .data-ring {
-          animation: ringPulse 9s ease-in-out infinite;
+        @keyframes sweep {
+          0% { transform: translateX(-100%); opacity: 0; }
+          25% { opacity: 1; }
+          75% { opacity: 1; }
+          100% { transform: translateX(100%); opacity: 0; }
         }
-        .data-ring-middle {
-          animation-delay: 1.2s;
-        }
-        .data-ring-inner {
-          animation-delay: 2.4s;
-        }
-        @keyframes flowMove {
-          0% {
-            left: 0%;
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.4);
-          }
-          15% {
-            opacity: 1;
-          }
-          85% {
-            opacity: 1;
-          }
-          100% {
-            left: 100%;
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.85);
-          }
-        }
-        @keyframes ringPulse {
-          0%, 100% {
-            transform: scale(0.96);
-            opacity: 0.55;
-          }
-          50% {
-            transform: scale(1.04);
-            opacity: 1;
-          }
-        }
-        @media (max-width: 1024px) {
-          .flow-line {
-            width: 80px;
-          }
-        }
-        @media (max-width: 640px) {
-          .flow-line {
-            width: 64px;
-          }
-        }
-      `}</style>
-    </>
+      }</style>
+    </section>
   )
 }
+
 
 export default function DataTraceLanding() {
   const { isAuthenticated, isLoading } = useAuth()
