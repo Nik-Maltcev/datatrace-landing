@@ -4,7 +4,7 @@ let checkHistory: any[] = []
 export interface CheckRecord {
   id: string
   userId: string
-  type: 'phone' | 'email'
+  type: 'phone' | 'email' | 'email_breach' | 'password'
   query: string
   date: string
   status: 'completed' | 'failed'
@@ -22,7 +22,7 @@ export interface CheckRecord {
 }
 
 export function saveCheckResult(data: {
-  type: 'phone' | 'email'
+  type: 'phone' | 'email' | 'email_breach' | 'password'
   query: string
   results: any[]
   totalLeaks: number
@@ -43,20 +43,30 @@ export function saveCheckResult(data: {
     totalLeaks: totalLeaks || 0,
     foundSources: foundSources || 0,
     message: message || '',
-    results: results?.map((result: any) => ({
-      source: result.name,
-      found: result.ok && (
-        Array.isArray(result.items) ? result.items.length > 0 : 
-        (typeof result.items === 'object' && result.items !== null) ? Object.keys(result.items).length > 0 : 
-        false
-      ),
-      count: Array.isArray(result.items) ? result.items.length : 
-             (typeof result.items === 'object' && result.items !== null) ? 
-             Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0) : 0,
-      ok: result.ok,
-      error: result.error,
-      items: result.items // Сохраняем нормализованные данные
-    })) || []
+    results: results?.map((result: any) => {
+      const hasObjectItems = typeof result.items === 'object' && result.items !== null
+      const countFromItems = Array.isArray(result.items)
+        ? result.items.length
+        : hasObjectItems
+          ? Object.values(result.items).reduce((sum: number, items: any) => sum + (Array.isArray(items) ? items.length : 0), 0)
+          : 0
+      const resolvedCount = countFromItems || (typeof result.count === 'number' ? result.count : 0)
+
+      const found = result.ok && (
+        Array.isArray(result.items) ? result.items.length > 0 :
+        hasObjectItems ? Object.keys(result.items).length > 0 :
+        resolvedCount > 0
+      )
+
+      return {
+        source: result.name,
+        found,
+        count: resolvedCount,
+        ok: result.ok,
+        error: result.error,
+        items: result.items // Сохраняем нормализованные данные
+      }
+    }) || []
   }
 
   // Сохраняем в временное хранилище
@@ -103,3 +113,4 @@ export function getCheckHistory(userId: string = 'current-user'): CheckRecord[] 
 
   return sortedChecks
 }
+

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 interface CheckResult {
   id: string;
-  type: 'phone' | 'email';
+  type: 'phone' | 'email' | 'email_breach' | 'password';
   query: string;
   date: string;
   status: 'completed' | 'failed';

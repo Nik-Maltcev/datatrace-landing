@@ -35,7 +35,7 @@ import Link from "next/link"
 
 interface CheckHistory {
   id: string
-  type: 'phone' | 'email' | 'password'
+  type: 'phone' | 'email' | 'email_breach' | 'password'
   query: string
   date: string
   status: 'completed' | 'failed'
@@ -61,6 +61,39 @@ export default function ChecksPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteInstructionsOpen, setDeleteInstructionsOpen] = useState(false)
   const [selectedSourceForDeletion, setSelectedSourceForDeletion] = useState<string>('')
+
+  const getTypeMeta = (type: CheckHistory['type']) => {
+    switch (type) {
+      case 'phone':
+        return {
+          borderClass: 'border-l-blue-400',
+          iconBgClass: 'bg-blue-100',
+          icon: <Phone className="h-5 w-5 text-blue-600" />,
+          label: 'Телефон'
+        }
+      case 'email_breach':
+        return {
+          borderClass: 'border-l-purple-400',
+          iconBgClass: 'bg-purple-100',
+          icon: <AlertTriangle className="h-5 w-5 text-purple-600" />,
+          label: 'Email (взлом)'
+        }
+      case 'password':
+        return {
+          borderClass: 'border-l-amber-400',
+          iconBgClass: 'bg-amber-100',
+          icon: <Lock className="h-5 w-5 text-amber-600" />,
+          label: 'Пароль'
+        }
+      default:
+        return {
+          borderClass: 'border-l-green-400',
+          iconBgClass: 'bg-green-100',
+          icon: <Mail className="h-5 w-5 text-green-600" />,
+          label: 'Email'
+        }
+    }
+  }
 
   const toggleSource = (checkId: string, sourceName: string) => {
     const key = `${checkId}-${sourceName}`
@@ -342,23 +375,15 @@ export default function ChecksPage() {
               ))}
 
               {/* Проверки телефонов и email */}
-              {checks.map((check) => (
-                <Card key={check.id} className={`border-l-4 ${
-                  check.type === 'phone' ? 'border-l-blue-400' : 'border-l-green-400'
-                }`}>
+              {checks.map((check) => {
+                const typeMeta = getTypeMeta(check.type)
+                return (
+                  <Card key={check.id} className={`border-l-4 ${typeMeta.borderClass}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          check.type === 'phone' 
-                            ? 'bg-blue-100' 
-                            : 'bg-green-100'
-                        }`}>
-                          {check.type === 'phone' ? (
-                            <Phone className={`h-5 w-5 ${check.type === 'phone' ? 'text-blue-600' : 'text-green-600'}`} />
-                          ) : (
-                            <Mail className="h-5 w-5 text-green-600" />
-                          )}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${typeMeta.iconBgClass}`}>
+                          {typeMeta.icon}
                         </div>
                         <div>
                           <CardTitle className="text-base">{check.query}</CardTitle>
@@ -373,7 +398,7 @@ export default function ChecksPage() {
                           {check.status === 'completed' ? 'Завершено' : 'Ошибка'}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {check.type === 'phone' ? 'Телефон' : 'Email'}
+                          {typeMeta.label}
                         </Badge>
                       </div>
                     </div>
@@ -407,6 +432,13 @@ export default function ChecksPage() {
                             const sourceName = result.source || result.name
                             const key = `${check.id}-${sourceName}`
                             const isExpanded = expandedSources.has(key)
+                            const totalRecords = typeof result.count === 'number'
+                              ? result.count
+                              : Array.isArray(result.items)
+                                ? result.items.length
+                                : result.items && typeof result.items === 'object'
+                                  ? Object.keys(result.items).length
+                                  : 0
                             
                             return (
                               <div key={idx} className={`rounded-lg border ${
@@ -434,7 +466,7 @@ export default function ChecksPage() {
                                     {result.found ? (
                                       <>
                                         <Badge variant="destructive" className="text-xs">
-                                          {result.count || 0} записей
+                                          {totalRecords} записей
                                         </Badge>
                                         <Badge variant="outline" className="text-xs text-red-600">
                                           Утечка
@@ -476,7 +508,7 @@ export default function ChecksPage() {
                                     </h5>
                                     <div className="space-y-2 text-sm text-gray-600">
                                       <p>• Источник: {sourceName}</p>
-                                      <p>• Количество записей: {result.count || 0}</p>
+                                      <p>• Количество записей: {totalRecords}</p>
                                       
                                       <div className="mt-3 space-y-2">
                                         <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
@@ -507,9 +539,9 @@ export default function ChecksPage() {
                                                   ))
                                                 }
                                               </div>
-                                            ))}
+                                            )})
                                             <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-100 rounded">
-                                              📊 Всего показано: {result.items.length} записей
+                                              📊 Всего показано: {totalRecords} записей
                                             </div>
                                           </>
                                         ) : result.data && typeof result.data === 'object' ? (

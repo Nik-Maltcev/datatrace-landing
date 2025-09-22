@@ -44,6 +44,9 @@ export default function Dashboard() {
   const [emailResult, setEmailResult] = useState<any>(null)
   const [isCheckingPhone, setIsCheckingPhone] = useState(false)
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
+  const [breachEmail, setBreachEmail] = useState(user?.email || '')
+  const [emailBreachResult, setEmailBreachResult] = useState<any>(null)
+  const [isCheckingEmailBreach, setIsCheckingEmailBreach] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [paymentProcessed, setPaymentProcessed] = useState(false)
   const [transactionId, setTransactionId] = useState('')
@@ -115,6 +118,12 @@ export default function Dashboard() {
       }
     }
   }, [user])
+
+  useEffect(() => {
+    if (user?.email) {
+      setBreachEmail(user.email)
+    }
+  }, [user?.email])
 
   const handleCheckTransaction = async () => {
     if (!transactionId.trim()) {
@@ -254,6 +263,60 @@ export default function Dashboard() {
       console.error('Email check error:', error)
     }
     setIsCheckingEmail(false)
+  }
+
+  const handleCheckEmailBreach = async () => {
+    if (isCheckingEmailBreach) {
+      return
+    }
+
+    const emailToCheck = breachEmail.trim()
+    if (!emailToCheck) {
+      setEmailBreachResult({ ok: false, error: 'Введите email для проверки' })
+      return
+    }
+
+    if (!isPhoneVerified) {
+      setEmailBreachResult({ ok: false, error: 'Подтвердите номер телефона, чтобы воспользоваться проверкой.' })
+      return
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailPattern.test(emailToCheck)) {
+      setEmailBreachResult({ ok: false, error: 'Некорректный email' })
+      return
+    }
+
+    setIsCheckingEmailBreach(true)
+    setEmailBreachResult(null)
+
+    try {
+      const response = await fetch('/api/leaks/check-email-breach', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailToCheck,
+          userId: user?.email
+        }),
+      })
+
+      const data = await response.json()
+      setEmailBreachResult(data)
+
+      if (response.ok && data?.ok) {
+        updateUserChecks((user?.checksUsed || 0) + 1)
+      }
+    } catch (error) {
+      console.error('Email breach check error:', error)
+      setEmailBreachResult({
+        ok: false,
+        error: 'Не удалось выполнить проверку. Попробуйте позже.'
+      })
+    } finally {
+      setIsCheckingEmailBreach(false)
+    }
   }
 
   if (!user) {
@@ -551,6 +614,116 @@ export default function Dashboard() {
                       </div>
                     )}
                   </>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <Shield className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Проверить почту на взлом</CardTitle>
+                <p className="text-sm text-gray-500">BreachDirectory — поиск в утечках</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 mb-4">
+              <label className="text-sm text-gray-600" htmlFor="breach-email-input">Email для проверки</label>
+              <input
+                id="breach-email-input"
+                type="email"
+                value={breachEmail}
+                onChange={(e) => setBreachEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="name@example.com"
+              />
+            </div>
+            <Button
+              onClick={handleCheckEmailBreach}
+              disabled={isCheckingEmailBreach || !breachEmail.trim() || !isPhoneVerified}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              {isCheckingEmailBreach ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Проверяю...
+                </>
+              ) : !isPhoneVerified ? (
+                'Подтвердите номер телефона'
+              ) : (
+                <>
+                  Проверить на взлом
+                  <Shield className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+            {emailBreachResult && (
+              <div
+                className={`mt-3 p-4 rounded-lg border ${
+                  emailBreachResult.ok
+                    ? emailBreachResult.found
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-green-50 border-green-200'
+                    : 'bg-red-50 border-red-200'
+                }`}
+              >
+                {emailBreachResult.ok ? (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">
+                        {emailBreachResult.found ? (
+                          <>
+                            <AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" />
+                            Найдено утечек: {emailBreachResult.totalLeaks || 0}
+                          </>
+                        ) : (
+                          'Новых утечек не обнаружено'
+                        )}
+                      </p>
+                      {emailBreachResult.found && (
+                        <Badge variant="destructive" className="text-xs">
+                          {emailBreachResult.foundSources || 0} источников
+                        </Badge>
+                      )}
+                    </div>
+                    {emailBreachResult.message && (
+                      <p className="text-sm text-gray-700">{emailBreachResult.message}</p>
+                    )}
+                    {emailBreachResult.found && Array.isArray(emailBreachResult.results) && (
+                      <div className="mt-3 space-y-2">
+                        {emailBreachResult.results
+                          .filter((result: any) => result?.found)
+                          .map((result: any, index: number) => (
+                            <div key={index} className="bg-white rounded-lg border border-red-200 p-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">{result.name}</span>
+                                <Badge variant="outline" className="text-xs text-red-600 border-red-300">
+                                  {result.count || 0} записей
+                                </Badge>
+                              </div>
+                              {result.error && (
+                                <p className="mt-2 text-xs text-red-600">{result.error}</p>
+                              )}
+                              {result.items && (
+                                <pre className="mt-3 max-h-48 overflow-y-auto rounded bg-gray-50 p-3 text-xs text-gray-700">
+                                  {JSON.stringify(result.items, null, 2)}
+                                </pre>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-red-600">
+                    {emailBreachResult.error || 'Не удалось выполнить проверку'}
+                  </p>
                 )}
               </div>
             )}
