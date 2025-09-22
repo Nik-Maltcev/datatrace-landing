@@ -1,13 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseClient } from '@/lib/server/supabase-client';
 
 export async function GET(request: NextRequest) {
   try {
+    const client = getSupabaseClient();
+
+    if (!client) {
+      console.warn('[check-payment] Supabase credentials are not configured');
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Supabase credentials are missing – please contact support.'
+        },
+        { status: 503 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const transactionId = searchParams.get('transactionId');
 
@@ -18,17 +26,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('Checking payment status for transaction:', transactionId);
+    console.log('[check-payment] Checking status for transaction', transactionId);
 
-    // Ищем запись о платеже в таблице payment_transactions
-    const { data: transaction, error: transactionError } = await supabase
+    const { data: transaction, error: transactionError } = await client
       .from('payment_transactions')
       .select('*')
       .eq('transaction_id', transactionId)
       .single();
 
     if (transactionError) {
-      console.log('Transaction not found or error:', transactionError);
+      console.log('[check-payment] Transaction not found:', transactionError);
       return NextResponse.json({
         ok: true,
         status: 'pending',
@@ -37,19 +44,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (transaction.status === 'completed') {
-      // Получаем обновленные данные пользователя
-      const { data: userProfile, error: profileError } = await supabase
+      const { data: userProfile, error: profileError } = await client
         .from('user_profiles')
         .select('*')
         .eq('user_id', transaction.user_id)
         .single();
 
       if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        return NextResponse.json({
-          ok: false,
-          error: 'User profile not found'
-        }, { status: 404 });
+        console.error('[check-payment] Error fetching user profile:', profileError);
+        return NextResponse.json(
+          { ok: false, error: 'User profile not found' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({
@@ -72,9 +78,8 @@ export async function GET(request: NextRequest) {
       status: transaction.status || 'pending',
       message: 'Payment is being processed'
     });
-
   } catch (error) {
-    console.error('Check payment error:', error);
+    console.error('[check-payment] Unexpected error:', error);
     return NextResponse.json(
       { ok: false, error: 'Internal server error' },
       { status: 500 }

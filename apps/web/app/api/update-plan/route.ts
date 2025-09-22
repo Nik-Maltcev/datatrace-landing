@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseClient } from '@/lib/server/supabase-client';
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    console.error('[update-plan] Supabase credentials are missing');
+    return NextResponse.json(
+      { ok: false, error: { message: 'Supabase is not configured' } },
+      { status: 503 }
+    );
+  }
+
+
   try {
     const { userId, plan } = await request.json();
 

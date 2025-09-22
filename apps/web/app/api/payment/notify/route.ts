@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '@/lib/server/supabase-client';
 
 const PayAnyWayService = require('@/lib/services/PayAnyWayService');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    console.error('[payment-notify] Supabase credentials are missing');
+    return new Response('FAIL - Supabase not configured', { status: 200 });
+  }
+
+
   try {
     // Получаем параметры уведомления
     const formData = await request.formData();
