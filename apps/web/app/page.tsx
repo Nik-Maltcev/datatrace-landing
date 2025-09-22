@@ -30,53 +30,53 @@ function DataFlowShowcase() {
   const dataSources = [
     {
       code: 'SRC-01',
-      label: 'РўРµР»РµРіСЂР°Рј-Р±РѕС‚С‹',
-      description: 'Р‘РѕС‚С‹-Р°РіСЂРµРіР°С‚РѕСЂС‹, РіРґРµ РїРѕСЏРІР»СЏСЋС‚СЃСЏ СЃРІРµР¶РёРµ СЃР»РёРІС‹ Рё РѕР±СЃСѓР¶РґРµРЅРёСЏ.'
+      label: 'Телеграм-боты',
+      description: 'Боты-агрегаторы, где появляются свежие сливы и обсуждения.'
     },
     {
       code: 'SRC-02',
-      label: 'OSINT-РёРЅСЃС‚СЂСѓРјРµРЅС‚С‹',
-      description: 'РџРѕРёСЃРє РїРѕ РѕС‚РєСЂС‹С‚С‹Рј РёСЃС‚РѕС‡РЅРёРєР°Рј, РёРЅРґРµРєСЃР°Рј СѓС‚РµС‡РµРє Рё РёСЃС‚РѕСЂРёС‡РµСЃРєРёРј РґР°РјРїР°Рј.'
+      label: 'OSINT-инструменты',
+      description: 'Поиск по открытым источникам, индексам утечек и историческим дампам.'
     },
     {
       code: 'SRC-03',
-      label: 'Р”Р°СЂРєРЅРµС‚-С„РѕСЂСѓРјС‹',
-      description: 'РњРѕРЅРёС‚РѕСЂРёРЅРі Р·Р°РєСЂС‹С‚С‹С… РїР»РѕС‰Р°РґРѕРє СЃ РЅРµР»РµРіР°Р»СЊРЅС‹РјРё РїСЂРѕРґР°Р¶Р°РјРё Рё РѕР±СЃСѓР¶РґРµРЅРёСЏРјРё.'
+      label: 'Даркнет-форумы',
+      description: 'Мониторинг закрытых площадок с нелегальными продажами и обсуждениями.'
     },
     {
       code: 'SRC-04',
-      label: 'РџР°СЂС‚РЅС‘СЂС‹ РїРѕ РєРёР±РµСЂР±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё',
-      description: 'Р­С‚РёС‡РЅС‹Р№ РѕР±РјРµРЅ СЃРёРіРЅР°Р»Р°РјРё СЃ РІРµРЅРґРѕСЂР°РјРё Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РёРЅС†РёРґРµРЅС‚РѕРІ.'
+      label: 'Партнёры по кибербезопасности',
+      description: 'Этичный обмен сигналами с вендорами и подтверждение инцидентов.'
     }
   ];
 
   const dataDestinations = [
     {
       code: 'ACT-01',
-      label: 'РўРѕС‡РµС‡РЅРѕРµ СѓРґР°Р»РµРЅРёРµ',
-      description: 'РћР±СЂР°С‚РЅР°СЏ СЃРІСЏР·СЊ РІР»Р°РґРµР»СЊС†Р°Рј РёСЃС‚РѕС‡РЅРёРєРѕРІ Рё РєРѕРЅС‚СЂРѕР»СЊ Р·Р°СЏРІРѕРє РЅР° РґРµРёРЅРґРµРєСЃР°С†РёСЋ.'
+      label: 'Точечное удаление',
+      description: 'Обратная связь владельцам источников и контроль заявок на деиндексацию.'
     },
     {
       code: 'ACT-02',
-      label: 'РЈРІРµРґРѕРјР»РµРЅРёРµ РєР»РёРµРЅС‚Р°',
-      description: 'РџРѕРґСЂРѕР±РЅС‹Р№ РѕС‚С‡С‘С‚ РѕР± РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С… СѓС‚РµС‡РєР°С…, СЃС‚Р°С‚СѓСЃРµ Рё SLA.'
+      label: 'Уведомление клиента',
+      description: 'Подробный отчёт об обработанных утечках, статусе и SLA.'
     },
     {
       code: 'ACT-03',
-      label: 'Р—Р°С‰РёС‚Р° СЃР»РµРґР°',
-      description: 'Р РµРєРѕРјРµРЅРґР°С†РёРё РїРѕ СѓСЃРёР»РµРЅРёСЋ Р·Р°С‰РёС‚С‹, СЂРѕС‚Р°С†РёРё РєР»СЋС‡РµР№ Рё РїРѕР»РёС‚РёРє.'
+      label: 'Защита следа',
+      description: 'Рекомендации по усилению защиты, ротации ключей и политик.'
     },
     {
       code: 'ACT-04',
-      label: 'РњРѕРЅРёС‚РѕСЂРёРЅРі РїРѕРІС‚РѕСЂРѕРІ',
-      description: 'РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРёРµ РїСЂРѕРІРµСЂРєРё РЅР° РїРѕРІС‚РѕСЂРЅРѕРµ РїРѕСЏРІР»РµРЅРёРµ РґР°РЅРЅС‹С… Рё РёС… Р±Р»РѕРєРёСЂРѕРІРєСѓ.'
+      label: 'Мониторинг повторов',
+      description: 'Автоматические проверки на повторное появление данных и их блокировку.'
     }
   ];
 
   const legend = [
-    'Р­С‚РёС‡РЅР°СЏ РїСЂРѕРІРµСЂРєР°',
-    'РђРЅР°Р»РёС‚РёРєР° DataTrace',
-    'РЈРґР°Р»РµРЅРёРµ Рё РєРѕРЅС‚СЂРѕР»СЊ'
+    'Этичная проверка',
+    'Аналитика DataTrace',
+    'Удаление и контроль'
   ];
 
   return (
@@ -88,13 +88,13 @@ function DataFlowShowcase() {
       <div className="relative container mx-auto px-6 lg:px-12">
         <div className="mx-auto max-w-3xl text-center space-y-6">
           <span className="inline-flex items-center justify-center rounded-full border border-emerald-400/40 px-5 py-1 text-[11px] uppercase tracking-[0.45em] text-emerald-200">
-            СЌС‚РёС‡РЅРѕРµ СѓРґР°Р»РµРЅРёРµ
+            этичное удаление
           </span>
           <h2 className="text-4xl font-bold leading-tight text-slate-50 lg:text-5xl">
-            РџРѕРЅРёРјР°РµРј, РѕС‚РєСѓРґР° РїСЂРёС…РѕРґСЏС‚ СѓС‚РµС‡РєРё, Рё Р±РµСЂРµР¶РЅРѕ Р·Р°РєСЂС‹РІР°РµРј РёС… РёСЃС‚РѕС‡РЅРёРєРё
+            Понимаем, откуда приходят утечки, и бережно закрываем их источники
           </h2>
           <p className="text-base text-slate-300">
-            РњС‹ СЃРѕРµРґРёРЅСЏРµРј СЃРёРіРЅР°Р»С‹ РѕС‚ РїСЂРѕРІРµСЂРµРЅРЅС‹С… РёСЃС‚РѕС‡РЅРёРєРѕРІ СЃ РІРЅСѓС‚СЂРµРЅРЅРёРјРё РїСЂРѕС‚РѕРєРѕР»Р°РјРё DataTrace, С‡С‚РѕР±С‹ Р±С‹СЃС‚СЂРѕ РЅР°С…РѕРґРёС‚СЊ Рё СѓРґР°Р»СЏС‚СЊ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ Р±РµР· СѓС‡Р°СЃС‚РёСЏ С‚РµРЅРµРІС‹С… СЃС…РµРј.
+            Мы соединяем сигналы от проверенных источников с внутренними протоколами DataTrace, чтобы быстро находить и удалять персональные данные без участия теневых схем.
           </p>
         </div>
 
@@ -126,10 +126,10 @@ function DataFlowShowcase() {
                 <ShieldCheck className="h-10 w-10 text-emerald-400" strokeWidth={1.3} />
               </div>
               <p className="text-[11px] uppercase tracking-[0.5em] text-emerald-200/80">datatrace</p>
-              <p className="text-base font-semibold text-slate-100">Р­С‚РёС‡РЅРѕРµ СѓРґР°Р»РµРЅРёРµ</p>
+              <p className="text-base font-semibold text-slate-100">Этичное удаление</p>
               <div className="mt-4 grid gap-1 text-[11px] text-emerald-200/70">
-                <p>Р–СѓСЂРЅР°Р» РґРµР№СЃС‚РІРёР№ вЂў РЁРёС„СЂРѕРІР°РЅРёРµ вЂў SLA 24/7</p>
-                <p>РљРѕРЅС‚СЂРѕР»СЊ РїРѕРІС‚РѕСЂРЅС‹С… РїРѕСЏРІР»РµРЅРёР№</p>
+                <p>Журнал действий • Шифрование • SLA 24/7</p>
+                <p>Контроль повторных появлений</p>
               </div>
             </div>
           </div>
@@ -216,17 +216,17 @@ export default function DataTraceLanding() {
       return
     }
 
-    // Р•СЃР»Рё Р°РІС‚РѕСЂРёР·РѕРІР°РЅ, РѕС‚РєСЂС‹РІР°РµРј СЃСЃС‹Р»РєСѓ РЅР° РѕРїР»Р°С‚Сѓ
+    // Если авторизован, открываем ссылку на оплату
     const successUrl = encodeURIComponent(`https://www.datatrace.tech/redirect?plan=${plan}`)
     
     if (plan === 'basic') {
-      // Р‘Р°Р·РѕРІС‹Р№ С‚Р°СЂРёС„ - 350в‚Ѕ
+      // Базовый тариф - 350₽
       window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&productPrice=350`
     } else if (plan === 'professional-6m') {
-      // РџСЂРѕС„РµСЃСЃРёРѕРЅР°Р»СЊРЅС‹Р№ 6 РјРµСЃСЏС†РµРІ - 5000в‚Ѕ
+      // Профессиональный 6 месяцев - 5000₽
       window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=5000`
     } else if (plan === 'professional-12m') {
-      // РџСЂРѕС„РµСЃСЃРёРѕРЅР°Р»СЊРЅС‹Р№ 12 РјРµСЃСЏС†РµРІ - 8500в‚Ѕ
+      // Профессиональный 12 месяцев - 8500₽
       window.location.href = `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}&productPrice=8500`
     }
   }
@@ -248,7 +248,7 @@ export default function DataTraceLanding() {
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
-                Р“Р›РђР’РќРђРЇ
+                ГЛАВНАЯ
               </Link>
               <div 
                 className="relative"
@@ -256,7 +256,7 @@ export default function DataTraceLanding() {
                 onMouseLeave={() => setShowSolutionsDropdown(false)}
               >
                 <button className="text-sm font-medium text-gray-700 hover:text-black flex items-center">
-                  Р Р•РЁР•РќРРЇ
+                  РЕШЕНИЯ
                   <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -275,7 +275,7 @@ export default function DataTraceLanding() {
                           setShowSolutionsDropdown(false);
                         }}
                       >
-                        РћР±РЅР°СЂСѓР¶РµРЅРёРµ Рё СѓРґР°Р»РµРЅРёРµ СЃРєРѕРјРїСЂРѕРјРµС‚РёСЂРѕРІР°РЅРЅРѕР№ Р»РёС‡РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
+                        Обнаружение и удаление скомпрометированной личной информации
                       </Link>
                       <Link 
                         href="#solutions" 
@@ -288,7 +288,7 @@ export default function DataTraceLanding() {
                           setShowSolutionsDropdown(false);
                         }}
                       >
-                        РњРѕРЅРёС‚РѕСЂРёРЅРі РіР»СѓР±РёРЅРЅРѕРіРѕ РёРЅС‚РµСЂРЅРµС‚Р° Рё РґР°СЂРєРЅРµС‚Р°
+                        Мониторинг глубинного интернета и даркнета
                       </Link>
                     </div>
                   </div>
@@ -304,10 +304,10 @@ export default function DataTraceLanding() {
                   });
                 }}
               >
-                РўРђР РР¤Р«
+                ТАРИФЫ
               </Link>
               <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
-                Р‘Р›РћР“
+                БЛОГ
               </Link>
               <Link 
                 href="#contacts" 
@@ -319,7 +319,7 @@ export default function DataTraceLanding() {
                   });
                 }}
               >
-                РљРћРќРўРђРљРўР«
+                КОНТАКТЫ
               </Link>
             </nav>
             <Button
@@ -328,7 +328,7 @@ export default function DataTraceLanding() {
               className="border-black text-black hover:bg-black hover:text-white bg-transparent"
               disabled={isLoading}
             >
-              {isLoading ? "..." : isAuthenticated ? "Р›РР§РќР«Р™ РљРђР‘РРќР•Рў" : "Р’РћР™РўР"}
+              {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
             </Button>
           </div>
         </div>
@@ -341,7 +341,7 @@ export default function DataTraceLanding() {
             <div className="space-y-8">
               <div>
                 <h1 className="text-5xl lg:text-6xl font-bold text-black leading-[1.0]">
-                  РР-РїР»Р°С‚С„РѕСЂРјР° РґР»СЏ РїРѕРёСЃРєР° Рё СѓРґР°Р»РµРЅРёСЏ СЃРєРѕРјРїСЂРѕРјРµС‚РёСЂРѕРІР°РЅРЅРѕР№ Р»РёС‡РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
+                  -платформа для поиска и удаления скомпрометированной личной информации
                 </h1>
               </div>
               <div>
@@ -354,7 +354,7 @@ export default function DataTraceLanding() {
                     });
                   }}
                 >
-                  {"РЈР—РќРђРўР¬ РџРћР”Р РћР‘РќР•Р•"}
+                  {"УЗНАТЬ ПОДРОБНЕЕ"}
                 </Button>
               </div>
             </div>
@@ -370,29 +370,29 @@ export default function DataTraceLanding() {
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             <div className="space-y-6">
               <p className="text-lg text-gray-700 leading-relaxed">
-                DataTrace РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚ РїР»Р°С‚С„РѕСЂРјСѓ РЅР° РѕСЃРЅРѕРІРµ РёСЃРєСѓСЃСЃС‚РІРµРЅРЅРѕРіРѕ РёРЅС‚РµР»Р»РµРєС‚Р° Рё СѓРЅРёРєР°Р»СЊРЅС‹С… С‚РµС…РЅРёС‡РµСЃРєРёС… СЂРµС€РµРЅРёР№, РєРѕС‚РѕСЂР°СЏ РїРѕР·РІРѕР»СЏРµС‚ РЅР°С€РёРј РєР»РёРµРЅС‚Р°Рј РѕР±РЅР°СЂСѓР¶РёС‚СЊ, СѓРґР°Р»РёС‚СЊ Рё РјРѕРЅРёС‚РѕСЂРёС‚СЊ РІ СЂРµР¶РёРјРµ СЂРµР°Р»СЊРЅРѕРіРѕ РІСЂРµРјРµРЅРё СЃРєРѕРјРїСЂРѕРјРµС‚РёСЂРѕРІР°РЅРЅСѓСЋ (СѓРєСЂР°РґРµРЅРЅСѓСЋ) Р»РёС‡РЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ РёР· Р±Р°Р· РґР°РЅРЅС‹С… Р·Р»РѕСѓРјС‹С€Р»РµРЅРЅРёРєРѕРІ.
+                DataTrace представляет платформу на основе искусственного интеллекта и уникальных технических решений, которая позволяет нашим клиентам обнаружить, удалить и мониторить в режиме реального времени скомпрометированную (украденную) личную информацию из баз данных злоумышленников.
               </p>
             </div>
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">РђРЅР°Р»РёР· РґР°РЅРЅС‹С… РёР· РѕС‚РєСЂС‹С‚С‹С… РёСЃС‚РѕС‡РЅРёРєРѕРІ</p>
+                <p className="text-gray-700">Анализ данных из открытых источников</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">РђРЅР°Р»РёР· РґР°РЅРЅС‹С… РёР· РіР»СѓР±РёРЅРЅРѕРіРѕ РёРЅС‚РµСЂРЅРµС‚Р° Рё РґР°СЂРєРЅРµС‚Р°</p>
+                <p className="text-gray-700">Анализ данных из глубинного интернета и даркнета</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">РњРѕРЅРёС‚РѕСЂРёРЅРі Р»РёС‡РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё</p>
+                <p className="text-gray-700">Мониторинг личной информации</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">Р’С‹СЏРІР»РµРЅРёРµ Рё РѕС†РµРЅРєР° РЅРµРіР°С‚РёРІРЅС‹С… СЃС†РµРЅР°СЂРёРµРІ</p>
+                <p className="text-gray-700">Выявление и оценка негативных сценариев</p>
               </div>
               <div className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                <p className="text-gray-700">РџСЂРѕС‚РёРІРѕРґРµР№СЃС‚РІРёРµ С„РёС€РёРЅРіСѓ Рё РІС‚РѕСЂРёС‡РЅС‹Рј Р°С‚Р°РєР°Рј</p>
+                <p className="text-gray-700">Противодействие фишингу и вторичным атакам</p>
               </div>
             </div>
           </div>
@@ -402,32 +402,32 @@ export default function DataTraceLanding() {
       <section id="solutions" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="mb-12">
-            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">Р Р•РЁР•РќРРЇ</div>
+            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">РЕШЕНИЯ</div>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-4xl font-bold text-black mb-4">01</div>
-                <h3 className="text-2xl font-bold text-black mb-6">РђРЅР°Р»РёС‚РёС‡РµСЃРєРёР№ РјРѕРґСѓР»СЊ</h3>
+                <h3 className="text-2xl font-bold text-black mb-6">Аналитический модуль</h3>
                 <p className="text-gray-700 mb-8">
-                  РђРЅР°Р»РёС‚РёС‡РµСЃРєРёР№ РјРѕРґСѓР»СЊ DataTrace РёС‰РµС‚ СѓС‚РµС‡РєРё РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С… РїРѕ РІСЃРµРј РґРѕСЃС‚СѓРїРЅС‹Рј РёСЃС‚РѕС‡РЅРёРєР°Рј Рё
-                  РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РёС… РїРѕР»РЅРѕРіРѕ СѓРґР°Р»РµРЅРёСЏ СЃ РїРѕСЃР»РµРґСѓСЋС‰РёРј РјРѕРЅРёС‚РѕСЂРёРЅРіРѕРј.
+                  Аналитический модуль DataTrace ищет утечки персональных данных по всем доступным источникам и
+                  предоставляет возможность их полного удаления с последующим мониторингом.
                 </p>
                 <Button variant="ghost" className="text-black hover:bg-black hover:text-white p-0">
-                  РЈР—РќРђРўР¬ Р‘РћР›Р¬РЁР• <ArrowRight className="ml-2 h-4 w-4" />
+                  УЗНАТЬ БОЛЬШЕ <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-4xl font-bold text-black mb-4">02</div>
-                <h3 className="text-2xl font-bold text-black mb-6">РР РјРѕРґСѓР»СЊ</h3>
+                <h3 className="text-2xl font-bold text-black mb-6"> модуль</h3>
                 <p className="text-gray-700 mb-8">
-                  РР РјРѕРґСѓР»СЊ DataTrace Р°РЅР°Р»РёР·РёСЂСѓРµС‚ СЂРµРїСѓС‚Р°С†РёСЋ РІ РёРЅС‚РµСЂРЅРµС‚Рµ РЅР° РѕСЃРЅРѕРІРµ Р±РѕР»СЊС€РёС… РґР°РЅРЅС‹С…, РїСЂРµРґРѕСЃС‚Р°РІР»СЏСЏ
-                  РєРѕРјРїР»РµРєСЃРЅСѓСЋ РѕС†РµРЅРєСѓ С†РёС„СЂРѕРІРѕРіРѕ СЃР»РµРґР° Рё СЂРµРїСѓС‚Р°С†РёРѕРЅРЅС‹С… СЂРёСЃРєРѕРІ.
+                   модуль DataTrace анализирует репутацию в интернете на основе больших данных, предоставляя
+                  комплексную оценку цифрового следа и репутационных рисков.
                 </p>
                 <Button variant="ghost" className="text-black hover:bg-black hover:text-white p-0">
-                  РЈР—РќРђРўР¬ Р‘РћР›Р¬РЁР• <ArrowRight className="ml-2 h-4 w-4" />
+                  УЗНАТЬ БОЛЬШЕ <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
@@ -441,32 +441,32 @@ export default function DataTraceLanding() {
       <section id="pricing" className="py-20">
         <div className="container mx-auto px-4">
           <div className="mb-12">
-            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">РўРђР РР¤Р«</div>
+            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">ТАРИФЫ</div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-black mb-2">Р‘РђР—РћР’Р«Р™</h3>
-                  <div className="text-4xl font-bold text-black mb-2">350в‚Ѕ</div>
-                  <p className="text-gray-600">Р·Р° Р·Р°РїСЂРѕСЃ</p>
+                  <h3 className="text-2xl font-bold text-black mb-2">БАЗОВЫЙ</h3>
+                  <div className="text-4xl font-bold text-black mb-2">350₽</div>
+                  <p className="text-gray-600">за запрос</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">1 РїСЂРѕРІРµСЂРєР° РІРєР»СЋС‡РµРЅР°</p>
+                    <p className="text-gray-700">1 проверка включена</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РџРѕРёСЃРє РїРѕ РІСЃРµРј РёСЃС‚РѕС‡РЅРёРєР°Рј</p>
+                    <p className="text-gray-700">Поиск по всем источникам</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Р”РµС‚Р°Р»СЊРЅС‹Р№ РѕС‚С‡РµС‚ Рѕ РЅР°Р№РґРµРЅРЅС‹С… РґР°РЅРЅС‹С…</p>
+                    <p className="text-gray-700">Детальный отчет о найденных данных</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РђРЅР°Р»РёР· СѓСЂРѕРІРЅСЏ РєРѕРјРїСЂРѕРјРµС‚Р°С†РёРё</p>
+                    <p className="text-gray-700">Анализ уровня компрометации</p>
                   </div>
                 </div>
                 <Button
@@ -474,53 +474,53 @@ export default function DataTraceLanding() {
                   variant="outline"
                   className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
                 >
-                  Р’Р«Р‘Р РђРўР¬ РўРђР РР¤
+                  ВЫБРАТЬ ТАРИФ
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="border-2 border-black bg-gray-50 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="bg-black text-white px-4 py-1 text-sm font-medium rounded">РџРћРџРЈР›РЇР РќР«Р™</div>
+                <div className="bg-black text-white px-4 py-1 text-sm font-medium rounded">ПОПУЛЯРНЫЙ</div>
               </div>
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-black mb-2">РџР РћР¤Р•РЎРЎРРћРќРђР›Р¬РќР«Р™</h3>
-                  <p className="text-lg text-gray-700 mb-2">6 РјРµСЃСЏС†РµРІ</p>
-                  <div className="text-4xl font-bold text-black mb-2">5 000в‚Ѕ</div>
-                  <p className="text-gray-600">РµРґРёРЅРѕРІСЂРµРјРµРЅРЅРѕ</p>
+                  <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+                  <p className="text-lg text-gray-700 mb-2">6 месяцев</p>
+                  <div className="text-4xl font-bold text-black mb-2">5 000₽</div>
+                  <p className="text-gray-600">единовременно</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">2 РїСЂРѕРІРµСЂРєРё РІРєР»СЋС‡РµРЅС‹</p>
+                    <p className="text-gray-700">2 проверки включены</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РџРѕРёСЃРє РїРѕ РІСЃРµРј РёСЃС‚РѕС‡РЅРёРєР°Рј</p>
+                    <p className="text-gray-700">Поиск по всем источникам</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РЈРґР°Р»РµРЅРёРµ РёР· РІСЃРµС… РёСЃС‚РѕС‡РЅРёРєРѕРІ</p>
+                    <p className="text-gray-700">Удаление из всех источников</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РњРѕРЅРёС‚РѕСЂРёРЅРі СѓС‚РµС‡РµРє 6 РјРµСЃСЏС†РµРІ</p>
+                    <p className="text-gray-700">Мониторинг утечек 6 месяцев</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РЈРІРµРґРѕРјР»РµРЅРёСЏ Рѕ РЅРѕРІС‹С… СѓС‚РµС‡РєР°С…</p>
+                    <p className="text-gray-700">Уведомления о новых утечках</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">Р”РµС‚Р°Р»СЊРЅС‹Рµ РѕС‚С‡РµС‚С‹</p>
+                    <p className="text-gray-700">Детальные отчеты</p>
                   </div>
                 </div>
                 <Button 
                   onClick={() => handlePlanSelect('professional-6m')}
                   className="w-full bg-black text-white hover:bg-gray-800"
                 >
-                  Р’Р«Р‘Р РђРўР¬ РўРђР РР¤
+                  ВЫБРАТЬ ТАРИФ
                 </Button>
               </CardContent>
             </Card>
@@ -528,35 +528,35 @@ export default function DataTraceLanding() {
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-black mb-2">РџР РћР¤Р•РЎРЎРРћРќРђР›Р¬РќР«Р™</h3>
-                  <p className="text-lg text-gray-700 mb-2">12 РјРµСЃСЏС†РµРІ</p>
-                  <div className="text-4xl font-bold text-black mb-2">8 500в‚Ѕ</div>
-                  <p className="text-gray-600">РµРґРёРЅРѕРІСЂРµРјРµРЅРЅРѕ</p>
+                  <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
+                  <p className="text-lg text-gray-700 mb-2">12 месяцев</p>
+                  <div className="text-4xl font-bold text-black mb-2">8 500₽</div>
+                  <p className="text-gray-600">единовременно</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">2 РїСЂРѕРІРµСЂРєРё РІРєР»СЋС‡РµРЅС‹</p>
+                    <p className="text-gray-700">2 проверки включены</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РџРѕРёСЃРє РїРѕ РІСЃРµРј РёСЃС‚РѕС‡РЅРёРєР°Рј</p>
+                    <p className="text-gray-700">Поиск по всем источникам</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РЈРґР°Р»РµРЅРёРµ РёР· РІСЃРµС… РёСЃС‚РѕС‡РЅРёРєРѕРІ</p>
+                    <p className="text-gray-700">Удаление из всех источников</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РњРѕРЅРёС‚РѕСЂРёРЅРі СѓС‚РµС‡РµРє 12 РјРµСЃСЏС†РµРІ</p>
+                    <p className="text-gray-700">Мониторинг утечек 12 месяцев</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РЈРІРµРґРѕРјР»РµРЅРёСЏ Рѕ РЅРѕРІС‹С… СѓС‚РµС‡РєР°С…</p>
+                    <p className="text-gray-700">Уведомления о новых утечках</p>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Check className="h-5 w-5 text-black mt-1 flex-shrink-0" />
-                    <p className="text-gray-700">РџСЂРёРѕСЂРёС‚РµС‚РЅР°СЏ РїРѕРґРґРµСЂР¶РєР°</p>
+                    <p className="text-gray-700">Приоритетная поддержка</p>
                   </div>
                 </div>
                 <Button
@@ -564,7 +564,7 @@ export default function DataTraceLanding() {
                   variant="outline"
                   className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
                 >
-                  Р’Р«Р‘Р РђРўР¬ РўРђР РР¤
+                  ВЫБРАТЬ ТАРИФ
                 </Button>
               </CardContent>
             </Card>
@@ -577,9 +577,9 @@ export default function DataTraceLanding() {
       {/* Contacts Section */}
       <section id="contacts" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">РћСЃС‚Р°Р»РёСЃСЊ РІРѕРїСЂРѕСЃС‹?</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Остались вопросы?</h2>
           <p className="text-xl text-gray-600 mb-12">
-            РњС‹ РіРѕС‚РѕРІС‹ РїРѕРјРѕС‡СЊ! РЎРІСЏР¶РёС‚РµСЃСЊ СЃ РЅР°РјРё Р»СЋР±С‹Рј СѓРґРѕР±РЅС‹Рј СЃРїРѕСЃРѕР±РѕРј
+            Мы готовы помочь! Свяжитесь с нами любым удобным способом
           </p>
           
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -589,9 +589,9 @@ export default function DataTraceLanding() {
                   <Mail className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">РќР°РїРёС€РёС‚Рµ РЅР°Рј</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Напишите нам</h3>
               <p className="text-gray-600 mb-6">
-                РћС‚РїСЂР°РІСЊС‚Рµ РІР°С€ РІРѕРїСЂРѕСЃ РЅР° РїРѕС‡С‚Сѓ РїРѕРґРґРµСЂР¶РєРё, Рё РјС‹ РѕС‚РІРµС‚РёРј РІ С‚РµС‡РµРЅРёРµ 24 С‡Р°СЃРѕРІ
+                Отправьте ваш вопрос на почту поддержки, и мы ответим в течение 24 часов
               </p>
               <a
                 href="mailto:support@datatrace.tech"
@@ -607,9 +607,9 @@ export default function DataTraceLanding() {
                   <MessageSquare className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Telegram РїРѕРґРґРµСЂР¶РєР°</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Telegram поддержка</h3>
               <p className="text-gray-600 mb-6">
-                РЎРІСЏР¶РёС‚РµСЃСЊ СЃ РЅР°РјРё РІ Telegram РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ РїРѕР»СѓС‡РµРЅРёСЏ РѕС‚РІРµС‚Р° РЅР° РІР°С€Рё РІРѕРїСЂРѕСЃС‹
+                Свяжитесь с нами в Telegram для быстрого получения ответа на ваши вопросы
               </p>
               <a
                 href="https://t.me/datatrace_support_bot"
@@ -618,7 +618,7 @@ export default function DataTraceLanding() {
                 className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <MessageSquare className="h-5 w-5 mr-2" />
-                РќР°РїРёСЃР°С‚СЊ РІ Telegram
+                Написать в Telegram
               </a>
             </div>
           </div>
@@ -640,12 +640,12 @@ export default function DataTraceLanding() {
                 />
               </div>
               <p className="text-gray-400 mb-6">
-                РџРѕРґРїРёС€РёСЃСЊ РЅР° РЅР°С€ Р±Р»РѕРі
+                Подпишись на наш блог
               </p>
               <div className="flex space-x-4">
                 <input
                   type="email"
-                  placeholder="Р’Р°С€ email Р·РґРµСЃСЊ"
+                  placeholder="Ваш email здесь"
                   className="bg-gray-800 text-white px-4 py-2 rounded flex-1"
                 />
                 <Button className="bg-white text-black hover:bg-gray-200">
@@ -654,37 +654,37 @@ export default function DataTraceLanding() {
               </div>
             </div>
             <div>
-              <h4 className="font-bold mb-4">РљРћРњРџРђРќРРЇ</h4>
+              <h4 className="font-bold mb-4">КОМПАНЯ</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link href="#" className="hover:text-white">
-                    Р‘Р»РѕРі
+                    Блог
                   </Link>
                 </li>
                 <li>
                   <Link href="#" className="hover:text-white">
-                    РљРѕРЅС‚Р°РєС‚С‹
+                    Контакты
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">Р Р•РЁР•РќРРЇ</h4>
+              <h4 className="font-bold mb-4">РЕШЕНИЯ</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link href="#" className="hover:text-white">
-                    РћР±РЅР°СЂСѓР¶РµРЅРёРµ Рё СѓРґР°Р»РµРЅРёРµ СЃРєРѕРјРїСЂРѕРјРµС‚РёСЂРѕРІР°РЅРЅРѕР№ Р»РёС‡РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
+                    Обнаружение и удаление скомпрометированной личной информации
                   </Link>
                 </li>
                 <li>
                   <Link href="#" className="hover:text-white">
-                    РњРѕРЅРёС‚РѕСЂРёРЅРі РіР»СѓР±РёРЅРЅРѕРіРѕ РёРЅС‚РµСЂРЅРµС‚Р° Рё РґР°СЂРєРЅРµС‚Р°
+                    Мониторинг глубинного интернета и даркнета
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">РљРћРќРўРђРљРўР«</h4>
+              <h4 className="font-bold mb-4">КОНТАКТЫ</h4>
               <ul className="space-y-2 text-gray-400">
                 <li className="flex items-center space-x-2">
                   <Mail className="h-4 w-4" />
@@ -711,13 +711,13 @@ export default function DataTraceLanding() {
           </div>
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">DataTrace 2025 В© Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹</p>
+              <p className="text-gray-400 text-sm">DataTrace 2025 © Все права защищены</p>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <Link href="#" className="text-gray-400 hover:text-white text-sm">
-                  РџРѕР»РёС‚РёРєР° РєРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚Рё
+                  Политика конфиденциальности
                 </Link>
                 <Link href="#" className="text-gray-400 hover:text-white text-sm">
-                  РЎРѕРіР»Р°С€РµРЅРёРµ РѕР± РѕР±СЂР°Р±РѕС‚РєРµ РґР°РЅРЅС‹С…
+                  Соглашение об обработке данных
                 </Link>
               </div>
             </div>
@@ -725,13 +725,13 @@ export default function DataTraceLanding() {
         </div>
       </footer>
 
-      {/* РњРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ Р°РІС‚РѕСЂРёР·Р°С†РёРё */}
+      {/* Модальное окно авторизации */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-center">РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ</h3>
+            <h3 className="text-xl font-bold mb-4 text-center">Требуется авторизация</h3>
             <p className="text-gray-600 mb-6 text-center">
-              Р”Р»СЏ РїРѕРєСѓРїРєРё С‚Р°СЂРёС„Р° РЅРµРѕР±С…РѕРґРёРјРѕ РІРѕР№С‚Рё РІ Р°РєРєР°СѓРЅС‚ РёР»Рё Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊСЃСЏ.
+              Для покупки тарифа необходимо войти в аккаунт или зарегистрироваться.
             </p>
             <div className="flex space-x-3">
               <Button 
@@ -741,7 +741,7 @@ export default function DataTraceLanding() {
                 }}
                 className="flex-1 bg-black text-white hover:bg-gray-800"
               >
-                Р’РѕР№С‚Рё
+                Войти
               </Button>
               <Button 
                 onClick={() => {
@@ -751,7 +751,7 @@ export default function DataTraceLanding() {
                 variant="outline"
                 className="flex-1 border-black text-black hover:bg-black hover:text-white"
               >
-                Р РµРіРёСЃС‚СЂР°С†РёСЏ
+                Регистрация
               </Button>
             </div>
             <Button 
@@ -759,7 +759,7 @@ export default function DataTraceLanding() {
               variant="ghost"
               className="w-full mt-3 text-gray-500 hover:text-gray-700"
             >
-              РћС‚РјРµРЅР°
+              Отмена
             </Button>
           </div>
         </div>
@@ -767,4 +767,5 @@ export default function DataTraceLanding() {
     </div>
   )
 }
+
 
