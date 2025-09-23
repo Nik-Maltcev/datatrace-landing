@@ -303,11 +303,24 @@ export default function Dashboard() {
       })
 
       const data = await response.json()
-      setEmailBreachResult(data)
 
-      if (response.ok && data?.ok) {
-        updateUserChecks((user?.checksUsed || 0) + 1)
+      if (!response.ok || !data?.ok) {
+        const message =
+          typeof data?.error === 'string'
+            ? data.error
+            : data?.error?.message ||
+              'Не удалось выполнить проверку. Попробуйте позже.'
+
+        setEmailBreachResult({
+          ok: false,
+          error: message,
+          code: data?.error?.code,
+        })
+        return
       }
+
+      setEmailBreachResult(data)
+      updateUserChecks((user?.checksUsed || 0) + 1)
     } catch (error) {
       console.error('Email breach check error:', error)
       setEmailBreachResult({
