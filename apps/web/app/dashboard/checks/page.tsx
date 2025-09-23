@@ -539,7 +539,7 @@ export default function ChecksPage() {
                                                   ))
                                                 }
                                               </div>
-                                            )})
+                                            ))}
                                             <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-100 rounded">
                                               📊 Всего показано: {totalRecords} записей
                                             </div>
@@ -611,7 +611,8 @@ export default function ChecksPage() {
                     </CardContent>
                   )}
                 </Card>
-              ))}
+              )
+            })}
             </div>
           )}
         </CardContent>
