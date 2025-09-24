@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/config/supabase-api';
+import { resolvePlanFromParam } from '@/lib/plans';
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,14 +45,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    const { plan: normalizedPlan, rawPlan } = resolvePlanFromParam(profile.plan);
+
+    return NextResponse.json({
+      ok: true,
       profile: {
         id: profile.id,
         email: profile.email,
         name: profile.name,
         phone: profile.phone,
-        plan: profile.plan || 'free',
+        plan: normalizedPlan,
+        rawPlan,
         checksUsed: profile.checks_used || 0,
         checksLimit: profile.checks_limit || 0
       }
@@ -95,25 +99,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Определяем лимит проверок в зависимости от плана
-    let finalChecksLimit = checksLimit;
-    if (!finalChecksLimit) {
-      switch (plan) {
-        case 'basic':
-          finalChecksLimit = 1;
-          break;
-        case 'professional-6m':
-        case 'professional-12m':
-          finalChecksLimit = 2;
-          break;
-        default:
-          finalChecksLimit = 0;
-      }
-    }
+    const { plan: normalizedPlan, limit: defaultLimit } = resolvePlanFromParam(plan);
+    const finalChecksLimit = checksLimit ?? defaultLimit;
 
     let query = supabase
       .from('user_profiles')
-      .update({ 
-        plan,
+      .update({
+        plan: normalizedPlan,
         checks_limit: finalChecksLimit,
         updated_at: new Date().toISOString()
       });
@@ -134,14 +126,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    const { plan: normalizedPlan, rawPlan } = resolvePlanFromParam(data.plan);
+
+    return NextResponse.json({
+      ok: true,
       profile: {
         id: data.id,
         email: data.email,
         name: data.name,
         phone: data.phone,
-        plan: data.plan || 'free',
+        plan: normalizedPlan,
+        rawPlan,
         checksUsed: data.checks_used || 0,
         checksLimit: data.checks_limit || 0
       }

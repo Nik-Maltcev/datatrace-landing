@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/server/supabase-client';
+import { resolvePlanFromParam } from '@/lib/plans';
 
 const PayAnyWayService = require('@/lib/services/PayAnyWayService');
 
@@ -82,15 +83,10 @@ export async function POST(request: NextRequest) {
     
     console.log('  - Final plan:', plan);
     
-    const planLimits = {
-      free: 999,        // Безлимит для free
-      basic: 999,       // Безлимит для basic  
-      professional: 999 // Безлимит для professional
-    };
+    const { plan: normalizedPlan, limit: checksLimit, rawPlan } = resolvePlanFromParam(plan);
+    plan = normalizedPlan;
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits] || 999;
-    
-    console.log(`🎯 Processing payment: ${price} RUB for ${email}, plan: ${plan}, limit: ${checksLimit}, transactionId: ${finalTransactionId}`);
+    console.log(`🎯 Processing payment: ${price} RUB for ${email}, plan: ${plan} (raw: ${rawPlan}), limit: ${checksLimit}, transactionId: ${finalTransactionId}`);
 
     if (!email) {
       console.error('❌ No email found in webhook data');

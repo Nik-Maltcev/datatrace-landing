@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/server/supabase-client';
+import { resolvePlanFromParam } from '@/lib/plans';
 
 export async function POST(request: NextRequest) {
   const supabase = getSupabaseClient();
@@ -25,22 +26,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Определяем лимиты по тарифу - теперь все безлимитные
-    const planLimits = {
-      free: 999,
-      basic: 999,
-      professional: 999
-    };
+    const { plan: normalizedPlan, limit: checksLimit } = resolvePlanFromParam(plan);
 
-    const checksLimit = planLimits[plan as keyof typeof planLimits] || 999;
-
-    console.log(`Updating user ${userId} to plan ${plan} with limit ${checksLimit}`);
+    console.log(`Updating user ${userId} to plan ${normalizedPlan} with limit ${checksLimit}`);
 
     // Обновляем пользователя в Supabase
     const { data, error } = await supabase
       .from('user_profiles')
       .update({
-        plan: plan,
+        plan: normalizedPlan,
         checks_limit: checksLimit,
         checks_used: 0 // Сбрасываем использованные проверки
       })
@@ -63,7 +57,7 @@ export async function POST(request: NextRequest) {
       const { data: userData, error: userError } = await supabase
         .from('user_profiles')
         .update({
-          plan: plan,
+          plan: normalizedPlan,
           checks_limit: checksLimit,
           checks_used: 0
         })
