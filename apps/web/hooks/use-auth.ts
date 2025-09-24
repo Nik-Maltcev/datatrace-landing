@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
+import { resolvePlanFromParam } from '@/lib/plans'
 
 interface User {
   id: string
@@ -9,6 +10,7 @@ interface User {
   phone?: string
   isAuthenticated: boolean
   plan?: 'free' | 'basic' | 'professional' | 'corporate'
+  rawPlan?: string
   checksUsed?: number
   checksLimit?: number
 }
@@ -97,21 +99,16 @@ export function useAuth() {
   }
 
   const login = (userData: User, accessToken: string, refreshToken?: string) => {
-    // Устанавливаем базовый план и лимиты по умолчанию
-    const planLimits = {
-      free: 0,
-      basic: 1,
-      professional: 2
-    }
-    
-    const plan = userData.plan || 'free'
+    const { plan: normalizedPlan, limit: defaultLimit, rawPlan } = resolvePlanFromParam(userData.rawPlan ?? userData.plan)
+    const plan = normalizedPlan
     const userWithDefaults = {
       ...userData,
       plan,
-      checksUsed: userData.checksUsed || 0,
-      checksLimit: userData.checksLimit || planLimits[plan as keyof typeof planLimits] || 0
+      rawPlan,
+      checksUsed: userData.checksUsed ?? 0,
+      checksLimit: userData.checksLimit ?? defaultLimit
     }
-    
+
     setUser(userWithDefaults)
     setIsAuthenticated(true)
     localStorage.setItem("user", JSON.stringify(userWithDefaults))
@@ -135,15 +132,12 @@ export function useAuth() {
 
   const updateUserPlan = (plan: 'free' | 'basic' | 'professional') => {
     if (user) {
-      const planLimits = {
-        free: 0,
-        basic: 1,
-        professional: 2
-      }
-      const updatedUser = { 
-        ...user, 
-        plan, 
-        checksLimit: planLimits[plan],
+      const { plan: normalizedPlan, limit } = resolvePlanFromParam(plan)
+      const updatedUser = {
+        ...user,
+        plan: normalizedPlan,
+        rawPlan: plan,
+        checksLimit: limit,
         checksUsed: 0 // Сбрасываем счетчик при покупке нового тарифа
       }
       console.log('Updating user plan locally:', updatedUser)
@@ -179,15 +173,19 @@ export function useAuth() {
         checksLimit: result.profile?.checksLimit,
         checksUsed: result.profile?.checksUsed
       })
-      
+
       if (response.ok && result.ok && result.profile) {
+        const { plan: normalizedPlan, limit: defaultLimit, rawPlan } = resolvePlanFromParam(result.profile.rawPlan ?? result.profile.plan)
+        const resolvedChecksLimit = result.profile.checksLimit ?? result.profile.checks_limit ?? defaultLimit
+        const resolvedChecksUsed = result.profile.checksUsed ?? result.profile.checks_used ?? 0
         const updatedUser = {
           ...currentUser,
           name: result.profile.name || currentUser.name,
           phone: result.profile.phone || currentUser.phone,
-          plan: result.profile.plan || 'free',
-          checksLimit: result.profile.checksLimit || result.profile.checks_limit || 0,
-          checksUsed: result.profile.checksUsed || result.profile.checks_used || 0
+          plan: normalizedPlan,
+          rawPlan,
+          checksLimit: resolvedChecksLimit,
+          checksUsed: resolvedChecksUsed
         }
         
         console.log('Updating user with fresh data:', updatedUser)

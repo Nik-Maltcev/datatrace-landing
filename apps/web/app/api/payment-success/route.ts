@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/config/supabase-api';
+import { getSupabaseClient } from '@/lib/server/supabase-client';
+import { resolvePlanFromParam } from '@/lib/plans';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,39 +23,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Определяем план и лимит проверок по plan
-    let plan: string;
-    let checksLimit: number;
-
-    console.log('🎯 Payment success processing plan:', planParam);
-
-    switch (planParam) {
-      case 'basic':
-        plan = 'basic';
-        checksLimit = 999;  // Безлимит для basic
-        break;
-      case 'professional':
-      case 'professional-6m':
-      case 'professional-12m':
-        plan = 'professional';
-        checksLimit = 999;  // Безлимит для professional
-        break;
-      default:
-        // Fallback: если план не распознан, делаем professional
-        console.log('⚠️ Unknown plan, defaulting to professional:', planParam);
-        plan = 'professional';
-        checksLimit = 999;  // Безлимит по умолчанию
-        break;
-    }
+    const { plan, limit: checksLimit, rawPlan } = resolvePlanFromParam(planParam);
 
     console.log(`✅ Plan mapped: ${planParam} → ${plan} (limit: ${checksLimit})`);
 
     // Обновляем профиль пользователя
     const { data, error } = await supabase
       .from('user_profiles')
-      .update({ 
+      .update({
         plan,
         checks_limit: checksLimit,
+        checks_used: 0,
         updated_at: new Date().toISOString()
       })
       .eq('email', email)
@@ -80,6 +59,7 @@ export async function POST(request: NextRequest) {
         name: data.name,
         phone: data.phone,
         plan: data.plan,
+        rawPlan,
         checksUsed: data.checks_used || 0,
         checksLimit: data.checks_limit || 0
       }

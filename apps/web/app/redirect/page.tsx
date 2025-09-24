@@ -66,6 +66,7 @@ export default function PaymentSuccessPage() {
             phone: data.profile.phone,
             isAuthenticated: true,
             plan: data.profile.plan,
+            rawPlan: data.profile.rawPlan,
             checksUsed: data.profile.checksUsed,
             checksLimit: data.profile.checksLimit
           }
