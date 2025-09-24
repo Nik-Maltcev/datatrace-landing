@@ -99,8 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Определяем лимит проверок в зависимости от плана
-    const resolvedPlan = resolvePlanFromParam(plan);
-    const { plan: normalizedPlan, limit: defaultLimit } = resolvedPlan;
+    const { plan: normalizedPlan, limit: defaultLimit } = resolvePlanFromParam(plan);
     const finalChecksLimit = checksLimit ?? defaultLimit;
 
     let query = supabase
@@ -128,7 +127,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { plan: updatedPlan, rawPlan } = resolvePlanFromParam(data.plan);
+    const { plan: normalizedStoredPlan, rawPlan } = resolvePlanFromParam(data.plan);
     const effectiveChecksLimit = data.checks_limit ?? finalChecksLimit ?? 0;
 
     return NextResponse.json({
@@ -138,7 +137,7 @@ export async function POST(request: NextRequest) {
         email: data.email,
         name: data.name,
         phone: data.phone,
-        plan: updatedPlan,
+        plan: normalizedStoredPlan,
         rawPlan,
         checksUsed: data.checks_used || 0,
         checksLimit: effectiveChecksLimit
