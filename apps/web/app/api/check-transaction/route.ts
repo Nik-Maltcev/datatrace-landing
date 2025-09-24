@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/config/supabase-api';
+import { getSupabaseClient } from '@/lib/server/supabase-client';
+import { resolvePlanFromParam } from '@/lib/plans';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,11 +41,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Если транзакция найдена, обновляем план пользователя
+    const { plan: normalizedPlan, limit: checksLimit, rawPlan } = resolvePlanFromParam(transaction.plan);
+
     const { data: updatedProfile, error: updateError } = await supabase
       .from('user_profiles')
-      .update({ 
-        plan: transaction.plan,
-        checks_limit: 999,  // Безлимит для всех планов
+      .update({
+        plan: normalizedPlan,
+        checks_limit: checksLimit,
+        checks_used: 0,
         updated_at: new Date().toISOString()
       })
       .eq('email', email)
@@ -59,18 +63,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Plan updated for ${email} to ${transaction.plan}`);
+    console.log(`Plan updated for ${email} to ${normalizedPlan}`);
 
-    return NextResponse.json({ 
-      ok: true, 
+    return NextResponse.json({
+      ok: true,
       message: 'Plan updated successfully',
-      plan: transaction.plan,
+      plan: normalizedPlan,
+      rawPlan,
       profile: {
         id: updatedProfile.id,
         email: updatedProfile.email,
         name: updatedProfile.name,
         phone: updatedProfile.phone,
         plan: updatedProfile.plan,
+        rawPlan,
         checksUsed: updatedProfile.checks_used || 0,
         checksLimit: updatedProfile.checks_limit || 0
       }

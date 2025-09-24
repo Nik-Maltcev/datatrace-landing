@@ -177,8 +177,9 @@ export default function Dashboard() {
       return;
     }
     
-    // Проверяем лимит проверок - ВРЕМЕННО ОТКЛЮЧЕНО для безлимитного режима
-    if (false) { // Было: if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
+    const checksUsed = user.checksUsed ?? 0
+    const checksLimit = user.checksLimit ?? 0
+    if (Number.isFinite(checksLimit) && checksLimit >= 0 && checksUsed >= checksLimit) {
       console.log('❌ Checks limit reached');
       return;
     }
@@ -215,7 +216,7 @@ export default function Dashboard() {
       
       // Обновляем счетчик проверок локально после успешной проверки
       if (data.ok) {
-        updateUserChecks((user.checksUsed || 0) + 1);
+        updateUserChecks(checksUsed + 1)
         console.log('✅ Phone check counter updated');
       }
     } catch (error) {
@@ -233,8 +234,9 @@ export default function Dashboard() {
       return;
     }
     
-    // Проверяем лимит проверок - ВРЕМЕННО ОТКЛЮЧЕНО для безлимитного режима
-    if (false) { // Было: if ((user.checksUsed || 0) >= (user.checksLimit || 0)) {
+    const checksUsed = user.checksUsed ?? 0
+    const checksLimit = user.checksLimit ?? 0
+    if (Number.isFinite(checksLimit) && checksLimit >= 0 && checksUsed >= checksLimit) {
       console.log('❌ Checks limit reached');
       return;
     }
@@ -256,7 +258,7 @@ export default function Dashboard() {
       
       // Обновляем счетчик проверок локально после успешной проверки
       if (data.ok) {
-        updateUserChecks((user.checksUsed || 0) + 1);
+        updateUserChecks(checksUsed + 1)
         console.log('✅ Email check counter updated');
       }
     } catch (error) {
@@ -278,6 +280,14 @@ export default function Dashboard() {
 
     if (!isPhoneVerified) {
       setEmailBreachResult({ ok: false, error: 'Подтвердите номер телефона, чтобы воспользоваться проверкой.' })
+      return
+    }
+
+    const checksUsed = user?.checksUsed ?? 0
+    const checksLimit = user?.checksLimit ?? 0
+    if (Number.isFinite(checksLimit) && checksLimit >= 0 && checksUsed >= checksLimit) {
+      console.log('❌ Checks limit reached')
+      setEmailBreachResult({ ok: false, error: 'Вы использовали все доступные проверки по текущему тарифу.' })
       return
     }
 
@@ -320,7 +330,7 @@ export default function Dashboard() {
       }
 
       setEmailBreachResult(data)
-      updateUserChecks((user?.checksUsed || 0) + 1)
+      updateUserChecks(checksUsed + 1)
     } catch (error) {
       console.error('Email breach check error:', error)
       setEmailBreachResult({
