@@ -131,6 +131,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { plan: updatedPlan } = resolvePlanFromParam(data.plan);
+
     return NextResponse.json({
       ok: true,
       profile: {
@@ -138,7 +140,7 @@ export async function POST(request: NextRequest) {
         email: data.email,
         name: data.name,
         phone: data.phone,
-        plan: data.plan,
+        plan: updatedPlan,
         rawPlan,
         checksUsed: data.checks_used || 0,
         checksLimit: data.checks_limit ?? defaultLimit ?? 0
