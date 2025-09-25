@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const email = searchParams.get('email');
-    const userIdParam = searchParams.get('user_id'); // Добавляем поддержку user_id
+    const userIdParam = searchParams.get('user_id'); // Accept legacy user_id param
 
     if (!userId && !email && !userIdParam) {
       return NextResponse.json(
@@ -98,14 +98,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Определяем лимит проверок в зависимости от плана
-    const { plan: normalizedPlan, limit: defaultLimit } = resolvePlanFromParam(plan);
+    // Derive plan-specific check limit
+    const { plan: resolvedPlan, limit: defaultLimit } = resolvePlanFromParam(plan);
     const finalChecksLimit = checksLimit ?? defaultLimit;
 
     let query = supabase
       .from('user_profiles')
       .update({
-        plan: normalizedPlan,
+        plan: resolvedPlan,
         checks_limit: finalChecksLimit,
         updated_at: new Date().toISOString()
       });
