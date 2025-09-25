@@ -129,8 +129,12 @@ export async function POST(request: NextRequest) {
     }
 
     const resolvedStoredPlan = resolvePlanFromParam(data.plan);
-    const { plan: normalizedStoredPlan, rawPlan } = resolvedStoredPlan;
-    const effectiveChecksLimit = data.checks_limit ?? finalChecksLimit ?? 0;
+    const {
+      plan: normalizedStoredPlan,
+      rawPlan,
+      limit: storedDefaultLimit
+    } = resolvedStoredPlan;
+    const effectiveChecksLimit = data.checks_limit ?? storedDefaultLimit ?? 0;
 
     return NextResponse.json({
       ok: true,
