@@ -225,8 +225,23 @@ export default function DataTraceLanding() {
     }
 
     // Если авторизован, открываем ссылку на оплату
-    const successUrl = encodeURIComponent(`https://www.datatrace.tech/redirect?plan=${plan}`)
-    
+    let email = user?.email ?? ''
+    if (!email) {
+      try {
+        const stored = localStorage.getItem('user')
+        if (stored) {
+          const parsed = JSON.parse(stored) as { email?: string }
+          email = parsed?.email ?? ''
+        }
+      } catch (error) {
+        console.error('Unable to read user email from storage:', error)
+      }
+    }
+
+    const emailQuery = email ? '&email=' + email : ''
+    const baseRedirect = window.location.origin + '/redirect?plan=' + plan
+    const successUrl = encodeURIComponent(baseRedirect + emailQuery)
+
     if (plan === 'basic') {
       // Базовый тариф - 350₽
       window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&productPrice=350`

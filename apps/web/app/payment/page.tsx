@@ -37,8 +37,23 @@ export default function PaymentPage() {
     setLoading(planId)
     
     try {
-      const successUrl = encodeURIComponent(`${window.location.origin}/redirect?plan=${planId}`)
-      
+      let email = user?.email ?? ''
+      if (!email) {
+        try {
+          const stored = localStorage.getItem('user')
+          if (stored) {
+            const parsed = JSON.parse(stored) as { email?: string }
+            email = parsed?.email ?? ''
+          }
+        } catch (error) {
+          console.error('Unable to read user email from storage:', error)
+        }
+      }
+
+      const emailQuery = email ? '&email=' + email : ''
+      const baseRedirect = window.location.origin + '/redirect?plan=' + planId
+      const successUrl = encodeURIComponent(baseRedirect + emailQuery)
+
       // Рассчитываем итоговую цену с учетом промокода
       const plan = plans.find(p => p.id === planId)
       if (!plan) return
