@@ -20,6 +20,64 @@ export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  const refreshUserData = useCallback(async () => {
+    // Получаем актуальные данные из localStorage
+    const userData = localStorage.getItem("user")
+    const currentUser = userData ? JSON.parse(userData) : user
+    
+    if (!currentUser?.email) {
+      console.log('No user email for refresh')
+      return
+    }
+    
+    try {
+      console.log('Refreshing user data for email:', currentUser.email)
+      
+      // Используем GET метод с email параметром
+      const response = await fetch(`/api/user-profile?email=${encodeURIComponent(currentUser.email)}`, {
+        method: 'GET'
+      })
+      
+      const result = await response.json()
+      console.log('Refresh API response:', result)
+      console.log('Profile data from API:', {
+        plan: result.profile?.plan,
+        checks_limit: result.profile?.checks_limit,
+        checks_used: result.profile?.checks_used,
+        checksLimit: result.profile?.checksLimit,
+        checksUsed: result.profile?.checksUsed
+      })
+
+      if (response.ok && result.ok && result.profile) {
+        const { plan: normalizedPlan, limit: defaultLimit, rawPlan } = resolvePlanFromParam(result.profile.rawPlan ?? result.profile.plan)
+        const resolvedChecksLimit = result.profile.checksLimit ?? result.profile.checks_limit ?? defaultLimit
+        const resolvedChecksUsed = result.profile.checksUsed ?? result.profile.checks_used ?? 0
+        const updatedUser = {
+          ...currentUser,
+          name: result.profile.name || currentUser.name,
+          phone: result.profile.phone || currentUser.phone,
+          plan: normalizedPlan,
+          rawPlan,
+          checksLimit: resolvedChecksLimit,
+          checksUsed: resolvedChecksUsed
+        }
+        
+        console.log('Updating user with fresh data:', updatedUser)
+        console.log('Final user state:', {
+          plan: updatedUser.plan,
+          checksLimit: updatedUser.checksLimit,
+          checksUsed: updatedUser.checksUsed
+        })
+        setUser(updatedUser)
+        localStorage.setItem("user", JSON.stringify(updatedUser))
+      } else {
+        console.error('Failed to refresh user data:', result)
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error)
+    }
+  }, [])
+
   useEffect(() => {
     const maybeRefreshPendingPayment = async () => {
       try {
@@ -205,63 +263,7 @@ export function useAuth() {
     }
   }
 
-  const refreshUserData = useCallback(async () => {
-    // Получаем актуальные данные из localStorage
-    const userData = localStorage.getItem("user")
-    const currentUser = userData ? JSON.parse(userData) : user
-    
-    if (!currentUser?.email) {
-      console.log('No user email for refresh')
-      return
-    }
-    
-    try {
-      console.log('Refreshing user data for email:', currentUser.email)
-      
-      // Используем GET метод с email параметром
-      const response = await fetch(`/api/user-profile?email=${encodeURIComponent(currentUser.email)}`, {
-        method: 'GET'
-      })
-      
-      const result = await response.json()
-      console.log('Refresh API response:', result)
-      console.log('Profile data from API:', {
-        plan: result.profile?.plan,
-        checks_limit: result.profile?.checks_limit,
-        checks_used: result.profile?.checks_used,
-        checksLimit: result.profile?.checksLimit,
-        checksUsed: result.profile?.checksUsed
-      })
 
-      if (response.ok && result.ok && result.profile) {
-        const { plan: normalizedPlan, limit: defaultLimit, rawPlan } = resolvePlanFromParam(result.profile.rawPlan ?? result.profile.plan)
-        const resolvedChecksLimit = result.profile.checksLimit ?? result.profile.checks_limit ?? defaultLimit
-        const resolvedChecksUsed = result.profile.checksUsed ?? result.profile.checks_used ?? 0
-        const updatedUser = {
-          ...currentUser,
-          name: result.profile.name || currentUser.name,
-          phone: result.profile.phone || currentUser.phone,
-          plan: normalizedPlan,
-          rawPlan,
-          checksLimit: resolvedChecksLimit,
-          checksUsed: resolvedChecksUsed
-        }
-        
-        console.log('Updating user with fresh data:', updatedUser)
-        console.log('Final user state:', {
-          plan: updatedUser.plan,
-          checksLimit: updatedUser.checksLimit,
-          checksUsed: updatedUser.checksUsed
-        })
-        setUser(updatedUser)
-        localStorage.setItem("user", JSON.stringify(updatedUser))
-      } else {
-        console.error('Failed to refresh user data:', result)
-      }
-    } catch (error) {
-      console.error('Failed to refresh user data:', error)
-    }
-  }, [])
 
   // Отдельный useEffect для обработки событий обновления данных
   useEffect(() => {
