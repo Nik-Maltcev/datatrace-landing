@@ -21,6 +21,65 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const maybeRefreshPendingPayment = async () => {
+      try {
+        const pendingRaw = localStorage.getItem('pending_payment')
+        if (!pendingRaw) {
+          return
+        }
+
+        const pending = JSON.parse(pendingRaw)
+        const startedAt = typeof pending?.startedAt === 'number' ? pending.startedAt : null
+        if (startedAt && Date.now() - startedAt > 1000 * 60 * 30) {
+          localStorage.removeItem('pending_payment')
+          return
+        }
+
+        await refreshUserData()
+
+        try {
+          const storedUserRaw = localStorage.getItem('user')
+          if (storedUserRaw) {
+            const storedUser = JSON.parse(storedUserRaw)
+            if (pending?.plan) {
+              const { plan: normalizedPlan } = resolvePlanFromParam(pending.plan)
+              if (storedUser?.plan === normalizedPlan) {
+                localStorage.removeItem('pending_payment')
+              }
+            } else {
+              localStorage.removeItem('pending_payment')
+            }
+          }
+        } catch (error) {
+          console.error('Unable to reconcile pending payment state:', error)
+        }
+      } catch (error) {
+        console.error('Failed to process pending payment refresh:', error)
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        maybeRefreshPendingPayment()
+      }
+    }
+
+    const handleWindowFocus = () => {
+      maybeRefreshPendingPayment()
+    }
+
+    maybeRefreshPendingPayment()
+
+    window.addEventListener('focus', handleWindowFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [refreshUserData])
+
+  useEffect(() => {
     checkAuthStatus()
     
     // Добавляем слушатель для обновлений данных пользователя из других вкладок

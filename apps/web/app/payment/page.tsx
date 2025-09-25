@@ -37,6 +37,15 @@ export default function PaymentPage() {
     setLoading(planId)
     
     try {
+      try {
+        localStorage.setItem(
+          'pending_payment',
+          JSON.stringify({ plan: planId, email: user?.email ?? null, startedAt: Date.now() })
+        )
+      } catch (error) {
+        console.error('Unable to mark pending payment:', error)
+      }
+
       let email = user?.email ?? ''
       if (!email) {
         try {

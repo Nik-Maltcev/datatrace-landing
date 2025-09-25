@@ -9,6 +9,14 @@ import { useAuth } from "@/hooks/use-auth"
 
 export default function PaymentSuccessPage() {
   const { login, user } = useAuth()
+  const clearPendingPaymentFlag = () => {
+    try {
+      localStorage.removeItem('pending_payment')
+    } catch (error) {
+      console.error('Unable to clear pending payment flag:', error)
+    }
+  }
+
   const [isLoading, setIsLoading] = useState(true)
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('Проверяем статус платежа...')
@@ -82,6 +90,7 @@ export default function PaymentSuccessPage() {
           setTimeout(() => {
             localStorage.removeItem('refresh_user_data')
           }, 1000)
+          clearPendingPaymentFlag()
           
           // Отправляем сообщение родительскому окну (если это popup)
           if (window.opener) {
@@ -105,6 +114,7 @@ export default function PaymentSuccessPage() {
           setIsLoading(false)
         } else {
           console.log('No profile data, but payment was successful')
+          clearPendingPaymentFlag()
           setStatus('success') 
           setMessage('Платеж обработан! Обновите страницу дашборда.')
           setIsLoading(false)
@@ -112,6 +122,7 @@ export default function PaymentSuccessPage() {
         
       } catch (error) {
         console.error('Error in payment success handler:', error)
+        clearPendingPaymentFlag()
         setStatus('success') // Все равно показываем успех, так как webhook сработал
         setMessage('Платеж обработан! Обновите страницу дашборда.')
         setIsLoading(false)

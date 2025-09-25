@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
@@ -225,6 +225,15 @@ export default function DataTraceLanding() {
     }
 
     // Если авторизован, открываем ссылку на оплату
+    try {
+      localStorage.setItem(
+        'pending_payment',
+        JSON.stringify({ plan, email: user?.email ?? null, startedAt: Date.now() })
+      )
+    } catch (error) {
+      console.error('Unable to mark pending payment:', error)
+    }
+
     let email = user?.email ?? ''
     if (!email) {
       try {
