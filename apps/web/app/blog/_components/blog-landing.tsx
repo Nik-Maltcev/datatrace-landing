@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import { PT_Mono } from "next/font/google"
 import { CalendarDays, Clock, ArrowUpRight, Check, Sparkle, Newspaper } from "lucide-react"
@@ -39,20 +39,27 @@ export function BlogLanding({ posts }: BlogLandingProps) {
     return posts.find((post) => post.id === activePostId) ?? posts[0]
   }, [posts, activePostId])
 
+  const dateFormatter = useMemo(() => {
+    return new Intl.DateTimeFormat("ru-RU", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }, [])
+
+  const formatDate = useCallback(
+    (value: string) => {
+      try {
+        return dateFormatter.format(new Date(value))
+      } catch (error) {
+        return value
+      }
+    },
+    [dateFormatter]
+  )
+
   if (!activePost) {
     return null
-  }
-
-  const formatDate = (value: string) => {
-    try {
-      return new Intl.DateTimeFormat("ru-RU", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(new Date(value))
-    } catch (error) {
-      return value
-    }
   }
 
   return (
@@ -72,7 +79,10 @@ export function BlogLanding({ posts }: BlogLandingProps) {
             <Link href="/" className="hover:text-emerald-500">
               Главная
             </Link>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-emerald-600">
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-emerald-600"
+              aria-current="page"
+            >
               <Newspaper className="h-3.5 w-3.5" /> Блог
             </span>
           </div>
@@ -140,6 +150,8 @@ export function BlogLanding({ posts }: BlogLandingProps) {
                         "group w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300",
                         isActive && "border-emerald-300 bg-emerald-50 shadow-[0_20px_40px_rgba(45,212,191,0.25)]"
                       )}
+                      aria-pressed={isActive}
+                      aria-label={`Открыть публикацию «${post.title}»`}
                     >
                       <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-500">
                         <span>{formatDate(post.date)}</span>
