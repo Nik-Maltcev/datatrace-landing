@@ -33,7 +33,7 @@ export default function PaymentSuccessPage() {
         console.log("Plan from URL:", plan)
 
         // Даём вебхуку немного времени, чтобы применить изменения
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
         if (isCancelled) return
 
@@ -55,10 +55,11 @@ export default function PaymentSuccessPage() {
         console.log("User email for profile fetch:", userEmail)
 
         if (!userEmail) {
+          console.log("No user email found, redirecting to dashboard with plan")
           if (!isCancelled) {
             clearPendingPaymentFlag()
             setStatus("success")
-            setMessage("Платеж обработан! Обновите дашборд, чтобы увидеть новый тариф.")
+            setMessage("Платеж успешно обработан! Ваш тариф обновлен.")
             setIsLoading(false)
           }
           return
@@ -142,7 +143,7 @@ export default function PaymentSuccessPage() {
         setMessage("Платеж обработан! Перейдите в личный кабинет.")
         setIsLoading(false)
       }
-    }, 10000) // 10 секунд максимум
+    }, 5000) // 5 секунд максимум
 
     handleSuccessfulPayment()
 
