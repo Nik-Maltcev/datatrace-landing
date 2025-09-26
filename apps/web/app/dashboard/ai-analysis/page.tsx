@@ -37,6 +37,7 @@ interface AIAnalysis {
   sourceBreakdown: { name: string; value: number; color: string }[]
   analysis: string
   lastUpdated: string
+  priorityActions?: string[]
 }
 
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
@@ -381,12 +382,36 @@ export default function AIAnalysisPage() {
             )}
           </div>
 
+          {/* Priority Actions */}
+          {aiAnalysis.priorityActions && aiAnalysis.priorityActions.length > 0 && (
+            <Card className="border-2 border-red-200 bg-red-50">
+              <CardHeader>
+                <CardTitle className="flex items-center text-red-700">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Приоритетные действия
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {aiAnalysis.priorityActions.map((action, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-3 bg-red-100 rounded-lg border border-red-300">
+                      <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        !
+                      </div>
+                      <p className="text-red-800 font-medium">{action}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Recommendations */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Zap className="h-5 w-5 mr-2 text-green-600" />
-                ИИ рекомендации по безопасности
+                Детальные рекомендации по безопасности
               </CardTitle>
             </CardHeader>
             <CardContent>
