@@ -351,7 +351,7 @@ export default function DataTraceLanding() {
               >
                 ТАРИФЫ
               </Link>
-              <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
+              <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-black">
                 БЛОГ
               </Link>
               <Link 
