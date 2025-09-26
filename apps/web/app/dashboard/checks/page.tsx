@@ -711,9 +711,11 @@ export default function ChecksPage() {
                 <p className="text-sm text-gray-600 mb-3">
                   Получите персональные рекомендации по безопасности
                 </p>
-                <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
-                  Запустить анализ
-                </Button>
+                <Link href="/dashboard/ai-analysis">
+                  <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
+                    Запустить анализ
+                  </Button>
+                </Link>
               </div>
             </div>
           </CardContent>
