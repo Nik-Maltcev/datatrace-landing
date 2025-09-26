@@ -39,6 +39,8 @@ export function BlogLanding({ posts }: BlogLandingProps) {
     return posts.find((post) => post.id === activePostId) ?? posts[0]
   }, [posts, activePostId])
 
+  const getArticleId = useCallback((postId: string) => `blog-article-${postId}`, [])
+
   const dateFormatter = useMemo(() => {
     return new Intl.DateTimeFormat("ru-RU", {
       year: "numeric",
@@ -65,6 +67,7 @@ export function BlogLanding({ posts }: BlogLandingProps) {
   return (
     <div className={cn("relative min-h-screen overflow-hidden bg-slate-50 text-slate-900", ptMono.className)}>
       <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-emerald-50/40 to-slate-100" />
         <div className="absolute left-1/2 top-[-120px] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-200/60 blur-[140px]" />
         <div className="absolute right-[-160px] top-1/3 h-[320px] w-[320px] rounded-full bg-cyan-200/50 blur-[160px]" />
         <div className="absolute left-[-120px] top-1/2 h-[280px] w-[280px] rounded-full bg-emerald-100/70 blur-[160px]" />
@@ -130,9 +133,14 @@ export function BlogLanding({ posts }: BlogLandingProps) {
 
         <section className="relative">
           <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[320px_1fr] xl:grid-cols-[360px_1fr]">
-            <aside className="space-y-5">
+            <aside className="space-y-5" aria-labelledby="blog-posts-heading">
               <div className="rounded-2xl border border-slate-200 bg-white/80 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500">Последние заметки</p>
+                <h2
+                  id="blog-posts-heading"
+                  className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500"
+                >
+                  Последние заметки
+                </h2>
                 <p className="mt-3 text-sm text-slate-600">
                   Выберите публикацию, чтобы открыть подробный обзор, включая хронологию, подтвержденные факты и рекомендации.
                 </p>
@@ -152,6 +160,7 @@ export function BlogLanding({ posts }: BlogLandingProps) {
                       )}
                       aria-pressed={isActive}
                       aria-label={`Открыть публикацию «${post.title}»`}
+                      aria-controls={isActive ? getArticleId(post.id) : undefined}
                     >
                       <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-500">
                         <span>{formatDate(post.date)}</span>
@@ -176,7 +185,12 @@ export function BlogLanding({ posts }: BlogLandingProps) {
               </div>
             </aside>
 
-            <article className="space-y-8 rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-[0_30px_80px_rgba(45,212,191,0.25)]">
+            <article
+              className="space-y-8 rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-[0_30px_80px_rgba(45,212,191,0.25)]"
+              id={getArticleId(activePost.id)}
+              aria-labelledby={`${getArticleId(activePost.id)}-heading`}
+              aria-live="polite"
+            >
               <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.35em] text-slate-500">
                 <span className="inline-flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-emerald-500" /> {formatDate(activePost.date)}
@@ -196,7 +210,12 @@ export function BlogLanding({ posts }: BlogLandingProps) {
               </div>
 
               <div className="space-y-6">
-                <h2 className="text-3xl font-semibold text-slate-900 lg:text-4xl">{activePost.title}</h2>
+                <h2
+                  className="text-3xl font-semibold text-slate-900 lg:text-4xl"
+                  id={`${getArticleId(activePost.id)}-heading`}
+                >
+                  {activePost.title}
+                </h2>
                 <p className="text-base text-slate-600 lg:text-lg">{activePost.summary}</p>
                 <div className="flex flex-wrap gap-2">
                   {activePost.tags.map((tag) => (
