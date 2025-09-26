@@ -59,8 +59,13 @@ export default function PaymentSuccessPage() {
           if (!isCancelled) {
             clearPendingPaymentFlag()
             setStatus("success")
-            setMessage("Платеж успешно обработан! Ваш тариф обновлен.")
+            setMessage("Платеж успешно обработан! Открываем личный кабинет...")
             setIsLoading(false)
+            
+            // Открываем личный кабинет в новом окне
+            setTimeout(() => {
+              window.open('/dashboard', '_blank')
+            }, 1000)
           }
           return
         }
@@ -114,22 +119,37 @@ export default function PaymentSuccessPage() {
 
           clearPendingPaymentFlag()
           setStatus("success")
-          setMessage("Платеж успешно обработан! Ваш тариф обновлен.")
+          setMessage("Платеж успешно обработан! Открываем личный кабинет...")
           setIsLoading(false)
+          
+          // Открываем личный кабинет в новом окне
+          setTimeout(() => {
+            window.open('/dashboard', '_blank')
+          }, 1000)
         } else {
           console.log("Profile not found or API error, showing fallback success")
           clearPendingPaymentFlag()
           setStatus("success")
-          setMessage("Платеж обработан! Обновите дашборд, чтобы увидеть новый тариф.")
+          setMessage("Платеж обработан! Открываем личный кабинет...")
           setIsLoading(false)
+          
+          // Открываем личный кабинет в новом окне
+          setTimeout(() => {
+            window.open('/dashboard', '_blank')
+          }, 1000)
         }
       } catch (error) {
         console.error("Error in payment success handler:", error)
         if (!isCancelled) {
           clearPendingPaymentFlag()
           setStatus("success")
-          setMessage("Платеж обработан! Обновите дашборд, чтобы увидеть новый тариф.")
+          setMessage("Платеж обработан! Открываем личный кабинет...")
           setIsLoading(false)
+          
+          // Открываем личный кабинет в новом окне
+          setTimeout(() => {
+            window.open('/dashboard', '_blank')
+          }, 1000)
         }
       }
     }
@@ -140,8 +160,13 @@ export default function PaymentSuccessPage() {
         console.log("Timeout reached, showing success anyway")
         clearPendingPaymentFlag()
         setStatus("success")
-        setMessage("Платеж обработан! Перейдите в личный кабинет.")
+        setMessage("Платеж обработан! Открываем личный кабинет...")
         setIsLoading(false)
+        
+        // Открываем личный кабинет в новом окне
+        setTimeout(() => {
+          window.open('/dashboard', '_blank')
+        }, 1000)
       }
     }, 5000) // 5 секунд максимум
 
