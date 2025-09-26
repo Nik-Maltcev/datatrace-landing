@@ -1,5 +1,5 @@
 ﻿"use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
 import { useRouter } from "next/navigation"
@@ -207,6 +207,19 @@ export default function DataTraceLanding() {
   const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
+
+  // Обработчик postMessage для открытия дашборда из фрейма
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OPEN_DASHBOARD') {
+        console.log('Received OPEN_DASHBOARD message, opening new tab')
+        window.open('/dashboard', '_blank')
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
 
   const handleDashboardClick = () => {
     if (isAuthenticated) {

@@ -35,9 +35,54 @@ export default function PaymentSuccessPage() {
         setMessage('Платеж успешно обработан! Перенаправляем в личный кабинет...')
         setIsLoading(false)
         
-        // Перенаправляем через 2 секунды
+        // Пытаемся открыть в новой вкладке разными способами
         setTimeout(() => {
-          console.log('Redirecting to dashboard...')
+          console.log('Trying to open dashboard in new tab...')
+          
+          // Способ 1: Через родительское окно
+          if (window.parent && window.parent !== window) {
+            try {
+              window.parent.open('/dashboard', '_blank')
+              console.log('Opened via parent.open')
+              return
+            } catch (e) {
+              console.log('Parent.open failed:', e)
+            }
+          }
+          
+          // Способ 2: Через opener
+          if (window.opener) {
+            try {
+              window.opener.open('/dashboard', '_blank')
+              console.log('Opened via opener.open')
+              return
+            } catch (e) {
+              console.log('Opener.open failed:', e)
+            }
+          }
+          
+          // Способ 3: Обычный window.open
+          try {
+            const newWindow = window.open('/dashboard', '_blank')
+            if (newWindow) {
+              console.log('Opened via window.open')
+              return
+            }
+          } catch (e) {
+            console.log('Window.open failed:', e)
+          }
+          
+          // Способ 4: PostMessage родителю с просьбой открыть
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'OPEN_DASHBOARD',
+              url: '/dashboard'
+            }, '*')
+            console.log('Sent postMessage to parent')
+          }
+          
+          // Способ 5: Fallback - редирект в том же окне
+          console.log('All methods failed, redirecting in same window')
           window.location.href = '/dashboard'
         }, 2000)
         
