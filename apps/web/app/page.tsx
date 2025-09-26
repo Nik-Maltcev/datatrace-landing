@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
@@ -248,7 +248,7 @@ export default function DataTraceLanding() {
     }
 
     const emailQuery = email ? '&email=' + email : ''
-    const baseRedirect = window.location.origin + '/redirect?plan=' + plan
+    const baseRedirect = window.location.origin + '/payment/success?plan=' + plan
     const successUrl = encodeURIComponent(baseRedirect + emailQuery)
 
     if (plan === 'basic') {
@@ -801,6 +801,7 @@ export default function DataTraceLanding() {
     </div>
   )
 }
+
 
 
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
 const PayAnyWayService = require('@/lib/services/PayAnyWayService');
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       transactionId,
       description: `Оплата тарифа ${plan.toUpperCase()} - DataTrace`,
       subscriberId: userEmail,
-      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/redirect?plan=${plan}&email=${encodeURIComponent(userEmail)}`,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?plan=${plan}&email=${encodeURIComponent(userEmail)}`,
       failUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`
     };
 

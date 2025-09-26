@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
@@ -60,7 +60,7 @@ export default function PaymentPage() {
       }
 
       const emailQuery = email ? '&email=' + email : ''
-      const baseRedirect = window.location.origin + '/redirect?plan=' + planId
+      const baseRedirect = window.location.origin + '/payment/success?plan=' + planId
       const successUrl = encodeURIComponent(baseRedirect + emailQuery)
 
       // Рассчитываем итоговую цену с учетом промокода
@@ -345,3 +345,4 @@ export default function PaymentPage() {
     </div>
   )
 }
+
