@@ -30,8 +30,21 @@ export default function PaymentSuccessPage() {
         const urlParams = new URLSearchParams(window.location.search)
         const plan = urlParams.get('plan') || 'basic'
         
-        // Ждем 3 секунды, чтобы webhook точно обработался
-        await new Promise(resolve => setTimeout(resolve, 3000))
+        // Сразу показываем успех и перенаправляем
+        setStatus('success')
+        setMessage('Платеж успешно обработан! Перенаправляем в личный кабинет...')
+        setIsLoading(false)
+        
+        // Перенаправляем через 2 секунды
+        setTimeout(() => {
+          console.log('Redirecting to dashboard...')
+          window.location.href = '/dashboard'
+        }, 2000)
+        
+        return // Выходим из функции
+        
+        // Ждем 1 секунду, чтобы webhook точно обработался
+        await new Promise(resolve => setTimeout(resolve, 1000))
         
         // Получаем email пользователя из URL или localStorage
         const emailFromUrl = urlParams.get('email')
@@ -145,7 +158,7 @@ export default function PaymentSuccessPage() {
     }
     
     handleSuccessfulPayment()
-  }, [login])
+  }, [])
 
 
   return (
