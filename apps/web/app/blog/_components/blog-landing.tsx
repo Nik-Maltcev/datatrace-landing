@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { PT_Mono } from "next/font/google"
 import { CalendarDays, Clock, ArrowUpRight, Check, Sparkle, Newspaper } from "lucide-react"
 
@@ -65,8 +66,14 @@ export function BlogLanding({ posts }: BlogLandingProps) {
 
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-          <Link href="/" className="text-xs font-semibold uppercase tracking-[0.5em] text-emerald-600 hover:text-emerald-700">
-            DataTrace
+          <Link href="/" className="flex items-center">
+            <Image 
+              src="/image-removebg-preview.png" 
+              alt="DataTrace" 
+              width={200} 
+              height={60} 
+              className="h-14"
+            />
           </Link>
           <div className="flex items-center gap-4 text-xs uppercase tracking-[0.35em] text-slate-600">
             <Link href="/" className="hover:text-emerald-600">
