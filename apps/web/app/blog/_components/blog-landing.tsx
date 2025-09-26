@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { PT_Mono } from "next/font/google"
-import { CalendarDays, Clock, ArrowUpRight, Check, Sparkle, Newspaper } from "lucide-react"
+import { CalendarDays, Clock, ArrowUpRight, Check, Sparkle, Newspaper, RefreshCw } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,10 +35,43 @@ const ptMono = PT_Mono({
 
 export function BlogLanding({ posts }: BlogLandingProps) {
   const [activePostId, setActivePostId] = useState(posts[0]?.id)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedPosts, setGeneratedPosts] = useState<BlogPost[]>([])
+  const [showGenerated, setShowGenerated] = useState(false)
 
+  const currentPosts = showGenerated ? generatedPosts : posts
+  
   const activePost = useMemo(() => {
-    return posts.find((post) => post.id === activePostId) ?? posts[0]
-  }, [posts, activePostId])
+    return currentPosts.find((post) => post.id === activePostId) ?? currentPosts[0]
+  }, [currentPosts, activePostId])
+
+  const handleGenerateNews = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch('/api/generate-news', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate news')
+      }
+      
+      const data = await response.json()
+      if (data.posts && Array.isArray(data.posts)) {
+        setGeneratedPosts(data.posts)
+        setShowGenerated(true)
+        setActivePostId(data.posts[0]?.id)
+      }
+    } catch (error) {
+      console.error('Error generating news:', error)
+      alert('Ошибка при генерации новостей. Попробуйте позже.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   if (!activePost) {
     return null
@@ -118,9 +151,14 @@ export function BlogLanding({ posts }: BlogLandingProps) {
                   Практические рекомендации для реагирования и предотвращения повторных утечек.
                 </li>
               </ul>
-              <div className="rounded-2xl border border-emerald-500 bg-emerald-50 p-4 text-xs uppercase tracking-[0.3em] text-emerald-700">
-                Скоро добавим генерацию и обновление ленты через Perplexity API.
-              </div>
+              <button
+                onClick={handleGenerateNews}
+                disabled={isGenerating}
+                className="w-full rounded-2xl border border-emerald-500 bg-emerald-50 p-4 text-xs uppercase tracking-[0.3em] text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+                {isGenerating ? 'Генерируем новости...' : 'Сгенерировать актуальные новости'}
+              </button>
             </div>
           </div>
         </section>
@@ -135,8 +173,38 @@ export function BlogLanding({ posts }: BlogLandingProps) {
                 </p>
               </div>
               <div className="space-y-4">
-                {posts.map((post) => {
-                  const isActive = post.id === activePost.id
+                <div className="flex gap-2 mb-4">
+                  <button
+                    onClick={() => {
+                      setShowGenerated(false)
+                      setActivePostId(posts[0]?.id)
+                    }}
+                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                      !showGenerated 
+                        ? 'bg-emerald-500 text-white' 
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
+                  >
+                    Примеры
+                  </button>
+                  {generatedPosts.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setShowGenerated(true)
+                        setActivePostId(generatedPosts[0]?.id)
+                      }}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                        showGenerated 
+                          ? 'bg-emerald-500 text-white' 
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      Актуальные
+                    </button>
+                  )}
+                </div>
+                {currentPosts.map((post) => {
+                  const isActive = post.id === activePost?.id
 
                   return (
                     <button
