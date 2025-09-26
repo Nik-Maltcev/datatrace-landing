@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, Database, Loader2, Zap } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from "@/hooks/use-auth"
 
 type PaymentStatus = "loading" | "success" | "error"
 
 export default function PaymentSuccessPage() {
-  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [status, setStatus] = useState<PaymentStatus>("loading")
   const [message, setMessage] = useState("Обрабатываем ваш платеж...")
@@ -25,14 +23,19 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     let isCancelled = false
+    let timeoutId: NodeJS.Timeout
 
     const handleSuccessfulPayment = async () => {
       try {
+        console.log("Payment success page loaded")
         const urlParams = new URLSearchParams(window.location.search)
         const plan = urlParams.get("plan") || "basic"
+        console.log("Plan from URL:", plan)
 
         // Даём вебхуку немного времени, чтобы применить изменения
         await new Promise((resolve) => setTimeout(resolve, 3000))
+
+        if (isCancelled) return
 
         const emailFromUrl = urlParams.get("email")
         let userEmail = emailFromUrl
@@ -49,6 +52,8 @@ export default function PaymentSuccessPage() {
           }
         }
 
+        console.log("User email for profile fetch:", userEmail)
+
         if (!userEmail) {
           if (!isCancelled) {
             clearPendingPaymentFlag()
@@ -61,6 +66,7 @@ export default function PaymentSuccessPage() {
 
         const response = await fetch(`/api/user-profile?email=${encodeURIComponent(userEmail)}`)
         const data = await response.json()
+        console.log("Profile API response:", data)
 
         if (isCancelled) {
           return
@@ -79,8 +85,9 @@ export default function PaymentSuccessPage() {
             checksLimit: data.profile.checksLimit ?? data.profile.checks_limit ?? 0,
           }
 
-          login(updatedUser, "temp_token", "")
+          console.log("Updated user data:", updatedUser)
           localStorage.setItem("user", JSON.stringify(updatedUser))
+          localStorage.setItem("access_token", "temp_token")
 
           // Сообщаем другим вкладкам, что тариф обновился
           localStorage.setItem("refresh_user_data", "true")
@@ -109,6 +116,7 @@ export default function PaymentSuccessPage() {
           setMessage("Платеж успешно обработан! Ваш тариф обновлен.")
           setIsLoading(false)
         } else {
+          console.log("Profile not found or API error, showing fallback success")
           clearPendingPaymentFlag()
           setStatus("success")
           setMessage("Платеж обработан! Обновите дашборд, чтобы увидеть новый тариф.")
@@ -116,19 +124,35 @@ export default function PaymentSuccessPage() {
         }
       } catch (error) {
         console.error("Error in payment success handler:", error)
-        clearPendingPaymentFlag()
-        setStatus("success")
-        setMessage("Платеж обработан! Обновите дашборд, чтобы увидеть новый тариф.")
-        setIsLoading(false)
+        if (!isCancelled) {
+          clearPendingPaymentFlag()
+          setStatus("success")
+          setMessage("Платеж обработан! Обновите дашборд, чтобы увидеть новый тариф.")
+          setIsLoading(false)
+        }
       }
     }
+
+    // Добавляем таймаут на случай, если что-то пойдет не так
+    timeoutId = setTimeout(() => {
+      if (!isCancelled) {
+        console.log("Timeout reached, showing success anyway")
+        clearPendingPaymentFlag()
+        setStatus("success")
+        setMessage("Платеж обработан! Перейдите в личный кабинет.")
+        setIsLoading(false)
+      }
+    }, 10000) // 10 секунд максимум
 
     handleSuccessfulPayment()
 
     return () => {
       isCancelled = true
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     }
-  }, [login])
+  }, [])
 
   const renderStatusIcon = () => {
     if (isLoading) {

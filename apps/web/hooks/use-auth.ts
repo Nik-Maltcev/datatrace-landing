@@ -135,7 +135,7 @@ export function useAuth() {
       window.removeEventListener('focus', handleWindowFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [refreshUserData])
+  }, [])
 
   useEffect(() => {
     checkAuthStatus()
@@ -274,7 +274,7 @@ export function useAuth() {
     
     window.addEventListener('refreshUserData', handleRefreshEvent)
     return () => window.removeEventListener('refreshUserData', handleRefreshEvent)
-  }, [])
+  }, [refreshUserData])
 
   return {
     user,
