@@ -4,7 +4,10 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Starting news generation request')
+    
     if (!PERPLEXITY_API_KEY) {
+      console.error('Perplexity API key not configured')
       return NextResponse.json(
         { error: 'Perplexity API key not configured' },
         { status: 500 }
@@ -47,61 +50,81 @@ export async function POST(request: NextRequest) {
 
 Используй только проверенные источники и реальные события. Переводи все на русский язык.`
 
+    console.log('Making request to Perplexity API')
+    
+    const requestBody = {
+      model: 'sonar-pro',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      stream: false,
+      web_search_options: {
+        search_context_size: 'medium',
+        latest_updated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      }
+    }
+    
+    console.log('Request body:', JSON.stringify(requestBody, null, 2))
+    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'sonar-pro',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        stream: false,
-        web_search_options: {
-          search_context_size: 'medium',
-          latest_updated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        }
-      })
+      body: JSON.stringify(requestBody)
     })
 
+    console.log('Perplexity API response status:', response.status)
+    
     if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.status}`)
+      const errorText = await response.text()
+      console.error('Perplexity API error:', response.status, errorText)
+      throw new Error(`Perplexity API error: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()
+    console.log('Perplexity API response:', JSON.stringify(data, null, 2))
+    
     const content = data.choices[0]?.message?.content
 
     if (!content) {
+      console.error('No content received from Perplexity API')
       throw new Error('No content received from Perplexity API')
     }
 
+    console.log('Raw content from Perplexity:', content)
+
     let newsData
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        newsData = JSON.parse(jsonMatch[0])
+        const jsonString = jsonMatch[1] || jsonMatch[0]
+        console.log('Extracted JSON string:', jsonString)
+        newsData = JSON.parse(jsonString)
       } else {
+        console.error('No JSON found in response')
         throw new Error('No JSON found in response')
       }
     } catch (parseError) {
       console.error('Failed to parse JSON from Perplexity response:', parseError)
+      console.error('Raw content was:', content)
       return NextResponse.json(
         { error: 'Failed to parse news data', rawContent: content },
         { status: 500 }
       )
     }
 
+    console.log('Successfully parsed news data:', newsData)
     return NextResponse.json(newsData)
 
   } catch (error) {
     console.error('Error generating news:', error)
     return NextResponse.json(
-      { error: 'Failed to generate news' },
+      { error: 'Failed to generate news', details: error.message },
       { status: 500 }
     )
   }
