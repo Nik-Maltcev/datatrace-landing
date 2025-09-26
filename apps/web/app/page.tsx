@@ -386,7 +386,7 @@ export default function DataTraceLanding() {
             <div className="space-y-8">
               <div>
                 <h1 className="text-5xl lg:text-6xl font-bold text-black leading-[1.0]">
-                  -платформа для поиска и удаления скомпрометированной личной информации
+                  ИИ-платформа для поиска и удаления скомпрометированной личной информации
                 </h1>
               </div>
               <div>
