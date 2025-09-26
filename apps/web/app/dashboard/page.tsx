@@ -427,9 +427,12 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-gray-900 mb-1">
-              {user.checksUsed ?? 0}/∞
+              {user.checksUsed ?? 0}/{user.checksLimit ?? 0}
             </p>
-            <p className="text-sm text-blue-700">Проверок использовано (безлимит)</p>
+            <p className="text-sm text-blue-700">
+              Проверок использовано
+              {(user.checksLimit ?? 0) === 0 ? ' (лимит исчерпан)' : ''}
+            </p>
           </CardContent>
         </Card>
 
