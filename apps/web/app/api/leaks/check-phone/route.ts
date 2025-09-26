@@ -3,99 +3,17 @@ import axios from 'axios';
 import { saveCheckResult } from '@/lib/checkHistory';
 
 // Import normalizers
-const ITPNormalizer = require('@/lib/utils/ITPNormalizer');
 const DyxlessNormalizer = require('@/lib/utils/DyxlessNormalizer');
-const LeakOsintNormalizer = require('@/lib/utils/LeakOsintNormalizer');
 const UsersboxNormalizer = require('@/lib/utils/UsersboxNormalizer');
-const VektorNormalizer = require('@/lib/utils/VektorNormalizer');
 
 // API tokens from environment
 const TOKENS = {
-  ITP: process.env.ITP_TOKEN || '91b2c57abce2ca84f8ca068df2eda054',
   DYXLESS: process.env.DYXLESS_TOKEN || '38a634df-2317-4c8c-beb7-7ca4fd97f1e1',
-  LEAKOSINT: process.env.LEAKOSINT_TOKEN || '466496291:r571DgY3',
-  USERSBOX: process.env.USERSBOX_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkX2F0IjoxNzUyNTg0NTk5LCJhcHBfaWQiOjE3NTI1ODQ1OTl9.FqMGisO5V1xW2Xr8Ri5mQryy5I1sdBBWzuckCEPpK58',
-  VEKTOR: process.env.VEKTOR_TOKEN || 'C45vAVuDkzNax2BF4sz8o4KEAZFBIIK'
+  USERSBOX: process.env.USERSBOX_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkX2F0IjoxNzUyNTg0NTk5LCJhcHBfaWQiOjE3NTI1ODQ1OTl9.FqMGisO5V1xW2Xr8Ri5mQryy5I1sdBBWzuckCEPpK58'
 };
 
-const ITP_BASE = process.env.ITP_BASE || 'https://datatech.work';
 const DYXLESS_BASE = process.env.DYXLESS_BASE || 'https://api-dyxless.cfd';
-const LEAKOSINT_BASE = 'https://leakosintapi.com/';
 const USERSBOX_BASE = 'https://api.usersbox.ru/v1';
-const VEKTOR_BASE = 'https://infosearch54321.xyz';
-
-function extractUsernameIfSocial(field: string, query: string): string {
-  if (!query || (field !== 'vk' && field !== 'ok')) return query;
-  try {
-    if (/^https?:\/\//i.test(query)) {
-      const u = new URL(query);
-      const host = u.hostname.replace(/^www\./, '');
-      if (host.includes('vk.com')) {
-        const seg = u.pathname.split('/').filter(Boolean);
-        if (seg.length > 0) return seg[seg.length - 1];
-      }
-      if (host.includes('ok.ru') || host.includes('odnoklassniki.ru')) {
-        const seg = u.pathname.split('/').filter(Boolean);
-        if (seg.length > 0) return seg[seg.length - 1];
-      }
-    }
-    return query.replace(/^@+/, '');
-  } catch {
-    return query;
-  }
-}
-
-async function searchITP(query: string, field: string) {
-  try {
-    const itpTypeMap: Record<string, string> = {
-      phone: 'phone',
-      email: 'email',
-      inn: 'inn',
-      snils: 'snils',
-      vk: 'username',
-      ok: 'username'
-    };
-    const isSocial = field === 'vk' || field === 'ok';
-    const adjustedQuery = isSocial ? extractUsernameIfSocial(field, query) : query;
-    const itpType = itpTypeMap[field] || 'full_text';
-    
-    const res = await axios.post(
-      ITP_BASE + '/public-api/data/search',
-      {
-        searchOptions: [
-          { type: itpType, query: adjustedQuery }
-        ]
-      },
-      { 
-        headers: { 'x-api-key': TOKENS.ITP },
-        timeout: 15000
-      }
-    );
-    
-    const data = res.data || {};
-    const normalizedData = data.data ? ITPNormalizer.normalizeRecords(data.data) : {};
-    
-    // ITPNormalizer возвращает объект с группировкой по базам данных
-    // Преобразуем в плоский массив для подсчета
-    const allRecords = [];
-    for (const [dbName, records] of Object.entries(normalizedData)) {
-      if (Array.isArray(records)) {
-        allRecords.push(...records);
-      }
-    }
-    
-    return { 
-      name: 'ITP', 
-      ok: true, 
-      found: allRecords.length > 0,
-      count: allRecords.length,
-      data: normalizedData, // Сохраняем группированную структуру
-      items: allRecords // Плоский массив для фронтенда
-    };
-  } catch (err: any) {
-    return { name: 'ITP', ok: false, found: false, count: 0, error: err.message };
-  }
-}
 
 async function searchDyxless(query: string, type: string = 'standart') {
   const attempt = async () => {
@@ -186,89 +104,6 @@ async function searchDyxless(query: string, type: string = 'standart') {
   }
 }
 
-async function searchLeakOsint(query: string) {
-  try {
-    const res = await axios.post(
-      LEAKOSINT_BASE,
-      { token: TOKENS.LEAKOSINT, request: query, limit: 100, lang: 'ru', type: 'json' },
-      { 
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 15000
-      }
-    );
-    
-    const data = res.data || {};
-    
-    // Debug logging to understand the structure
-    console.log('🔍 LeakOsint response data:', JSON.stringify(data, null, 2));
-    
-    if (data && (data['Error code'] || data.Error || data.error)) {
-      return { name: 'LeakOsint', ok: false, found: false, count: 0, error: data };
-    }
-    
-    // Check for "No results found" message - this means no leaks were found
-    const responseText = JSON.stringify(data).toLowerCase();
-    console.log('🔍 LeakOsint response text (for checking):', responseText.substring(0, 200));
-    
-    if (responseText.includes('no results found') || 
-        responseText.includes('не найдено результатов') ||
-        responseText.includes('нет результатов')) {
-      console.log('✅ LeakOsint: Detected "No results found" in response');
-      return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
-    }
-    
-    const list = data.List || {};
-    const items = Object.keys(list).map((k) => ({ db: k, info: list[k]?.InfoLeak, data: list[k]?.Data }));
-    
-    if (!Object.keys(list).length) {
-      console.log('✅ LeakOsint: No List property or empty List');
-      return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
-    }
-    
-    // More detailed filtering - check inside InfoLeak and Data fields
-    const validItems = items.filter(item => {
-      const itemText = JSON.stringify(item).toLowerCase();
-      const hasNoResults = itemText.includes('no results found') || 
-                          itemText.includes('не найдено результатов') ||
-                          itemText.includes('нет результатов') ||
-                          itemText.includes('по вашему запросу не найдено результатов');
-      
-      if (hasNoResults) {
-        console.log(`🚫 LeakOsint: Filtering out item with "No results": ${item.db}`);
-        return false;
-      }
-      
-      // Also check if Data field is empty or contains only info messages
-      if (item.data && Array.isArray(item.data) && item.data.length === 0) {
-        console.log(`🚫 LeakOsint: Filtering out item with empty data array: ${item.db}`);
-        return false;
-      }
-      
-      return true;
-    });
-    
-    if (validItems.length === 0) {
-      console.log('✅ LeakOsint: All items filtered out as empty/no results');
-      return { name: 'LeakOsint', ok: true, found: false, count: 0, data: [], items: [] };
-    }
-    
-    const normalizedItems = LeakOsintNormalizer.normalizeRecords(validItems);
-    
-    console.log(`📊 LeakOsint: Found ${normalizedItems.length} valid records after filtering ${items.length - validItems.length} empty items`);
-    
-    return { 
-      name: 'LeakOsint', 
-      ok: true, 
-      found: normalizedItems.length > 0,
-      count: normalizedItems.length,
-      data: normalizedItems,
-      items: normalizedItems
-    };
-  } catch (err: any) {
-    return { name: 'LeakOsint', ok: false, found: false, count: 0, error: err.message };
-  }
-}
-
 async function searchUsersbox(query: string) {
   try {
     const res = await axios.get(
@@ -296,35 +131,6 @@ async function searchUsersbox(query: string) {
   }
 }
 
-async function searchVektor(query: string) {
-  try {
-    const url = `${VEKTOR_BASE}/api/${encodeURIComponent(TOKENS.VEKTOR)}/search/${encodeURIComponent(query)}`;
-    const res = await axios.get(url, { timeout: 15000 });
-    const data = res.data || {};
-    
-    if (data && data.error) {
-      return { name: 'Vektor', ok: false, found: false, count: 0, error: data.error };
-    }
-    
-    if (!data || !data.result) {
-      return { name: 'Vektor', ok: false, found: false, count: 0, error: { message: 'Пустой ответ или нет поля result' } };
-    }
-    
-    const items = Array.isArray(data.result) ? data.result : [data.result];
-    
-    return { 
-      name: 'Vektor', 
-      ok: true, 
-      found: items.length > 0,
-      count: items.length,
-      data: items,
-      items: items
-    };
-  } catch (err: any) {
-    return { name: 'Vektor', ok: false, found: false, count: 0, error: err.message };
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -348,13 +154,10 @@ export async function POST(request: NextRequest) {
     
     console.log(`🔍 Starting comprehensive phone search for: ${normalizedPhone}`);
     
-    // Search all sources in parallel
+    // Search selected sources in parallel
     const searchPromises = [
-      searchITP(normalizedPhone, 'phone'),
       searchDyxless(normalizedPhone, 'standart'), // Use 'standart' type for phone searches (2₽)
-      searchLeakOsint(normalizedPhone),
-      searchUsersbox(normalizedPhone),
-      searchVektor(normalizedPhone)
+      searchUsersbox(normalizedPhone)
     ];
     
     const results = await Promise.allSettled(searchPromises);
@@ -364,7 +167,7 @@ export async function POST(request: NextRequest) {
       if (result.status === 'fulfilled') {
         return result.value;
       } else {
-        const sourceNames = ['ITP', 'Dyxless', 'LeakOsint', 'Usersbox', 'Vektor'];
+        const sourceNames = ['Dyxless', 'Usersbox'];
         return {
           name: sourceNames[index],
           ok: false,
