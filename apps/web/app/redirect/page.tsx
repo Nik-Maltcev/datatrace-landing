@@ -110,37 +110,37 @@ export default function PaymentSuccessPage() {
           }
           
           setStatus('success')
-          setMessage('Платеж успешно обработан! Открываем личный кабинет...')
+          setMessage('Платеж успешно обработан! Перенаправляем в личный кабинет...')
           setIsLoading(false)
           
-          // Открываем личный кабинет в новом окне
+          // Перенаправляем на дашборд
           setTimeout(() => {
-            window.open('/dashboard', '_blank')
-          }, 1000)
+            window.location.href = '/dashboard'
+          }, 2000)
         } else {
           console.log('No profile data, but payment was successful')
           clearPendingPaymentFlag()
           setStatus('success') 
-          setMessage('Платеж обработан! Открываем личный кабинет...')
+          setMessage('Платеж обработан! Перенаправляем в личный кабинет...')
           setIsLoading(false)
           
-          // Открываем личный кабинет в новом окне
+          // Перенаправляем на дашборд
           setTimeout(() => {
-            window.open('/dashboard', '_blank')
-          }, 1000)
+            window.location.href = '/dashboard'
+          }, 2000)
         }
         
       } catch (error) {
         console.error('Error in payment success handler:', error)
         clearPendingPaymentFlag()
         setStatus('success') // Все равно показываем успех, так как webhook сработал
-        setMessage('Платеж обработан! Открываем личный кабинет...')
+        setMessage('Платеж обработан! Перенаправляем в личный кабинет...')
         setIsLoading(false)
         
-        // Открываем личный кабинет в новом окне
+        // Перенаправляем на дашборд
         setTimeout(() => {
-          window.open('/dashboard', '_blank')
-        }, 1000)
+          window.location.href = '/dashboard'
+        }, 2000)
       }
     }
     
