@@ -261,10 +261,30 @@ async function generateDeepSeekAnalysis(data: any) {
   }
 
   try {
+    // Сначала пытаемся парсить как обычный JSON
     return JSON.parse(content)
   } catch (error) {
-    console.error('Failed to parse DeepSeek JSON:', error)
-    throw error
+    console.log('Direct JSON parse failed, trying to extract from markdown blocks')
+    
+    try {
+      // Ищем JSON в markdown блоках
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || 
+                       content.match(/```\s*([\s\S]*?)\s*```/) ||
+                       content.match(/\{[\s\S]*\}/)
+      
+      if (jsonMatch) {
+        const jsonString = jsonMatch[1] || jsonMatch[0]
+        console.log('Extracted JSON string:', jsonString.substring(0, 200) + '...')
+        return JSON.parse(jsonString.trim())
+      } else {
+        console.error('No JSON found in content:', content.substring(0, 500))
+        throw new Error('No JSON found in DeepSeek response')
+      }
+    } catch (parseError) {
+      console.error('Failed to parse extracted JSON:', parseError)
+      console.error('Content was:', content)
+      throw parseError
+    }
   }
 }
 
