@@ -376,7 +376,7 @@ export default function DataTraceLanding() {
                 className="hidden sm:flex border-black text-black hover:bg-black hover:text-white bg-transparent"
                 disabled={isLoading}
               >
-                {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
+                {isLoading ? "..." : isAuthenticated ? "ЛИЧНЫЙ КАБИНЕТ" : "ВОЙТИ"}
               </Button>
               <Button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -456,7 +456,7 @@ export default function DataTraceLanding() {
                 className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
                 disabled={isLoading}
               >
-                {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
+                {isLoading ? "..." : isAuthenticated ? "ЛИЧНЫЙ КАБИНЕТ" : "ВОЙТИ"}
               </Button>
             </div>
           </div>
