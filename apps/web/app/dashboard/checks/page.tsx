@@ -512,7 +512,57 @@ export default function ChecksPage() {
                                       
                                       <div className="mt-3 space-y-2">
                                         <p className="text-xs font-medium text-gray-700 mb-2">Найденная информация:</p>
-                                        {Array.isArray(result.items) ? (
+                                        {check.type === 'email_breach' && result.items && result.items.result ? (
+                                          // BreachDirectory format: result array
+                                          <>
+                                            {result.items.result.map((item: any, itemIdx: number) => {
+                                              const sources = Array.isArray(item.sources) ? item.sources.join(', ') : (item.sources || 'Неизвестный источник')
+                                              const hasPassword = item.hash_password || item.password
+                                              const password = item.password || (item.hash_password ? '••••••••' : null)
+                                              const email = item.email ? item.email.replace('mailto:', '') : check.query
+                                              
+                                              return (
+                                                <div key={itemIdx} className="bg-gray-50 p-3 rounded text-xs border border-gray-200">
+                                                  <div className="space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                      <span className="font-medium text-gray-600">Источник:</span>
+                                                      <span className="text-gray-800 font-mono bg-white px-2 py-1 rounded">{sources}</span>
+                                                    </div>
+                                                    
+                                                    {hasPassword && (
+                                                      <div className="flex items-center justify-between">
+                                                        <span className="font-medium text-red-600">Пароль скомпрометирован:</span>
+                                                        <div className="flex items-center space-x-2">
+                                                          <AlertTriangle className="h-3 w-3 text-red-500" />
+                                                          <span className="text-red-600 font-mono bg-red-50 px-2 py-1 rounded">
+                                                            {password || 'Да'}
+                                                          </span>
+                                                        </div>
+                                                      </div>
+                                                    )}
+                                                    
+                                                    {item.sha1 && (
+                                                      <div className="flex items-center justify-between">
+                                                        <span className="font-medium text-gray-600">SHA1 хеш:</span>
+                                                        <span className="text-gray-600 font-mono bg-white px-2 py-1 rounded truncate max-w-32">
+                                                          {item.sha1.substring(0, 16)}...
+                                                        </span>
+                                                      </div>
+                                                    )}
+                                                    
+                                                    <div className="flex items-center justify-between">
+                                                      <span className="font-medium text-gray-600">Email:</span>
+                                                      <span className="text-gray-800 font-mono bg-white px-2 py-1 rounded">{email}</span>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              )
+                                            })}
+                                            <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-100 rounded">
+                                              📊 Всего показано: {result.items.result.length} записей
+                                            </div>
+                                          </>
+                                        ) : Array.isArray(result.items) ? (
                                           // Dyxless format: простой массив записей
                                           <>
                                             {result.items.map((item: any, itemIdx: number) => (
