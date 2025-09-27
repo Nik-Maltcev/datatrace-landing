@@ -351,7 +351,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Payment Success Alert */}
       {paymentSuccess && (
         <Alert className="mb-6 border-green-200 bg-green-50">
@@ -412,10 +412,10 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 xl:grid-cols-3">
         <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                 <Activity className="h-5 w-5 text-white" />
               </div>
@@ -438,7 +438,7 @@ export default function Dashboard() {
 
         <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
                 <Shield className="h-5 w-5 text-white" />
               </div>
@@ -455,7 +455,7 @@ export default function Dashboard() {
 
         <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
                 <Clock className="h-5 w-5 text-white" />
               </div>
@@ -472,7 +472,7 @@ export default function Dashboard() {
       </div>
 
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 xl:grid-cols-3">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
@@ -517,7 +517,7 @@ export default function Dashboard() {
                   <p className="text-sm text-red-600">{phoneResult.error}</p>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <p className="text-sm font-medium">
                         {phoneResult.found ? (
                           <>
@@ -536,7 +536,7 @@ export default function Dashboard() {
                           
                           return (
                             <div key={idx} className="bg-white rounded-lg border border-red-200 p-3">
-                              <div className="flex items-center justify-between">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
                                     <AlertTriangle className="h-3 w-3 text-red-600" />
@@ -604,7 +604,7 @@ export default function Dashboard() {
                   <p className="text-sm text-red-600">{emailResult.error}</p>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <p className="text-sm font-medium">
                         {emailResult.found ? (
                           <>
@@ -623,7 +623,7 @@ export default function Dashboard() {
                           
                           return (
                             <div key={idx} className="bg-white rounded-lg border border-red-200 p-3">
-                              <div className="flex items-center justify-between">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
                                     <AlertTriangle className="h-3 w-3 text-red-600" />
@@ -701,7 +701,7 @@ export default function Dashboard() {
               >
                 {emailBreachResult.ok ? (
                   <>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <p className="text-sm font-medium">
                         {emailBreachResult.found ? (
                           <>
@@ -727,7 +727,7 @@ export default function Dashboard() {
                           .filter((result: any) => result?.found)
                           .map((result: any, index: number) => (
                             <div key={index} className="bg-white rounded-lg border border-red-200 p-3">
-                              <div className="flex items-center justify-between">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="text-sm font-medium">{result.name}</span>
                                 <Badge variant="outline" className="text-xs text-red-600 border-red-300">
                                   {result.count || 0} записей
@@ -737,7 +737,7 @@ export default function Dashboard() {
                                 <p className="mt-2 text-xs text-red-600">{result.error}</p>
                               )}
                               {result.items && (
-                                <pre className="mt-3 max-h-48 overflow-y-auto rounded bg-gray-50 p-3 text-xs text-gray-700">
+                                <pre className="mt-3 max-h-48 overflow-auto rounded bg-gray-50 p-3 text-xs text-gray-700 whitespace-pre-wrap break-words">
                                   {JSON.stringify(result.items, null, 2)}
                                 </pre>
                               )}
@@ -783,7 +783,7 @@ export default function Dashboard() {
       </div>
 
       {/* Additional Services */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
