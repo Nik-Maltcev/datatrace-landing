@@ -183,25 +183,14 @@ export async function POST(request: NextRequest) {
 
     const records = extractRecords(data)
 
-    const normalizedResults = records.map((entry, index) => {
-      const label = buildResultLabel(entry, index + 1)
-      const count = countItems(entry)
-
-      return {
-        name: label,
-        ok: true,
-        found: count > 0,
-        count,
-        items: data // Передаем весь ответ API для правильной обработки на фронтенде
-      }
-    })
-
-    const baseResults = normalizedResults.length > 0 ? normalizedResults : [
+    // Для BreachDirectory создаем одну запись со всеми данными
+    const baseResults = [
       {
         name: 'BreachDirectory',
         ok: true,
-        found: false,
-        count: 0
+        found: records.length > 0,
+        count: records.length,
+        items: data // Передаем весь ответ API для правильной обработки на фронтенде
       }
     ]
 
