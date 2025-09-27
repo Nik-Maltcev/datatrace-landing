@@ -351,7 +351,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
+    <div className="px-4 py-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Payment Success Alert */}
       {paymentSuccess && (
         <Alert className="mb-6 border-green-200 bg-green-50">
@@ -394,12 +394,12 @@ export default function Dashboard() {
       </div>
 
       {/* Welcome Section */}
-      <div className="mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="mb-6 sm:mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
         <div className="w-full md:w-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Добро пожаловать, {user.name}
           </h1>
-          <p className="text-gray-600">Мониторинг и защита ваших персональных данных</p>
+          <p className="text-sm sm:text-base text-gray-600">Мониторинг и защита ваших персональных данных</p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end md:w-auto">
           <Link href="/">
@@ -412,7 +412,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -472,7 +472,7 @@ export default function Dashboard() {
       </div>
 
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
@@ -480,7 +480,7 @@ export default function Dashboard() {
                 <Phone className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Проверить телефон</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Проверить телефон</CardTitle>
                 <p className="text-sm text-gray-500">Поиск утечек номера телефона</p>
               </div>
             </div>
@@ -566,7 +566,7 @@ export default function Dashboard() {
                 <Mail className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Проверить Email</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Проверить Email</CardTitle>
                 <p className="text-sm text-gray-500">Поиск утечек email адреса</p>
               </div>
             </div>
@@ -653,7 +653,7 @@ export default function Dashboard() {
                 <Shield className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Проверить почту на взлом</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Проверить почту на взлом</CardTitle>
                 <p className="text-sm text-gray-500">BreachDirectory — поиск в утечках</p>
               </div>
             </div>
@@ -763,7 +763,7 @@ export default function Dashboard() {
                 <Search className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">История проверок</CardTitle>
+                <CardTitle className="text-base sm:text-lg">История проверок</CardTitle>
                 <p className="text-sm text-gray-500">Просмотр всех проверок</p>
               </div>
             </div>
@@ -783,7 +783,7 @@ export default function Dashboard() {
       </div>
 
       {/* Additional Services */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
@@ -791,7 +791,7 @@ export default function Dashboard() {
                 <Zap className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Управление тарифом</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Управление тарифом</CardTitle>
                 <p className="text-sm text-gray-500">Подписка и оплата</p>
               </div>
             </div>
@@ -816,7 +816,7 @@ export default function Dashboard() {
                 <Monitor className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">Мониторинг утечек</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Мониторинг утечек</CardTitle>
                 <p className="text-sm text-gray-500">Автоматическое отслеживание и удаление</p>
               </div>
             </div>
