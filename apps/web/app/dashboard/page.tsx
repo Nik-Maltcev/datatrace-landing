@@ -351,7 +351,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="px-4 py-6 sm:px-6 lg:px-8">
       {/* Payment Success Alert */}
       {paymentSuccess && (
         <Alert className="mb-6 border-green-200 bg-green-50">
@@ -368,18 +368,18 @@ export default function Dashboard() {
         <p className="text-sm text-blue-700 mb-3">
           Если вы оплатили тариф, но он не обновился автоматически, введите ID транзакции из письма об оплате:
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <input
             type="text"
             placeholder="Введите ID транзакции"
             value={transactionId}
             onChange={(e) => setTransactionId(e.target.value)}
-            className="flex-1 px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 w-full px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-          <Button 
+          <Button
             onClick={handleCheckTransaction}
             disabled={isCheckingTransaction || !transactionId.trim()}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
           >
             {isCheckingTransaction ? (
               <>
@@ -394,16 +394,16 @@ export default function Dashboard() {
       </div>
 
       {/* Welcome Section */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
+      <div className="mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="w-full md:w-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Добро пожаловать, {user.name}
           </h1>
           <p className="text-gray-600">Мониторинг и защита ваших персональных данных</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end md:w-auto">
           <Link href="/">
-            <Button variant="outline" className="border-gray-300 hover:bg-gray-50">
+            <Button variant="outline" className="border-gray-300 hover:bg-gray-50 w-full sm:w-auto">
               <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
               Вернуться на сайт
             </Button>
