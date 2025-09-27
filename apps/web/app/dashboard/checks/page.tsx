@@ -306,6 +306,31 @@ export default function ChecksPage() {
         </Alert>
       )}
 
+      {/* Кнопка очистки старых записей */}
+      {checks.some(check => check.results.some(r => r.name && r.name.startsWith('Breach '))) && (
+        <Alert className="border-yellow-200 bg-yellow-50">
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800 flex items-center justify-between">
+            <span>
+              <strong>Обнаружены старые некорректные записи!</strong> Рекомендуем очистить историю для корректного отображения.
+            </span>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+              onClick={() => {
+                if (confirm('Очистить всю историю проверок?')) {
+                  localStorage.removeItem(`checkHistory_${user?.email}`)
+                  window.location.reload()
+                }
+              }}
+            >
+              Очистить историю
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* История проверок */}
       <Card>
         <CardHeader>
@@ -426,9 +451,77 @@ export default function ChecksPage() {
                       <Separator className="my-4" />
 
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-900">Источники утечек:</h4>
+                        <h4 className="text-sm font-medium text-gray-900">Результат проверки:</h4>
                         <div className="space-y-2">
-                          {check.results.map((result, idx) => {
+                          {check.type === 'email_breach' && check.results.length > 0 && check.results[0].items && check.results[0].items.result ? (
+                            // BreachDirectory: показываем все записи из одного результата
+                            <div className="rounded-lg border bg-red-50 border-red-200">
+                              <div className="p-3">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                                    <span className="text-sm font-medium">BreachDirectory</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="destructive" className="text-xs">
+                                      {check.results[0].items.result.length} записей
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs text-red-600">
+                                      Утечка
+                                    </Badge>
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  {check.results[0].items.result.map((item: any, itemIdx: number) => {
+                                    const sources = Array.isArray(item.sources) ? item.sources.join(', ') : (item.sources || 'Неизвестный источник')
+                                    const hasPassword = item.hash_password || item.password
+                                    const password = item.password || (item.hash_password ? '••••••••' : null)
+                                    const email = item.email ? item.email.replace('mailto:', '') : check.query
+                                    
+                                    return (
+                                      <div key={itemIdx} className="bg-white p-3 rounded text-xs border border-gray-200">
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-medium text-gray-600">Источник:</span>
+                                            <span className="text-gray-800 font-mono bg-gray-50 px-2 py-1 rounded">{sources}</span>
+                                          </div>
+                                          
+                                          {hasPassword && (
+                                            <div className="flex items-center justify-between">
+                                              <span className="font-medium text-red-600">Пароль скомпрометирован:</span>
+                                              <div className="flex items-center space-x-2">
+                                                <AlertTriangle className="h-3 w-3 text-red-500" />
+                                                <span className="text-red-600 font-mono bg-red-50 px-2 py-1 rounded">
+                                                  {password || 'Да'}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {item.sha1 && (
+                                            <div className="flex items-center justify-between">
+                                              <span className="font-medium text-gray-600">SHA1 хеш:</span>
+                                              <span className="text-gray-600 font-mono bg-gray-50 px-2 py-1 rounded truncate max-w-32">
+                                                {item.sha1.substring(0, 16)}...
+                                              </span>
+                                            </div>
+                                          )}
+                                          
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-medium text-gray-600">Email:</span>
+                                            <span className="text-gray-800 font-mono bg-gray-50 px-2 py-1 rounded">{email}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            // Остальные типы проверок: показываем по источникам
+                            check.results.map((result, idx) => {
                             const sourceName = result.source || result.name
                             const key = `${check.id}-${sourceName}`
                             const isExpanded = expandedSources.has(key)
@@ -655,7 +748,8 @@ export default function ChecksPage() {
                                 )}
                               </div>
                             )
-                          })}
+                          })
+                          )}
                         </div>
                       </div>
                     </CardContent>
