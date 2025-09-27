@@ -1,16 +1,18 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { 
-  User, 
-  Search, 
+import {
+  Search,
   LogOut,
   Home,
-  Brain
+  Brain,
+  Menu,
+  X
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -23,6 +25,7 @@ export default function DashboardLayout({
   const { user, logout } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   if (!user) {
     return null
@@ -35,11 +38,21 @@ export default function DashboardLayout({
 
   const isActive = (path: string) => pathname === path
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev)
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gray-50 lg:flex-row">
       {/* Left Sidebar */}
-      <div className="w-80 bg-white shadow-lg border-r border-gray-200">
-        <div className="p-6">
+      <div
+        className={`fixed inset-y-0 left-0 z-40 w-72 transform bg-white shadow-xl border-r border-gray-200 transition-transform duration-300 ease-in-out lg:static lg:w-80 lg:translate-x-0 lg:shadow-lg ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex h-full flex-col overflow-y-auto px-6 py-6">
           {/* User Profile Section */}
           <div className="text-center mb-6">
             <Avatar className="w-16 h-16 mx-auto mb-3">
@@ -128,9 +141,47 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className="flex-1">
-        {children}
+      <div className="flex-1 lg:ml-0">
+        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 shadow-sm lg:hidden">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileMenu}
+              aria-label={isMobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                {user.name || user.email}
+              </p>
+              <p className="text-xs text-gray-500">Личный кабинет</p>
+            </div>
+          </div>
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={user.avatar || ""} />
+            <AvatarFallback className="bg-blue-100 text-blue-600 text-sm">
+              {user.email?.charAt(0).toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+        </header>
+        <div className="flex-1">
+          {children}
+        </div>
       </div>
+
+      {/* Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
     </div>
   )
 }
