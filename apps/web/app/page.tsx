@@ -5,6 +5,7 @@ import { PT_Mono } from "next/font/google"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import Image from "next/image"
+import { Menu, X } from "lucide-react"
 
 const ptMono = PT_Mono({
   subsets: ["latin", "cyrillic"],
@@ -207,6 +208,7 @@ export default function DataTraceLanding() {
   const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // Обработчик postMessage для открытия дашборда из фрейма
   useEffect(() => {
@@ -291,92 +293,174 @@ export default function DataTraceLanding() {
                 className="h-14"
               />
             </div>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
+            <div className="flex items-center space-x-4">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
+                  ГЛАВНАЯ
+                </Link>
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowSolutionsDropdown(true)}
+                  onMouseLeave={() => setShowSolutionsDropdown(false)}
+                >
+                  <button className="text-sm font-medium text-gray-700 hover:text-black flex items-center">
+                    РЕШЕНИЯ
+                    <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showSolutionsDropdown && (
+                    <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                      <div className="py-2">
+                        <Link 
+                          href="#solutions" 
+                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black border-b border-gray-100"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById('solutions')?.scrollIntoView({ 
+                              behavior: 'smooth' 
+                            });
+                            setShowSolutionsDropdown(false);
+                          }}
+                        >
+                          Обнаружение и удаление скомпрометированной личной информации
+                        </Link>
+                        <Link 
+                          href="#solutions" 
+                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById('solutions')?.scrollIntoView({ 
+                              behavior: 'smooth' 
+                            });
+                            setShowSolutionsDropdown(false);
+                          }}
+                        >
+                          Мониторинг глубинного интернета и даркнета
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Link 
+                  href="#pricing" 
+                  className="text-sm font-medium text-gray-700 hover:text-black"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('pricing')?.scrollIntoView({ 
+                      behavior: 'smooth' 
+                    });
+                  }}
+                >
+                  ТАРИФЫ
+                </Link>
+                <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-black">
+                  БЛОГ
+                </Link>
+                <Link 
+                  href="#contacts" 
+                  className="text-sm font-medium text-gray-700 hover:text-black"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('contacts')?.scrollIntoView({ 
+                      behavior: 'smooth' 
+                    });
+                  }}
+                >
+                  КОНТАКТЫ
+                </Link>
+              </nav>
+              <Button
+                onClick={handleDashboardClick}
+                variant="outline"
+                className="hidden sm:flex border-black text-black hover:bg-black hover:text-white bg-transparent"
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
+              </Button>
+              <Button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                variant="outline"
+                size="sm"
+                className="md:hidden border-black text-black hover:bg-black hover:text-white bg-transparent"
+              >
+                {showMobileMenu ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Menu */}
+        {showMobileMenu && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 py-4 space-y-4">
+              <Link 
+                href="#" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
                 ГЛАВНАЯ
               </Link>
-              <div 
-                className="relative"
-                onMouseEnter={() => setShowSolutionsDropdown(true)}
-                onMouseLeave={() => setShowSolutionsDropdown(false)}
+              <Link 
+                href="#solutions" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('solutions')?.scrollIntoView({ 
+                    behavior: 'smooth' 
+                  });
+                  setShowMobileMenu(false);
+                }}
               >
-                <button className="text-sm font-medium text-gray-700 hover:text-black flex items-center">
-                  РЕШЕНИЯ
-                  <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {showSolutionsDropdown && (
-                  <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="py-2">
-                      <Link 
-                        href="#solutions" 
-                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black border-b border-gray-100"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          document.getElementById('solutions')?.scrollIntoView({ 
-                            behavior: 'smooth' 
-                          });
-                          setShowSolutionsDropdown(false);
-                        }}
-                      >
-                        Обнаружение и удаление скомпрометированной личной информации
-                      </Link>
-                      <Link 
-                        href="#solutions" 
-                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          document.getElementById('solutions')?.scrollIntoView({ 
-                            behavior: 'smooth' 
-                          });
-                          setShowSolutionsDropdown(false);
-                        }}
-                      >
-                        Мониторинг глубинного интернета и даркнета
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
+                РЕШЕНИЯ
+              </Link>
               <Link 
                 href="#pricing" 
-                className="text-sm font-medium text-gray-700 hover:text-black"
+                className="block text-sm font-medium text-gray-700 hover:text-black"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('pricing')?.scrollIntoView({ 
                     behavior: 'smooth' 
                   });
+                  setShowMobileMenu(false);
                 }}
               >
                 ТАРИФЫ
               </Link>
-              <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-black">
+              <Link 
+                href="/blog" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
                 БЛОГ
               </Link>
               <Link 
                 href="#contacts" 
-                className="text-sm font-medium text-gray-700 hover:text-black"
+                className="block text-sm font-medium text-gray-700 hover:text-black"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('contacts')?.scrollIntoView({ 
                     behavior: 'smooth' 
                   });
+                  setShowMobileMenu(false);
                 }}
               >
                 КОНТАКТЫ
               </Link>
-            </nav>
-            <Button
-              onClick={handleDashboardClick}
-              variant="outline"
-              className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent sm:w-auto"
-              disabled={isLoading}
-            >
-              {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
-            </Button>
+              <Button
+                onClick={() => {
+                  handleDashboardClick();
+                  setShowMobileMenu(false);
+                }}
+                variant="outline"
+                className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
+                disabled={isLoading}
+              >
+                {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Hero Section */}
