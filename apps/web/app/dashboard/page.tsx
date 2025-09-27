@@ -362,37 +362,6 @@ export default function Dashboard() {
         </Alert>
       )}
 
-      {/* Transaction Check Section */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">Обновить тариф после оплаты</h3>
-        <p className="text-sm text-blue-700 mb-3">
-          Если вы оплатили тариф, но он не обновился автоматически, введите ID транзакции из письма об оплате:
-        </p>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            placeholder="Введите ID транзакции"
-            value={transactionId}
-            onChange={(e) => setTransactionId(e.target.value)}
-            className="flex-1 w-full px-3 py-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <Button
-            onClick={handleCheckTransaction}
-            disabled={isCheckingTransaction || !transactionId.trim()}
-            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-          >
-            {isCheckingTransaction ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Проверяю...
-              </>
-            ) : (
-              'Обновить тариф'
-            )}
-          </Button>
-        </div>
-      </div>
-
       {/* Welcome Section */}
       <div className="mb-6 sm:mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
         <div className="w-full md:w-auto">
