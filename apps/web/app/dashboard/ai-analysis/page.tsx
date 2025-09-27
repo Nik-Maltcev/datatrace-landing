@@ -52,8 +52,36 @@ export default function AIAnalysisPage() {
   useEffect(() => {
     if (user?.email) {
       loadData()
+      loadSavedAnalysis()
     }
   }, [user])
+
+  const loadSavedAnalysis = () => {
+    try {
+      const saved = localStorage.getItem(`ai-analysis-${user?.email}`)
+      if (saved) {
+        const parsedAnalysis = JSON.parse(saved)
+        // Проверяем, не устарел ли анализ (старше 24 часов)
+        const lastUpdated = new Date(parsedAnalysis.lastUpdated)
+        const now = new Date()
+        const hoursDiff = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60)
+        
+        if (hoursDiff < 24) {
+          setAiAnalysis(parsedAnalysis)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load saved analysis:', error)
+    }
+  }
+
+  const saveAnalysis = (analysis: AIAnalysis) => {
+    try {
+      localStorage.setItem(`ai-analysis-${user?.email}`, JSON.stringify(analysis))
+    } catch (error) {
+      console.error('Failed to save analysis:', error)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -72,7 +100,12 @@ export default function AIAnalysisPage() {
     }
   }
 
-  const generateAnalysis = async (checksData: CheckHistory[]) => {
+  const generateAnalysis = async (checksData: CheckHistory[], forceRefresh = false) => {
+    // Если есть сохраненный анализ и не принудительное обновление, не генерируем заново
+    if (!forceRefresh && aiAnalysis) {
+      return
+    }
+    
     setIsGenerating(true)
     try {
       const response = await fetch('/api/ai-analysis', {
@@ -84,13 +117,18 @@ export default function AIAnalysisPage() {
       if (response.ok) {
         const analysis = await response.json()
         setAiAnalysis(analysis)
+        saveAnalysis(analysis)
       } else {
         // Fallback analysis
-        setAiAnalysis(createFallbackAnalysis(checksData))
+        const fallbackAnalysis = createFallbackAnalysis(checksData)
+        setAiAnalysis(fallbackAnalysis)
+        saveAnalysis(fallbackAnalysis)
       }
     } catch (error) {
       console.error('AI analysis failed:', error)
-      setAiAnalysis(createFallbackAnalysis(checksData))
+      const fallbackAnalysis = createFallbackAnalysis(checksData)
+      setAiAnalysis(fallbackAnalysis)
+      saveAnalysis(fallbackAnalysis)
     } finally {
       setIsGenerating(false)
     }
@@ -228,7 +266,7 @@ export default function AIAnalysisPage() {
           </div>
         </div>
         <Button 
-          onClick={() => generateAnalysis(checks)}
+          onClick={() => generateAnalysis(checks, true)}
           disabled={isGenerating}
           className="bg-purple-600 hover:bg-purple-700"
         >
