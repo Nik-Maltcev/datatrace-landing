@@ -623,50 +623,67 @@ export default function Dashboard() {
                               {result.error && (
                                 <p className="mt-2 text-xs text-red-600">{result.error}</p>
                               )}
-                              {result.items && Array.isArray(result.items) && result.items.length > 0 && (
+                              {result.items && (
                                 <div className="mt-3 space-y-2">
-                                  {result.items.map((item: any, itemIndex: number) => {
-                                    const sources = item.sources || 'Неизвестный источник'
-                                    const hasPassword = item.has_password || item.hash_password || item.password
-                                    const password = item.password || (item.hash_password ? '••••••••' : null)
+                                  {(() => {
+                                    // Обработка данных от BreachDirectory API
+                                    let items = []
                                     
-                                    return (
-                                      <div key={itemIndex} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                        <div className="space-y-2">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-xs font-medium text-gray-600">Источник:</span>
-                                            <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded">{sources}</span>
-                                          </div>
-                                          
-                                          {hasPassword && (
+                                    if (Array.isArray(result.items)) {
+                                      items = result.items
+                                    } else if (Array.isArray(result.items.result)) {
+                                      items = result.items.result
+                                    } else if (result.items.result) {
+                                      items = [result.items.result]
+                                    } else {
+                                      items = [result.items]
+                                    }
+                                    
+                                    return items.map((item: any, itemIndex: number) => {
+                                      const sources = Array.isArray(item.sources) ? item.sources.join(', ') : (item.sources || 'Неизвестный источник')
+                                      const hasPassword = item.hash_password || item.password
+                                      const password = item.password || (item.hash_password ? '••••••••' : null)
+                                      const email = item.email ? item.email.replace('mailto:', '') : breachEmail
+                                      
+                                      return (
+                                        <div key={itemIndex} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                          <div className="space-y-2">
                                             <div className="flex items-center justify-between">
-                                              <span className="text-xs font-medium text-red-600">Пароль скомпрометирован:</span>
-                                              <div className="flex items-center space-x-2">
-                                                <AlertTriangle className="h-3 w-3 text-red-500" />
-                                                <span className="text-xs text-red-600 font-mono bg-red-50 px-2 py-1 rounded">
-                                                  {password || 'Да'}
+                                              <span className="text-xs font-medium text-gray-600">Источник:</span>
+                                              <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded">{sources}</span>
+                                            </div>
+                                            
+                                            {hasPassword && (
+                                              <div className="flex items-center justify-between">
+                                                <span className="text-xs font-medium text-red-600">Пароль скомпрометирован:</span>
+                                                <div className="flex items-center space-x-2">
+                                                  <AlertTriangle className="h-3 w-3 text-red-500" />
+                                                  <span className="text-xs text-red-600 font-mono bg-red-50 px-2 py-1 rounded">
+                                                    {password || 'Да'}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            )}
+                                            
+                                            {item.sha1 && (
+                                              <div className="flex items-center justify-between">
+                                                <span className="text-xs font-medium text-gray-600">SHA1 хеш:</span>
+                                                <span className="text-xs text-gray-600 font-mono bg-white px-2 py-1 rounded truncate max-w-32">
+                                                  {item.sha1.substring(0, 16)}...
                                                 </span>
                                               </div>
-                                            </div>
-                                          )}
-                                          
-                                          {item.sha1 && (
+                                            )}
+                                            
                                             <div className="flex items-center justify-between">
-                                              <span className="text-xs font-medium text-gray-600">SHA1 хеш:</span>
-                                              <span className="text-xs text-gray-600 font-mono bg-white px-2 py-1 rounded truncate max-w-32">
-                                                {item.sha1.substring(0, 16)}...
-                                              </span>
+                                              <span className="text-xs font-medium text-gray-600">Email:</span>
+                                              <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded">{email}</span>
                                             </div>
-                                          )}
-                                          
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-xs font-medium text-gray-600">Email:</span>
-                                            <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded">{item.email}</span>
                                           </div>
                                         </div>
-                                      </div>
-                                    )
-                                  })}
+                                      )
+                                    })
+                                  })()
+                                  }
                                 </div>
                               )}
                             </div>

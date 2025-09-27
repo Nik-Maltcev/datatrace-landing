@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
         ok: true,
         found: count > 0,
         count,
-        items: entry
+        items: data // Передаем весь ответ API для правильной обработки на фронтенде
       }
     })
 
