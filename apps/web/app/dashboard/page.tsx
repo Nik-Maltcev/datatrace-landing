@@ -608,9 +608,14 @@ export default function Dashboard() {
                         {emailBreachResult.results
                           .filter((result: any) => result?.found)
                           .map((result: any, index: number) => (
-                            <div key={index} className="bg-white rounded-lg border border-red-200 p-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">{result.name}</span>
+                            <div key={index} className="bg-white rounded-lg border border-red-200 p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                    <AlertTriangle className="h-3 w-3 text-red-600" />
+                                  </div>
+                                  <span className="text-sm font-medium">{result.name}</span>
+                                </div>
                                 <Badge variant="outline" className="text-xs text-red-600 border-red-300">
                                   {result.count || 0} записей
                                 </Badge>
@@ -618,10 +623,51 @@ export default function Dashboard() {
                               {result.error && (
                                 <p className="mt-2 text-xs text-red-600">{result.error}</p>
                               )}
-                              {result.items && (
-                                <pre className="mt-3 max-h-48 overflow-y-auto rounded bg-gray-50 p-3 text-xs text-gray-700">
-                                  {JSON.stringify(result.items, null, 2)}
-                                </pre>
+                              {result.items && Array.isArray(result.items) && result.items.length > 0 && (
+                                <div className="mt-3 space-y-2">
+                                  {result.items.map((item: any, itemIndex: number) => {
+                                    const sources = item.sources || 'Неизвестный источник'
+                                    const hasPassword = item.has_password || item.hash_password || item.password
+                                    const password = item.password || (item.hash_password ? '••••••••' : null)
+                                    
+                                    return (
+                                      <div key={itemIndex} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-medium text-gray-600">Источник:</span>
+                                            <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded">{sources}</span>
+                                          </div>
+                                          
+                                          {hasPassword && (
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-xs font-medium text-red-600">Пароль скомпрометирован:</span>
+                                              <div className="flex items-center space-x-2">
+                                                <AlertTriangle className="h-3 w-3 text-red-500" />
+                                                <span className="text-xs text-red-600 font-mono bg-red-50 px-2 py-1 rounded">
+                                                  {password || 'Да'}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          )}
+                                          
+                                          {item.sha1 && (
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-xs font-medium text-gray-600">SHA1 хеш:</span>
+                                              <span className="text-xs text-gray-600 font-mono bg-white px-2 py-1 rounded truncate max-w-32">
+                                                {item.sha1.substring(0, 16)}...
+                                              </span>
+                                            </div>
+                                          )}
+                                          
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-medium text-gray-600">Email:</span>
+                                            <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded">{item.email}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
                               )}
                             </div>
                           ))}
