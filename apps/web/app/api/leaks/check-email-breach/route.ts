@@ -133,6 +133,11 @@ export async function POST(request: NextRequest) {
     url.searchParams.set('func', 'auto')
     url.searchParams.set('term', email)
 
+    console.log('BreachDirectory API request:', {
+      url: url.toString(),
+      apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT_SET'
+    })
+
     const response = await fetch(url.toString(), {
       method: 'GET',
       cache: 'no-store',
@@ -143,6 +148,12 @@ export async function POST(request: NextRequest) {
     })
 
     const raw = await response.text()
+    console.log('BreachDirectory API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      rawResponse: raw.substring(0, 500)
+    })
+
     let data: any = null
 
     if (raw) {
@@ -157,6 +168,12 @@ export async function POST(request: NextRequest) {
       const message = typeof data === 'string'
         ? data
         : data?.message || data?.error || `Request failed with status ${response.status}`
+
+      console.error('BreachDirectory API error:', {
+        status: response.status,
+        message,
+        data
+      })
 
       return NextResponse.json(
         { ok: false, error: { code: 'UPSTREAM_ERROR', message } },
