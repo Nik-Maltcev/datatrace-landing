@@ -19,7 +19,7 @@ import Link from "next/link"
 function InteractiveHeroGraphic() {
   return (
     <div className="flex justify-center">
-      <div className="relative w-[500px] h-[500px]">
+      <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg aspect-square">
         <img src="/images/geometric-triangle.png" alt="Geometric Triangle" className="w-full h-full object-contain" />
       </div>
     </div>
@@ -92,12 +92,12 @@ function DataFlowShowcaseLight() {
       <div className="absolute inset-0 light-grid-overlay" />
       <div className="absolute inset-0 light-radial" />
 
-      <div className="relative container mx-auto px-6 lg:px-12">
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-3xl text-center space-y-6">
           <span className="inline-flex items-center justify-center rounded-full border border-emerald-300/80 bg-white/70 px-5 py-1 text-[11px] uppercase tracking-[0.45em] text-emerald-600 shadow-[0_8px_20px_rgba(34,197,94,0.15)]">
             этичное удаление
           </span>
-          <h2 className="text-4xl font-bold leading-tight text-slate-900 lg:text-5xl">
+          <h2 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
             Понимаем, откуда приходят утечки, и бережно закрываем их источники
           </h2>
           <p className="text-base text-slate-600">
@@ -124,10 +124,10 @@ function DataFlowShowcaseLight() {
             ))}
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <div className="absolute h-[340px] w-[340px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
-            <div className="absolute h-[420px] w-[420px] rounded-full border border-emerald-200/70 blur-sm" />
-            <div className="absolute h-[480px] w-[480px] rounded-full border border-emerald-100/60" />
+          <div className="relative flex w-full items-center justify-center min-h-[260px] sm:min-h-[320px] md:min-h-[360px] lg:min-h-[420px]">
+            <div className="absolute h-[220px] w-[220px] sm:h-[280px] sm:w-[280px] md:h-[320px] md:w-[320px] lg:h-[340px] lg:w-[340px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
+            <div className="absolute h-[280px] w-[280px] sm:h-[340px] sm:w-[340px] md:h-[380px] md:w-[380px] lg:h-[420px] lg:w-[420px] rounded-full border border-emerald-200/70 blur-sm" />
+            <div className="absolute h-[320px] w-[320px] sm:h-[380px] sm:w-[380px] md:h-[420px] md:w-[420px] lg:h-[480px] lg:w-[480px] rounded-full border border-emerald-100/60" />
             <div className="relative z-10 flex flex-col items-center gap-3 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/50 bg-white">
                 <ShieldCheck className="h-10 w-10 text-emerald-400" strokeWidth={1.3} />
@@ -281,12 +281,12 @@ export default function DataTraceLanding() {
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center">
-              <Image 
-                src="/image-removebg-preview.png" 
-                alt="DataTrace" 
-                width={200} 
+              <Image
+                src="/image-removebg-preview.png"
+                alt="DataTrace"
+                width={200}
                 height={60} 
                 className="h-14"
               />
@@ -370,7 +370,7 @@ export default function DataTraceLanding() {
             <Button
               onClick={handleDashboardClick}
               variant="outline"
-              className="border-black text-black hover:bg-black hover:text-white bg-transparent"
+              className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent sm:w-auto"
               disabled={isLoading}
             >
               {isLoading ? "..." : isAuthenticated ? "ЛЧНЫЙ КАБНЕТ" : "ВОЙТ"}
@@ -385,17 +385,17 @@ export default function DataTraceLanding() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div>
-                <h1 className="text-5xl lg:text-6xl font-bold text-black leading-[1.0]">
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-black leading-[1.0]">
                   ИИ-платформа для поиска и удаления скомпрометированной личной информации
                 </h1>
               </div>
               <div>
                 <Button
                   variant="outline"
-                  className="border-black text-black hover:bg-black hover:text-white px-8 py-3 bg-transparent"
+                  className="w-full border-black text-black hover:bg-black hover:text-white px-8 py-3 bg-transparent sm:w-auto"
                   onClick={() => {
-                    document.getElementById('solutions')?.scrollIntoView({ 
-                      behavior: 'smooth' 
+                    document.getElementById('solutions')?.scrollIntoView({
+                      behavior: 'smooth'
                     });
                   }}
                 >
@@ -689,13 +689,13 @@ export default function DataTraceLanding() {
               <p className="text-gray-400 mb-6">
                 Подпишись на наш блог
               </p>
-              <div className="flex space-x-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <input
                   type="email"
                   placeholder="Ваш email здесь"
                   className="bg-gray-800 text-white px-4 py-2 rounded flex-1"
                 />
-                <Button className="bg-white text-black hover:bg-gray-200">
+                <Button className="bg-white text-black hover:bg-gray-200 w-full sm:w-auto">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
