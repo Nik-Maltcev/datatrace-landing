@@ -78,7 +78,9 @@ function analyzeLeakDetails(checks: any[]) {
     sitesWithPasswords: new Set(),
     socialNetworks: new Set(),
     financialServices: new Set(),
-    governmentServices: new Set()
+    governmentServices: new Set(),
+    compromisedSites: new Set(),
+    databaseNames: new Set()
   }
 
   checks.forEach(check => {
@@ -93,31 +95,71 @@ function analyzeLeakDetails(checks: any[]) {
         items.forEach((item: any) => {
           if (item.email) leakDetails.emailsFound.add(item.email)
           if (item.phone) leakDetails.phonesFound.add(item.phone)
-          if (item.password) {
-            leakDetails.passwordsFound.add(item.password)
-            leakDetails.sitesWithPasswords.add(sourceName)
-          }
+          if (item.password) leakDetails.passwordsFound.add(item.password)
           
-          // Категоризация по типам сервисов
-          if (sourceName.toLowerCase().includes('vk') || 
-              sourceName.toLowerCase().includes('facebook') ||
-              sourceName.toLowerCase().includes('instagram') ||
-              sourceName.toLowerCase().includes('twitter')) {
-            leakDetails.socialNetworks.add(sourceName)
-          }
+          // Извлекаем названия сайтов и баз данных из содержимого утечек
+          if (item.source) leakDetails.compromisedSites.add(item.source)
+          if (item.dbName) leakDetails.databaseNames.add(item.dbName)
+          if (item.site) leakDetails.compromisedSites.add(item.site)
+          if (item.domain) leakDetails.compromisedSites.add(item.domain)
+          if (item.service) leakDetails.compromisedSites.add(item.service)
           
-          if (sourceName.toLowerCase().includes('bank') ||
-              sourceName.toLowerCase().includes('pay') ||
-              sourceName.toLowerCase().includes('wallet')) {
-            leakDetails.financialServices.add(sourceName)
-          }
-          
-          if (sourceName.toLowerCase().includes('gov') ||
-              sourceName.toLowerCase().includes('госуслуги') ||
-              sourceName.toLowerCase().includes('налог')) {
-            leakDetails.governmentServices.add(sourceName)
+          // Анализируем конкретные сайты и сервисы из содержимого
+          const siteToAnalyze = item.source || item.site || item.domain || item.service || item.dbName
+          if (siteToAnalyze) {
+            const siteLower = siteToAnalyze.toLowerCase()
+            
+            // Социальные сети
+            if (siteLower.includes('vk') || siteLower.includes('вконтакте') ||
+                siteLower.includes('facebook') || siteLower.includes('instagram') ||
+                siteLower.includes('twitter') || siteLower.includes('telegram') ||
+                siteLower.includes('одноклассники') || siteLower.includes('ok.ru')) {
+              leakDetails.socialNetworks.add(siteToAnalyze)
+            }
+            
+            // Финансовые сервисы
+            if (siteLower.includes('bank') || siteLower.includes('банк') ||
+                siteLower.includes('pay') || siteLower.includes('wallet') ||
+                siteLower.includes('сбер') || siteLower.includes('тинькофф') ||
+                siteLower.includes('альфа') || siteLower.includes('втб') ||
+                siteLower.includes('qiwi') || siteLower.includes('яндекс.деньги')) {
+              leakDetails.financialServices.add(siteToAnalyze)
+            }
+            
+            // Государственные сервисы
+            if (siteLower.includes('gov') || siteLower.includes('госуслуги') ||
+                siteLower.includes('налог') || siteLower.includes('пфр') ||
+                siteLower.includes('мфц') || siteLower.includes('росреестр')) {
+              leakDetails.governmentServices.add(siteToAnalyze)
+            }
+            
+            // Если есть пароль для этого сайта
+            if (item.password) {
+              leakDetails.sitesWithPasswords.add(siteToAnalyze)
+            }
           }
         })
+        
+        // Если в данных есть структура по базам (как в ITP)
+        if (result.data && typeof result.data === 'object') {
+          Object.keys(result.data).forEach(dbName => {
+            leakDetails.databaseNames.add(dbName)
+            
+            // Анализируем название базы данных
+            const dbLower = dbName.toLowerCase()
+            if (dbLower.includes('vk') || dbLower.includes('social') ||
+                dbLower.includes('facebook') || dbLower.includes('instagram')) {
+              leakDetails.socialNetworks.add(dbName)
+            }
+            if (dbLower.includes('bank') || dbLower.includes('pay') ||
+                dbLower.includes('финанс') || dbLower.includes('деньги')) {
+              leakDetails.financialServices.add(dbName)
+            }
+            if (dbLower.includes('gov') || dbLower.includes('госуслуги')) {
+              leakDetails.governmentServices.add(dbName)
+            }
+          })
+        }
       }
     })
   })
@@ -129,7 +171,9 @@ function analyzeLeakDetails(checks: any[]) {
     sitesWithPasswords: Array.from(leakDetails.sitesWithPasswords),
     socialNetworks: Array.from(leakDetails.socialNetworks),
     financialServices: Array.from(leakDetails.financialServices),
-    governmentServices: Array.from(leakDetails.governmentServices)
+    governmentServices: Array.from(leakDetails.governmentServices),
+    compromisedSites: Array.from(leakDetails.compromisedSites),
+    databaseNames: Array.from(leakDetails.databaseNames)
   }
 }
 
@@ -156,10 +200,12 @@ async function generateDeepSeekAnalysis(data: any) {
 - Найденные email: ${data.detailedLeaks.emailsFound.length}
 - Найденные телефоны: ${data.detailedLeaks.phonesFound.length}
 - Скомпрометированные пароли: ${data.detailedLeaks.passwordsFound.length}
-- Сайты с паролями: ${data.detailedLeaks.sitesWithPasswords.join(', ')}
-- Соцсети: ${data.detailedLeaks.socialNetworks.join(', ')}
-- Финансовые сервисы: ${data.detailedLeaks.financialServices.join(', ')}
-- Госуслуги: ${data.detailedLeaks.governmentServices.join(', ')}
+- Сайты с паролями: ${data.detailedLeaks.sitesWithPasswords.slice(0, 5).join(', ')}${data.detailedLeaks.sitesWithPasswords.length > 5 ? '...' : ''}
+- Соцсети: ${data.detailedLeaks.socialNetworks.slice(0, 5).join(', ')}${data.detailedLeaks.socialNetworks.length > 5 ? '...' : ''}
+- Финансовые сервисы: ${data.detailedLeaks.financialServices.slice(0, 5).join(', ')}${data.detailedLeaks.financialServices.length > 5 ? '...' : ''}
+- Госуслуги: ${data.detailedLeaks.governmentServices.slice(0, 3).join(', ')}${data.detailedLeaks.governmentServices.length > 3 ? '...' : ''}
+- Скомпрометированные сайты: ${data.detailedLeaks.compromisedSites.slice(0, 5).join(', ')}${data.detailedLeaks.compromisedSites.length > 5 ? '...' : ''}
+- Базы данных: ${data.detailedLeaks.databaseNames.slice(0, 3).join(', ')}${data.detailedLeaks.databaseNames.length > 3 ? '...' : ''}
 
 Верни ТОЛЬКО валидный JSON в следующем формате:
 {
@@ -230,22 +276,26 @@ function generateFallbackAnalysis(data: any) {
   
   // Конкретные рекомендации на основе найденных утечек
   if (data.detailedLeaks.financialServices.length > 0) {
-    recommendations.push(`🏦 КРИТИЧНО: Немедленно смените пароли в банковских сервисах: ${data.detailedLeaks.financialServices.join(', ')}`)
+    recommendations.push(`🏦 КРИТИЧНО: Немедленно смените пароли в финансовых сервисах: ${data.detailedLeaks.financialServices.slice(0, 5).join(', ')}${data.detailedLeaks.financialServices.length > 5 ? ` и еще ${data.detailedLeaks.financialServices.length - 5}` : ''}`)
     priorityActions.push('Смена паролей в банках и платежных системах')
   }
   
   if (data.detailedLeaks.governmentServices.length > 0) {
-    recommendations.push(`🏛️ ВАЖНО: Смените пароль на Госуслугах и других государственных сервисах: ${data.detailedLeaks.governmentServices.join(', ')}`)
+    recommendations.push(`🏛️ ВАЖНО: Смените пароли в государственных сервисах: ${data.detailedLeaks.governmentServices.slice(0, 3).join(', ')}${data.detailedLeaks.governmentServices.length > 3 ? ` и других` : ''}`)
     priorityActions.push('Смена пароля на Госуслугах')
   }
   
   if (data.detailedLeaks.socialNetworks.length > 0) {
-    recommendations.push(`📱 Смените пароли в социальных сетях: ${data.detailedLeaks.socialNetworks.join(', ')}`)
+    recommendations.push(`📱 Смените пароли в социальных сетях: ${data.detailedLeaks.socialNetworks.slice(0, 5).join(', ')}${data.detailedLeaks.socialNetworks.length > 5 ? ` и других` : ''}`)
     priorityActions.push('Смена паролей в соцсетях')
   }
   
   if (data.detailedLeaks.sitesWithPasswords.length > 0) {
-    recommendations.push(`🔐 Найдены скомпрометированные пароли от сайтов: ${data.detailedLeaks.sitesWithPasswords.join(', ')}. Смените их немедленно!`)
+    recommendations.push(`🔐 Найдены скомпрометированные пароли от сайтов: ${data.detailedLeaks.sitesWithPasswords.slice(0, 5).join(', ')}${data.detailedLeaks.sitesWithPasswords.length > 5 ? ` и еще ${data.detailedLeaks.sitesWithPasswords.length - 5}` : ''}. Смените их немедленно!`)
+  }
+  
+  if (data.detailedLeaks.compromisedSites.length > 0) {
+    recommendations.push(`🌐 Обнаружены утечки с сайтов: ${data.detailedLeaks.compromisedSites.slice(0, 5).join(', ')}${data.detailedLeaks.compromisedSites.length > 5 ? ` и еще ${data.detailedLeaks.compromisedSites.length - 5}` : ''}. Проверьте и смените пароли на этих ресурсах`)
   }
   
   if (data.detailedLeaks.emailsFound.length > 0) {
