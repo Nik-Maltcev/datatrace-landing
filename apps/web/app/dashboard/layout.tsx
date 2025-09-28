@@ -10,7 +10,6 @@ import {
   Search, 
   LogOut,
   Home,
-  Brain,
   Menu,
   X
 } from "lucide-react"
@@ -85,17 +84,6 @@ export default function DashboardLayout({
           >
             <Search className="h-4 w-4 mr-3" />
             Мои проверки
-          </Button>
-        </Link>
-
-        <Link href="/dashboard/ai-analysis">
-          <Button
-            variant={isActive('/dashboard/ai-analysis') ? "default" : "ghost"}
-            className={`w-full justify-start text-sm ${isActive('/dashboard/ai-analysis') ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <Brain className="h-4 w-4 mr-3" />
-            ИИ анализ
           </Button>
         </Link>
       </nav>
