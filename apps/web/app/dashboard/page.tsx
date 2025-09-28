@@ -51,6 +51,9 @@ export default function Dashboard() {
   const [paymentProcessed, setPaymentProcessed] = useState(false)
   const [transactionId, setTransactionId] = useState('')
   const [isCheckingTransaction, setIsCheckingTransaction] = useState(false)
+  const [passwordToCheck, setPasswordToCheck] = useState('')
+  const [passwordResult, setPasswordResult] = useState<any>(null)
+  const [isCheckingPassword, setIsCheckingPassword] = useState(false)
 
   // Обработка успешного платежа
   useEffect(() => {
@@ -267,6 +270,75 @@ export default function Dashboard() {
     setIsCheckingEmail(false)
   }
 
+  const handleCheckPassword = async () => {
+    if (isCheckingPassword) {
+      return
+    }
+
+    const password = passwordToCheck.trim()
+    if (!password) {
+      setPasswordResult({ ok: false, error: 'Введите пароль для проверки' })
+      return
+    }
+
+    if (!isPhoneVerified) {
+      setPasswordResult({ ok: false, error: 'Подтвердите номер телефона, чтобы воспользоваться проверкой.' })
+      return
+    }
+
+    const checksUsed = user?.checksUsed ?? 0
+    const checksLimit = user?.checksLimit ?? 0
+    if (Number.isFinite(checksLimit) && checksLimit >= 0 && checksUsed >= checksLimit) {
+      console.log('❌ Checks limit reached')
+      setPasswordResult({ ok: false, error: 'Вы использовали все доступные проверки по текущему тарифу.' })
+      return
+    }
+
+    setIsCheckingPassword(true)
+    setPasswordResult(null)
+
+    try {
+      const response = await fetch('/api/check-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: password,
+          userEmail: user?.email
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data?.ok) {
+        const message =
+          typeof data?.error === 'string'
+            ? data.error
+            : data?.error?.message ||
+              'Не удалось выполнить проверку. Попробуйте позже.'
+
+        setPasswordResult({
+          ok: false,
+          error: message,
+          code: data?.error?.code,
+        })
+        return
+      }
+
+      setPasswordResult(data)
+      updateUserChecks(checksUsed + 1)
+    } catch (error) {
+      console.error('Password check error:', error)
+      setPasswordResult({
+        ok: false,
+        error: 'Не удалось выполнить проверку. Попробуйте позже.'
+      })
+    } finally {
+      setIsCheckingPassword(false)
+    }
+  }
+
   const handleCheckEmailBreach = async () => {
     if (isCheckingEmailBreach) {
       return
@@ -441,7 +513,7 @@ export default function Dashboard() {
       </div>
 
       {/* Action Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
@@ -694,6 +766,114 @@ export default function Dashboard() {
                 ) : (
                   <p className="text-sm text-red-600">
                     {emailBreachResult.error || 'Не удалось выполнить проверку'}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Shield className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base sm:text-lg">Проверить пароль</CardTitle>
+                <p className="text-sm text-gray-500">DeHashed — поиск в утечках</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 mb-4">
+              <label className="text-sm text-gray-600" htmlFor="password-input">Пароль для проверки</label>
+              <input
+                id="password-input"
+                type="password"
+                value={passwordToCheck}
+                onChange={(e) => setPasswordToCheck(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="Введите пароль"
+              />
+            </div>
+            <Button
+              onClick={handleCheckPassword}
+              disabled={isCheckingPassword || !passwordToCheck.trim() || !isPhoneVerified}
+              className="w-full bg-red-600 hover:bg-red-700"
+            >
+              {isCheckingPassword ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Проверяю...
+                </>
+              ) : !isPhoneVerified ? (
+                'Подтвердите номер телефона'
+              ) : (
+                <>
+                  Проверить пароль
+                  <Shield className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+            {passwordResult && (
+              <div
+                className={`mt-3 p-4 rounded-lg border ${
+                  passwordResult.ok
+                    ? passwordResult.isCompromised
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-green-50 border-green-200'
+                    : 'bg-red-50 border-red-200'
+                }`}
+              >
+                {passwordResult.ok ? (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">
+                        {passwordResult.isCompromised ? (
+                          <>
+                            <AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" />
+                            Пароль скомпрометирован!
+                          </>
+                        ) : (
+                          'Пароль в безопасности'
+                        )}
+                      </p>
+                      {passwordResult.isCompromised && (
+                        <Badge variant="destructive" className="text-xs">
+                          {passwordResult.breachCount || 0} записей
+                        </Badge>
+                      )}
+                    </div>
+                    {passwordResult.message && (
+                      <p className="text-sm text-gray-700 mb-3">{passwordResult.message}</p>
+                    )}
+                    {passwordResult.databases && passwordResult.databases.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs font-medium text-gray-600">Найден в базах данных:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {passwordResult.databases.map((db: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-xs text-red-600 border-red-300">
+                              {db}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {passwordResult.recommendations && (
+                      <div className="mt-3 space-y-1">
+                        <p className="text-xs font-medium text-gray-600">Рекомендации:</p>
+                        <div className="space-y-1">
+                          {passwordResult.recommendations.slice(0, 3).map((rec: string, index: number) => (
+                            <p key={index} className="text-xs text-gray-700">{rec}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-red-600">
+                    {passwordResult.error || 'Не удалось выполнить проверку'}
                   </p>
                 )}
               </div>
