@@ -558,9 +558,7 @@ export default function DataTraceLanding() {
         </div>
       </section>
 
-      <div className="mt-24">
-        <DataFlowShowcaseLight />
-      </div>
+      <DataFlowShowcaseLight />
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20">
