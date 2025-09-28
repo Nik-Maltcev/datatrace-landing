@@ -204,7 +204,7 @@ function DataFlowShowcaseLight() {
 
 
 export default function DataTraceLanding() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
