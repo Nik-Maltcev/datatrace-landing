@@ -226,19 +226,12 @@ export default function PaymentSuccessPage() {
           {isLoading ? (
             <p className="text-sm text-gray-500">Это может занять несколько секунд. Не закрывайте вкладку.</p>
           ) : (
-            <div className="space-y-3">
-              <Link href="/dashboard">
-                <Button className="w-full bg-black text-white hover:bg-gray-800">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Перейти в личный кабинет
-                </Button>
-              </Link>
-              <Link href="/">
-                <Button variant="outline" className="w-full">
-                  На главную
-                </Button>
-              </Link>
-            </div>
+            <Link href="/dashboard">
+              <Button className="w-full bg-black text-white hover:bg-gray-800">
+                <Zap className="h-4 w-4 mr-2" />
+                Перейти в личный кабинет
+              </Button>
+            </Link>
           )}
         </CardContent>
       </Card>
