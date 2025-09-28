@@ -880,9 +880,9 @@ export default function ChecksPage() {
         </CardContent>
       </Card>
 
-      {/* Графики и аналитика */}
+      {/* Графики и аналитика НАД блоком истории проверок */}
       {analytics && totalChecks > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Data Types Breakdown */}
           {analytics.dataTypeBreakdown.length > 0 && (
             <Card>
@@ -934,39 +934,6 @@ export default function ChecksPage() {
                     <Tooltip />
                     <Line type="monotone" dataKey="leaks" stroke="#ef4444" strokeWidth={2} />
                   </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Source Breakdown */}
-          {analytics.sourceBreakdown.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="h-5 w-5 mr-2 text-purple-600" />
-                  Распределение по источникам
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={analytics.sourceBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {analytics.sourceBreakdown.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
