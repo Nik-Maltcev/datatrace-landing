@@ -247,13 +247,77 @@ export default function ChecksPage() {
     }))
 
     const trends = generateTrendData()
+    const dataTypeBreakdown = generateDataTypeBreakdown()
 
     setAnalytics({
       totalLeaks,
       compromisedSources,
       sourceBreakdown,
-      trends
+      trends,
+      dataTypeBreakdown
     })
+  }
+
+  const generateDataTypeBreakdown = () => {
+    const dataTypes: { [key: string]: number } = {
+      'Email': 0,
+      'Телефон': 0,
+      'Банковская карта': 0,
+      'Адрес': 0,
+      'Паспорт': 0,
+      'Другое': 0
+    }
+
+    checks.forEach(check => {
+      check.results.forEach(result => {
+        if (!result.found || !result.items) return
+
+        // Анализируем данные в зависимости от типа проверки и содержимого
+        if (check.type === 'email_breach' && result.items.result) {
+          result.items.result.forEach((item: any) => {
+            if (item.email) dataTypes['Email'] += 1
+            if (item.password) dataTypes['Другое'] += 1
+          })
+        } else if (check.type === 'phone') {
+          dataTypes['Телефон'] += result.count || 0
+        } else if (check.type === 'email') {
+          dataTypes['Email'] += result.count || 0
+        }
+
+        // Анализируем содержимое items для определения типов данных
+        if (Array.isArray(result.items)) {
+          result.items.forEach((item: any) => {
+            if (item.email) dataTypes['Email'] += 1
+            if (item.phone) dataTypes['Телефон'] += 1
+            if (item.address) dataTypes['Адрес'] += 1
+            if (item.passport || item.passport_number) dataTypes['Паспорт'] += 1
+            if (item.card_number || item.bank_card) dataTypes['Банковская карта'] += 1
+            if (item.name && !item.email && !item.phone) dataTypes['Другое'] += 1
+          })
+        } else if (result.data && typeof result.data === 'object') {
+          Object.values(result.data).forEach((dbRecords: any) => {
+            if (Array.isArray(dbRecords)) {
+              dbRecords.forEach((record: any) => {
+                if (record.email) dataTypes['Email'] += 1
+                if (record.phone) dataTypes['Телефон'] += 1
+                if (record.address) dataTypes['Адрес'] += 1
+                if (record.passport || record.passport_number) dataTypes['Паспорт'] += 1
+                if (record.card_number || record.bank_card) dataTypes['Банковская карта'] += 1
+                if (record.name && !record.email && !record.phone) dataTypes['Другое'] += 1
+              })
+            }
+          })
+        }
+      })
+    })
+
+    return Object.entries(dataTypes)
+      .filter(([_, value]) => value > 0)
+      .map(([name, value], idx) => ({
+        name,
+        value,
+        color: COLORS[idx % COLORS.length]
+      }))
   }
 
   const generateTrendData = () => {
@@ -818,7 +882,40 @@ export default function ChecksPage() {
 
       {/* Графики и аналитика */}
       {analytics && totalChecks > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Data Types Breakdown */}
+          {analytics.dataTypeBreakdown.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-green-600" />
+                  Типы скомпрометированных данных
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={analytics.dataTypeBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {analytics.dataTypeBreakdown.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Trends Chart */}
           {analytics.trends.length > 0 && (
             <Card>
