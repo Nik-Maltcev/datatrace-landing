@@ -129,13 +129,13 @@ function DataFlowShowcaseLight() {
             <div className="absolute h-[220px] w-[220px] sm:h-[280px] sm:w-[280px] md:h-[320px] md:w-[320px] lg:h-[340px] lg:w-[340px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
             <div className="absolute h-[280px] w-[280px] sm:h-[340px] sm:w-[340px] md:h-[380px] md:w-[380px] lg:h-[420px] lg:w-[420px] rounded-full border border-emerald-200/70 blur-sm" />
             <div className="absolute h-[320px] w-[320px] sm:h-[380px] sm:w-[380px] md:h-[420px] md:w-[420px] lg:h-[480px] lg:w-[480px] rounded-full border border-emerald-100/60" />
-            <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/50 bg-white">
-                <ShieldCheck className="h-10 w-10 text-emerald-400" strokeWidth={1.3} />
+            <div className="relative z-10 flex flex-col items-center gap-3 text-center px-4 sm:px-6">
+              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border border-emerald-400/50 bg-white">
+                <ShieldCheck className="h-8 w-8 sm:h-10 sm:w-10 text-emerald-400" strokeWidth={1.3} />
               </div>
-              <p className="text-[11px] uppercase tracking-[0.5em] text-emerald-500/70">datatrace</p>
-              <p className="text-base font-semibold text-slate-900">Этичное удаление</p>
-              <div className="mt-4 grid gap-1 text-[11px] text-slate-500">
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.4em] sm:tracking-[0.5em] text-emerald-500/70">datatrace</p>
+              <p className="text-sm sm:text-base font-semibold text-slate-900">Этичное удаление</p>
+              <div className="mt-2 sm:mt-4 grid gap-1 text-[9px] sm:text-[11px] text-slate-500 max-w-[180px] sm:max-w-none">
                 <p>Журнал действий • Шифрование • SLA 24/7</p>
                 <p>Контроль повторных появлений</p>
               </div>
