@@ -1028,17 +1028,15 @@ export default function ChecksPage() {
               
               <div className="p-4 bg-white rounded-lg border border-purple-200">
                 <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                  <Brain className="h-4 w-4 mr-2 text-purple-500" />
-                  ИИ рекомендации
+                  <Shield className="h-4 w-4 mr-2 text-purple-500" />
+                  Консультация специалиста
                 </h4>
                 <p className="text-sm text-gray-600 mb-3">
-                  Получите персональные рекомендации от ИИ
+                  Получить консультацию специалиста по кибербезопасности
                 </p>
-                <Link href="/dashboard/ai-analysis">
-                  <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
-                    Получить рекомендации
-                  </Button>
-                </Link>
+                <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
+                  Связаться со специалистом
+                </Button>
               </div>
             </div>
           </CardContent>
