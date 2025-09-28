@@ -538,26 +538,20 @@ export default function DataTraceLanding() {
               <CardContent className="p-8">
                 <div className="text-4xl font-bold text-black mb-4">01</div>
                 <h3 className="text-2xl font-bold text-black mb-6">Аналитический модуль</h3>
-                <p className="text-gray-700 mb-8">
+                <p className="text-gray-700">
                   Аналитический модуль DataTrace ищет утечки персональных данных по всем доступным источникам и
                   предоставляет возможность их полного удаления с последующим мониторингом.
                 </p>
-                <Button variant="ghost" className="text-black hover:bg-black hover:text-white p-0">
-                  УЗНАТЬ БОЛЬШЕ <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
               </CardContent>
             </Card>
             <Card className="border-2 border-gray-200 hover:border-black transition-colors">
               <CardContent className="p-8">
                 <div className="text-4xl font-bold text-black mb-4">02</div>
-                <h3 className="text-2xl font-bold text-black mb-6"> модуль</h3>
-                <p className="text-gray-700 mb-8">
-                   модуль DataTrace анализирует репутацию в интернете на основе больших данных, предоставляя
+                <h3 className="text-2xl font-bold text-black mb-6">ИИ модуль</h3>
+                <p className="text-gray-700">
+                  ИИ модуль DataTrace анализирует репутацию в интернете на основе больших данных, предоставляя
                   комплексную оценку цифрового следа и репутационных рисков.
                 </p>
-                <Button variant="ghost" className="text-black hover:bg-black hover:text-white p-0">
-                  УЗНАТЬ БОЛЬШЕ <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
               </CardContent>
             </Card>
           </div>
