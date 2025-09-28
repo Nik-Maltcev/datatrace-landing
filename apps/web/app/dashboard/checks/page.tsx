@@ -28,8 +28,11 @@ import {
   TrendingUp,
   Clock,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  BarChart3,
+  Calendar
 } from "lucide-react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useEffect, useState } from "react"
 import Link from "next/link"
 
@@ -61,6 +64,9 @@ export default function ChecksPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteInstructionsOpen, setDeleteInstructionsOpen] = useState(false)
   const [selectedSourceForDeletion, setSelectedSourceForDeletion] = useState<string>('')
+  const [analytics, setAnalytics] = useState<any>(null)
+
+  const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
 
   const getTypeMeta = (type: CheckHistory['type']) => {
     switch (type) {
@@ -148,6 +154,12 @@ export default function ChecksPage() {
     }
   }, [user])
 
+  useEffect(() => {
+    if (checks.length > 0) {
+      generateAnalytics()
+    }
+  }, [checks])
+
   const loadCheckHistory = async () => {
     if (!user?.email) {
       setIsLoading(false)
@@ -213,6 +225,48 @@ export default function ChecksPage() {
                     passwordChecks.reduce((sum, check) => sum + (check.results?.DeHashed?.count || 0), 0)
   const successfulChecks = checks.filter(check => check.status === 'completed').length + passwordChecks.length
   const compromisedSources = getCompromisedSources()
+
+  const generateAnalytics = () => {
+    const totalLeaks = checks.reduce((sum, check) => 
+      sum + check.results.reduce((s, r) => s + (r.count || 0), 0), 0
+    )
+    
+    const compromisedSources = Array.from(new Set(
+      checks.flatMap(check => 
+        check.results.filter(r => r.found).map(r => r.source || r.name)
+      )
+    ))
+
+    const sourceBreakdown = compromisedSources.map((source, idx) => ({
+      name: source,
+      value: checks.reduce((sum, check) => {
+        const sourceResult = check.results.find(r => (r.source || r.name) === source)
+        return sum + (sourceResult?.count || 0)
+      }, 0),
+      color: COLORS[idx % COLORS.length]
+    }))
+
+    const trends = generateTrendData()
+
+    setAnalytics({
+      totalLeaks,
+      compromisedSources,
+      sourceBreakdown,
+      trends
+    })
+  }
+
+  const generateTrendData = () => {
+    const monthlyData: { [key: string]: number } = {}
+    
+    checks.forEach(check => {
+      const month = new Date(check.date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short' })
+      const leaks = check.results.reduce((sum, r) => sum + (r.count || 0), 0)
+      monthlyData[month] = (monthlyData[month] || 0) + leaks
+    })
+
+    return Object.entries(monthlyData).map(([month, leaks]) => ({ month, leaks }))
+  }
 
   if (!user) {
     return (
@@ -762,6 +816,67 @@ export default function ChecksPage() {
         </CardContent>
       </Card>
 
+      {/* Графики и аналитика */}
+      {analytics && totalChecks > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Trends Chart */}
+          {analytics.trends.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                  Динамика утечек по месяцам
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={analytics.trends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="leaks" stroke="#ef4444" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Source Breakdown */}
+          {analytics.sourceBreakdown.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-purple-600" />
+                  Распределение по источникам
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={analytics.sourceBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {analytics.sourceBreakdown.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* Быстрые действия */}
       {totalChecks > 0 && (
         <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
@@ -850,14 +965,14 @@ export default function ChecksPage() {
               <div className="p-4 bg-white rounded-lg border border-purple-200">
                 <h4 className="font-medium text-gray-900 mb-2 flex items-center">
                   <Brain className="h-4 w-4 mr-2 text-purple-500" />
-                  ИИ анализ
+                  ИИ рекомендации
                 </h4>
                 <p className="text-sm text-gray-600 mb-3">
-                  Получите персональные рекомендации по безопасности
+                  Получите персональные рекомендации от ИИ
                 </p>
                 <Link href="/dashboard/ai-analysis">
                   <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
-                    Запустить анализ
+                    Получить рекомендации
                   </Button>
                 </Link>
               </div>
