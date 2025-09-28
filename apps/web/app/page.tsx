@@ -782,12 +782,21 @@ export default function DataTraceLanding() {
               <h4 className="font-bold mb-4">КОМПАНЯ</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white">
+                  <Link href="/blog" className="hover:text-white">
                     Блог
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white">
+                  <Link 
+                    href="#contacts" 
+                    className="hover:text-white"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('contacts')?.scrollIntoView({ 
+                        behavior: 'smooth' 
+                      });
+                    }}
+                  >
                     Контакты
                   </Link>
                 </li>
@@ -797,12 +806,30 @@ export default function DataTraceLanding() {
               <h4 className="font-bold mb-4">РЕШЕНИЯ</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link href="#" className="hover:text-white">
+                  <Link 
+                    href="#solutions" 
+                    className="hover:text-white"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('solutions')?.scrollIntoView({ 
+                        behavior: 'smooth' 
+                      });
+                    }}
+                  >
                     Обнаружение и удаление скомпрометированной личной информации
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-white">
+                  <Link 
+                    href="#solutions" 
+                    className="hover:text-white"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('solutions')?.scrollIntoView({ 
+                        behavior: 'smooth' 
+                      });
+                    }}
+                  >
                     Мониторинг глубинного интернета и даркнета
                   </Link>
                 </li>
