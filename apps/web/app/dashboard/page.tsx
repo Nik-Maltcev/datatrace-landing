@@ -281,10 +281,7 @@ export default function Dashboard() {
       return
     }
 
-    if (!isPhoneVerified) {
-      setPasswordResult({ ok: false, error: 'Подтвердите номер телефона, чтобы воспользоваться проверкой.' })
-      return
-    }
+
 
     const checksUsed = user?.checksUsed ?? 0
     const checksLimit = user?.checksLimit ?? 0
@@ -350,10 +347,7 @@ export default function Dashboard() {
       return
     }
 
-    if (!isPhoneVerified) {
-      setEmailBreachResult({ ok: false, error: 'Подтвердите номер телефона, чтобы воспользоваться проверкой.' })
-      return
-    }
+
 
     const checksUsed = user?.checksUsed ?? 0
     const checksLimit = user?.checksLimit ?? 0
@@ -626,7 +620,7 @@ export default function Dashboard() {
             </div>
             <Button
               onClick={handleCheckEmailBreach}
-              disabled={isCheckingEmailBreach || !breachEmail.trim() || !isPhoneVerified}
+              disabled={isCheckingEmailBreach || !breachEmail.trim()}
               className="w-full bg-purple-600 hover:bg-purple-700"
             >
               {isCheckingEmailBreach ? (
@@ -634,8 +628,6 @@ export default function Dashboard() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
                 </>
-              ) : !isPhoneVerified ? (
-                'Подтвердите номер телефона'
               ) : (
                 <>
                   Проверить на взлом
@@ -799,7 +791,7 @@ export default function Dashboard() {
             </div>
             <Button
               onClick={handleCheckPassword}
-              disabled={isCheckingPassword || !passwordToCheck.trim() || !isPhoneVerified}
+              disabled={isCheckingPassword || !passwordToCheck.trim()}
               className="w-full bg-red-600 hover:bg-red-700"
             >
               {isCheckingPassword ? (
@@ -807,8 +799,6 @@ export default function Dashboard() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Проверяю...
                 </>
-              ) : !isPhoneVerified ? (
-                'Подтвердите номер телефона'
               ) : (
                 <>
                   Проверить пароль
