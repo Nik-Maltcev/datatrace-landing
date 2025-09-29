@@ -239,11 +239,25 @@ export function useAuth() {
     clearAuth()
   }
 
-  const updateUserChecks = (checksUsed: number) => {
+  const updateUserChecks = async (checksUsed: number) => {
     if (user) {
       const updatedUser = { ...user, checksUsed }
       setUser(updatedUser)
       localStorage.setItem("user", JSON.stringify(updatedUser))
+      
+      try {
+        await fetch('/api/user-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            plan: user.plan,
+            checksLimit: user.checksLimit
+          })
+        })
+      } catch (error) {
+        console.error('Failed to update checks in database:', error)
+      }
     }
   }
 
