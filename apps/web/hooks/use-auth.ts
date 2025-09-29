@@ -252,7 +252,8 @@ export function useAuth() {
           body: JSON.stringify({
             email: user.email,
             plan: user.plan,
-            checksLimit: user.checksLimit
+            checksLimit: user.checksLimit,
+            checksUsed: checksUsed
           })
         })
       } catch (error) {

@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
       .update({
         plan: resolvedPlan,
         checks_limit: finalChecksLimit,
+        checks_used: body.checksUsed || 0,
         updated_at: new Date().toISOString()
       });
     
