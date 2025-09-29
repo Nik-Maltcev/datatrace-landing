@@ -157,7 +157,7 @@ export function BlogLanding({ posts }: BlogLandingProps) {
                 className="w-full rounded-2xl border border-emerald-500 bg-emerald-50 p-4 text-xs uppercase tracking-[0.3em] text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
-                {isGenerating ? 'Генерируем новости...' : 'Сгенерировать актуальные новости'}
+                {isGenerating ? 'Генерируем новости...' : 'Получить свежие новости об утечках'}
               </button>
             </div>
           </div>
