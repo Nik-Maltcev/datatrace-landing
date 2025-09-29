@@ -14,11 +14,31 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { plan, userId, userEmail } = body;
+    const { plan, userId, userEmail, promoCode } = body;
 
     console.log('Payment creation request:', { plan, userId, userEmail });
 
-    // Определяем сумму по тарифу
+    // Проверяем промокод и используем готовые ссылки
+    if (promoCode === 'DATATRACE25') {
+      const promoLinks = {
+        basic: 'https://self.payanyway.ru/17591628606561',
+        'professional-6': 'https://self.payanyway.ru/17591629735214',
+        'professional-12': 'https://self.payanyway.ru/17591630893195'
+      };
+      
+      const paymentUrl = promoLinks[plan as keyof typeof promoLinks];
+      if (paymentUrl) {
+        return NextResponse.json({
+          ok: true,
+          paymentUrl,
+          transactionId: `promo_${Date.now()}`,
+          amount: 0, // Сумма со скидкой
+          promoApplied: true
+        });
+      }
+    }
+
+    // Обычная логика без промокода
     const planPrices = {
       basic: 500,
       professional: 5000
@@ -32,13 +52,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Создаем уникальный ID транзакции
     const transactionId = paymentService.createTransactionId(
       `plan_${plan}`,
       userId
     );
 
-    // Параметры для создания ссылки на оплату
     const paymentParams = {
       amount,
       transactionId,
@@ -48,14 +66,14 @@ export async function POST(request: NextRequest) {
       failUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`
     };
 
-    // Создаем ссылку на оплату
     const paymentUrl = paymentService.createPaymentUrl(paymentParams);
 
     return NextResponse.json({
       ok: true,
       paymentUrl,
       transactionId,
-      amount
+      amount,
+      promoApplied: false
     });
 
   } catch (error) {
