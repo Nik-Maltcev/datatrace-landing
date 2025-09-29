@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Определяем сумму по тарифу
     const planPrices = {
       basic: 500,
-      professional: 10 // Сделаем 10 рублей для тестирования
+      professional: 5000
     };
 
     const amount = planPrices[plan as keyof typeof planPrices];
