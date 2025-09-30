@@ -31,7 +31,7 @@ const DATA_FLOW_SOURCES = [
   {
     code: 'SRC-01',
     label: 'Телеграм-боты',
-    description: 'Боты-агрегаторы, где появляются свежие сливы и обсуждения.'
+    description: 'Боты-агрегаторы, где появляются свежие сливы личной информации и закрытые форумы.'
   },
   {
     code: 'SRC-02',
@@ -41,12 +41,12 @@ const DATA_FLOW_SOURCES = [
   {
     code: 'SRC-03',
     label: 'Даркнет-форумы',
-    description: 'Мониторинг закрытых площадок с нелегальными продажами и обсуждениями.'
+    description: 'Мониторинг закрытых площадок с нелегальной продажей украденной информации.'
   },
   {
     code: 'SRC-04',
     label: 'Партнёры по кибербезопасности',
-    description: 'Этичный обмен сигналами с вендорами и подтверждение инцидентов.'
+    description: 'Обмен данными с вендорами и подтверждение инцидентов.'
   }
 ];
 
@@ -54,7 +54,7 @@ const DATA_FLOW_DESTINATIONS = [
   {
     code: 'ACT-01',
     label: 'Точечное удаление',
-    description: 'Обратная связь владельцам источников и контроль заявок на деиндексацию.'
+    description: 'Обратная связь владельцам источников и контроль заявок на удаление или деиндексацию.'
   },
   {
     code: 'ACT-02',
@@ -63,18 +63,18 @@ const DATA_FLOW_DESTINATIONS = [
   },
   {
     code: 'ACT-03',
-    label: 'Защита следа',
-    description: 'Рекомендации по усилению защиты, ротации ключей и политик.'
+    label: 'Защита цифрового следа',
+    description: 'Рекомендации по усилению защиты, ротации идентифицирующей информации и смене паролей.'
   },
   {
     code: 'ACT-04',
-    label: 'Мониторинг повторов',
-    description: 'Автоматические проверки на повторное появление данных и их блокировку.'
+    label: 'Мониторинг повторных утечек информации',
+    description: 'Автоматические проверки на повторное появление данных и их удаление или деиндексация.'
   }
 ];
 
 const DATA_FLOW_LEGEND = [
-  'Этичная проверка',
+  'Легитимная проверка',
   'Аналитика DataTrace',
   'Удаление и контроль'
 ];
@@ -96,7 +96,7 @@ function DataFlowShowcaseLight() {
       <div className="relative container mx-auto px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-3xl text-center space-y-6">
           <span className="inline-flex items-center justify-center rounded-full border border-emerald-300/80 bg-white/70 px-5 py-1 text-[11px] uppercase tracking-[0.45em] text-emerald-600 shadow-[0_8px_20px_rgba(34,197,94,0.15)]">
-            этичное удаление
+            легитимное удаление
           </span>
           <h2 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
             Понимаем, откуда приходят утечки, и бережно закрываем их источники
@@ -134,10 +134,10 @@ function DataFlowShowcaseLight() {
                 <ShieldCheck className="h-8 w-8 sm:h-10 sm:w-10 text-emerald-400" strokeWidth={1.3} />
               </div>
               <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.4em] sm:tracking-[0.5em] text-emerald-500/70">datatrace</p>
-              <p className="text-sm sm:text-base font-semibold text-slate-900">Этичное удаление</p>
+              <p className="text-sm sm:text-base font-semibold text-slate-900">Легитимное удаление</p>
               <div className="mt-2 sm:mt-4 grid gap-1 text-[9px] sm:text-[11px] text-slate-500 max-w-[180px] sm:max-w-none">
-                <p>Журнал действий • Шифрование • SLA 24/7</p>
-                <p>Контроль повторных появлений</p>
+                <p>Журнал проверок • Шифрование</p>
+                <p>Контроль повторных утечек</p>
               </div>
             </div>
           </div>
