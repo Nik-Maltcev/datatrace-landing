@@ -126,7 +126,7 @@ function DataFlowShowcaseLight() {
           </div>
 
           <div className="relative flex w-full items-center justify-center min-h-[260px] sm:min-h-[320px] md:min-h-[360px] lg:min-h-[420px]">
-            <div className="absolute h-[220px] w-[220px] sm:h-[280px] sm:w-[280px] md:h-[320px] md:w-[320px] lg:h-[340px] lg:w-[340px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
+            <div className="absolute h-[200px] w-[200px] sm:h-[240px] sm:w-[240px] md:h-[280px] md:w-[280px] lg:h-[300px] lg:w-[300px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
             <div className="absolute h-[280px] w-[280px] sm:h-[340px] sm:w-[340px] md:h-[380px] md:w-[380px] lg:h-[420px] lg:w-[420px] rounded-full border border-emerald-200/70 blur-sm" />
             <div className="absolute h-[320px] w-[320px] sm:h-[380px] sm:w-[380px] md:h-[420px] md:w-[420px] lg:h-[480px] lg:w-[480px] rounded-full border border-emerald-100/60" />
             <div className="relative z-10 flex flex-col items-center gap-3 text-center px-4 sm:px-6">
