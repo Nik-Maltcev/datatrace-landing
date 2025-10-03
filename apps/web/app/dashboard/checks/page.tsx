@@ -32,7 +32,7 @@ import {
   BarChart3,
   Calendar
 } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useEffect, useState } from "react"
 import Link from "next/link"
 
@@ -246,14 +246,14 @@ export default function ChecksPage() {
       color: COLORS[idx % COLORS.length]
     }))
 
-    const trends = generateTrendData()
+    const databaseBreakdown = generateDatabaseBreakdown()
     const dataTypeBreakdown = generateDataTypeBreakdown()
 
     setAnalytics({
       totalLeaks,
       compromisedSources,
       sourceBreakdown,
-      trends,
+      databaseBreakdown,
       dataTypeBreakdown
     })
   }
@@ -358,16 +358,29 @@ export default function ChecksPage() {
       }))
   }
 
-  const generateTrendData = () => {
-    const monthlyData: { [key: string]: number } = {}
+  const generateDatabaseBreakdown = () => {
+    const databases: { [key: string]: number } = {}
     
     checks.forEach(check => {
-      const month = new Date(check.date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short' })
-      const leaks = check.results.reduce((sum, r) => sum + (r.count || 0), 0)
-      monthlyData[month] = (monthlyData[month] || 0) + leaks
+      check.results.forEach(result => {
+        if (!result.found || !result.data) return
+        
+        // Парсим базы данных из result.data
+        if (typeof result.data === 'object') {
+          Object.keys(result.data).forEach(dbName => {
+            const records = result.data[dbName]
+            const count = Array.isArray(records) ? records.length : 0
+            databases[dbName] = (databases[dbName] || 0) + count
+          })
+        }
+      })
     })
 
-    return Object.entries(monthlyData).map(([month, leaks]) => ({ month, leaks }))
+    // Сортируем по количеству и берем топ-10
+    return Object.entries(databases)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }))
   }
 
   if (!user) {
@@ -954,24 +967,24 @@ export default function ChecksPage() {
             </Card>
           )}
 
-          {/* Trends Chart */}
-          {analytics.trends.length > 0 && (
+          {/* Database Breakdown Chart */}
+          {analytics.databaseBreakdown.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
-                  Динамика утечек по месяцам
+                  Топ баз данных с утечками
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analytics.trends}>
+                  <BarChart data={analytics.databaseBreakdown} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={150} style={{ fontSize: '11px' }} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="leaks" stroke="#ef4444" strokeWidth={2} />
-                  </LineChart>
+                    <Bar dataKey="count" fill="#3b82f6" />
+                  </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
