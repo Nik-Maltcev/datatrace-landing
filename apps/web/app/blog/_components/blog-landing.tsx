@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { PT_Mono } from "next/font/google"
-import { CalendarDays, Clock, ArrowUpRight, Check, Sparkle, Newspaper, RefreshCw } from "lucide-react"
+import { CalendarDays, Clock, ArrowUpRight, Check, Sparkle, Newspaper, RefreshCw, Menu, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,8 @@ export function BlogLanding({ posts }: BlogLandingProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedPosts, setGeneratedPosts] = useState<BlogPost[]>([])
   const [showGenerated, setShowGenerated] = useState(false)
+  const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   const currentPosts = showGenerated ? generatedPosts : posts
   
@@ -97,26 +99,139 @@ export function BlogLanding({ posts }: BlogLandingProps) {
         <div className="absolute left-[-120px] top-1/2 h-[280px] w-[280px] rounded-full bg-emerald-400/10 blur-[160px]" />
       </div>
 
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-          <Link href="/" className="flex items-center">
-            <Image 
-              src="/image-removebg-preview.png" 
-              alt="DataTrace" 
-              width={200} 
-              height={60} 
-              className="h-14"
-            />
-          </Link>
-          <div className="flex items-center gap-4 text-xs uppercase tracking-[0.35em] text-slate-600">
-            <Link href="/" className="hover:text-emerald-600">
-              Главная
-            </Link>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-50 px-3 py-1 text-emerald-700">
-              <Newspaper className="h-3.5 w-3.5" /> Блог
-            </span>
+      <header className="border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center">
+              <Image
+                src="/image-removebg-preview.png"
+                alt="DataTrace"
+                width={200}
+                height={60} 
+                className="h-14"
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link href="/" className="text-sm font-medium text-gray-700 hover:text-black">
+                  ГЛАВНАЯ
+                </Link>
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowSolutionsDropdown(true)}
+                  onMouseLeave={() => setShowSolutionsDropdown(false)}
+                >
+                  <button className="text-sm font-medium text-gray-700 hover:text-black flex items-center">
+                    РЕШЕНИЯ
+                    <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showSolutionsDropdown && (
+                    <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                      <div className="py-2">
+                        <Link 
+                          href="/#solutions" 
+                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black border-b border-gray-100"
+                          onClick={() => setShowSolutionsDropdown(false)}
+                        >
+                          Обнаружение и удаление скомпрометированной личной информации
+                        </Link>
+                        <Link 
+                          href="/#solutions" 
+                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
+                          onClick={() => setShowSolutionsDropdown(false)}
+                        >
+                          Мониторинг глубинного интернета и даркнета
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Link 
+                  href="/#pricing" 
+                  className="text-sm font-medium text-gray-700 hover:text-black"
+                >
+                  ТАРИФЫ
+                </Link>
+                <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-black">
+                  БЛОГ
+                </Link>
+                <Link 
+                  href="/#contacts" 
+                  className="text-sm font-medium text-gray-700 hover:text-black"
+                >
+                  КОНТАКТЫ
+                </Link>
+              </nav>
+              <Button
+                asChild
+                variant="outline"
+                className="hidden sm:flex border-black text-black hover:bg-black hover:text-white bg-transparent"
+              >
+                <Link href="/dashboard">ЛИЧНЫЙ КАБИНЕТ</Link>
+              </Button>
+              <Button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                variant="outline"
+                size="sm"
+                className="md:hidden border-black text-black hover:bg-black hover:text-white bg-transparent"
+              >
+                {showMobileMenu ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
+        
+        {/* Mobile Menu */}
+        {showMobileMenu && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 py-4 space-y-4">
+              <Link 
+                href="/" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                ГЛАВНАЯ
+              </Link>
+              <Link 
+                href="/#solutions" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                РЕШЕНИЯ
+              </Link>
+              <Link 
+                href="/#pricing" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                ТАРИФЫ
+              </Link>
+              <Link 
+                href="/blog" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                БЛОГ
+              </Link>
+              <Link 
+                href="/#contacts" 
+                className="block text-sm font-medium text-gray-700 hover:text-black"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                КОНТАКТЫ
+              </Link>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full border-black text-black hover:bg-black hover:text-white bg-transparent"
+              >
+                <Link href="/dashboard" onClick={() => setShowMobileMenu(false)}>ЛИЧНЫЙ КАБИНЕТ</Link>
+              </Button>
+            </div>
+          </div>
+        )}
       </header>
 
       <main>
