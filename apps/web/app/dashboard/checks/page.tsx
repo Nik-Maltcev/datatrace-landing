@@ -259,21 +259,21 @@ export default function ChecksPage() {
   }
 
   const generateDataTypeBreakdown = () => {
-    const dataTypes: { [key: string]: Set<string> } = {
-      'Email': new Set(),
-      'Номер телефона': new Set(),
-      'Номер банковской карты': new Set(),
-      'Адрес проживания': new Set(),
-      'Паспорт': new Set(),
-      'ИНН': new Set(),
-      'СНИЛС': new Set()
+    const dataTypes: { [key: string]: number } = {
+      'Email': 0,
+      'Номер телефона': 0,
+      'Номер банковской карты': 0,
+      'Адрес проживания': 0,
+      'Паспорт': 0,
+      'ИНН': 0,
+      'СНИЛС': 0
     }
 
     const analyzeRecord = (record: any) => {
       // Email - проверяем все возможные варианты
       const emailValue = record['Адрес электронной почты'] || record.email || record.Email || record.EMAIL
       if (emailValue && String(emailValue).includes('@')) {
-        dataTypes['Email'].add(String(emailValue).toLowerCase())
+        dataTypes['Email']++
       }
       
       // Телефон - проверяем все возможные варианты
@@ -281,45 +281,43 @@ export default function ChecksPage() {
       if (phoneValue) {
         const cleanPhone = String(phoneValue).replace(/\D/g, '')
         if (cleanPhone.length >= 10) {
-          dataTypes['Номер телефона'].add(cleanPhone)
+          dataTypes['Номер телефона']++
         }
       }
       
       // Банковская карта
       const cardValue = record['Номер банковской карты'] || record.card_number || record.bank_card || record.card || record.cardnumber || record.cards
       if (cardValue) {
-        // Если это строка с несколькими картами, разбиваем
-        String(cardValue).split(',').forEach(c => {
-          const cleaned = c.trim().replace(/\s/g, '')
-          // Проверяем что это похоже на номер карты (от 13 до 19 цифр)
-          if (cleaned && /^\d{13,19}$/.test(cleaned)) {
-            dataTypes['Номер банковской карты'].add(cleaned)
+        // Если это строка с несколькими картами, считаем каждую
+        const cards = String(cardValue).split(',')
+        cards.forEach(c => {
+          const cleaned = c.trim().replace(/\s/g, '').replace(/\*/g, '')
+          // Проверяем что это похоже на номер карты (от 13 до 19 цифр или замаскированный)
+          if (cleaned && (/^\d{13,19}$/.test(cleaned) || /^\d{6}\*+\d{4}$/.test(cleaned))) {
+            dataTypes['Номер банковской карты']++
           }
         })
       }
       
       // Адрес
       if (record['Адрес проживания/доставки'] || record.address || record.addr || record.street || record.city || record['Город']) {
-        const addrValue = record['Адрес проживания/доставки'] || record.address || record.addr || 
-                         (record.street ? `${record.city || record['Город'] || ''} ${record.street}` : record.city || record['Город'])
-        if (addrValue) dataTypes['Адрес проживания'].add(String(addrValue))
+        dataTypes['Адрес проживания']++
       }
       
       // Паспорт
       if (record.passport || record.passport_number || record.passport_series || 
           record.passport_date || record.passport_give || record.passport_subdivision) {
-        const passportValue = `${record.passport_series || ''}${record.passport_number || ''}${record.passport || ''}`
-        if (passportValue) dataTypes['Паспорт'].add(passportValue)
+        dataTypes['Паспорт']++
       }
       
       // ИНН
       if (record['ИНН'] || record.inn) {
-        dataTypes['ИНН'].add(record['ИНН'] || record.inn)
+        dataTypes['ИНН']++
       }
       
       // СНИЛС
       if (record['СНИЛС'] || record.snils) {
-        dataTypes['СНИЛС'].add(record['СНИЛС'] || record.snils)
+        dataTypes['СНИЛС']++
       }
     }
 
@@ -350,15 +348,12 @@ export default function ChecksPage() {
       })
     })
 
-    // Конвертируем Set в числа
+    // Возвращаем результаты
     return Object.entries(dataTypes)
-      .map(([name, valueSet]) => ({
+      .filter(([_, value]) => value > 0)
+      .map(([name, value], idx) => ({
         name,
-        value: valueSet.size
-      }))
-      .filter(item => item.value > 0)
-      .map((item, idx) => ({
-        ...item,
+        value,
         color: COLORS[idx % COLORS.length]
       }))
   }
