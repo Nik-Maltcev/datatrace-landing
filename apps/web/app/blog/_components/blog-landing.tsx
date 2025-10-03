@@ -211,9 +211,6 @@ export function BlogLanding({ posts }: BlogLandingProps) {
               >
                 ТАРИФЫ
               </Link>
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
-                <Newspaper className="h-3.5 w-3.5" /> БЛОГ
-              </span>
               <Link 
                 href="/#contacts" 
                 className="block text-sm font-medium text-gray-700 hover:text-black"
