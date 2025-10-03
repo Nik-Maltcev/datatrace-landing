@@ -111,6 +111,9 @@ export function BlogLanding({ posts }: BlogLandingProps) {
                 className="h-14"
               />
             </div>
+            <span className="md:hidden inline-flex items-center gap-1 rounded-full border border-emerald-500 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
+              <Newspaper className="h-3.5 w-3.5" /> БЛОГ
+            </span>
             <div className="flex items-center space-x-4">
               <nav className="hidden md:flex items-center space-x-8">
                 <Link href="/" className="text-sm font-medium text-gray-700 hover:text-black">
