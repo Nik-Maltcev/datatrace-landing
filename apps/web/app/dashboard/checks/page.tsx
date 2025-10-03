@@ -359,71 +359,19 @@ export default function ChecksPage() {
   }
 
   const generateCompanyBreakdown = () => {
-    const companies: { [key: string]: number } = {}
-    
-    // Маппинг названий баз на компании
-    const companyMapping: { [key: string]: string } = {
-      'яндекс': 'Яндекс',
-      'yandex': 'Яндекс',
-      'сбер': 'Сбер',
-      'sber': 'Сбер',
-      'альфа': 'Альфабанк',
-      'alfa': 'Альфабанк',
-      'alpha': 'Альфабанк',
-      'vk': 'VK',
-      'вк': 'VK',
-      'мтс': 'МТС',
-      'mts': 'МТС',
-      'теле2': 'Теле2',
-      'tele2': 'Теле2',
-      't2': 'Теле2',
-      'билайн': 'Билайн',
-      'beeline': 'Билайн',
-      'мегафон': 'Мегафон',
-      'megafon': 'Мегафон',
-      'сдэк': 'СДЭК',
-      'cdek': 'СДЭК',
-      'росреестр': 'Росреестр',
-      'ашан': 'Ашан',
-      'auchan': 'Ашан',
-      'пятерочка': 'Пятёрочка',
-      'магнит': 'Магнит',
-      'wildberries': 'Wildberries',
-      'ozon': 'Ozon',
-      'озон': 'Ozon'
-    }
-    
-    checks.forEach(check => {
-      check.results.forEach(result => {
-        if (!result.found || !result.data) return
-        
-        if (typeof result.data === 'object') {
-          Object.keys(result.data).forEach(dbName => {
-            const records = result.data[dbName]
-            const count = Array.isArray(records) ? records.length : 0
-            
-            // Определяем компанию по названию базы
-            const lowerDbName = dbName.toLowerCase()
-            let company = 'Другие'
-            
-            for (const [keyword, companyName] of Object.entries(companyMapping)) {
-              if (lowerDbName.includes(keyword)) {
-                company = companyName
-                break
-              }
-            }
-            
-            companies[company] = (companies[company] || 0) + count
-          })
-        }
-      })
-    })
-
-    // Сортируем по количеству и берем топ-10
-    return Object.entries(companies)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([name, count]) => ({ name, count }))
+    // Статичные данные для всех пользователей
+    return [
+      { name: 'Яндекс', count: 14 },
+      { name: 'VK', count: 6 },
+      { name: 'Сбер', count: 4 },
+      { name: 'СДЭК', count: 4 },
+      { name: 'Альфабанк', count: 3 },
+      { name: 'Билайн', count: 3 },
+      { name: 'Росреестр', count: 2 },
+      { name: 'МТС', count: 2 },
+      { name: 'Теле2', count: 1 },
+      { name: 'Другие', count: 8 }
+    ]
   }
 
   if (!user) {
