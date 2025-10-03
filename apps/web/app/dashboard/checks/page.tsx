@@ -246,14 +246,14 @@ export default function ChecksPage() {
       color: COLORS[idx % COLORS.length]
     }))
 
-    const databaseBreakdown = generateDatabaseBreakdown()
+    const companyBreakdown = generateCompanyBreakdown()
     const dataTypeBreakdown = generateDataTypeBreakdown()
 
     setAnalytics({
       totalLeaks,
       compromisedSources,
       sourceBreakdown,
-      databaseBreakdown,
+      companyBreakdown,
       dataTypeBreakdown
     })
   }
@@ -358,26 +358,69 @@ export default function ChecksPage() {
       }))
   }
 
-  const generateDatabaseBreakdown = () => {
-    const databases: { [key: string]: number } = {}
+  const generateCompanyBreakdown = () => {
+    const companies: { [key: string]: number } = {}
+    
+    // Маппинг названий баз на компании
+    const companyMapping: { [key: string]: string } = {
+      'яндекс': 'Яндекс',
+      'yandex': 'Яндекс',
+      'сбер': 'Сбер',
+      'sber': 'Сбер',
+      'альфа': 'Альфабанк',
+      'alfa': 'Альфабанк',
+      'alpha': 'Альфабанк',
+      'vk': 'VK',
+      'вк': 'VK',
+      'мтс': 'МТС',
+      'mts': 'МТС',
+      'теле2': 'Теле2',
+      'tele2': 'Теле2',
+      't2': 'Теле2',
+      'билайн': 'Билайн',
+      'beeline': 'Билайн',
+      'мегафон': 'Мегафон',
+      'megafon': 'Мегафон',
+      'сдэк': 'СДЭК',
+      'cdek': 'СДЭК',
+      'росреестр': 'Росреестр',
+      'ашан': 'Ашан',
+      'auchan': 'Ашан',
+      'пятерочка': 'Пятёрочка',
+      'магнит': 'Магнит',
+      'wildberries': 'Wildberries',
+      'ozon': 'Ozon',
+      'озон': 'Ozon'
+    }
     
     checks.forEach(check => {
       check.results.forEach(result => {
         if (!result.found || !result.data) return
         
-        // Парсим базы данных из result.data
         if (typeof result.data === 'object') {
           Object.keys(result.data).forEach(dbName => {
             const records = result.data[dbName]
             const count = Array.isArray(records) ? records.length : 0
-            databases[dbName] = (databases[dbName] || 0) + count
+            
+            // Определяем компанию по названию базы
+            const lowerDbName = dbName.toLowerCase()
+            let company = 'Другие'
+            
+            for (const [keyword, companyName] of Object.entries(companyMapping)) {
+              if (lowerDbName.includes(keyword)) {
+                company = companyName
+                break
+              }
+            }
+            
+            companies[company] = (companies[company] || 0) + count
           })
         }
       })
     })
 
     // Сортируем по количеству и берем топ-10
-    return Object.entries(databases)
+    return Object.entries(companies)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
       .map(([name, count]) => ({ name, count }))
@@ -967,21 +1010,21 @@ export default function ChecksPage() {
             </Card>
           )}
 
-          {/* Database Breakdown Chart */}
-          {analytics.databaseBreakdown.length > 0 && (
+          {/* Company Breakdown Chart */}
+          {analytics.companyBreakdown.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
-                  Топ баз данных с утечками
+                  Компании с утечками
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analytics.databaseBreakdown} layout="vertical">
+                  <BarChart data={analytics.companyBreakdown} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={150} style={{ fontSize: '11px' }} />
+                    <YAxis dataKey="name" type="category" width={100} style={{ fontSize: '12px' }} />
                     <Tooltip />
                     <Bar dataKey="count" fill="#3b82f6" />
                   </BarChart>
