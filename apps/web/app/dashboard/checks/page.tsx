@@ -270,26 +270,32 @@ export default function ChecksPage() {
     }
 
     const analyzeRecord = (record: any) => {
-      // Email
-      if (record['Адрес электронной почты'] || record.email) {
-        dataTypes['Email'].add(record['Адрес электронной почты'] || record.email)
+      // Email - проверяем все возможные варианты
+      const emailValue = record['Адрес электронной почты'] || record.email || record.Email || record.EMAIL
+      if (emailValue && String(emailValue).includes('@')) {
+        dataTypes['Email'].add(String(emailValue).toLowerCase())
       }
       
-      // Телефон
-      if (record['Номер телефона'] || record.phone || record.telephone) {
-        dataTypes['Номер телефона'].add(record['Номер телефона'] || record.phone || record.telephone)
+      // Телефон - проверяем все возможные варианты
+      const phoneValue = record['Номер телефона'] || record.phone || record.telephone || record.Phone || record.PHONE
+      if (phoneValue) {
+        const cleanPhone = String(phoneValue).replace(/\D/g, '')
+        if (cleanPhone.length >= 10) {
+          dataTypes['Номер телефона'].add(cleanPhone)
+        }
       }
       
       // Банковская карта
-      if (record['Номер банковской карты'] || record.card_number || record.bank_card || record.card || record.cardnumber || record.cards) {
-        const cardValue = record['Номер банковской карты'] || record.card_number || record.bank_card || record.card || record.cardnumber || record.cards
-        if (cardValue) {
-          // Если это строка с несколькими картами, разбиваем
-          String(cardValue).split(',').forEach(c => {
-            const cleaned = c.trim()
-            if (cleaned && cleaned.length > 4) dataTypes['Номер банковской карты'].add(cleaned)
-          })
-        }
+      const cardValue = record['Номер банковской карты'] || record.card_number || record.bank_card || record.card || record.cardnumber || record.cards
+      if (cardValue) {
+        // Если это строка с несколькими картами, разбиваем
+        String(cardValue).split(',').forEach(c => {
+          const cleaned = c.trim().replace(/\s/g, '')
+          // Проверяем что это похоже на номер карты (от 13 до 19 цифр)
+          if (cleaned && /^\d{13,19}$/.test(cleaned)) {
+            dataTypes['Номер банковской карты'].add(cleaned)
+          }
+        })
       }
       
       // Адрес
@@ -329,14 +335,17 @@ export default function ChecksPage() {
           } else if (Array.isArray(result.items)) {
             // Dyxless format - массив записей
             result.items.forEach((item: any) => analyzeRecord(item))
-          } else if (result.data && typeof result.data === 'object') {
-            // ITP format - группированные данные по базам
-            Object.values(result.data).forEach((dbRecords: any) => {
-              if (Array.isArray(dbRecords)) {
-                dbRecords.forEach((record: any) => analyzeRecord(record))
-              }
-            })
           }
+        }
+        
+        // Проверяем result.data отдельно (ITP format)
+        if (result.data && typeof result.data === 'object') {
+          // ITP format - группированные данные по базам
+          Object.values(result.data).forEach((dbRecords: any) => {
+            if (Array.isArray(dbRecords)) {
+              dbRecords.forEach((record: any) => analyzeRecord(record))
+            }
+          })
         }
       })
     })
