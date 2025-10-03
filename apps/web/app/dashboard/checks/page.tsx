@@ -1076,9 +1076,11 @@ export default function ChecksPage() {
                 <p className="text-sm text-gray-600 mb-3">
                   Получить консультацию специалиста по кибербезопасности
                 </p>
-                <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
-                  Связаться со специалистом
-                </Button>
+                <a href="https://t.me/nik_maltcev" target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline" className="text-purple-600 border-purple-200">
+                    Связаться со специалистом
+                  </Button>
+                </a>
               </div>
             </div>
           </CardContent>
