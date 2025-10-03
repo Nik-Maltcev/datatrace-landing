@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCheckHistory, saveCheckResult } from '@/lib/checkHistory'
+import { saveCheckToDatabase, getUserChecks } from '@/lib/supabaseCheckHistory'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +9,21 @@ export async function POST(request: NextRequest) {
 
     const { type, query, results, totalLeaks, foundSources, message, userId } = body
 
-    const checkRecord = saveCheckResult({
+    if (!userId) {
+      return NextResponse.json({
+        ok: false,
+        error: { message: 'userId is required' }
+      }, { status: 400 })
+    }
+
+    const checkRecord = await saveCheckToDatabase({
+      userId,
       type,
       query,
       results,
-      totalLeaks,
-      foundSources,
-      message,
-      userId: userId || 'current-user'
+      totalLeaks: totalLeaks || 0,
+      foundSources: foundSources || 0,
+      message: message || ''
     })
 
     return NextResponse.json({
@@ -37,13 +44,32 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId') || 'current-user'
+    const userId = searchParams.get('userId')
 
-    const checks = getCheckHistory(userId)
+    if (!userId) {
+      return NextResponse.json({
+        ok: false,
+        error: { message: 'userId is required' }
+      }, { status: 400 })
+    }
+
+    const checks = await getUserChecks(userId)
+
+    // Преобразуем формат из БД в формат фронтенда
+    const formattedChecks = checks.map(check => ({
+      id: check.id,
+      type: check.type,
+      query: check.query,
+      date: check.created_at,
+      status: 'completed',
+      totalLeaks: check.total_leaks,
+      foundSources: check.found_sources,
+      results: check.results
+    }))
 
     return NextResponse.json({
       ok: true,
-      checks: checks
+      checks: formattedChecks
     })
 
   } catch (error) {

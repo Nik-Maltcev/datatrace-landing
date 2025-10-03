@@ -8,7 +8,7 @@ const supabase = createClient(
 export interface CheckRecord {
   id: string
   user_id: string
-  type: 'phone' | 'email'
+  type: 'phone' | 'email' | 'email_breach' | 'password'
   query: string
   total_leaks: number
   found_sources: number
@@ -19,7 +19,7 @@ export interface CheckRecord {
 
 export async function saveCheckToDatabase(data: {
   userId: string
-  type: 'phone' | 'email'
+  type: 'phone' | 'email' | 'email_breach' | 'password'
   query: string
   results: any[]
   totalLeaks: number
