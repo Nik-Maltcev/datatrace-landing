@@ -109,7 +109,7 @@ function DataFlowShowcaseLight() {
         <div className="mt-16 grid items-center gap-12 lg:grid-cols-[1fr_auto_1fr]">
           <div className="space-y-8">
             {dataSources.map((source, index) => (
-              <div key={source.code} className="group relative flex items-start justify-end gap-6">
+              <div key={source.code} className="group relative flex items-start justify-end gap-6 z-10">
                 <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-l from-emerald-300/70 to-transparent lg:block">
                   <span
                     className="trace-line-light"
