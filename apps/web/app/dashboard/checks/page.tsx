@@ -361,16 +361,16 @@ export default function ChecksPage() {
   const generateCompanyBreakdown = () => {
     // Статичные данные для всех пользователей
     return [
-      { name: 'Яндекс', count: 14 },
-      { name: 'VK', count: 6 },
-      { name: 'Сбер', count: 4 },
-      { name: 'СДЭК', count: 4 },
-      { name: 'Альфабанк', count: 3 },
-      { name: 'Билайн', count: 3 },
-      { name: 'Росреестр', count: 2 },
-      { name: 'МТС', count: 2 },
-      { name: 'Теле2', count: 1 },
-      { name: 'Другие', count: 8 }
+      { name: 'Яндекс', количество: 14 },
+      { name: 'VK', количество: 6 },
+      { name: 'Сбер', количество: 4 },
+      { name: 'СДЭК', количество: 4 },
+      { name: 'Альфабанк', количество: 3 },
+      { name: 'Билайн', количество: 3 },
+      { name: 'Росреестр', количество: 2 },
+      { name: 'МТС', количество: 2 },
+      { name: 'Теле2', количество: 1 },
+      { name: 'Другие', количество: 8 }
     ]
   }
 
@@ -974,7 +974,7 @@ export default function ChecksPage() {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={100} style={{ fontSize: '12px' }} />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#3b82f6" />
+                    <Bar dataKey="количество" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
