@@ -55,6 +55,31 @@ export default function Dashboard() {
   const [passwordResult, setPasswordResult] = useState<any>(null)
   const [isCheckingPassword, setIsCheckingPassword] = useState(false)
 
+  // Функция для сохранения результатов проверки в БД
+  const saveCheckResult = async (checkData: {
+    type: 'phone' | 'email' | 'email_breach' | 'password'
+    query: string
+    results: any[]
+    totalLeaks: number
+    foundSources: number
+    message: string
+  }) => {
+    if (!user?.email) return
+    
+    try {
+      await fetch('/api/save-check-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...checkData,
+          userId: user.email
+        })
+      })
+    } catch (error) {
+      console.error('Failed to save check result:', error)
+    }
+  }
+
   // Обработка успешного платежа
   useEffect(() => {
     const paymentStatus = searchParams.get('payment')
@@ -221,6 +246,16 @@ export default function Dashboard() {
       if (data.ok) {
         updateUserChecks(checksUsed + 1)
         console.log('✅ Phone check counter updated');
+        
+        // Сохраняем результат в БД
+        await saveCheckResult({
+          type: 'phone',
+          query: user.phone,
+          results: data.results || [],
+          totalLeaks: data.totalLeaks || 0,
+          foundSources: data.foundSources || 0,
+          message: data.message || ''
+        })
       }
     } catch (error) {
       console.error('Phone check error:', error)
@@ -325,6 +360,16 @@ export default function Dashboard() {
 
       setPasswordResult(data)
       updateUserChecks(checksUsed + 1)
+      
+      // Сохраняем результат в БД
+      await saveCheckResult({
+        type: 'password',
+        query: '***',  // Не сохраняем сам пароль
+        results: [{ name: 'DeHashed', found: data.isCompromised, count: data.breachCount || 0, ok: true }],
+        totalLeaks: data.breachCount || 0,
+        foundSources: data.isCompromised ? 1 : 0,
+        message: data.message || ''
+      })
     } catch (error) {
       console.error('Password check error:', error)
       setPasswordResult({
@@ -397,6 +442,16 @@ export default function Dashboard() {
 
       setEmailBreachResult(data)
       updateUserChecks(checksUsed + 1)
+      
+      // Сохраняем результат в БД
+      await saveCheckResult({
+        type: 'email_breach',
+        query: emailToCheck,
+        results: data.results || [],
+        totalLeaks: data.totalLeaks || 0,
+        foundSources: data.foundSources || 0,
+        message: data.message || ''
+      })
     } catch (error) {
       console.error('Email breach check error:', error)
       setEmailBreachResult({
