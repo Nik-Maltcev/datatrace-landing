@@ -64,10 +64,14 @@ export default function Dashboard() {
     foundSources: number
     message: string
   }) => {
-    if (!user?.email) return
+    if (!user?.email) {
+      console.log('❌ No user email for saving check result')
+      return
+    }
     
     try {
-      await fetch('/api/save-check-result', {
+      console.log('💾 Saving check result:', { type: checkData.type, query: checkData.query })
+      const response = await fetch('/api/save-check-result', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,8 +79,14 @@ export default function Dashboard() {
           userId: user.email
         })
       })
+      const result = await response.json()
+      if (result.ok) {
+        console.log('✅ Check result saved successfully')
+      } else {
+        console.error('❌ Failed to save check result:', result.error)
+      }
     } catch (error) {
-      console.error('Failed to save check result:', error)
+      console.error('❌ Failed to save check result:', error)
     }
   }
 
