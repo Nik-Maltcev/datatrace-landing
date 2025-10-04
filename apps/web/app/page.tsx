@@ -223,6 +223,22 @@ export default function DataTraceLanding() {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
+  // Очистка pending_payment при возврате на страницу
+  useEffect(() => {
+    try {
+      const pending = localStorage.getItem('pending_payment')
+      if (pending) {
+        const data = JSON.parse(pending)
+        // Если прошло больше 5 минут, очищаем
+        if (Date.now() - data.startedAt > 5 * 60 * 1000) {
+          localStorage.removeItem('pending_payment')
+        }
+      }
+    } catch (error) {
+      console.error('Error checking pending payment:', error)
+    }
+  }, [])
+
   const handleDashboardClick = () => {
     if (isAuthenticated) {
       router.push('/dashboard')
