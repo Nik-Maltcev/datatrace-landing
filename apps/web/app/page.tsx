@@ -779,7 +779,7 @@ export default function DataTraceLanding() {
                 />
               </div>
               <p className="text-gray-400 mb-6">
-                Узнай о новых утечках в нашем телеграм канале
+                Свежие новости об утечках в нашем телеграм канале
               </p>
               <a
                 href="https://t.me/data_trace"
