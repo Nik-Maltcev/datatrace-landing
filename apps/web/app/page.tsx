@@ -779,18 +779,17 @@ export default function DataTraceLanding() {
                 />
               </div>
               <p className="text-gray-400 mb-6">
-                Подпишись на наш блог
+                Узнай о новых утечках в нашем телеграм канале
               </p>
-              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                <input
-                  type="email"
-                  placeholder="Ваш email здесь"
-                  className="bg-gray-800 text-white px-4 py-2 rounded flex-1"
-                />
-                <Button className="bg-white text-black hover:bg-gray-200 w-full sm:w-auto">
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <a
+                href="https://t.me/data_trace"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center bg-white text-black hover:bg-gray-200 px-6 py-3 rounded-lg transition-colors w-full sm:w-auto"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Подписаться на канал
+              </a>
             </div>
             <div>
               <h4 className="font-bold mb-4">КОМПАНЯ</h4>
