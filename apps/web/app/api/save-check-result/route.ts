@@ -32,8 +32,19 @@ export async function POST(request: NextRequest) {
       checkId: checkRecord.id
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Save check result error:', error)
+    
+    // Если Supabase не инициализирован, возвращаем успех без сохранения
+    if (error?.message?.includes('Supabase client not initialized')) {
+      console.warn('⚠️ Supabase not configured, skipping save')
+      return NextResponse.json({
+        ok: true,
+        message: 'Проверка выполнена (сохранение отключено)',
+        checkId: Date.now().toString()
+      })
+    }
+    
     return NextResponse.json({
       ok: false,
       error: { message: 'Ошибка при сохранении результата' }
@@ -72,8 +83,18 @@ export async function GET(request: NextRequest) {
       checks: formattedChecks
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get check history error:', error)
+    
+    // Если Supabase не инициализирован, возвращаем пустой массив
+    if (error?.message?.includes('Supabase client not initialized')) {
+      return NextResponse.json({
+        ok: true,
+        checks: [],
+        warning: 'Database not configured'
+      })
+    }
+    
     return NextResponse.json({
       ok: false,
       error: { message: 'Ошибка при получении истории проверок' }
