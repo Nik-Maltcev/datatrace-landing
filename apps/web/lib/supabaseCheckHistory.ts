@@ -8,13 +8,29 @@ function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   
+  console.log('Supabase init check:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseKey,
+    urlLength: supabaseUrl?.length || 0,
+    keyLength: supabaseKey?.length || 0
+  })
+  
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase credentials not found')
+    console.error('Supabase credentials not found:', {
+      NEXT_PUBLIC_SUPABASE_URL: supabaseUrl ? 'present' : 'missing',
+      SUPABASE_SERVICE_ROLE_KEY: supabaseKey ? 'present' : 'missing'
+    })
     return null
   }
   
-  supabase = createClient(supabaseUrl, supabaseKey)
-  return supabase
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey)
+    console.log('Supabase client created successfully')
+    return supabase
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error)
+    return null
+  }
 }
 
 export interface CheckRecord {
