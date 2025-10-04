@@ -5,27 +5,17 @@ let supabase: SupabaseClient | null = null
 function getSupabaseClient() {
   if (supabase) return supabase
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   
-  console.log('Supabase init check:', {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseKey,
-    urlLength: supabaseUrl?.length || 0,
-    keyLength: supabaseKey?.length || 0
-  })
-  
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase credentials not found:', {
-      NEXT_PUBLIC_SUPABASE_URL: supabaseUrl ? 'present' : 'missing',
-      SUPABASE_SERVICE_ROLE_KEY: supabaseKey ? 'present' : 'missing'
-    })
+    console.error('Supabase credentials not found')
     return null
   }
   
   try {
     supabase = createClient(supabaseUrl, supabaseKey)
-    console.log('Supabase client created successfully')
+    console.log('✅ Supabase client initialized')
     return supabase
   } catch (error) {
     console.error('Failed to create Supabase client:', error)
