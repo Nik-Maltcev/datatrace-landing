@@ -1,11 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+let supabase: SupabaseClient | null = null
 
-const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null
+function getSupabaseClient() {
+  if (supabase) return supabase
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('Supabase credentials not found')
+    return null
+  }
+  
+  supabase = createClient(supabaseUrl, supabaseKey)
+  return supabase
+}
 
 export interface CheckRecord {
   id: string
@@ -28,11 +38,12 @@ export async function saveCheckToDatabase(data: {
   foundSources: number
   message: string
 }): Promise<CheckRecord> {
-  if (!supabase) {
+  const client = getSupabaseClient()
+  if (!client) {
     throw new Error('Supabase client not initialized')
   }
 
-  const { data: savedCheck, error } = await supabase
+  const { data: savedCheck, error } = await client
     .from('user_checks')
     .insert({
       user_id: data.userId,
@@ -55,11 +66,12 @@ export async function saveCheckToDatabase(data: {
 }
 
 export async function getUserChecks(userId: string, limit = 50): Promise<CheckRecord[]> {
-  if (!supabase) {
+  const client = getSupabaseClient()
+  if (!client) {
     throw new Error('Supabase client not initialized')
   }
 
-  const { data: checks, error } = await supabase
+  const { data: checks, error } = await client
     .from('user_checks')
     .select('*')
     .eq('user_id', userId)
@@ -75,11 +87,12 @@ export async function getUserChecks(userId: string, limit = 50): Promise<CheckRe
 }
 
 export async function getCheckStats(userId: string) {
-  if (!supabase) {
+  const client = getSupabaseClient()
+  if (!client) {
     return null
   }
 
-  const { data: stats, error } = await supabase
+  const { data: stats, error } = await client
     .from('user_checks')
     .select('type, total_leaks, found_sources, created_at')
     .eq('user_id', userId)
