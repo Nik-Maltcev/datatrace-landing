@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null
 
 export interface CheckRecord {
   id: string
@@ -26,6 +28,10 @@ export async function saveCheckToDatabase(data: {
   foundSources: number
   message: string
 }): Promise<CheckRecord> {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized')
+  }
+
   const { data: savedCheck, error } = await supabase
     .from('user_checks')
     .insert({
@@ -49,6 +55,10 @@ export async function saveCheckToDatabase(data: {
 }
 
 export async function getUserChecks(userId: string, limit = 50): Promise<CheckRecord[]> {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized')
+  }
+
   const { data: checks, error } = await supabase
     .from('user_checks')
     .select('*')
@@ -65,6 +75,10 @@ export async function getUserChecks(userId: string, limit = 50): Promise<CheckRe
 }
 
 export async function getCheckStats(userId: string) {
+  if (!supabase) {
+    return null
+  }
+
   const { data: stats, error } = await supabase
     .from('user_checks')
     .select('type, total_leaks, found_sources, created_at')
