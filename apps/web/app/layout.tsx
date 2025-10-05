@@ -6,6 +6,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'DataTrace - сервис по удалению личной информации из утечек',
   description: 'ИИ-платформа для поиска и удаления скомпрометированной личной информации из баз данных злоумышленников',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
