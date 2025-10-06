@@ -1,4 +1,4 @@
-"use client"
+чёё"use client"
 
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"

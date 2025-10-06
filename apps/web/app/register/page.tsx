@@ -64,10 +64,10 @@ export default function RegisterPage() {
       return
     }
 
-    // Валидация номера телефона
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
-    if (!phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
-      alert("Неверный формат номера телефона")
+    // Валидация номера телефона (должен быть в формате +7XXXXXXXXXX)
+    const normalizedPhone = normalizePhone(formData.phone)
+    if (!normalizedPhone.match(/^\+7\d{10}$/)) {
+      alert("Неверный формат номера телефона. Используйте формат: +79001234567")
       setIsLoading(false)
       return
     }
@@ -79,7 +79,7 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           name: formData.name,
-          phone: formData.phone,
+          phone: normalizePhone(formData.phone),
           captchaToken
         })
       })
@@ -114,10 +114,29 @@ export default function RegisterPage() {
     }
   }
 
+  const normalizePhone = (phone: string) => {
+    // Удаляем все символы кроме цифр и +
+    let cleaned = phone.replace(/[^\d+]/g, '')
+    // Если начинается с 8, заменяем на +7
+    if (cleaned.startsWith('8')) {
+      cleaned = '+7' + cleaned.slice(1)
+    }
+    // Если начинается с 7 без +, добавляем +
+    if (cleaned.startsWith('7') && !cleaned.startsWith('+7')) {
+      cleaned = '+' + cleaned
+    }
+    // Если начинается с 9, добавляем +7
+    if (cleaned.startsWith('9')) {
+      cleaned = '+7' + cleaned
+    }
+    return cleaned
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: name === 'phone' ? normalizePhone(value) : value
     })
   }
 
@@ -178,7 +197,7 @@ export default function RegisterPage() {
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="+7 (999) 123-45-67"
+                placeholder="+79001234567 или 89001234567"
                 value={formData.phone}
                 onChange={handleInputChange}
                 required
