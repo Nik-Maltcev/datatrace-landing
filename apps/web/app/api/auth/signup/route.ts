@@ -78,6 +78,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Проверяем, существует ли уже пользователь с таким email
+    const { data: existingUsers } = await supabase
+      .from('user_profiles')
+      .select('email')
+      .eq('email', email.trim().toLowerCase())
+      .limit(1);
+
+    if (existingUsers && existingUsers.length > 0) {
+      // Пользователь уже существует - пытаемся переотправить письмо подтверждения
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+        options: {
+          captchaToken
+        }
+      });
+
+      if (resendError) {
+        console.error('Resend confirmation error:', resendError);
+        return NextResponse.json(
+          {
+            ok: false,
+            error: {
+              code: 'EMAIL_EXISTS',
+              message: 'Пользователь с таким email уже зарегистрирован. Если вы не получили письмо подтверждения, попробуйте войти или восстановить пароль.'
+            }
+          },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        ok: true,
+        message: 'Письмо подтверждения отправлено повторно. Проверьте email.'
+      });
+    }
+
     // Sign up with Supabase
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
