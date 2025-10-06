@@ -65,6 +65,7 @@ export default function ChecksPage() {
   const [deleteInstructionsOpen, setDeleteInstructionsOpen] = useState(false)
   const [selectedSourceForDeletion, setSelectedSourceForDeletion] = useState<string>('')
   const [analytics, setAnalytics] = useState<any>(null)
+  const [deletedLeaks, setDeletedLeaks] = useState<Set<string>>(new Set())
 
   const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
 
@@ -151,6 +152,7 @@ export default function ChecksPage() {
   useEffect(() => {
     if (user?.email) {
       loadCheckHistory()
+      loadDeletedLeaks()
     }
   }, [user])
 
@@ -159,6 +161,24 @@ export default function ChecksPage() {
       generateAnalytics()
     }
   }, [checks])
+
+  const loadDeletedLeaks = () => {
+    if (!user?.email) return
+    const stored = localStorage.getItem(`deletedLeaks_${user.email}`)
+    if (stored) {
+      setDeletedLeaks(new Set(JSON.parse(stored)))
+    }
+  }
+
+  const markAsDeleted = (checkId: string, sourceName: string) => {
+    const key = `${checkId}-${sourceName}`
+    const newDeleted = new Set(deletedLeaks)
+    newDeleted.add(key)
+    setDeletedLeaks(newDeleted)
+    if (user?.email) {
+      localStorage.setItem(`deletedLeaks_${user.email}`, JSON.stringify(Array.from(newDeleted)))
+    }
+  }
 
   const loadCheckHistory = async () => {
     if (!user?.email) {
@@ -432,12 +452,12 @@ export default function ChecksPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-700 flex items-center">
               <CheckCircle className="h-4 w-4 mr-2" />
-              Успешных проверок
+              Утечек удалено
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-900">{successfulChecks}</div>
-            <p className="text-sm text-green-600">завершено успешно</p>
+            <div className="text-3xl font-bold text-green-900">{deletedLeaks.size}</div>
+            <p className="text-sm text-green-600">источников очищено</p>
           </CardContent>
         </Card>
 
@@ -785,17 +805,23 @@ export default function ChecksPage() {
                                         <Badge variant="outline" className="text-xs text-red-600">
                                           Утечка
                                         </Badge>
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline" 
-                                          className="text-xs px-3 py-1 h-7 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ml-1"
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            openDeleteInstructions(sourceName)
-                                          }}
-                                        >
-                                          🗑️ Удалить
-                                        </Button>
+                                        {deletedLeaks.has(`${check.id}-${sourceName}`) ? (
+                                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-300">
+                                            ✓ Удалено
+                                          </Badge>
+                                        ) : (
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline" 
+                                            className="text-xs px-3 py-1 h-7 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ml-1"
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              openDeleteInstructions(sourceName)
+                                            }}
+                                          >
+                                            🗑️ Удалить
+                                          </Button>
+                                        )}
                                         {result.items && (
                                           <>
                                             {isExpanded ? (
@@ -1177,6 +1203,22 @@ export default function ChecksPage() {
               className="bg-white border-gray-300 text-gray-700 hover:bg-gray-100 px-6"
             >
               Закрыть
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => {
+                const checkId = checks.find(c => 
+                  c.results.some(r => (r.source || r.name) === selectedSourceForDeletion)
+                )?.id
+                if (checkId) {
+                  markAsDeleted(checkId, selectedSourceForDeletion)
+                }
+                setDeleteInstructionsOpen(false)
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white px-6"
+            >
+              Я удалил
             </Button>
           </DialogFooter>
         </DialogContent>
