@@ -86,33 +86,17 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingUsers && existingUsers.length > 0) {
-      // Пользователь уже существует - пытаемся переотправить письмо подтверждения
-      const { error: resendError } = await supabase.auth.resend({
-        type: 'signup',
-        email: email.trim().toLowerCase(),
-        options: {
-          captchaToken
-        }
-      });
-
-      if (resendError) {
-        console.error('Resend confirmation error:', resendError);
-        return NextResponse.json(
-          {
-            ok: false,
-            error: {
-              code: 'EMAIL_EXISTS',
-              message: 'Пользователь с таким email уже зарегистрирован. Если вы не получили письмо подтверждения, попробуйте войти или восстановить пароль.'
-            }
-          },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({
-        ok: true,
-        message: 'Письмо подтверждения отправлено повторно. Проверьте email.'
-      });
+      // Пользователь уже существует - не даем регистрироваться повторно
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'EMAIL_EXISTS',
+            message: 'Пользователь с таким email уже зарегистрирован. Попробуйте войти или восстановить пароль.'
+          }
+        },
+        { status: 400 }
+      );
     }
 
     // Sign up with Supabase
