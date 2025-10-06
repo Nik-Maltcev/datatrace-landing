@@ -65,7 +65,7 @@ export default function ChecksPage() {
   const [deleteInstructionsOpen, setDeleteInstructionsOpen] = useState(false)
   const [selectedSourceForDeletion, setSelectedSourceForDeletion] = useState<string>('')
   const [analytics, setAnalytics] = useState<any>(null)
-  const [deletedLeaks, setDeletedLeaks] = useState<Set<string>>(new Set())
+  const [deletedLeaks, setDeletedLeaks] = useState<Map<string, number>>(new Map())
 
   const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
 
@@ -166,17 +166,18 @@ export default function ChecksPage() {
     if (!user?.email) return
     const stored = localStorage.getItem(`deletedLeaks_${user.email}`)
     if (stored) {
-      setDeletedLeaks(new Set(JSON.parse(stored)))
+      const parsed = JSON.parse(stored)
+      setDeletedLeaks(new Map(parsed))
     }
   }
 
-  const markAsDeleted = (checkId: string, sourceName: string) => {
+  const markAsDeleted = (checkId: string, sourceName: string, count: number) => {
     const key = `${checkId}-${sourceName}`
-    const newDeleted = new Set(deletedLeaks)
-    newDeleted.add(key)
+    const newDeleted = new Map(deletedLeaks)
+    newDeleted.set(key, count)
     setDeletedLeaks(newDeleted)
     if (user?.email) {
-      localStorage.setItem(`deletedLeaks_${user.email}`, JSON.stringify(Array.from(newDeleted)))
+      localStorage.setItem(`deletedLeaks_${user.email}`, JSON.stringify(Array.from(newDeleted.entries())))
     }
   }
 
@@ -456,8 +457,8 @@ export default function ChecksPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-900">{deletedLeaks.size}</div>
-            <p className="text-sm text-green-600">источников очищено</p>
+            <div className="text-3xl font-bold text-green-900">{Array.from(deletedLeaks.values()).reduce((sum, count) => sum + count, 0)}</div>
+            <p className="text-sm text-green-600">записей удалено</p>
           </CardContent>
         </Card>
 
@@ -1208,11 +1209,13 @@ export default function ChecksPage() {
               type="button"
               variant="default"
               onClick={() => {
-                const checkId = checks.find(c => 
+                const check = checks.find(c => 
                   c.results.some(r => (r.source || r.name) === selectedSourceForDeletion)
-                )?.id
-                if (checkId) {
-                  markAsDeleted(checkId, selectedSourceForDeletion)
+                )
+                if (check) {
+                  const result = check.results.find(r => (r.source || r.name) === selectedSourceForDeletion)
+                  const count = result?.count || 0
+                  markAsDeleted(check.id, selectedSourceForDeletion, count)
                 }
                 setDeleteInstructionsOpen(false)
               }}
