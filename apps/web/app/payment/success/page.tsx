@@ -54,6 +54,22 @@ export default function PaymentSuccessPage() {
 
         console.log("User email for profile fetch:", userEmail)
 
+        // Вызываем API для обновления тарифа
+        if (userEmail) {
+          try {
+            console.log("Calling payment-success API with plan:", plan)
+            const paymentResponse = await fetch('/api/payment-success', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: userEmail, plan })
+            })
+            const paymentData = await paymentResponse.json()
+            console.log("Payment-success API response:", paymentData)
+          } catch (error) {
+            console.error("Error calling payment-success API:", error)
+          }
+        }
+
         if (!userEmail) {
           console.log("No user email found, redirecting to dashboard with plan")
           if (!isCancelled) {
@@ -69,6 +85,9 @@ export default function PaymentSuccessPage() {
           }
           return
         }
+
+        // Даём время на обновление профиля
+        await new Promise((resolve) => setTimeout(resolve, 500))
 
         const response = await fetch(`/api/user-profile?email=${encodeURIComponent(userEmail)}`)
         const data = await response.json()
