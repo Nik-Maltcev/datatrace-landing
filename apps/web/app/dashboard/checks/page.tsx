@@ -806,22 +806,24 @@ export default function ChecksPage() {
                                         <Badge variant="outline" className="text-xs text-red-600">
                                           Утечка
                                         </Badge>
-                                        {deletedLeaks.has(`${check.id}-${sourceName}`) ? (
-                                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-300">
-                                            ✓ Удалено
-                                          </Badge>
-                                        ) : (
-                                          <Button 
-                                            size="sm" 
-                                            variant="outline" 
-                                            className="text-xs px-3 py-1 h-7 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ml-1"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              openDeleteInstructions(sourceName)
-                                            }}
-                                          >
-                                            🗑️ Удалить
-                                          </Button>
+                                        {user?.plan === 'professional' && (
+                                          deletedLeaks.has(`${check.id}-${sourceName}`) ? (
+                                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-300">
+                                              ✓ Удалено
+                                            </Badge>
+                                          ) : (
+                                            <Button 
+                                              size="sm" 
+                                              variant="outline" 
+                                              className="text-xs px-3 py-1 h-7 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 ml-1"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                openDeleteInstructions(sourceName)
+                                              }}
+                                            >
+                                              🗑️ Удалить
+                                            </Button>
+                                          )
                                         )}
                                         {result.items && (
                                           <>
