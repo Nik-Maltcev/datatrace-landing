@@ -73,11 +73,20 @@ export default function PaymentPage() {
       
       // Прямые ссылки на платежные страницы
       if (planId === 'basic') {
-        window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&productPrice=${finalPrice}`
+        const url = promoApplied 
+          ? `https://self.payanyway.ru/17591628606561?MNT_SUCCESS_URL=${successUrl}`
+          : `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}`
+        window.location.href = url
       } else if (planId === 'professional-6m') {
-        window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=${finalPrice}`
+        const url = promoApplied
+          ? `https://self.payanyway.ru/17591629735214?MNT_SUCCESS_URL=${successUrl}`
+          : `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}`
+        window.location.href = url
       } else if (planId === 'professional-12m') {
-        window.location.href = `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}&productPrice=${finalPrice}`
+        const url = promoApplied
+          ? `https://self.payanyway.ru/17591630893195?MNT_SUCCESS_URL=${successUrl}`
+          : `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}`
+        window.location.href = url
       }
       
     } catch (error) {
