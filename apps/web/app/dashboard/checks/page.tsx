@@ -166,8 +166,13 @@ export default function ChecksPage() {
     if (!user?.email) return
     const stored = localStorage.getItem(`deletedLeaks_${user.email}`)
     if (stored) {
-      const parsed = JSON.parse(stored)
-      setDeletedLeaks(new Map(parsed))
+      try {
+        const parsed = JSON.parse(stored)
+        setDeletedLeaks(new Map(Array.isArray(parsed) ? parsed : []))
+      } catch (error) {
+        console.error('Failed to load deleted leaks:', error)
+        setDeletedLeaks(new Map())
+      }
     }
   }
 
