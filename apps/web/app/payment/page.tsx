@@ -18,6 +18,15 @@ export default function PaymentPage() {
 
   useEffect(() => {
     setLoading(null)
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setLoading(null)
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const applyPromoCode = () => {
