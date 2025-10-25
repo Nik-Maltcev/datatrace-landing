@@ -1097,13 +1097,13 @@ export default function ChecksPage() {
                 </div>
               )}
               
-              {selectedSourceForDeletion === 'Userbox' && (
+              {(selectedSourceForDeletion === 'Userbox' || selectedSourceForDeletion === 'Usersbox') && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
-                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Userbox:</h4>
+                  <h4 className="font-bold text-gray-900 text-lg">Инструкция для Usersbox:</h4>
                   <div className="space-y-2 text-sm text-gray-700 leading-relaxed">
                     <p><strong>1.</strong> Откройте бота <a href="https://t.me/datatrace5_bot" target="_blank" className="text-blue-600 underline">t.me/datatrace5_bot</a> и запустите командой /start</p>
-                    <p><strong>2.</strong> Затем напишите команду /me</p>
-                    <p><strong>3.</strong> Выберите раздел "Скрытие информации"</p>
+                    <p><strong>2.</strong> Затем выберите "мой профиль" или напишите команду /me</p>
+                    <p><strong>3.</strong> Выберите раздел "Удалить информацию о себе"</p>
                   </div>
                 </div>
               )}
@@ -1120,7 +1120,7 @@ export default function ChecksPage() {
               )}
               
               {/* Fallback для неизвестных источников */}
-              {!['ITP', 'Dyxless', 'LeakOsint', 'Userbox', 'Vektor'].includes(selectedSourceForDeletion) && (
+              {!['ITP', 'Dyxless', 'LeakOsint', 'Userbox', 'Usersbox', 'Vektor'].includes(selectedSourceForDeletion) && (
                 <div className="space-y-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                   <h4 className="font-bold text-gray-900 text-lg">Общая инструкция:</h4>
                   <p className="text-sm text-gray-700 leading-relaxed">Свяжитесь с нашей службой поддержки для получения инструкций по удалению данных из источника {selectedSourceForDeletion}.</p>
