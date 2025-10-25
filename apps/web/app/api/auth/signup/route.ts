@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
         user_metadata: data.user?.user_metadata,
         created_at: data.user?.created_at
       },
-      message: 'Проверьте email для подтверждения регистрации'
+      message: 'Регистрация успешна! Выполните вход'
     });
 
   } catch (error) {
