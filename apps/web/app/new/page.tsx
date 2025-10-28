@@ -1,386 +1,357 @@
 "use client"
 
-import { useState } from "react"
+import { ChangeEvent, FormEvent, ReactNode, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Shield, 
-  Phone, 
-  CreditCard, 
-  AlertTriangle, 
-  CheckCircle,
-  User,
-  FileText,
-  Lock,
-  Mail
-} from "lucide-react"
+import { Shield, Phone, CheckCircle, User, FileText, Lock, Mail } from "lucide-react"
+
+const initialFormState = {
+  name: "",
+  phone: "",
+  email: "",
+  message: ""
+}
 
 export default function NewLandingPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    message: ""
-  })
+  const [formData, setFormData] = useState(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const highlights = [
+    "Выявляем скрытые риски по компаниям и индивидуальным предпринимателям",
+    "Объясняем результаты без сложных терминов и профессионального жаргона",
+    "Подсказываем, какие шаги предпринять после проверки, чтобы защитить сделку"
+  ]
+
+  const advantages: Array<{ title: string; description: string; icon: ReactNode }> = [
+    {
+      title: "Официальные источники",
+      description: "Собираем данные из ФНС, арбитражных дел, ФСПП и других государственных реестров.",
+      icon: <Shield className="h-6 w-6" />
+    },
+    {
+      title: "Понятный язык",
+      description: "Аналитик поясняет, что означают цифры в отчётах и какие решения подходят именно вашей ситуации.",
+      icon: <User className="h-6 w-6" />
+    },
+    {
+      title: "Актуальная картина",
+      description: "Информация обновляется ежедневно, поэтому вы видите свежие сведения по контрагентам.",
+      icon: <FileText className="h-6 w-6" />
+    },
+    {
+      title: "Конфиденциальность",
+      description: "Бережно храним ваши документы и соблюдаем требования 152-ФЗ о персональных данных.",
+      icon: <Lock className="h-6 w-6" />
+    }
+  ]
+
+  const steps = [
+    {
+      number: "1",
+      title: "Расскажите о контрагенте",
+      description: "Уточним сферу деятельности, условия сделки и договоримся о сроках проверки."
+    },
+    {
+      number: "2",
+      title: "Получите отчёт и пояснения",
+      description: "Через 1–2 рабочих дня вы получите структурированный отчёт и разбор от аналитика."
+    },
+    {
+      number: "3",
+      title: "Примите уверенное решение",
+      description: "Вы поймёте, стоит ли продолжать сделку, и получите рекомендации по следующему шагу."
+    }
+  ]
+
+  const useCases = [
+    "Вы заключаете долгосрочный контракт и хотите убедиться в надёжности партнёра.",
+    "Планируете инвестицию и сомневаетесь, нет ли у компании скрытых долгов и судебных споров.",
+    "Нужно объяснить совладельцам или совету директоров, почему сделку можно одобрить.",
+    "Требуется быстро разобраться в отчётах, чтобы не тратить вечера на самостоятельный анализ."
+  ]
+
+  const consultationPoints = [
+    "Разберём вашу ситуацию и подскажем, какие документы и данные стоит подготовить заранее.",
+    "Покажем, как пользоваться отчётами самостоятельно и на что смотреть в первую очередь."
+  ]
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setIsSubmitting(true)
+    setIsSubmitted(false)
 
     try {
-      // Здесь будет отправка заявки
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Имитация отправки
+      await new Promise(resolve => setTimeout(resolve, 1500))
       setIsSubmitted(true)
+      setFormData(() => ({ ...initialFormState }))
     } catch (error) {
-      console.error('Ошибка отправки заявки:', error)
+      console.error("Ошибка при отправке формы", error)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target
+    setIsSubmitted(false)
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
   }
 
+  const handleScrollToForm = () => {
+    if (typeof window === "undefined") {
+      return
+    }
+    document.getElementById("consultation")?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">DataTrace</span>
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-gray-900">
+      <header className="border-b border-emerald-100 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="h-10 w-10 text-emerald-600" />
+            <div>
+              <p className="text-2xl font-semibold text-gray-900">DataTrace</p>
+              <p className="text-sm text-gray-500">Проверка контрагентов и сделок</p>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-semibold text-blue-600">8 (800) 555-0123</p>
-              <p className="text-sm text-gray-600">Бесплатная консультация</p>
-            </div>
+          </div>
+          <div className="text-sm sm:text-right">
+            <p className="text-lg font-semibold text-emerald-700">8 (800) 555-0123</p>
+            <p className="text-gray-500">Ежедневно с 9:00 до 21:00 (мск)</p>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Защитите себя от мошенников
+      <section className="px-4 py-16">
+        <div className="mx-auto max-w-5xl text-center">
+          <h1 className="text-4xl font-semibold leading-tight text-gray-900 md:text-5xl">
+            Проверка партнёров и сделок с понятными выводами для вас
           </h1>
-          <p className="text-xl text-gray-700 mb-8 leading-relaxed">
-            Ваши персональные данные могут быть в открытом доступе. 
-            Мошенники используют их для обмана и кражи денег.
+          <p className="mt-6 text-xl leading-relaxed text-gray-700">
+            DataTrace помогает собственникам, директорам и финансистам вовремя замечать риски контрагентов,
+            чтобы сделки проходили спокойно и без неожиданных сюрпризов.
           </p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
-              <h2 className="text-2xl font-bold text-red-800">Внимание!</h2>
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button
+              onClick={handleScrollToForm}
+              className="rounded-full bg-emerald-600 px-8 py-6 text-lg font-medium text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700"
+            >
+              Получить консультацию
+            </Button>
+            <div className="flex items-center gap-3 rounded-full border border-emerald-200 bg-white px-5 py-3 shadow-sm">
+              <Phone className="h-5 w-5 text-emerald-600" />
+              <span className="text-lg font-medium text-emerald-700">8 (800) 555-0123</span>
             </div>
-            <p className="text-lg text-red-700">
-              Если вам звонят незнакомцы и знают ваши данные — это мошенники!
+          </div>
+          <p className="mt-6 text-sm text-gray-500">
+            Объясним простыми словами, какие риски обнаружила система и что стоит предпринять дальше.
+          </p>
+          <div className="mt-12 grid gap-5 sm:grid-cols-3">
+            {highlights.map(item => (
+              <div
+                key={item}
+                className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-white/80 px-5 py-4 text-left shadow-sm"
+              >
+                <CheckCircle className="h-5 w-5 flex-shrink-0 text-emerald-600" />
+                <span className="text-base leading-relaxed text-gray-700">{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-center text-3xl font-semibold text-gray-900">Почему DataTrace доверяют</h2>
+          <p className="mx-auto mt-4 max-w-3xl text-center text-lg leading-relaxed text-gray-600">
+            Мы объединяем автоматический сбор данных и работу экспертов. Вы получаете понятную картину рисков
+            и уверенность, что учли важные детали.
+          </p>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {advantages.map(item => (
+              <Card key={item.title} className="border-emerald-100 bg-emerald-50/70 shadow-none">
+                <CardHeader className="items-center gap-4 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-emerald-600 shadow">
+                    {item.icon}
+                  </div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">{item.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed text-gray-600">{item.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-center text-3xl font-semibold text-gray-900">Как проходит работа</h2>
+          <p className="mx-auto mt-4 max-w-3xl text-center text-lg leading-relaxed text-gray-600">
+            Всё выстроено так, чтобы вам было комфортно: без сложных формулировок и лишних визитов в офис.
+          </p>
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {steps.map(step => (
+              <Card key={step.number} className="border-emerald-100 bg-white/80 shadow-sm">
+                <CardHeader className="flex-row items-center gap-4">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-xl font-semibold text-white">
+                    {step.number}
+                  </span>
+                  <CardTitle className="text-xl font-semibold text-gray-900">{step.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-base leading-relaxed text-gray-600">{step.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-emerald-50/80 px-4 py-16">
+        <div className="mx-auto max-w-5xl text-center">
+          <h2 className="text-3xl font-semibold text-gray-900">Когда особенно полезен DataTrace</h2>
+          <p className="mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-gray-600">
+            Наши клиенты — владельцы и руководители компаний, которые ценят спокойствие и уверенность в сделках.
+          </p>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+            {useCases.map(point => (
+              <div
+                key={point}
+                className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-4 text-left shadow-sm"
+              >
+                <CheckCircle className="mt-1 h-5 w-5 flex-shrink-0 text-emerald-600" />
+                <span className="text-base leading-relaxed text-gray-700">{point}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="consultation" className="px-4 py-20">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_1fr]">
+          <div>
+            <h2 className="text-3xl font-semibold text-gray-900">Получите бесплатную консультацию</h2>
+            <p className="mt-4 text-lg leading-relaxed text-gray-600">
+              Оставьте контакты — специалист DataTrace свяжется в течение рабочего дня, задаст пару уточняющих
+              вопросов и подскажет оптимальный формат проверки.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Dangers Section */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Какие данные утекают и чем это опасно
-          </h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-red-200 bg-red-50">
-              <CardHeader className="text-center">
-                <Phone className="h-12 w-12 text-red-600 mx-auto mb-3" />
-                <CardTitle className="text-lg text-red-800">Номер телефона</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-red-700">
-                  Мошенники звонят и представляются банком, знают ваше имя и данные
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-200 bg-orange-50">
-              <CardHeader className="text-center">
-                <FileText className="h-12 w-12 text-orange-600 mx-auto mb-3" />
-                <CardTitle className="text-lg text-orange-800">Паспортные данные</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-orange-700">
-                  Оформляют кредиты и займы на ваше имя без вашего ведома
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200 bg-purple-50">
-              <CardHeader className="text-center">
-                <User className="h-12 w-12 text-purple-600 mx-auto mb-3" />
-                <CardTitle className="text-lg text-purple-800">ИНН и СНИЛС</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-purple-700">
-                  Получают доступ к госуслугам, налоговой, пенсионному фонду
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader className="text-center">
-                <CreditCard className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-                <CardTitle className="text-lg text-blue-800">Банковские данные</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-blue-700">
-                  Списывают деньги, оформляют карты и кредиты
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* How Scammers Work */}
-      <section className="py-16 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Как действуют мошенники
-          </h2>
-          
-          <div className="space-y-6">
-            <Card className="border-l-4 border-l-red-500">
-              <CardContent className="pt-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-red-100 rounded-full p-2">
-                    <span className="text-red-600 font-bold text-lg">1</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Звонок "из банка"</h3>
-                    <p className="text-gray-700">
-                      Звонят и говорят: "Здравствуйте, [ваше имя], это банк [название]. 
-                      На вашу карту пытаются списать деньги, нужно срочно заблокировать!"
-                    </p>
-                  </div>
+            <div className="mt-6 space-y-4">
+              {consultationPoints.map(point => (
+                <div key={point} className="flex items-start gap-3 rounded-2xl bg-white/80 px-4 py-3">
+                  <CheckCircle className="mt-1 h-5 w-5 text-emerald-600" />
+                  <p className="text-base leading-relaxed text-gray-600">{point}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-orange-500">
-              <CardContent className="pt-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-orange-100 rounded-full p-2">
-                    <span className="text-orange-600 font-bold text-lg">2</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Создают панику</h3>
-                    <p className="text-gray-700">
-                      "У вас осталось 5 минут! Мошенники уже списывают деньги! 
-                      Быстро назовите код из СМС для защиты!"
-                    </p>
-                  </div>
+              ))}
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-4 py-3 shadow-sm">
+                <Mail className="h-5 w-5 text-emerald-600" />
+                <div className="text-left">
+                  <p className="text-sm text-gray-500">Пишите, если удобнее на почту</p>
+                  <a href="mailto:info@datatrace.ru" className="text-lg font-medium text-emerald-700">
+                    info@datatrace.ru
+                  </a>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-purple-500">
-              <CardContent className="pt-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-purple-100 rounded-full p-2">
-                    <span className="text-purple-600 font-bold text-lg">3</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Получают доступ</h3>
-                    <p className="text-gray-700">
-                      Получив код из СМС, они получают полный доступ к вашим деньгам 
-                      и могут оформить кредиты на ваше имя.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Solution Section */}
-      <section className="py-16 px-4 bg-blue-600 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-8">
-            Мы поможем защитить ваши данные
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center">
-              <div className="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Найдем утечки</h3>
-              <p className="text-blue-100">
-                Проверим все базы данных и найдем ваши персональные данные
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Lock className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Удалим данные</h3>
-              <p className="text-blue-100">
-                Подадим заявки на удаление ваших данных из всех найденных источников
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Защитим навсегда</h3>
-              <p className="text-blue-100">
-                Настроим постоянный мониторинг и будем удалять новые утечки
-              </p>
             </div>
           </div>
+          <Card className="border-emerald-200 bg-white/90 shadow-lg shadow-emerald-100">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold text-gray-900">Оставьте заявку</CardTitle>
+              <p className="text-base text-gray-600">
+                Мы перезвоним или напишем в удобное время, чтобы обсудить вашу задачу.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {isSubmitted && (
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                  <CheckCircle className="h-5 w-5" />
+                  <AlertDescription>
+                    Спасибо! Мы получили вашу заявку и свяжемся с вами в ближайшее рабочее время.
+                  </AlertDescription>
+                </Alert>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Ваше имя *</label>
+                  <Input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Например, Ольга Сергеевна"
+                    required
+                    className="py-3 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Телефон *</label>
+                  <Input
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="+7 (900) 000-00-00"
+                    required
+                    className="py-3 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Электронная почта</label>
+                  <Input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Если удобнее получить ответ письмом"
+                    className="py-3 text-base"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Комментарий</label>
+                  <Textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    placeholder="Расскажите, с какой задачей обращаетесь"
+                    rows={4}
+                    className="text-base"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full rounded-full bg-emerald-600 py-4 text-lg font-medium text-white transition hover:bg-emerald-700 disabled:bg-emerald-300"
+                >
+                  {isSubmitting ? "Отправляем..." : "Отправить заявку"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
-      {/* Contact Form */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-            Оставьте заявку на защиту
-          </h2>
-          
-          {isSubmitted ? (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="pt-6 text-center">
-                <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-green-800 mb-2">Заявка отправлена!</h3>
-                <p className="text-green-700 text-lg">
-                  Наш специалист свяжется с вами в течение 30 минут
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center text-2xl">Бесплатная консультация</CardTitle>
-                <p className="text-center text-gray-600">
-                  Заполните форму и мы проверим ваши данные бесплатно
-                </p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ваше имя *
-                    </label>
-                    <Input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Введите ваше имя"
-                      required
-                      className="text-lg py-3"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Номер телефона *
-                    </label>
-                    <Input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="+7 (999) 123-45-67"
-                      required
-                      className="text-lg py-3"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email (необязательно)
-                    </label>
-                    <Input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="your@email.com"
-                      className="text-lg py-3"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Опишите вашу ситуацию
-                    </label>
-                    <Textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      placeholder="Например: Мне звонят мошенники и знают мои данные..."
-                      rows={4}
-                      className="text-lg"
-                    />
-                  </div>
-                  
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-4"
-                  >
-                    {isSubmitting ? "Отправляем..." : "Получить бесплатную консультацию"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      {/* Warning Section */}
-      <section className="py-12 px-4 bg-red-50">
-        <div className="max-w-4xl mx-auto">
-          <Alert className="border-red-200 bg-red-100">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <AlertDescription className="text-red-800 text-lg">
-              <strong>Помните:</strong> Настоящие банки НИКОГДА не просят назвать коды из СМС по телефону! 
-              Если вам звонят и просят код — это мошенники!
-            </AlertDescription>
-          </Alert>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <Shield className="h-8 w-8 text-blue-400" />
-            <span className="text-2xl font-bold">DataTrace</span>
+      <footer className="bg-emerald-900 px-4 py-12 text-emerald-50">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-emerald-200" />
+            <span className="text-2xl font-semibold">DataTrace</span>
           </div>
-          <p className="text-gray-400 mb-4">
-            Защита персональных данных от мошенников
+          <p className="max-w-3xl text-base text-emerald-100">
+            Мы помогаем предпринимателям и руководителям принимать взвешенные решения. Наши специалисты всегда
+            рядом, чтобы подсказать и поддержать.
           </p>
-          <div className="text-xl font-semibold text-blue-400 mb-2">
-            8 (800) 555-0123
+          <div className="flex flex-col items-center gap-2 text-lg font-medium sm:flex-row sm:gap-3">
+            <Phone className="h-5 w-5 text-emerald-200" />
+            <span>8 (800) 555-0123</span>
           </div>
-          <p className="text-gray-400">
-            Звонок бесплатный, работаем круглосуточно
-          </p>
+          <p className="text-sm text-emerald-200">Работаем по всей России, отвечаем каждый день с 9:00 до 21:00</p>
         </div>
       </footer>
     </div>
