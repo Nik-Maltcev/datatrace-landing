@@ -206,7 +206,6 @@ export default function PersonalRemovalLanding() {
           <h2 className="text-center text-3xl font-semibold text-gray-900">Что делают мошенники</h2>
           <p className="mx-auto mt-4 max-w-3xl text-center text-lg leading-relaxed text-gray-600">
             Основная цель звонящих — вывести вас из равновесия, заставить торопиться и принять решение на эмоциях.
-            Мы готовим вас к разговору и всегда остаёмся на связи.
           </p>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
             {threatScenarios.map(scenario => (
