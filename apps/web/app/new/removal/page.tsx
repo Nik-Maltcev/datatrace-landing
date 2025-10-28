@@ -176,7 +176,7 @@ export default function PersonalRemovalLanding() {
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="mt-1 h-6 w-6 text-emerald-600" />
                   <p className="text-base leading-relaxed text-emerald-900">
-                    Если вам уже звонят, значит данные попали в базы «сливов» и продаются десяткам колл-центров.
+                    Если вам уже звонят, значит данные попали в слитые базы и продаются десяткам колл-центров.
                     Мы находим источник и добиваемся удаления.
                   </p>
                 </div>
