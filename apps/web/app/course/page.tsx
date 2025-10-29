@@ -205,10 +205,6 @@ export default function CoursePage() {
             <p className="mt-3 text-sm text-gray-500">
               {completedCount} из {totalLessons} уроков отмечены как просмотренные.
             </p>
-            <div className="mt-4 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              <Sparkles className="h-4 w-4" />
-              Скачайте чек-лист, чтобы отмечать прогресс в офлайн-формате.
-            </div>
           </div>
         </div>
       </header>
@@ -340,63 +336,6 @@ export default function CoursePage() {
           </div>
 
           <aside className="order-3 space-y-6 lg:col-span-2 lg:order-3 xl:col-span-1 xl:order-3">
-            <Card className="border-emerald-100 bg-white/90">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Поддержка эксперта</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm leading-relaxed text-gray-600">
-                <p>
-                  Если во время прохождения вам уже звонят мошенники, запишитесь на консультацию — обсудим план действий
-                  и поможем подготовить обращения в банк.
-                </p>
-                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
-                  <Shield className="h-4 w-4" />
-                  <AlertDescription>
-                    DataTrace работает конфиденциально: данные не передаются третьим лицам и защищены требованиями
-                    152‑ФЗ.
-                  </AlertDescription>
-                </Alert>
-                <div className="flex flex-col gap-3 text-sm font-medium text-emerald-700">
-                  <a href="tel:88005550123" className="flex items-center gap-2 hover:underline">
-                    <Phone className="h-4 w-4" />
-                    8 (800) 555-0123
-                  </a>
-                  <a href="mailto:info@datatrace.ru" className="flex items-center gap-2 hover:underline">
-                    <Mail className="h-4 w-4" />
-                    info@datatrace.ru
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-emerald-100 bg-emerald-50/80">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Промокод слушателя</CardTitle>
-                <p className="text-sm text-emerald-700">
-                  Скидка 50% на персональное удаление данных при обращении в течение месяца после прохождения курса.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3">
-                  <code className="text-lg font-semibold tracking-widest text-emerald-700">{promocode}</code>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyPromocode}
-                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                  >
-                    {isPromocodeCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                {isPromocodeCopied && (
-                  <p className="text-sm text-emerald-700">Промокод скопирован. Расскажите менеджеру, что прошли курс.</p>
-                )}
-                <p className="text-xs text-emerald-700">
-                  Промокод действителен для новых обращений и не суммируется с другими акциями.
-                </p>
-              </CardContent>
-            </Card>
-
             <Card className="border-emerald-100 bg-white/90">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-gray-900">Что вы получите после курса</CardTitle>
