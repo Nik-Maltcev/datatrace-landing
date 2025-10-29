@@ -152,10 +152,6 @@ export default function PersonalRemovalLanding() {
             >
               Оставить заявку на удаление
             </Button>
-            <div className="flex items-center gap-3 rounded-full border border-emerald-200 bg-white px-5 py-3 shadow-sm">
-              <Phone className="h-5 w-5 text-emerald-600" />
-              <span className="text-lg font-medium text-emerald-700">8 (800) 555-0123</span>
-            </div>
           </div>
           <p className="mt-6 text-sm text-gray-500">
             Расскажем, где именно нашли ваши сведения, и свяжемся только в удобное для вас время.
