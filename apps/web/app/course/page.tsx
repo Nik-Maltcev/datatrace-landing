@@ -191,8 +191,7 @@ export default function CoursePage() {
               Как защититься от утечек и навязчивых звонков
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-              Пошаговая программа для предпринимателей и руководителей 45+, которая помогает вернуть контроль над
-              персональными данными и уверенно реагировать на попытки мошенников.
+              Практический курс для тех, кто хочет понять, какие данные могли утечь, где проверить их появление и как защитить себя от мошеннических звонков и действий.
             </p>
           </div>
           <div className="w-full max-w-sm rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
@@ -336,25 +335,6 @@ export default function CoursePage() {
           </div>
 
           <aside className="order-3 space-y-6 lg:col-span-2 lg:order-3 xl:col-span-1 xl:order-3">
-            <Card className="border-emerald-100 bg-white/90">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Что вы получите после курса</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-relaxed text-gray-600">
-                <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  Понимание, какие данные могли утечь, и где проверить их появление.
-                </p>
-                <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  Готовые шаблоны разговоров с «службой безопасности» и инструкции для банка.
-                </p>
-                <p className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  Чек-лист по цифровой гигиене для вас и вашей команды.
-                </p>
-              </CardContent>
-            </Card>
           </aside>
         </section>
       </main>
