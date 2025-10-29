@@ -33,7 +33,7 @@ const lessons: Lesson[] = [
     id: 1,
     title: "Почему появляются утечки и как их заметить вовремя",
     duration: "12:40",
-    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_1/preview",
+    videoUrl: "https://drive.google.com/file/d/1mFMJfxJmlsT2zVbUa75lJk9mVPVqlhJc/preview",
     description:
       "Разбираем, какие базы чаще всего попадают в открытый доступ, почему звонят «из банка» и где искать подтверждение утечки.",
     keyPoints: [
@@ -46,7 +46,7 @@ const lessons: Lesson[] = [
     id: 2,
     title: "Защищаем паспорт, СНИЛС и ИНН от повторных сливов",
     duration: "15:05",
-    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_2/preview",
+    videoUrl: "https://drive.google.com/file/d/1OMq3COdNlhYXcCNHWm2FD4ZbuFtTOHDn/preview",
     description:
       "Объясняем, как ограничить распространение документов и какие заявления можно подать дистанционно, чтобы мошенники не успели взять кредит.",
     keyPoints: [
@@ -59,7 +59,7 @@ const lessons: Lesson[] = [
     id: 3,
     title: "Телефон под прицелом: учимся фильтровать звонки",
     duration: "11:32",
-    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_3/preview",
+    videoUrl: "https://drive.google.com/file/d/1ElEwYhxCUZ8STMmSyJltljVbTeKYrfoM/preview",
     description:
       "Настраиваем фильтры и записные книжки, чтобы подозрительные номера блокировались автоматически, а важные вызовы не терялись.",
     keyPoints: [
@@ -72,7 +72,7 @@ const lessons: Lesson[] = [
     id: 4,
     title: "План действий, если навязали кредит или перевод",
     duration: "14:48",
-    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_4/preview",
+    videoUrl: "https://drive.google.com/file/d/1bYl10HB3JiwRNprr-kV9p5XR9Xe7qNBn/preview",
     description:
       "Пошагово разбираем, как отменить перевод, оспорить операцию в банке и подготовить заявление, если мошенники уже успели навредить.",
     keyPoints: [
@@ -85,13 +85,26 @@ const lessons: Lesson[] = [
     id: 5,
     title: "Настраиваем долгосрочную защиту данных",
     duration: "09:27",
-    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_5/preview",
+    videoUrl: "https://drive.google.com/file/d/10JQ7CMm2jSGMj01kT5SNaPRHNs1ARlE8/preview",
     description:
       "Формируем привычки кибергигиены: мониторинг утечек, безопасное хранение документов, контроль доступа к персональной информации.",
     keyPoints: [
       "Какие сервисы уведомят о новой утечке первыми",
       "Где безопасно хранить копии документов и пароли",
       "Как объяснить семье базовые правила цифровой безопасности"
+    ]
+  },
+  {
+    id: 6,
+    title: "Дополнительные материалы и практика",
+    duration: "10:15",
+    videoUrl: "https://drive.google.com/file/d/1nokusp9PACXGMI7hlx2v2qdgb9WGuCrT/preview",
+    description:
+      "Закрепляем полученные знания на практических примерах и разбираем дополнительные кейсы защиты данных.",
+    keyPoints: [
+      "Разбор реальных случаев утечек и способов их предотвращения",
+      "Практические упражнения по защите данных",
+      "Ответы на частые вопросы слушателей курса"
     ]
   }
 ]
