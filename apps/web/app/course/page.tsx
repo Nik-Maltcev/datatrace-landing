@@ -201,8 +201,54 @@ export default function CoursePage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-20">
-        <section className="grid gap-8 pt-12 lg:grid-cols-[1.05fr_1fr]">
-          <div className="space-y-8">
+        <section className="grid gap-8 pt-12 lg:grid-cols-[0.9fr_1.3fr_0.9fr]">
+          <div className="order-2 space-y-6 self-start lg:order-1">
+            <Card className="border-emerald-100 bg-white/90 lg:sticky lg:top-24">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">Содержание курса</CardTitle>
+                <p className="text-sm text-gray-500">
+                  Выберите урок, чтобы посмотреть видео и ключевые рекомендации.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {lessons.map(lesson => {
+                  const isActive = lesson.id === currentLessonId
+                  const isCompleted = completedLessons.has(lesson.id)
+                  return (
+                    <button
+                      type="button"
+                      key={lesson.id}
+                      onClick={() => handleSelectLesson(lesson.id)}
+                      className={`w-full rounded-xl border px-5 py-4 text-left transition ${
+                        isActive
+                          ? "border-emerald-300 bg-emerald-50 shadow-sm"
+                          : "border-emerald-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-base font-semibold text-gray-900">
+                          Урок {lesson.id}. {lesson.title}
+                        </p>
+                        <span className="flex items-center gap-2 text-sm text-emerald-700">
+                          <Clock className="h-3.5 w-3.5" />
+                          {lesson.duration}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-gray-600">{lesson.description}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm">
+                        <CheckCircle2
+                          className={`h-4 w-4 ${isCompleted ? "text-emerald-600" : "text-gray-300"}`}
+                        />
+                        {isCompleted ? "Отмечен как просмотренный" : "Ожидает просмотра"}
+                      </div>
+                    </button>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="order-1 space-y-8 lg:order-2">
             <Card className="border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
               <CardHeader className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
@@ -257,7 +303,7 @@ export default function CoursePage() {
                     <Play className="h-4 w-4 text-emerald-600" />
                     Просмотрите видео до конца, затем отметьте урок.
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Button variant="outline" onClick={handlePreviousLesson} disabled={currentLessonId === lessons[0]?.id}>
                       Предыдущий урок
                     </Button>
@@ -278,53 +324,9 @@ export default function CoursePage() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="border-emerald-100 bg-white/90">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">Содержание курса</CardTitle>
-                <p className="text-sm text-gray-500">
-                  Выберите урок, чтобы посмотреть видео и ключевые рекомендации.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {lessons.map(lesson => {
-                  const isActive = lesson.id === currentLessonId
-                  const isCompleted = completedLessons.has(lesson.id)
-                  return (
-                    <button
-                      type="button"
-                      key={lesson.id}
-                      onClick={() => handleSelectLesson(lesson.id)}
-                      className={`w-full rounded-xl border px-5 py-4 text-left transition ${
-                        isActive
-                          ? "border-emerald-300 bg-emerald-50 shadow-sm"
-                          : "border-emerald-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/60"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-base font-semibold text-gray-900">
-                          Урок {lesson.id}. {lesson.title}
-                        </p>
-                        <span className="flex items-center gap-2 text-sm text-emerald-700">
-                          <Clock className="h-3.5 w-3.5" />
-                          {lesson.duration}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm text-gray-600">{lesson.description}</p>
-                      <div className="mt-3 flex items-center gap-2 text-sm">
-                        <CheckCircle2
-                          className={`h-4 w-4 ${isCompleted ? "text-emerald-600" : "text-gray-300"}`}
-                        />
-                        {isCompleted ? "Отмечен как просмотренный" : "Ожидает просмотра"}
-                      </div>
-                    </button>
-                  )
-                })}
-              </CardContent>
-            </Card>
           </div>
 
-          <aside className="space-y-6">
+          <aside className="order-3 space-y-6">
             <Card className="border-emerald-100 bg-white/90">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-gray-900">Поддержка эксперта</CardTitle>
