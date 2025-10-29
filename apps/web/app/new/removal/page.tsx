@@ -130,7 +130,6 @@ export default function PersonalRemovalLanding() {
             </div>
           </div>
           <div className="text-sm sm:text-right">
-            <p className="text-lg font-semibold text-emerald-700">8 (800) 555-0123</p>
             <p className="text-gray-500">Ежедневно с 9:00 до 21:00 (мск)</p>
           </div>
         </div>
@@ -366,10 +365,6 @@ export default function PersonalRemovalLanding() {
             Мы заботимся о безопасности ваших данных и остаёмся на связи на каждом этапе удаления. Задайте любой
             вопрос — объясним спокойно и без спешки.
           </p>
-          <div className="flex flex-col items-center gap-2 text-lg font-medium sm:flex-row sm:gap-3">
-            <Phone className="h-5 w-5 text-emerald-200" />
-            <span>8 (800) 555-0123</span>
-          </div>
           <p className="text-sm text-emerald-200">Работаем по всей России, отвечаем каждый день с 9:00 до 21:00</p>
         </div>
       </footer>
