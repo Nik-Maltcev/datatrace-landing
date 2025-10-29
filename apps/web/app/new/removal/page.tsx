@@ -272,9 +272,9 @@ export default function PersonalRemovalLanding() {
               <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-4 py-3 shadow-sm">
                 <Mail className="h-5 w-5 text-emerald-600" />
                 <div className="text-left">
-                  <p className="text-sm text-gray-500">Если удобнее переписка</p>
-                  <a href="mailto:info@datatrace.ru" className="text-lg font-medium text-emerald-700">
-                    info@datatrace.ru
+                  <p className="text-sm text-gray-500">Наша электронная почта</p>
+                  <a href="mailto:support@datatrace.tech" className="text-lg font-medium text-emerald-700">
+                    support@datatrace.tech
                   </a>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function PersonalRemovalLanding() {
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Если удобнее получить план действий письмом"
+                    placeholder=""
                     className="py-3 text-base"
                   />
                 </div>
