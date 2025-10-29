@@ -26,40 +26,42 @@ interface VideoLesson {
   description: string
 }
 
+// Замените эти ссылки на ваши видео из Google Drive или YouTube
 const lessons: VideoLesson[] = [
   {
     id: 1,
     title: "Что такое утечки данных и почему это опасно",
     duration: 180, // 3 минуты
-    videoUrl: "/course-videos/lesson1.mp4",
+    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_1/preview", // Google Drive
+    // videoUrl: "https://www.youtube.com/embed/YOUR_VIDEO_ID_1", // YouTube
     description: "Узнайте, как ваши данные попадают в руки мошенников"
   },
   {
     id: 2,
     title: "Как мошенники используют ваши данные",
     duration: 240, // 4 минуты
-    videoUrl: "/course-videos/lesson2.mp4",
+    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_2/preview",
     description: "Разбираем схемы обмана и способы защиты"
   },
   {
     id: 3,
     title: "Признаки звонков мошенников",
     duration: 300, // 5 минут
-    videoUrl: "/course-videos/lesson3.mp4",
+    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_3/preview",
     description: "Учимся распознавать подозрительные звонки"
   },
   {
     id: 4,
     title: "Что делать, если вам звонят мошенники",
     duration: 360, // 6 минут
-    videoUrl: "/course-videos/lesson4.mp4",
+    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_4/preview",
     description: "Пошаговый алгоритм действий при подозрительном звонке"
   },
   {
     id: 5,
     title: "Как защитить свои данные в интернете",
     duration: 420, // 7 минут
-    videoUrl: "/course-videos/lesson5.mp4",
+    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_5/preview",
     description: "Практические советы по защите персональной информации"
   }
 ]
@@ -280,17 +282,13 @@ export default function CoursePage() {
               </CardHeader>
               <CardContent>
                 <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden mb-4">
-                  <video
-                    ref={videoRef}
+                  <iframe
+                    src={lessons[currentLesson].videoUrl}
                     className="w-full h-full"
-                    controls
-                    onPlay={handleVideoPlay}
-                    onPause={handleVideoPause}
-                    poster="/course-videos/poster.jpg"
-                  >
-                    <source src={lessons[currentLesson].videoUrl} type="video/mp4" />
-                    Ваш браузер не поддерживает видео.
-                  </video>
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={lessons[currentLesson].title}
+                  />
                 </div>
                 
                 <div className="space-y-4">
