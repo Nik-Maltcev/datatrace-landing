@@ -16,7 +16,8 @@ import {
   Bookmark,
   Sparkles,
   Copy,
-  Check
+  Check,
+  ArrowRight
 } from "lucide-react"
 
 type Lesson = {
@@ -110,11 +111,13 @@ const lessons: Lesson[] = [
 ]
 
 const promocode = "DATASAFE50"
+const completionPromocode = "DATATR50"
 
 export default function CoursePage() {
   const [currentLessonId, setCurrentLessonId] = useState(lessons[0]?.id ?? 1)
   const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set())
   const [isPromocodeCopied, setIsPromocodeCopied] = useState(false)
+  const [isCompletionPromocodeCopied, setIsCompletionPromocodeCopied] = useState(false)
 
   const currentLesson = useMemo(
     () => lessons.find(lesson => lesson.id === currentLessonId) ?? lessons[0],
@@ -159,6 +162,29 @@ export default function CoursePage() {
 
       setIsPromocodeCopied(true)
       setTimeout(() => setIsPromocodeCopied(false), 2500)
+    } catch (error) {
+      console.error("Не удалось скопировать промокод", error)
+    }
+  }
+
+  const handleCopyCompletionPromocode = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(completionPromocode)
+      } else {
+        const textarea = document.createElement("textarea")
+        textarea.value = completionPromocode
+        textarea.setAttribute("readonly", "")
+        textarea.style.position = "absolute"
+        textarea.style.left = "-9999px"
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textarea)
+      }
+
+      setIsCompletionPromocodeCopied(true)
+      setTimeout(() => setIsCompletionPromocodeCopied(false), 2500)
     } catch (error) {
       console.error("Не удалось скопировать промокод", error)
     }
@@ -336,6 +362,65 @@ export default function CoursePage() {
 
 
         </section>
+
+        {/* Congratulations Block */}
+        {progress === 100 && (
+          <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Card className="border-2 border-emerald-400 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 shadow-2xl">
+              <CardContent className="p-8 md:p-12">
+                <div className="text-center space-y-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 mb-4">
+                    <Sparkles className="h-10 w-10 text-emerald-600" />
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+                    Поздравляем с прохождением курса!
+                  </h2>
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Вы успешно завершили все уроки и теперь знаете, как защитить свои данные от утечек и мошенников.
+                  </p>
+                  
+                  <div className="bg-white rounded-2xl border-2 border-emerald-300 p-6 md:p-8 max-w-xl mx-auto shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <Shield className="h-6 w-6 text-emerald-600" />
+                      <h3 className="text-xl font-bold text-gray-900">Ваш подарок</h3>
+                    </div>
+                    <p className="text-gray-700 mb-6">
+                      Получите <span className="font-bold text-emerald-600">скидку 50%</span> на профессиональный тариф DataTrace
+                    </p>
+                    <div className="flex items-center justify-center gap-3 bg-emerald-50 rounded-xl border border-emerald-200 px-6 py-4 mb-6">
+                      <code className="text-2xl font-bold tracking-widest text-emerald-700">{completionPromocode}</code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyCompletionPromocode}
+                        className="border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                      >
+                        {isCompletionPromocodeCopied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                      </Button>
+                    </div>
+                    {isCompletionPromocodeCopied && (
+                      <p className="text-sm text-emerald-700 mb-4">✅ Промокод скопирован!</p>
+                    )}
+                    <a 
+                      href="https://datatrace.tech/payment" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-block w-full"
+                    >
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-lg py-6">
+                        Перейти к выбору тарифа
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </a>
+                    <p className="text-xs text-gray-500 mt-4">
+                      Промокод действителен в течение 30 дней с момента завершения курса
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-emerald-100 bg-white/80 py-10">
