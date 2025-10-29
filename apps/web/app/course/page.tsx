@@ -1,352 +1,419 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Play, 
-  Pause, 
-  CheckCircle, 
-  Lock, 
-  Shield, 
+import { Badge } from "@/components/ui/badge"
+import {
+  Shield,
   Clock,
-  Gift,
+  Play,
+  CheckCircle2,
+  Phone,
+  Mail,
+  Bookmark,
+  Sparkles,
   Copy,
   Check
 } from "lucide-react"
 
-interface VideoLesson {
+type Lesson = {
   id: number
   title: string
-  duration: number // в секундах
-  videoUrl: string
+  duration: string
   description: string
+  videoUrl: string
+  keyPoints: string[]
 }
 
-// Замените эти ссылки на ваши видео из Google Drive или YouTube
-const lessons: VideoLesson[] = [
+const lessons: Lesson[] = [
   {
     id: 1,
-    title: "Что такое утечки данных и почему это опасно",
-    duration: 180, // 3 минуты
-    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_1/preview", // Google Drive
-    // videoUrl: "https://www.youtube.com/embed/YOUR_VIDEO_ID_1", // YouTube
-    description: "Узнайте, как ваши данные попадают в руки мошенников"
+    title: "Почему появляются утечки и как их заметить вовремя",
+    duration: "12:40",
+    videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_1/preview",
+    description:
+      "Разбираем, какие базы чаще всего попадают в открытый доступ, почему звонят «из банка» и где искать подтверждение утечки.",
+    keyPoints: [
+      "Основные источники утечек и чаты, где продают данные",
+      "Как проверить, фигурирует ли ваш номер или паспорт в открытых базах",
+      "Что делать в первые 24 часа после подозрительного звонка"
+    ]
   },
   {
     id: 2,
-    title: "Как мошенники используют ваши данные",
-    duration: 240, // 4 минуты
+    title: "Защищаем паспорт, СНИЛС и ИНН от повторных сливов",
+    duration: "15:05",
     videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_2/preview",
-    description: "Разбираем схемы обмана и способы защиты"
+    description:
+      "Объясняем, как ограничить распространение документов и какие заявления можно подать дистанционно, чтобы мошенники не успели взять кредит.",
+    keyPoints: [
+      "Где появляются копии документов и как их удалить",
+      "Как заявить о компрометации паспорта и СНИЛС",
+      "В каком случае стоит перевыпустить документы"
+    ]
   },
   {
     id: 3,
-    title: "Признаки звонков мошенников",
-    duration: 300, // 5 минут
+    title: "Телефон под прицелом: учимся фильтровать звонки",
+    duration: "11:32",
     videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_3/preview",
-    description: "Учимся распознавать подозрительные звонки"
+    description:
+      "Настраиваем фильтры и записные книжки, чтобы подозрительные номера блокировались автоматически, а важные вызовы не терялись.",
+    keyPoints: [
+      "Какие приложения помогают отсеивать мошенников",
+      "Шаблоны ответов, которые быстро пресекают навязчивый разговор",
+      "Как фиксировать звонки, чтобы при необходимости обратиться в банк или полицию"
+    ]
   },
   {
     id: 4,
-    title: "Что делать, если вам звонят мошенники",
-    duration: 360, // 6 минут
+    title: "План действий, если навязали кредит или перевод",
+    duration: "14:48",
     videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_4/preview",
-    description: "Пошаговый алгоритм действий при подозрительном звонке"
+    description:
+      "Пошагово разбираем, как отменить перевод, оспорить операцию в банке и подготовить заявление, если мошенники уже успели навредить.",
+    keyPoints: [
+      "Как разговаривать с банком и на что ссылаться",
+      "Какие документы понадобятся для заявления",
+      "Сроки, в которые важно успеть подать обращение"
+    ]
   },
   {
     id: 5,
-    title: "Как защитить свои данные в интернете",
-    duration: 420, // 7 минут
+    title: "Настраиваем долгосрочную защиту данных",
+    duration: "09:27",
     videoUrl: "https://drive.google.com/file/d/YOUR_FILE_ID_5/preview",
-    description: "Практические советы по защите персональной информации"
+    description:
+      "Формируем привычки кибергигиены: мониторинг утечек, безопасное хранение документов, контроль доступа к персональной информации.",
+    keyPoints: [
+      "Какие сервисы уведомят о новой утечке первыми",
+      "Где безопасно хранить копии документов и пароли",
+      "Как объяснить семье базовые правила цифровой безопасности"
+    ]
   }
 ]
 
+const promocode = "DATASAFE50"
+
 export default function CoursePage() {
-  const [currentLesson, setCurrentLesson] = useState(0)
+  const [currentLessonId, setCurrentLessonId] = useState(lessons[0]?.id ?? 1)
   const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set())
-  const [watchedTime, setWatchedTime] = useState<{ [key: number]: number }>({})
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [showPromocode, setShowPromocode] = useState(false)
-  const [promocodeCopied, setPromocodeCopied] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPromocodeCopied, setIsPromocodeCopied] = useState(false)
 
-  const totalDuration = lessons.reduce((sum, lesson) => sum + lesson.duration, 0)
-  const totalWatchedTime = Object.values(watchedTime).reduce((sum, time) => sum + time, 0)
-  const progress = Math.min((totalWatchedTime / totalDuration) * 100, 100)
+  const currentLesson = useMemo(
+    () => lessons.find(lesson => lesson.id === currentLessonId) ?? lessons[0],
+    [currentLessonId]
+  )
 
-  const promocode = "DATASAFE50"
+  const totalLessons = lessons.length
+  const completedCount = completedLessons.size
+  const progress = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100)
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (videoRef.current && !videoRef.current.paused) {
-        const currentTime = Math.floor(videoRef.current.currentTime)
-        const lessonId = lessons[currentLesson].id
-        
-        setWatchedTime(prev => ({
-          ...prev,
-          [lessonId]: Math.max(prev[lessonId] || 0, currentTime)
-        }))
-
-        // Отмечаем урок как завершенный, если просмотрено 80% или больше
-        const lessonDuration = lessons[currentLesson].duration
-        if (currentTime >= lessonDuration * 0.8) {
-          setCompletedLessons(prev => new Set([...prev, lessonId]))
-        }
+  const toggleLessonCompletion = (lessonId: number) => {
+    setCompletedLessons(prev => {
+      const updated = new Set(prev)
+      if (updated.has(lessonId)) {
+        updated.delete(lessonId)
+      } else {
+        updated.add(lessonId)
       }
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [currentLesson])
-
-  useEffect(() => {
-    // Показываем промокод, если прогресс больше 90%
-    if (progress >= 90 && !showPromocode) {
-      setShowPromocode(true)
-    }
-  }, [progress, showPromocode])
-
-  const handleVideoPlay = () => {
-    setIsPlaying(true)
+      return updated
+    })
   }
 
-  const handleVideoPause = () => {
-    setIsPlaying(false)
+  const handleSelectLesson = (lessonId: number) => {
+    setCurrentLessonId(lessonId)
   }
 
-  const handleLessonSelect = (index: number) => {
-    // Можно выбрать только первый урок или уже завершенные + следующий
-    if (index === 0 || completedLessons.has(lessons[index - 1].id)) {
-      setCurrentLesson(index)
-      setIsPlaying(false)
-    }
-  }
-
-  const copyPromocode = async () => {
+  const handleCopyPromocode = async () => {
     try {
-      await navigator.clipboard.writeText(promocode)
-      setPromocodeCopied(true)
-      setTimeout(() => setPromocodeCopied(false), 2000)
-    } catch (err) {
-      console.error('Не удалось скопировать промокод:', err)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(promocode)
+      } else {
+        const textarea = document.createElement("textarea")
+        textarea.value = promocode
+        textarea.setAttribute("readonly", "")
+        textarea.style.position = "absolute"
+        textarea.style.left = "-9999px"
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textarea)
+      }
+
+      setIsPromocodeCopied(true)
+      setTimeout(() => setIsPromocodeCopied(false), 2500)
+    } catch (error) {
+      console.error("Не удалось скопировать промокод", error)
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+  const handleNextLesson = () => {
+    const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId)
+    if (currentIndex < lessons.length - 1) {
+      setCurrentLessonId(lessons[currentIndex + 1].id)
+    }
+  }
+
+  const handlePreviousLesson = () => {
+    const currentIndex = lessons.findIndex(lesson => lesson.id === currentLessonId)
+    if (currentIndex > 0) {
+      setCurrentLessonId(lessons[currentIndex - 1].id)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Курс по защите от мошенников</h1>
-                <p className="text-sm text-gray-600">Научитесь защищать свои данные</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-gray-900">
+      <header className="border-b border-emerald-100 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm">
+              <Shield className="h-4 w-4 text-emerald-600" />
+              Практический курс DataTrace
             </div>
-            <div className="text-right">
-              <div className="flex items-center space-x-2 mb-1">
-                <Clock className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">
-                  Прогресс: {Math.round(progress)}%
-                </span>
-              </div>
-              <Progress value={progress} className="w-32" />
+            <h1 className="text-4xl font-semibold leading-tight text-gray-900 md:text-5xl">
+              Как защититься от утечек и навязчивых звонков
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
+              Пошаговая программа для предпринимателей и руководителей 45+, которая помогает вернуть контроль над
+              персональными данными и уверенно реагировать на попытки мошенников.
+            </p>
+          </div>
+          <div className="w-full max-w-sm rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
+            <p className="text-sm font-medium uppercase tracking-wide text-emerald-600">Прогресс курса</p>
+            <p className="mt-3 text-4xl font-semibold text-gray-900">
+              {progress}
+              <span className="text-xl font-normal text-gray-500">%</span>
+            </p>
+            <Progress value={progress} className="mt-4 h-3 bg-emerald-100" />
+            <p className="mt-3 text-sm text-gray-500">
+              {completedCount} из {totalLessons} уроков отмечены как просмотренные.
+            </p>
+            <div className="mt-4 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <Sparkles className="h-4 w-4" />
+              Скачайте чек-лист, чтобы отмечать прогресс в офлайн-формате.
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Список уроков */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="h-5 w-5 mr-2 text-blue-600" />
-                  Уроки курса
-                </CardTitle>
+      <main className="mx-auto max-w-6xl px-4 pb-20">
+        <section className="grid gap-8 pt-12 lg:grid-cols-[1.05fr_1fr]">
+          <div className="space-y-8">
+            <Card className="border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
+              <CardHeader className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-2xl font-semibold text-gray-900">
+                    Урок {currentLesson?.id}. {currentLesson?.title}
+                  </CardTitle>
+                  <Badge variant="outline" className="border-emerald-200 text-emerald-700">
+                    <Clock className="mr-2 h-3.5 w-3.5" />
+                    {currentLesson?.duration}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Отметьте урок после просмотра, чтобы зафиксировать прогресс и открыть дополнительные материалы.
+                </p>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {lessons.map((lesson, index) => {
-                  const isCompleted = completedLessons.has(lesson.id)
-                  const isLocked = index > 0 && !completedLessons.has(lessons[index - 1].id)
-                  const isCurrent = index === currentLesson
-                  const watchedSeconds = watchedTime[lesson.id] || 0
-                  const lessonProgress = Math.min((watchedSeconds / lesson.duration) * 100, 100)
+              <CardContent className="space-y-6">
+                <div className="aspect-video overflow-hidden rounded-xl border border-emerald-100 bg-gray-900">
+                  <iframe
+                    src={currentLesson?.videoUrl}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={currentLesson?.title}
+                  />
+                </div>
 
-                  return (
-                    <div
-                      key={lesson.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                        isCurrent 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : isLocked 
-                            ? 'border-gray-200 bg-gray-50 cursor-not-allowed' 
-                            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                      }`}
-                      onClick={() => handleLessonSelect(index)}
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                  <Bookmark className="h-4 w-4" />
+                  <AlertDescription>
+                    Замените ссылки вида <code>YOUR_FILE_ID_X</code> на ваши материалы Google Drive или YouTube.
+                    После обновления страница автоматически подхватит новые уроки.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Что разберём</h2>
+                    <p className="mt-2 text-base leading-relaxed text-gray-600">{currentLesson?.description}</p>
+                  </div>
+                  <ul className="grid gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 text-sm leading-relaxed text-gray-700 sm:grid-cols-2">
+                    {currentLesson?.keyPoints.map(point => (
+                      <li key={point} className="flex items-start gap-2">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Play className="h-4 w-4 text-emerald-600" />
+                    Просмотрите видео до конца, затем отметьте урок.
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={handlePreviousLesson} disabled={currentLessonId === lessons[0]?.id}>
+                      Предыдущий урок
+                    </Button>
+                    <Button
+                      onClick={() => toggleLessonCompletion(currentLessonId)}
+                      className="bg-emerald-600 text-white hover:bg-emerald-700"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          {isCompleted ? (
-                            <CheckCircle className="h-5 w-5 text-green-600" />
-                          ) : isLocked ? (
-                            <Lock className="h-5 w-5 text-gray-400" />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full border-2 border-blue-600" />
-                          )}
-                          <span className="text-sm font-medium">Урок {lesson.id}</span>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {formatTime(lesson.duration)}
-                        </Badge>
+                      {completedLessons.has(currentLessonId) ? "Снять отметку" : "Отметить просмотренным"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleNextLesson}
+                      disabled={currentLessonId === lessons[lessons.length - 1]?.id}
+                    >
+                      Следующий урок
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-emerald-100 bg-white/90">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">Содержание курса</CardTitle>
+                <p className="text-sm text-gray-500">
+                  Выберите урок, чтобы посмотреть видео и ключевые рекомендации.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {lessons.map(lesson => {
+                  const isActive = lesson.id === currentLessonId
+                  const isCompleted = completedLessons.has(lesson.id)
+                  return (
+                    <button
+                      type="button"
+                      key={lesson.id}
+                      onClick={() => handleSelectLesson(lesson.id)}
+                      className={`w-full rounded-xl border px-5 py-4 text-left transition ${
+                        isActive
+                          ? "border-emerald-300 bg-emerald-50 shadow-sm"
+                          : "border-emerald-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-base font-semibold text-gray-900">
+                          Урок {lesson.id}. {lesson.title}
+                        </p>
+                        <span className="flex items-center gap-2 text-sm text-emerald-700">
+                          <Clock className="h-3.5 w-3.5" />
+                          {lesson.duration}
+                        </span>
                       </div>
-                      <h3 className={`text-sm font-medium mb-1 ${isLocked ? 'text-gray-400' : 'text-gray-900'}`}>
-                        {lesson.title}
-                      </h3>
-                      <p className={`text-xs ${isLocked ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {lesson.description}
-                      </p>
-                      {!isLocked && lessonProgress > 0 && (
-                        <div className="mt-2">
-                          <Progress value={lessonProgress} className="h-1" />
-                        </div>
-                      )}
-                    </div>
+                      <p className="mt-2 text-sm text-gray-600">{lesson.description}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm">
+                        <CheckCircle2
+                          className={`h-4 w-4 ${isCompleted ? "text-emerald-600" : "text-gray-300"}`}
+                        />
+                        {isCompleted ? "Отмечен как просмотренный" : "Ожидает просмотра"}
+                      </div>
+                    </button>
                   )
                 })}
               </CardContent>
             </Card>
-
-            {/* Промокод */}
-            {showPromocode && (
-              <Card className="mt-6 border-green-200 bg-green-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-green-800">
-                    <Gift className="h-5 w-5 mr-2" />
-                    Поздравляем!
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-green-700 mb-4">
-                    Вы прошли курс! Получите скидку 50% на наши услуги:
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <code className="bg-white px-3 py-2 rounded border text-lg font-mono font-bold text-green-800">
-                      {promocode}
-                    </code>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={copyPromocode}
-                      className="border-green-300 text-green-700 hover:bg-green-100"
-                    >
-                      {promocodeCopied ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  {promocodeCopied && (
-                    <p className="text-xs text-green-600 mt-2">Промокод скопирован!</p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </div>
 
-          {/* Видеоплеер */}
-          <div className="lg:col-span-2">
-            <Card>
+          <aside className="space-y-6">
+            <Card className="border-emerald-100 bg-white/90">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Урок {lessons[currentLesson].id}: {lessons[currentLesson].title}</span>
-                  <Badge variant="outline">
-                    {formatTime(watchedTime[lessons[currentLesson].id] || 0)} / {formatTime(lessons[currentLesson].duration)}
-                  </Badge>
-                </CardTitle>
+                <CardTitle className="text-xl font-semibold text-gray-900">Поддержка эксперта</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden mb-4">
-                  <iframe
-                    src={lessons[currentLesson].videoUrl}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title={lessons[currentLesson].title}
-                  />
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      О чем этот урок
-                    </h3>
-                    <p className="text-gray-700">
-                      {lessons[currentLesson].description}
-                    </p>
-                  </div>
-
-                  {currentLesson === 0 && (
-                    <Alert className="border-blue-200 bg-blue-50">
-                      <Shield className="h-4 w-4 text-blue-600" />
-                      <AlertDescription className="text-blue-800">
-                        <strong>Добро пожаловать на курс!</strong> Просматривайте уроки последовательно. 
-                        Следующий урок откроется после завершения текущего.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {completedLessons.has(lessons[currentLesson].id) && (
-                    <Alert className="border-green-200 bg-green-50">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <AlertDescription className="text-green-800">
-                        <strong>Урок завершен!</strong> Вы можете перейти к следующему уроку.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+              <CardContent className="space-y-4 text-sm leading-relaxed text-gray-600">
+                <p>
+                  Если во время прохождения вам уже звонят мошенники, запишитесь на консультацию — обсудим план действий
+                  и поможем подготовить обращения в банк.
+                </p>
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                  <Shield className="h-4 w-4" />
+                  <AlertDescription>
+                    DataTrace работает конфиденциально: данные не передаются третьим лицам и защищены требованиями
+                    152‑ФЗ.
+                  </AlertDescription>
+                </Alert>
+                <div className="flex flex-col gap-3 text-sm font-medium text-emerald-700">
+                  <a href="tel:88005550123" className="flex items-center gap-2 hover:underline">
+                    <Phone className="h-4 w-4" />
+                    8 (800) 555-0123
+                  </a>
+                  <a href="mailto:info@datatrace.ru" className="flex items-center gap-2 hover:underline">
+                    <Mail className="h-4 w-4" />
+                    info@datatrace.ru
+                  </a>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Навигация */}
-            <div className="flex justify-between mt-6">
-              <Button
-                variant="outline"
-                disabled={currentLesson === 0}
-                onClick={() => handleLessonSelect(currentLesson - 1)}
-              >
-                Предыдущий урок
-              </Button>
-              
-              <Button
-                disabled={
-                  currentLesson === lessons.length - 1 || 
-                  !completedLessons.has(lessons[currentLesson].id)
-                }
-                onClick={() => handleLessonSelect(currentLesson + 1)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Следующий урок
-              </Button>
-            </div>
-          </div>
+            <Card className="border-emerald-100 bg-emerald-50/80">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">Промокод слушателя</CardTitle>
+                <p className="text-sm text-emerald-700">
+                  Скидка 50% на персональное удаление данных при обращении в течение месяца после прохождения курса.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3">
+                  <code className="text-lg font-semibold tracking-widest text-emerald-700">{promocode}</code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyPromocode}
+                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                  >
+                    {isPromocodeCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {isPromocodeCopied && (
+                  <p className="text-sm text-emerald-700">Промокод скопирован. Расскажите менеджеру, что прошли курс.</p>
+                )}
+                <p className="text-xs text-emerald-700">
+                  Промокод действителен для новых обращений и не суммируется с другими акциями.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-emerald-100 bg-white/90">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">Что вы получите после курса</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm leading-relaxed text-gray-600">
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  Понимание, какие данные могли утечь, и где проверить их появление.
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  Готовые шаблоны разговоров с «службой безопасности» и инструкции для банка.
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  Чек-лист по цифровой гигиене для вас и вашей команды.
+                </p>
+              </CardContent>
+            </Card>
+          </aside>
+        </section>
+      </main>
+
+      <footer className="border-t border-emerald-100 bg-white/80 py-10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 text-center text-sm text-gray-600 sm:flex-row sm:justify-between sm:text-left">
+          <p>
+            DataTrace · Персональная защита данных. Мы рядом, чтобы поддержать вас и команду в любой ситуации с
+            утечками.
+          </p>
+          <p className="text-gray-500">Работаем ежедневно с 9:00 до 21:00 (мск)</p>
         </div>
-      </div>
+      </footer>
     </div>
   )
 }
