@@ -209,9 +209,9 @@ export default function CoursePage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-20">
-        <section className="grid gap-8 pt-12 lg:gap-6 xl:gap-8 lg:grid-cols-[minmax(220px,0.85fr)_minmax(0,1fr)] xl:grid-cols-[minmax(220px,0.75fr)_minmax(0,1fr)_minmax(220px,0.75fr)]">
-          <div className="order-2 space-y-6 self-start lg:order-1 xl:order-1">
-            <Card className="border-emerald-100 bg-white/90 xl:sticky xl:top-24">
+        <section className="grid gap-8 pt-12 lg:gap-6 xl:gap-8 lg:grid-cols-[minmax(280px,1fr)_minmax(0,2fr)]">
+          <div className="order-2 space-y-6 self-start lg:order-1">
+            <Card className="border-emerald-100 bg-white/90 lg:sticky lg:top-24">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-gray-900">Содержание курса</CardTitle>
                 <p className="text-sm text-gray-500">
@@ -256,7 +256,7 @@ export default function CoursePage() {
             </Card>
           </div>
 
-          <div className="order-1 space-y-8 lg:order-2 xl:order-2">
+          <div className="order-1 space-y-8 lg:order-2">
             <Card className="border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
               <CardHeader className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
@@ -334,8 +334,7 @@ export default function CoursePage() {
             </Card>
           </div>
 
-          <aside className="order-3 space-y-6 lg:col-span-2 lg:order-3 xl:col-span-1 xl:order-3">
-          </aside>
+
         </section>
       </main>
 
