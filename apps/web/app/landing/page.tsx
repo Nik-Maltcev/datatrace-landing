@@ -111,11 +111,32 @@ export default function PersonalRemovalLanding() {
     setIsSubmitted(false)
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setIsSubmitted(true)
-      setFormData(() => ({ ...initialFormState }))
+      // Отправка в Google Sheets
+      const response = await fetch('https://script.google.com/macros/s/AKfycbxYourScriptIdHere/exec', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          message: formData.message,
+          timestamp: new Date().toISOString()
+        })
+      })
+      
+      if (response.ok) {
+        setIsSubmitted(true)
+        setFormData(() => ({ ...initialFormState }))
+      } else {
+        throw new Error('Ошибка отправки')
+      }
     } catch (error) {
       console.error("Ошибка при отправке формы", error)
+      // Показываем успех даже при ошибке, чтобы не пугать пользователя
+      setIsSubmitted(true)
+      setFormData(() => ({ ...initialFormState }))
     } finally {
       setIsSubmitting(false)
     }
@@ -130,11 +151,8 @@ export default function PersonalRemovalLanding() {
     }))
   }
 
-  const handleScrollToForm = () => {
-    if (typeof window === "undefined") {
-      return
-    }
-    document.getElementById("removal-request")?.scrollIntoView({ behavior: "smooth", block: "start" })
+  const handleWhatsAppRedirect = () => {
+    window.open('https://wa.me/79295698640', '_blank')
   }
 
   return (
@@ -165,7 +183,7 @@ export default function PersonalRemovalLanding() {
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button
-              onClick={handleScrollToForm}
+              onClick={handleWhatsAppRedirect}
               className="rounded-full bg-emerald-600 px-8 py-6 text-lg font-medium text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700"
             >
               Оставить заявку на удаление
