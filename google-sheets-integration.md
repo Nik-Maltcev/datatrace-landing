@@ -51,6 +51,8 @@ function doPost(e) {
 
 ## Обновление кода
 
-Замените в файле landing/page.tsx:
-- `AKfycbxYourScriptIdHere` на ваш URL Google Apps Script
-- Убедитесь, что в Google Apps Script указан правильный SHEET_ID
+✅ **ГОТОВО!** Код уже обновлен с вашим URL:
+- Google Apps Script URL: https://script.google.com/macros/s/AKfycbxmr-ckIYNv1kXVnhf3GVSzweRLMlzm_ne1r5a0UB7XyUXhGl4IxBdEN6y6rrrzf1Q/exec
+- Google Sheet ID: 141fMoGy3u4_7libbtdwq4fv0xyGJQcrQTTJgdueiQM0
+
+Форма теперь будет отправлять данные в вашу Google таблицу!

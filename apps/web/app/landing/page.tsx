@@ -112,7 +112,7 @@ export default function PersonalRemovalLanding() {
 
     try {
       // Отправка в Google Sheets
-      const response = await fetch('https://script.google.com/macros/s/AKfycbxYourScriptIdHere/exec', {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbxmr-ckIYNv1kXVnhf3GVSzweRLMlzm_ne1r5a0UB7XyUXhGl4IxBdEN6y6rrrzf1Q/exec', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
