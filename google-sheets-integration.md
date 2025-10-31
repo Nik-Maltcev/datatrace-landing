@@ -8,28 +8,49 @@
 
 function doPost(e) {
   try {
+    // Логируем входящий запрос
+    console.log('Received request:', e);
+    
     var SHEET_ID = '141fMoGy3u4_7libbtdwq4fv0xyGJQcrQTTJgdueiQM0';
     var sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
     
-    var data = JSON.parse(e.postData.contents);
+    // Проверяем наличие данных
+    if (!e.postData || !e.postData.contents) {
+      throw new Error('No data received');
+    }
     
-    sheet.appendRow([
+    var data = JSON.parse(e.postData.contents);
+    console.log('Parsed data:', data);
+    
+    // Добавляем строку
+    var row = [
       new Date(),
       data.name || '',
       data.phone || '',
       data.email || '',
       data.message || ''
-    ]);
+    ];
+    
+    console.log('Adding row:', row);
+    sheet.appendRow(row);
     
     return ContentService
-      .createTextOutput(JSON.stringify({success: true}))
+      .createTextOutput(JSON.stringify({success: true, message: 'Data added successfully'}))
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (error) {
+    console.error('Error:', error);
     return ContentService
       .createTextOutput(JSON.stringify({success: false, error: error.toString()}))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// Функция для тестирования
+function doGet(e) {
+  return ContentService
+    .createTextOutput('Google Apps Script is working!')
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 4. Сохраните проект

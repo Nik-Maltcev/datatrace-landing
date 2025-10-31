@@ -111,9 +111,12 @@ export default function PersonalRemovalLanding() {
     setIsSubmitted(false)
 
     try {
+      console.log('Sending data:', formData)
+      
       // Отправка в Google Sheets
       const response = await fetch('https://script.google.com/macros/s/AKfycbxmr-ckIYNv1kXVnhf3GVSzweRLMlzm_ne1r5a0UB7XyUXhGl4IxBdEN6y6rrrzf1Q/exec', {
         method: 'POST',
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -126,12 +129,12 @@ export default function PersonalRemovalLanding() {
         })
       })
       
-      if (response.ok) {
-        setIsSubmitted(true)
-        setFormData(() => ({ ...initialFormState }))
-      } else {
-        throw new Error('Ошибка отправки')
-      }
+      console.log('Response:', response)
+      
+      // С no-cors мы не можем прочитать response, поэтому считаем успешным
+      setIsSubmitted(true)
+      setFormData(() => ({ ...initialFormState }))
+      
     } catch (error) {
       console.error("Ошибка при отправке формы", error)
       // Показываем успех даже при ошибке, чтобы не пугать пользователя
