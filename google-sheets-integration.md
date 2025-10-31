@@ -4,19 +4,15 @@
 
 1. Перейдите на https://script.google.com
 2. Создайте новый проект
-3. Вставьте следующий код:
+3. Удалите весь существующий код и вставьте следующий код (БЕЗ слова javascript в начале):
 
-```javascript
 function doPost(e) {
   try {
-    // ID вашей Google таблицы (из URL)
-    const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
+    var SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
+    var sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
     
-    // Парсим данные из запроса
-    const data = JSON.parse(e.postData.contents);
+    var data = JSON.parse(e.postData.contents);
     
-    // Добавляем строку с данными
     sheet.appendRow([
       new Date(),
       data.name || '',
@@ -35,7 +31,6 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
-```
 
 4. Сохраните проект
 5. Нажмите "Развернуть" > "Новое развертывание"
