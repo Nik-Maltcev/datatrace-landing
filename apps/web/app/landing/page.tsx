@@ -1,6 +1,6 @@
 "use client"
 
-import { ChangeEvent, FormEvent, ReactNode, useState } from "react"
+import { ChangeEvent, FormEvent, ReactNode, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -85,6 +85,25 @@ export default function PersonalRemovalLanding() {
   const [formData, setFormData] = useState<FormState>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+
+  useEffect(() => {
+    // Top.Mail.Ru counter
+    const _tmr = (window as any)._tmr || ((window as any)._tmr = [])
+    _tmr.push({id: "3713466", type: "pageView", start: (new Date()).getTime()})
+    
+    if (!document.getElementById("tmr-code")) {
+      const script = document.createElement("script")
+      script.type = "text/javascript"
+      script.async = true
+      script.id = "tmr-code"
+      script.src = "https://top-fwz1.mail.ru/js/code.js"
+      
+      const firstScript = document.getElementsByTagName("script")[0]
+      if (firstScript && firstScript.parentNode) {
+        firstScript.parentNode.insertBefore(script, firstScript)
+      }
+    }
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -368,6 +387,17 @@ export default function PersonalRemovalLanding() {
           <p className="text-sm text-emerald-200">Работаем по всей России, отвечаем каждый день с 9:00 до 21:00</p>
         </div>
       </footer>
+      
+      {/* Top.Mail.Ru noscript fallback */}
+      <noscript>
+        <div>
+          <img 
+            src="https://top-fwz1.mail.ru/counter?id=3713466;js=na" 
+            style={{position: "absolute", left: "-9999px"}} 
+            alt="Top.Mail.Ru" 
+          />
+        </div>
+      </noscript>
     </div>
   )
 }
