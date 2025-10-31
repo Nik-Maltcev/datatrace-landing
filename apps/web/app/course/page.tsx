@@ -86,7 +86,7 @@ const lessons: Lesson[] = [
     id: 5,
     title: "Настраиваем долгосрочную защиту данных",
     duration: "09:27",
-    videoUrl: "https://disk.yandex.ru/i/r1YdBi53vRMcnQ/embed",
+    videoUrl: "https://t.me/course_video1/2?embed=1&mode=tme",
     description:
       "Формируем привычки кибергигиены: мониторинг утечек, безопасное хранение документов, контроль доступа к персональной информации.",
     keyPoints: [
