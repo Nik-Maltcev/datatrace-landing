@@ -34,7 +34,7 @@ const lessons: Lesson[] = [
     id: 1,
     title: "Почему появляются утечки и как их заметить вовремя",
     duration: "12:40",
-    videoUrl: "https://dzen.ru/video/watch/6904e1b92317255bf390f222",
+    videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/266/h/5c96e7c47eb2df8f59a8f334055a88bd.mp4",
     description:
       "Разбираем, какие базы чаще всего попадают в открытый доступ, почему звонят «из банка» и где искать подтверждение утечки.",
     keyPoints: [
