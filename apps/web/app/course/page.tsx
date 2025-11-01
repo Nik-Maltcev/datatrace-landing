@@ -47,7 +47,7 @@ const lessons: Lesson[] = [
     id: 2,
     title: "Защищаем паспорт, СНИЛС и ИНН от повторных сливов",
     duration: "15:05",
-    videoUrl: "https://drive.google.com/file/d/1OMq3COdNlhYXcCNHWm2FD4ZbuFtTOHDn/preview",
+    videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/81/h/0d215b03e2f3807d34f4d33fd56212a7.mp4",
     description:
       "Объясняем, как ограничить распространение документов и какие заявления можно подать дистанционно, чтобы мошенники не успели взять кредит.",
     keyPoints: [
@@ -60,7 +60,7 @@ const lessons: Lesson[] = [
     id: 3,
     title: "Телефон под прицелом: учимся фильтровать звонки",
     duration: "11:32",
-    videoUrl: "https://drive.google.com/file/d/1ElEwYhxCUZ8STMmSyJltljVbTeKYrfoM/preview",
+    videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/448/h/c58ae2c5cbde886fea54ed1ec74d493f.mp4",
     description:
       "Настраиваем фильтры и записные книжки, чтобы подозрительные номера блокировались автоматически, а важные вызовы не терялись.",
     keyPoints: [
@@ -73,7 +73,7 @@ const lessons: Lesson[] = [
     id: 4,
     title: "План действий, если навязали кредит или перевод",
     duration: "14:48",
-    videoUrl: "https://drive.google.com/file/d/1bYl10HB3JiwRNprr-kV9p5XR9Xe7qNBn/preview",
+    videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/364/h/0a81a5b0accf2eebd45e47c20183a9af.mp4",
     description:
       "Пошагово разбираем, как отменить перевод, оспорить операцию в банке и подготовить заявление, если мошенники уже успели навредить.",
     keyPoints: [
@@ -86,7 +86,7 @@ const lessons: Lesson[] = [
     id: 5,
     title: "Настраиваем долгосрочную защиту данных",
     duration: "09:27",
-    videoUrl: "https://t.me/course_video1/2?embed=1&mode=tme",
+    videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/142/h/2281b06f56e84eba3d850f1da23c9419.mp4",
     description:
       "Формируем привычки кибергигиены: мониторинг утечек, безопасное хранение документов, контроль доступа к персональной информации.",
     keyPoints: [
@@ -99,7 +99,7 @@ const lessons: Lesson[] = [
     id: 6,
     title: "Дополнительные материалы и практика",
     duration: "10:15",
-    videoUrl: "https://drive.google.com/file/d/1nokusp9PACXGMI7hlx2v2qdgb9WGuCrT/preview",
+    videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/387/h/e2c9a38ac5a4377ce4fdf6ba40d13f8f.mp4",
     description:
       "Закрепляем полученные знания на практических примерах и разбираем дополнительные кейсы защиты данных.",
     keyPoints: [
