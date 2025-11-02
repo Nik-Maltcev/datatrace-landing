@@ -453,24 +453,32 @@ export default function CoursePage() {
                 </div>
 
                 {showQuiz && currentLesson?.quiz && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                      <CardHeader>
-                        <CardTitle className="text-2xl">Тест по уроку {currentLessonId}</CardTitle>
-                        <p className="text-gray-600">Ответьте на все вопросы, чтобы завершить урок</p>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        {currentLesson.quiz.map((question, qIndex) => (
-                          <div key={question.id} className="space-y-3">
-                            <p className="font-semibold text-gray-900">
-                              {qIndex + 1}. {question.question}
-                            </p>
-                            <div className="space-y-2">
-                              {question.options.map((option, oIndex) => (
+                  <Card className="border-2 border-emerald-200 bg-emerald-50/30 mt-6">
+                    <CardHeader>
+                      <CardTitle className="text-2xl text-emerald-900">Тест по уроку {currentLessonId}</CardTitle>
+                      <p className="text-gray-600">Ответьте на все вопросы, чтобы завершить урок</p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {currentLesson.quiz.map((question, qIndex) => (
+                        <div key={question.id} className="space-y-3">
+                          <p className="font-semibold text-gray-900">
+                            {qIndex + 1}. {question.question}
+                          </p>
+                          <div className="space-y-2">
+                            {question.options.map((option, oIndex) => {
+                              const isSelected = quizAnswers[question.id] === oIndex
+                              const isCorrect = question.correctAnswer === oIndex
+                              const showResult = quizSubmitted
+                              
+                              return (
                                 <label
                                   key={oIndex}
                                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
-                                    quizAnswers[question.id] === oIndex
+                                    showResult && isCorrect
+                                      ? 'border-green-500 bg-green-50'
+                                      : showResult && isSelected && !isCorrect
+                                      ? 'border-red-500 bg-red-50'
+                                      : isSelected
                                       ? 'border-emerald-500 bg-emerald-50'
                                       : 'border-gray-200 hover:border-emerald-300'
                                   }`}
@@ -478,43 +486,40 @@ export default function CoursePage() {
                                   <input
                                     type="radio"
                                     name={`question-${question.id}`}
-                                    checked={quizAnswers[question.id] === oIndex}
-                                    onChange={() => handleQuizAnswer(question.id, oIndex)}
+                                    checked={isSelected}
+                                    onChange={() => !quizSubmitted && handleQuizAnswer(question.id, oIndex)}
+                                    disabled={quizSubmitted}
                                     className="text-emerald-600"
                                   />
-                                  <span>{option}</span>
+                                  <span className="flex-1">{option}</span>
+                                  {showResult && isCorrect && (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  )}
                                 </label>
-                              ))}
-                            </div>
+                              )
+                            })}
                           </div>
-                        ))}
-
-                        {quizSubmitted ? (
-                          <Alert className="border-emerald-200 bg-emerald-50">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                            <AlertDescription className="text-emerald-800">
-                              Отлично! Вы успешно прошли тест. Теперь можете перейти к следующему уроку.
-                            </AlertDescription>
-                          </Alert>
-                        ) : null}
-
-                        <div className="flex gap-3">
-                          <Button
-                            onClick={handleQuizSubmit}
-                            disabled={Object.keys(quizAnswers).length !== currentLesson.quiz.length || quizSubmitted}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            Проверить ответы
-                          </Button>
-                          {quizSubmitted && (
-                            <Button onClick={handleCloseQuiz} variant="outline">
-                              Закрыть
-                            </Button>
-                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                      ))}
+
+                      {quizSubmitted && (
+                        <Alert className="border-emerald-200 bg-emerald-50">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <AlertDescription className="text-emerald-800">
+                            Отлично! Вы успешно прошли тест. Теперь можете перейти к следующему уроку.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      <Button
+                        onClick={handleQuizSubmit}
+                        disabled={Object.keys(quizAnswers).length !== currentLesson.quiz.length || quizSubmitted}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        Проверить ответы
+                      </Button>
+                    </CardContent>
+                  </Card>
                 )}
               </CardContent>
             </Card>
