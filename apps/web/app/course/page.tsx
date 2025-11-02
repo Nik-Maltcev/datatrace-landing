@@ -218,13 +218,8 @@ export default function CoursePage() {
     if (!lesson?.quiz) return
 
     setQuizSubmitted(true)
-    
-    const allCorrect = lesson.quiz.every(q => quizAnswers[q.id] === q.correctAnswer)
-    
-    if (allCorrect) {
-      setPassedQuizzes(prev => new Set([...prev, currentLessonId]))
-      setCompletedLessons(prev => new Set([...prev, currentLessonId]))
-    }
+    setPassedQuizzes(prev => new Set([...prev, currentLessonId]))
+    setCompletedLessons(prev => new Set([...prev, currentLessonId]))
   }
 
   const handleCloseQuiz = () => {
@@ -443,7 +438,7 @@ export default function CoursePage() {
                     <Button
                       variant="outline"
                       onClick={handleNextLesson}
-                      disabled={currentLessonId === lessons[lessons.length - 1]?.id || (currentLesson?.quiz && !passedQuizzes.has(currentLessonId))}
+                      disabled={currentLessonId === lessons[lessons.length - 1]?.id || (currentLesson?.quiz && !quizSubmitted)}
                     >
                       Следующий урок
                     </Button>
@@ -453,8 +448,28 @@ export default function CoursePage() {
                 {showQuiz && currentLesson?.quiz && (
                   <Card className="border-2 border-emerald-200 bg-emerald-50/30 mt-6">
                     <CardHeader>
-                      <CardTitle className="text-2xl text-emerald-900">Тест по уроку {currentLessonId}</CardTitle>
-                      <p className="text-gray-600">Ответьте на все вопросы, чтобы завершить урок</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-2xl text-emerald-900">Тест по уроку {currentLessonId}</CardTitle>
+                          <p className="text-gray-600 mt-2">Ответьте на все вопросы, чтобы завершить урок</p>
+                        </div>
+                        {quizSubmitted && (() => {
+                          const correctCount = currentLesson.quiz!.filter(q => quizAnswers[q.id] === q.correctAnswer).length
+                          const totalCount = currentLesson.quiz!.length
+                          return (
+                            <Badge 
+                              variant="outline" 
+                              className={`text-lg px-4 py-2 ${
+                                correctCount === totalCount 
+                                  ? 'border-green-500 bg-green-50 text-green-700'
+                                  : 'border-orange-500 bg-orange-50 text-orange-700'
+                              }`}
+                            >
+                              {correctCount}/{totalCount}
+                            </Badge>
+                          )
+                        })()}
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {currentLesson.quiz.map((question, qIndex) => (
@@ -500,24 +515,6 @@ export default function CoursePage() {
                         </div>
                       ))}
 
-                      {quizSubmitted && passedQuizzes.has(currentLessonId) && (
-                        <Alert className="border-emerald-200 bg-emerald-50">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          <AlertDescription className="text-emerald-800">
-                            Отлично! Вы успешно прошли тест. Теперь можете перейти к следующему уроку.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
-                      {quizSubmitted && !passedQuizzes.has(currentLessonId) && (
-                        <Alert className="border-red-200 bg-red-50">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                          <AlertDescription className="text-red-800">
-                            Некоторые ответы неверны. Правильные ответы отмечены зеленым. Попробуйте еще раз!
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
                       {!quizSubmitted ? (
                         <Button
                           onClick={handleQuizSubmit}
@@ -526,16 +523,26 @@ export default function CoursePage() {
                         >
                           Проверить ответы
                         </Button>
-                      ) : !passedQuizzes.has(currentLessonId) && (
-                        <Button
-                          onClick={() => {
-                            setQuizAnswers({})
-                            setQuizSubmitted(false)
-                          }}
-                          className="w-full bg-emerald-600 hover:bg-emerald-700"
-                        >
-                          Попробовать еще раз
-                        </Button>
+                      ) : (
+                        <div className="flex gap-3">
+                          <Button
+                            onClick={() => {
+                              setQuizAnswers({})
+                              setQuizSubmitted(false)
+                            }}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Попробовать еще раз
+                          </Button>
+                          <Button
+                            onClick={handleNextLesson}
+                            disabled={currentLessonId === lessons[lessons.length - 1]?.id}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            Следующий урок
+                          </Button>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
