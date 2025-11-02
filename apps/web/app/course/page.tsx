@@ -397,14 +397,6 @@ export default function CoursePage() {
                   />
                 </div>
 
-                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
-                  <Bookmark className="h-4 w-4" />
-                  <AlertDescription>
-                    Замените ссылки вида <code>YOUR_FILE_ID_X</code> на ваши материалы Google Drive или YouTube.
-                    После обновления страница автоматически подхватит новые уроки.
-                  </AlertDescription>
-                </Alert>
-
                 <div className="space-y-4">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">Что разберём</h2>
