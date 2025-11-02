@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { ChangeEvent, FormEvent, ReactNode, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,7 +16,8 @@ import {
   UserCheck,
   Lock,
   Fingerprint,
-  Mail
+  Mail,
+  ArrowRight
 } from "lucide-react"
 
 type FormState = {
@@ -192,6 +194,33 @@ export default function PersonalRemovalLanding() {
           <p className="mt-6 text-sm text-gray-500">
             Расскажем, где именно нашли ваши сведения, и свяжемся только в удобное для вас время.
           </p>
+        </div>
+      </section>
+
+      <section className="px-4 pb-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 p-8 text-white shadow-xl shadow-emerald-100 sm:flex sm:items-center sm:justify-between sm:gap-8">
+            <div className="space-y-4">
+              <span className="text-sm font-medium uppercase tracking-wider text-emerald-50/80">
+                Специальное предложение
+              </span>
+              <h2 className="text-3xl font-semibold leading-tight">
+                Пройди курс по кибергигиене и получи скидку 50% на услуги
+              </h2>
+              <p className="max-w-xl text-base text-emerald-50/90">
+                Усильте цифровую защиту команды и получите персональный разбор рисков вместе с DataTrace.
+              </p>
+            </div>
+            <Button
+              asChild
+              className="mt-6 w-full rounded-full bg-white px-7 py-4 text-lg font-semibold text-emerald-700 shadow-lg transition hover:bg-emerald-50 sm:mt-0 sm:w-auto"
+            >
+              <Link href="/course">
+                Перейти к курсу
+                <ArrowRight className="ml-2 inline-block h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
