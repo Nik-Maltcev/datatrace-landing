@@ -489,7 +489,10 @@ export default function CoursePage() {
   }
 
   const handleSelectLesson = (lessonId: number) => {
-    setCurrentLessonId(lessonId)
+    // Разрешаем переключение только на первый урок или на пройденные уроки
+    if (lessonId === 1 || completedLessons.has(lessonId - 1)) {
+      setCurrentLessonId(lessonId)
+    }
   }
 
   const handleCopyPromocode = async () => {
@@ -610,13 +613,17 @@ export default function CoursePage() {
                 {lessons.map(lesson => {
                   const isActive = lesson.id === currentLessonId
                   const isCompleted = completedLessons.has(lesson.id)
+                  const isLocked = lesson.id > 1 && !completedLessons.has(lesson.id - 1)
                   return (
                     <button
                       type="button"
                       key={lesson.id}
                       onClick={() => handleSelectLesson(lesson.id)}
+                      disabled={isLocked}
                       className={`w-full rounded-xl border px-5 py-4 text-left transition ${
-                        isActive
+                        isLocked
+                          ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                          : isActive
                           ? "border-emerald-300 bg-emerald-50 shadow-sm"
                           : "border-emerald-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/60"
                       }`}
