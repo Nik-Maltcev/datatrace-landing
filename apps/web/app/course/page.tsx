@@ -567,6 +567,16 @@ export default function CoursePage() {
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
               Практический курс для тех, кто хочет понять, какие данные могли утечь, где проверить их появление и как защитить себя от мошеннических звонков и действий.
             </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5">
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                Скидка 50% за прохождение
+              </Badge>
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5">
+                <Shield className="mr-1.5 h-3.5 w-3.5" />
+                Проверка номера после урока 2
+              </Badge>
+            </div>
           </div>
           <div className="w-full max-w-sm rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
             <p className="text-sm font-medium uppercase tracking-wide text-emerald-600">Прогресс курса</p>
@@ -631,6 +641,18 @@ export default function CoursePage() {
           </div>
 
           <div className="order-1 space-y-8 lg:order-2">
+            {completedLessons.has(2) && (
+              <Alert className="border-emerald-300 bg-gradient-to-r from-emerald-50 to-white">
+                <Phone className="h-5 w-5 text-emerald-600" />
+                <AlertDescription className="text-base">
+                  <span className="font-semibold text-emerald-900">Разблокировано!</span> Вы можете{" "}
+                  <a href="https://datatrace.tech" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 underline hover:text-emerald-700">
+                    проверить свой номер на утечки
+                  </a>{" "}
+                  в DataTrace.
+                </AlertDescription>
+              </Alert>
+            )}
             <Card className="border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
               <CardHeader className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
