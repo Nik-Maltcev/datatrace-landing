@@ -438,7 +438,7 @@ export default function CoursePage() {
                     <Button
                       variant="outline"
                       onClick={handleNextLesson}
-                      disabled={currentLessonId === lessons[lessons.length - 1]?.id || (currentLesson?.quiz && !quizSubmitted)}
+                      disabled={currentLessonId === lessons[lessons.length - 1]?.id || (currentLesson?.quiz && !passedQuizzes.has(currentLessonId))}
                     >
                       Следующий урок
                     </Button>
