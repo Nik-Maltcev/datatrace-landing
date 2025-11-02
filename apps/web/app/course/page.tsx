@@ -217,15 +217,13 @@ export default function CoursePage() {
     const lesson = lessons.find(l => l.id === currentLessonId)
     if (!lesson?.quiz) return
 
+    setQuizSubmitted(true)
+    
     const allCorrect = lesson.quiz.every(q => quizAnswers[q.id] === q.correctAnswer)
     
     if (allCorrect) {
       setPassedQuizzes(prev => new Set([...prev, currentLessonId]))
       setCompletedLessons(prev => new Set([...prev, currentLessonId]))
-      setQuizSubmitted(true)
-    } else {
-      alert('Некоторые ответы неверны. Попробуйте еще раз!')
-      setQuizAnswers({})
     }
   }
 
@@ -502,7 +500,7 @@ export default function CoursePage() {
                         </div>
                       ))}
 
-                      {quizSubmitted && (
+                      {quizSubmitted && passedQuizzes.has(currentLessonId) && (
                         <Alert className="border-emerald-200 bg-emerald-50">
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           <AlertDescription className="text-emerald-800">
@@ -511,13 +509,34 @@ export default function CoursePage() {
                         </Alert>
                       )}
 
-                      <Button
-                        onClick={handleQuizSubmit}
-                        disabled={Object.keys(quizAnswers).length !== currentLesson.quiz.length || quizSubmitted}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        Проверить ответы
-                      </Button>
+                      {quizSubmitted && !passedQuizzes.has(currentLessonId) && (
+                        <Alert className="border-red-200 bg-red-50">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <AlertDescription className="text-red-800">
+                            Некоторые ответы неверны. Правильные ответы отмечены зеленым. Попробуйте еще раз!
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {!quizSubmitted ? (
+                        <Button
+                          onClick={handleQuizSubmit}
+                          disabled={Object.keys(quizAnswers).length !== currentLesson.quiz.length}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          Проверить ответы
+                        </Button>
+                      ) : !passedQuizzes.has(currentLessonId) && (
+                        <Button
+                          onClick={() => {
+                            setQuizAnswers({})
+                            setQuizSubmitted(false)
+                          }}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          Попробовать еще раз
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 )}
