@@ -20,6 +20,13 @@ import {
   ArrowRight
 } from "lucide-react"
 
+type Question = {
+  id: number
+  question: string
+  options: string[]
+  correctAnswer: number
+}
+
 type Lesson = {
   id: number
   title: string
@@ -27,20 +34,73 @@ type Lesson = {
   description: string
   videoUrl: string
   keyPoints: string[]
+  quiz?: Question[]
 }
 
 const lessons: Lesson[] = [
   {
     id: 1,
-    title: "Почему появляются утечки и как их заметить вовремя",
+    title: "Почему утечки — не случайность и как защитить свои данные",
     duration: "12:40",
     videoUrl: "https://fs.getcourse.ru/fileservice/file/download/a/877480/sc/266/h/5c96e7c47eb2df8f59a8f334055a88bd.mp4",
     description:
-      "Разбираем, какие базы чаще всего попадают в открытый доступ, почему звонят «из банка» и где искать подтверждение утечки.",
+      "Разбираем, почему утечки происходят не лично против вас, а массово, и с чего начать защиту. Узнаете, как проверить свои данные и быстро повысить уровень цифровой безопасности.",
     keyPoints: [
-      "Основные источники утечек и чаты, где продают данные",
-      "Как проверить, фигурирует ли ваш номер или паспорт в открытых базах",
-      "Что делать в первые 24 часа после подозрительного звонка"
+      "Как проверить, утекли ли ваши данные",
+      "Зачем нужны уникальные пароли и 2FA",
+      "Простые привычки цифровой гигиены"
+    ],
+    quiz: [
+      {
+        id: 1,
+        question: "Почему злоумышленники совершают атаки?",
+        options: [
+          "Чтобы навредить лично вам",
+          "Чтобы собрать данные как можно большего числа людей",
+          "Чтобы протестировать системы безопасности"
+        ],
+        correctAnswer: 1
+      },
+      {
+        id: 2,
+        question: "Что первым делом стоит сделать, чтобы понять, есть ли риск утечек?",
+        options: [
+          "Сменить все пароли",
+          "Проверить, какие данные уже могли попасть в сеть",
+          "Удалить старые аккаунты"
+        ],
+        correctAnswer: 1
+      },
+      {
+        id: 3,
+        question: "Почему нельзя использовать один и тот же пароль для разных сайтов?",
+        options: [
+          "Потому что это неудобно",
+          "Потому что пароли должны быть короткими",
+          "Потому что утечка с одного сайта ставит под угрозу все аккаунты"
+        ],
+        correctAnswer: 2
+      },
+      {
+        id: 4,
+        question: "Что делает двухфакторная аутентификация?",
+        options: [
+          "Автоматически обновляет пароли",
+          "Требует дополнительное подтверждение входа, даже если пароль известен злоумышленнику",
+          "Отправляет уведомления о каждом входе"
+        ],
+        correctAnswer: 1
+      },
+      {
+        id: 5,
+        question: "Какой принцип цифровой гигиены помогает снизить риски утечек?",
+        options: [
+          "Оставлять как можно меньше личных данных там, где это не обязательно",
+          "Использовать один аккаунт для всего",
+          "Никогда не обновлять пароли"
+        ],
+        correctAnswer: 0
+      }
     ]
   },
   {
@@ -116,6 +176,10 @@ const completionPromocode = "DATATR50"
 export default function CoursePage() {
   const [currentLessonId, setCurrentLessonId] = useState(lessons[0]?.id ?? 1)
   const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set())
+  const [passedQuizzes, setPassedQuizzes] = useState<Set<number>>(new Set())
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [quizAnswers, setQuizAnswers] = useState<{[key: number]: number}>({})
+  const [quizSubmitted, setQuizSubmitted] = useState(false)
   const [isPromocodeCopied, setIsPromocodeCopied] = useState(false)
   const [isCompletionPromocodeCopied, setIsCompletionPromocodeCopied] = useState(false)
 
@@ -129,15 +193,46 @@ export default function CoursePage() {
   const progress = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100)
 
   const toggleLessonCompletion = (lessonId: number) => {
-    setCompletedLessons(prev => {
-      const updated = new Set(prev)
-      if (updated.has(lessonId)) {
-        updated.delete(lessonId)
-      } else {
-        updated.add(lessonId)
-      }
-      return updated
-    })
+    const lesson = lessons.find(l => l.id === lessonId)
+    if (lesson?.quiz && !passedQuizzes.has(lessonId)) {
+      setShowQuiz(true)
+    } else {
+      setCompletedLessons(prev => {
+        const updated = new Set(prev)
+        if (updated.has(lessonId)) {
+          updated.delete(lessonId)
+        } else {
+          updated.add(lessonId)
+        }
+        return updated
+      })
+    }
+  }
+
+  const handleQuizAnswer = (questionId: number, answerIndex: number) => {
+    setQuizAnswers(prev => ({ ...prev, [questionId]: answerIndex }))
+  }
+
+  const handleQuizSubmit = () => {
+    const lesson = lessons.find(l => l.id === currentLessonId)
+    if (!lesson?.quiz) return
+
+    const allCorrect = lesson.quiz.every(q => quizAnswers[q.id] === q.correctAnswer)
+    
+    if (allCorrect) {
+      setPassedQuizzes(prev => new Set([...prev, currentLessonId]))
+      setCompletedLessons(prev => new Set([...prev, currentLessonId]))
+      setQuizSubmitted(true)
+    } else {
+      alert('Некоторые ответы неверны. Попробуйте еще раз!')
+      setQuizAnswers({})
+    }
+  }
+
+  const handleCloseQuiz = () => {
+    setShowQuiz(false)
+    setQuizAnswers({})
+    setQuizSubmitted(false)
   }
 
   const handleSelectLesson = (lessonId: number) => {
@@ -350,12 +445,77 @@ export default function CoursePage() {
                     <Button
                       variant="outline"
                       onClick={handleNextLesson}
-                      disabled={currentLessonId === lessons[lessons.length - 1]?.id}
+                      disabled={currentLessonId === lessons[lessons.length - 1]?.id || (currentLesson?.quiz && !passedQuizzes.has(currentLessonId))}
                     >
                       Следующий урок
                     </Button>
                   </div>
                 </div>
+
+                {showQuiz && currentLesson?.quiz && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                      <CardHeader>
+                        <CardTitle className="text-2xl">Тест по уроку {currentLessonId}</CardTitle>
+                        <p className="text-gray-600">Ответьте на все вопросы, чтобы завершить урок</p>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {currentLesson.quiz.map((question, qIndex) => (
+                          <div key={question.id} className="space-y-3">
+                            <p className="font-semibold text-gray-900">
+                              {qIndex + 1}. {question.question}
+                            </p>
+                            <div className="space-y-2">
+                              {question.options.map((option, oIndex) => (
+                                <label
+                                  key={oIndex}
+                                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                                    quizAnswers[question.id] === oIndex
+                                      ? 'border-emerald-500 bg-emerald-50'
+                                      : 'border-gray-200 hover:border-emerald-300'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`question-${question.id}`}
+                                    checked={quizAnswers[question.id] === oIndex}
+                                    onChange={() => handleQuizAnswer(question.id, oIndex)}
+                                    className="text-emerald-600"
+                                  />
+                                  <span>{option}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+
+                        {quizSubmitted ? (
+                          <Alert className="border-emerald-200 bg-emerald-50">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <AlertDescription className="text-emerald-800">
+                              Отлично! Вы успешно прошли тест. Теперь можете перейти к следующему уроку.
+                            </AlertDescription>
+                          </Alert>
+                        ) : null}
+
+                        <div className="flex gap-3">
+                          <Button
+                            onClick={handleQuizSubmit}
+                            disabled={Object.keys(quizAnswers).length !== currentLesson.quiz.length || quizSubmitted}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            Проверить ответы
+                          </Button>
+                          {quizSubmitted && (
+                            <Button onClick={handleCloseQuiz} variant="outline">
+                              Закрыть
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
