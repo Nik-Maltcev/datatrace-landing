@@ -576,6 +576,10 @@ export default function CoursePage() {
                 <Shield className="mr-1.5 h-3.5 w-3.5" />
                 Проверка номера после урока 2
               </Badge>
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5">
+                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                Сертификат о прохождении
+              </Badge>
             </div>
           </div>
           <div className="w-full max-w-sm rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-sm">
