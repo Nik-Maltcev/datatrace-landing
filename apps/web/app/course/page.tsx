@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -459,12 +459,12 @@ export default function CoursePage() {
   const progress = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100)
 
   // Проверяем использование бесплатной проверки при загрузке
-  useState(() => {
+  useEffect(() => {
     const used = localStorage.getItem('course_phone_check_used')
     if (used === 'true') {
       setHasUsedFreeCheck(true)
     }
-  })
+  }, [])
 
   const toggleLessonCompletion = (lessonId: number) => {
     const lesson = lessons.find(l => l.id === lessonId)
