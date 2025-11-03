@@ -579,6 +579,47 @@ export default function CoursePage() {
     }
   }
 
+  const maskSensitiveData = (key: string, value: string): string => {
+    const val = String(value)
+    
+    // ФИО - показываем только первые буквы
+    if (key === 'name' || key === 'Имя' || key === 'ФИО') {
+      const parts = val.split(' ').filter(p => p.length > 0)
+      if (parts.length >= 2) {
+        return `${parts[0]} ${parts[1][0]}.`
+      }
+      return val
+    }
+    
+    // Email - скрываем домен
+    if (key === 'email' || key === 'Email') {
+      const atIndex = val.indexOf('@')
+      if (atIndex > 0) {
+        return val.substring(0, atIndex) + '@***'
+      }
+      return val
+    }
+    
+    // Адрес - скрываем город
+    if (key === 'address' || key === 'Адрес') {
+      const parts = val.split(',')
+      if (parts.length > 1) {
+        return '***' + parts.slice(1).join(',')
+      }
+      return '***'
+    }
+    
+    // Паспорт - скрываем серию
+    if (key === 'passport' || key === 'Паспорт' || key.toLowerCase().includes('passport')) {
+      if (val.length > 4) {
+        return '****' + val.substring(4)
+      }
+      return '****'
+    }
+    
+    return val
+  }
+
   const toggleSource = (sourceName: string) => {
     setExpandedSources(prev => {
       const newSet = new Set(prev)
@@ -839,7 +880,7 @@ export default function CoursePage() {
                                                         key === 'address' ? 'Адрес' :
                                                         key
                                                       }:</span>
-                                                      <span className="text-gray-800 break-all">{String(value)}</span>
+                                                      <span className="text-gray-800 break-all">{maskSensitiveData(key, String(value))}</span>
                                                     </div>
                                                   ))
                                                 }
@@ -863,7 +904,7 @@ export default function CoursePage() {
                                                             key === 'email' ? 'Email' :
                                                             key
                                                           }:</span>
-                                                          <span className="text-gray-800 break-all">{String(value)}</span>
+                                                          <span className="text-gray-800 break-all">{maskSensitiveData(key, String(value))}</span>
                                                         </div>
                                                       ))
                                                     }
