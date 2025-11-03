@@ -617,6 +617,33 @@ export default function CoursePage() {
       return '****'
     }
     
+    // Банковская карта - скрываем последние 4 цифры
+    if (key.toLowerCase().includes('card') || key.includes('карт') || key === 'Номер банковской карты') {
+      const cleaned = val.replace(/\s/g, '')
+      if (cleaned.length > 4) {
+        return cleaned.substring(0, cleaned.length - 4) + '****'
+      }
+      return '****'
+    }
+    
+    // ИНН - скрываем последние 4 цифры
+    if (key === 'inn' || key === 'ИНН') {
+      const cleaned = val.replace(/\D/g, '')
+      if (cleaned.length > 4) {
+        return cleaned.substring(0, cleaned.length - 4) + '****'
+      }
+      return '****'
+    }
+    
+    // СНИЛС - скрываем последние 3 цифры
+    if (key === 'snils' || key === 'СНИЛС') {
+      const cleaned = val.replace(/\D/g, '')
+      if (cleaned.length > 3) {
+        return cleaned.substring(0, cleaned.length - 3) + '***'
+      }
+      return '***'
+    }
+    
     return val
   }
 
