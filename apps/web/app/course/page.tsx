@@ -698,7 +698,7 @@ export default function CoursePage() {
 
           <div className="order-1 space-y-8 lg:order-2">
             {completedLessons.has(2) && currentLessonId === 2 && (
-              <Card className="border-emerald-200 bg-white shadow-lg">
+              <Card className="border-emerald-200 bg-white shadow-lg" data-phone-check>
                 <CardHeader>
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -944,24 +944,40 @@ export default function CoursePage() {
                           Проверить ответы
                         </Button>
                       ) : (
-                        <div className="flex gap-3">
-                          <Button
-                            onClick={() => {
-                              setQuizAnswers({})
-                              setQuizSubmitted(false)
-                            }}
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            Попробовать еще раз
-                          </Button>
-                          <Button
-                            onClick={handleNextLesson}
-                            disabled={currentLessonId === lessons[lessons.length - 1]?.id}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            Следующий урок
-                          </Button>
+                        <div className="space-y-3">
+                          {currentLessonId === 2 && (
+                            <Button
+                              onClick={() => {
+                                const checkBlock = document.querySelector('[data-phone-check]')
+                                if (checkBlock) {
+                                  checkBlock.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                }
+                              }}
+                              className="w-full bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Phone className="h-4 w-4 mr-2" />
+                              Проверить номер на утечки
+                            </Button>
+                          )}
+                          <div className="flex gap-3">
+                            <Button
+                              onClick={() => {
+                                setQuizAnswers({})
+                                setQuizSubmitted(false)
+                              }}
+                              variant="outline"
+                              className="flex-1"
+                            >
+                              Попробовать еще раз
+                            </Button>
+                            <Button
+                              onClick={handleNextLesson}
+                              disabled={currentLessonId === lessons[lessons.length - 1]?.id}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              Следующий урок
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </CardContent>
