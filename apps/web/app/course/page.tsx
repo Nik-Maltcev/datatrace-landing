@@ -17,7 +17,9 @@ import {
   Sparkles,
   Copy,
   Check,
-  ArrowRight
+  ArrowRight,
+  Loader2,
+  AlertTriangle
 } from "lucide-react"
 
 type Question = {
@@ -442,6 +444,10 @@ export default function CoursePage() {
   const [quizSubmitted, setQuizSubmitted] = useState(false)
   const [isPromocodeCopied, setIsPromocodeCopied] = useState(false)
   const [isCompletionPromocodeCopied, setIsCompletionPromocodeCopied] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [phoneResult, setPhoneResult] = useState<any>(null)
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false)
+  const [hasUsedFreeCheck, setHasUsedFreeCheck] = useState(false)
 
   const currentLesson = useMemo(
     () => lessons.find(lesson => lesson.id === currentLessonId) ?? lessons[0],
@@ -451,6 +457,14 @@ export default function CoursePage() {
   const totalLessons = lessons.length
   const completedCount = completedLessons.size
   const progress = totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100)
+
+  // Проверяем использование бесплатной проверки при загрузке
+  useState(() => {
+    const used = localStorage.getItem('course_phone_check_used')
+    if (used === 'true') {
+      setHasUsedFreeCheck(true)
+    }
+  })
 
   const toggleLessonCompletion = (lessonId: number) => {
     const lesson = lessons.find(l => l.id === lessonId)
@@ -555,6 +569,30 @@ export default function CoursePage() {
     }
   }
 
+  const handleCheckPhone = async () => {
+    if (!phoneNumber.trim() || isCheckingPhone || hasUsedFreeCheck) return
+
+    setIsCheckingPhone(true)
+    try {
+      const response = await fetch('/api/leaks/check-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber.trim() })
+      })
+      const data = await response.json()
+      setPhoneResult(data)
+      
+      if (data.ok) {
+        localStorage.setItem('course_phone_check_used', 'true')
+        setHasUsedFreeCheck(true)
+      }
+    } catch (error) {
+      console.error('Phone check error:', error)
+      setPhoneResult({ ok: false, error: 'Не удалось выполнить проверку' })
+    }
+    setIsCheckingPhone(false)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-gray-900">
       <header className="border-b border-emerald-100 bg-white/80 backdrop-blur">
@@ -652,17 +690,104 @@ export default function CoursePage() {
           </div>
 
           <div className="order-1 space-y-8 lg:order-2">
-            {completedLessons.has(2) && (
-              <Alert className="border-emerald-300 bg-gradient-to-r from-emerald-50 to-white">
-                <Phone className="h-5 w-5 text-emerald-600" />
-                <AlertDescription className="text-base">
-                  <span className="font-semibold text-emerald-900">Разблокировано!</span> Вы можете{" "}
-                  <a href="https://datatrace.tech" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 underline hover:text-emerald-700">
-                    проверить свой номер на утечки
-                  </a>{" "}
-                  в DataTrace.
-                </AlertDescription>
-              </Alert>
+            {completedLessons.has(2) && currentLessonId === 2 && (
+              <Card className="border-emerald-200 bg-white shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                      <Phone className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Проверить номер на утечки</CardTitle>
+                      <p className="text-sm text-gray-500">Бесплатная проверка для участников курса</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {!hasUsedFreeCheck ? (
+                    <>
+                      <p className="text-gray-600 mb-4">
+                        Введите номер телефона для проверки в базах утечек. У вас есть одна бесплатная попытка.
+                      </p>
+                      <div className="space-y-3">
+                        <input
+                          type="tel"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          placeholder="+7 (999) 123-45-67"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        />
+                        <Button
+                          onClick={handleCheckPhone}
+                          disabled={!phoneNumber.trim() || isCheckingPhone}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          {isCheckingPhone ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Проверяю...
+                            </>
+                          ) : (
+                            <>
+                              Проверить номер
+                              <Phone className="h-4 w-4 ml-2" />
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <AlertTriangle className="h-4 w-4 text-blue-600" />
+                      <AlertDescription>
+                        Вы уже использовали бесплатную проверку. Для дополнительных проверок{" "}
+                        <a href="https://datatrace.tech/register" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 underline">
+                          зарегистрируйтесь
+                        </a>.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {phoneResult && (
+                    <div className={`mt-4 p-4 rounded-lg border ${
+                      phoneResult.error ? 'bg-red-50 border-red-200' :
+                      phoneResult.found ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                    }`}>
+                      {phoneResult.error ? (
+                        <p className="text-sm text-red-600">{phoneResult.error}</p>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">
+                              {phoneResult.found ? (
+                                <>
+                                  <AlertTriangle className="inline h-4 w-4 mr-1 text-red-600" />
+                                  Найдено утечек: {phoneResult.totalLeaks || 0}
+                                </>
+                              ) : (
+                                "Данные в безопасности"
+                              )}
+                            </p>
+                          </div>
+                          {phoneResult.found && phoneResult.results && (
+                            <div className="mt-3 space-y-2">
+                              {phoneResult.results.filter((r: any) => r.found).map((result: any, idx: number) => (
+                                <div key={idx} className="bg-white rounded-lg border border-red-200 p-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium text-sm">{result.name}</span>
+                                    <Badge variant="destructive" className="text-xs">
+                                      {result.count || 0} записей
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
             <Card className="border-emerald-100 bg-white/90 shadow-lg shadow-emerald-100">
               <CardHeader className="space-y-2">
