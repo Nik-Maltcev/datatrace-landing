@@ -592,7 +592,7 @@ export default function CoursePage() {
     }
     
     // Email - скрываем домен
-    if (key === 'email' || key === 'Email') {
+    if (key === 'email' || key === 'Email' || val.includes('@')) {
       const atIndex = val.indexOf('@')
       if (atIndex > 0) {
         return val.substring(0, atIndex) + '@***'
