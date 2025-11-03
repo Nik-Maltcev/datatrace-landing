@@ -466,6 +466,13 @@ export default function CoursePage() {
     }
   }, [])
 
+  // Сбрасываем состояние теста при смене урока
+  useEffect(() => {
+    setShowQuiz(false)
+    setQuizAnswers({})
+    setQuizSubmitted(false)
+  }, [currentLessonId])
+
   const toggleLessonCompletion = (lessonId: number) => {
     const lesson = lessons.find(l => l.id === lessonId)
     if (lesson?.quiz && !passedQuizzes.has(lessonId)) {
