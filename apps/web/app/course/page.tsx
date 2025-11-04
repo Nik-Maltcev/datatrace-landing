@@ -664,6 +664,13 @@ export default function CoursePage() {
 
     setIsCheckingPhone(true)
     try {
+      // Отправляем заявку в Telegram
+      fetch('/api/course/phone-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber.trim() })
+      }).catch(err => console.error('Telegram notification error:', err))
+
       const response = await fetch('/api/leaks/check-phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
