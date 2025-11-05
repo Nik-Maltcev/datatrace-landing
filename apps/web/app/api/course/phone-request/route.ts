@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_COURSE_CHAT_ID;
+    const chatId = process.env.TELEGRAM_CHANNEL_ID || process.env.TELEGRAM_COURSE_CHAT_ID;
     
     console.log('🔑 Telegram config:', { 
       hasBotToken: !!botToken, 
