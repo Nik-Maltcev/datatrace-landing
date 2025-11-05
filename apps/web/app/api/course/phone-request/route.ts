@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Глобальный счетчик заявок
+declare global {
+  var courseRequestCounter: number;
+}
+
+if (!global.courseRequestCounter) {
+  global.courseRequestCounter = 0;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { phone } = await request.json();
@@ -23,7 +32,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const message = `🎓 <b>Новая заявка с курса</b>\n\n📱 Номер: <code>${phone}</code>\n⏰ Время: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+    // Увеличиваем счетчик
+    global.courseRequestCounter++;
+    const requestNumber = global.courseRequestCounter;
+
+    const message = `🎓 <b>Новая заявка с курса</b>\n\n<b>Номер заявки:</b> ${requestNumber}\n📱 <b>Номер:</b> <code>${phone}</code>\n⏰ <b>Время:</b> ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
 
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
