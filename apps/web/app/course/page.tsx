@@ -1176,7 +1176,7 @@ export default function CoursePage() {
                     Вы успешно завершили все уроки и теперь знаете, как защитить свои данные от утечек и мошенников.
                   </p>
                   
-                  <div className="bg-white rounded-2xl border-2 border-emerald-300 p-6 md:p-8 max-w-xl mx-auto shadow-lg">
+                  <div className="bg-white rounded-2xl border-2 border-emerald-300 p-6 md:p-8 max-w-2xl mx-auto shadow-lg">
                     <div className="flex items-center justify-center gap-2 mb-4">
                       <Shield className="h-6 w-6 text-emerald-600" />
                       <h3 className="text-xl font-bold text-gray-900">Ваш подарок</h3>
@@ -1184,20 +1184,47 @@ export default function CoursePage() {
                     <p className="text-gray-700 mb-6">
                       Получите <span className="font-bold text-emerald-600">скидку 50%</span> на профессиональный тариф DataTrace
                     </p>
-                    <div className="flex items-center justify-center gap-3 bg-emerald-50 rounded-xl border border-emerald-200 px-6 py-4 mb-6">
-                      <code className="text-2xl font-bold tracking-widest text-emerald-700">{completionPromocode}</code>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyCompletionPromocode}
-                        className="border-emerald-300 text-emerald-700 hover:bg-emerald-100"
-                      >
-                        {isCompletionPromocodeCopied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                      </Button>
+                    
+                    <div className="bg-emerald-50 rounded-xl border-2 border-emerald-300 p-6 mb-6">
+                      <p className="text-sm font-semibold text-emerald-900 mb-3 text-center">Ваш промокод:</p>
+                      <div className="flex items-center justify-center gap-3 bg-white rounded-lg border border-emerald-200 px-6 py-4 mb-4">
+                        <code className="text-3xl font-bold tracking-widest text-emerald-700">{completionPromocode}</code>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyCompletionPromocode}
+                          className="border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                        >
+                          {isCompletionPromocodeCopied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                        </Button>
+                      </div>
+                      {isCompletionPromocodeCopied && (
+                        <p className="text-sm text-emerald-700 text-center mb-2">✅ Промокод скопирован!</p>
+                      )}
                     </div>
-                    {isCompletionPromocodeCopied && (
-                      <p className="text-sm text-emerald-700 mb-4">✅ Промокод скопирован!</p>
-                    )}
+
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-gray-900 mb-3">Как воспользоваться промокодом:</h4>
+                      <ol className="space-y-2 text-left">
+                        <li className="flex items-start gap-3">
+                          <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold">1</span>
+                          <span className="text-gray-700">Перейдите на <a href="https://datatrace.tech" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-medium underline">datatrace.tech</a></span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold">2</span>
+                          <span className="text-gray-700">Зарегистрируйтесь или войдите в личный кабинет</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold">3</span>
+                          <span className="text-gray-700">Выберите подходящий тариф</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-sm font-semibold">4</span>
+                          <span className="text-gray-700">Введите промокод <code className="bg-emerald-50 px-2 py-1 rounded text-emerald-700 font-semibold">{completionPromocode}</code> при оплате</span>
+                        </li>
+                      </ol>
+                    </div>
+
                     <a 
                       href="https://datatrace.tech/payment" 
                       target="_blank" 
@@ -1209,7 +1236,7 @@ export default function CoursePage() {
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </Button>
                     </a>
-                    <p className="text-xs text-gray-500 mt-4">
+                    <p className="text-xs text-gray-500 mt-4 text-center">
                       Промокод действителен в течение 30 дней с момента завершения курса
                     </p>
                   </div>
