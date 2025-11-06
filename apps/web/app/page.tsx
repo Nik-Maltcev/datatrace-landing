@@ -286,11 +286,11 @@ export default function DataTraceLanding() {
       // Базовый тариф - 350₽
       window.location.href = `https://self.payanyway.ru/17573877087686?MNT_SUCCESS_URL=${successUrl}&productPrice=350`
     } else if (plan === 'professional-6m') {
-      // Профессиональный 6 месяцев - 5000₽
-      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=5000`
+      // Профессиональный 6 месяцев - 2500₽
+      window.location.href = `https://self.payanyway.ru/1757389094772?MNT_SUCCESS_URL=${successUrl}&productPrice=2500`
     } else if (plan === 'professional-12m') {
-      // Профессиональный 12 месяцев - 8500₽
-      window.location.href = `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}&productPrice=8500`
+      // Профессиональный 12 месяцев - 5000₽
+      window.location.href = `https://self.payanyway.ru/17579983533311?MNT_SUCCESS_URL=${successUrl}&productPrice=5000`
     }
   }
 
@@ -626,7 +626,7 @@ export default function DataTraceLanding() {
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
                   <p className="text-lg text-gray-700 mb-2">6 месяцев</p>
-                  <div className="text-4xl font-bold text-black mb-2">5 000₽</div>
+                  <div className="text-4xl font-bold text-black mb-2">2 500₽</div>
                   <p className="text-gray-600">единовременно</p>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -669,7 +669,7 @@ export default function DataTraceLanding() {
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-black mb-2">ПРОФЕССИОНАЛЬНЫЙ</h3>
                   <p className="text-lg text-gray-700 mb-2">12 месяцев</p>
-                  <div className="text-4xl font-bold text-black mb-2">8 500₽</div>
+                  <div className="text-4xl font-bold text-black mb-2">5 000₽</div>
                   <p className="text-gray-600">единовременно</p>
                 </div>
                 <div className="space-y-4 mb-8">
