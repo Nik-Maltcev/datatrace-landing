@@ -127,7 +127,7 @@ export default function PaymentPage() {
       id: 'professional-6m',
       name: 'ПРОФЕССИОНАЛЬНЫЙ',
       period: '6 месяцев',
-      price: '5 000',
+      price: '2 500',
       pricePeriod: 'единовременно',
       checks: '2',
       features: [
@@ -144,7 +144,7 @@ export default function PaymentPage() {
       id: 'professional-12m',
       name: 'ПРОФЕССИОНАЛЬНЫЙ',
       period: '12 месяцев',
-      price: '8 500',
+      price: '5 000',
       pricePeriod: 'единовременно',
       checks: '2',
       features: [

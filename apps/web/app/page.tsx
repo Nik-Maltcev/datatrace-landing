@@ -576,8 +576,31 @@ export default function DataTraceLanding() {
 
       <DataFlowShowcaseLight />
 
+      {/* Video Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="mb-12 text-center">
+            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium mb-4">ОБЗОР СЕРВИСА</div>
+            <h2 className="text-3xl font-bold text-black mb-4">Как работает DataTrace</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">Посмотрите короткое видео о возможностях платформы</p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="relative rounded-lg overflow-hidden shadow-2xl border-2 border-gray-200">
+              <video 
+                controls 
+                className="w-full"
+                poster="/video-poster.jpg"
+              >
+                <source src="/datatrace-overview.mp4" type="video/mp4" />
+                Ваш браузер не поддерживает видео
+              </video>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
-      <section id="pricing" className="py-20">
+      <section id="pricing" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="mb-12">
             <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">ТАРИФЫ</div>
