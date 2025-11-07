@@ -588,10 +588,10 @@ export default function DataTraceLanding() {
             <div className="relative rounded-lg overflow-hidden shadow-2xl border-2 border-gray-200">
               <video 
                 controls 
-                className="w-full"
-                poster="/video-poster.jpg"
+                preload="metadata"
+                className="w-full bg-black"
               >
-                <source src="/datatrace-overview.mp4" type="video/mp4" />
+                <source src="/overview-new.mp4" type="video/mp4" />
                 Ваш браузер не поддерживает видео
               </video>
             </div>
