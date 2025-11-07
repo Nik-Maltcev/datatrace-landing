@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function sendTelegramMessage(chatId: string | number, message: string) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const botToken = process.env.TELEGRAM_VERIFICATION_BOT_TOKEN;
   if (!botToken) return;
   
   try {

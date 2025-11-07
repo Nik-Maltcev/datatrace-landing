@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }, 5 * 60 * 1000);
     
     // Инициализируем Telegram Gateway
-    const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+    const telegramBotToken = process.env.TELEGRAM_VERIFICATION_BOT_TOKEN;
     let otpSent = false;
     let botUsername = null;
     
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         console.warn('⚠️ Telegram Bot недоступен');
       }
     } else {
-      console.warn('⚠️ TELEGRAM_BOT_TOKEN не настроен');
+      console.warn('⚠️ TELEGRAM_VERIFICATION_BOT_TOKEN не настроен');
     }
     
     // Логируем код для тестирования
