@@ -866,97 +866,22 @@ export default function CoursePage() {
                             </p>
                           </div>
                           {phoneResult.found && phoneResult.results && (
-                            <div className="mt-3 space-y-2">
-                              {phoneResult.results.filter((r: any) => r.found).map((result: any, idx: number) => {
-                                const sourceName = result.source || result.name
-                                const isExpanded = expandedSources.has(sourceName)
-                                const hasDetails = result.items && (Array.isArray(result.items) ? result.items.length > 0 : Object.keys(result.items).length > 0)
-                                
-                                return (
-                                  <div key={idx} className="bg-white rounded-lg border border-red-200">
-                                    <div 
-                                      className={`p-3 flex items-center justify-between ${
-                                        hasDetails ? 'cursor-pointer hover:bg-red-50 transition-colors' : ''
-                                      }`}
-                                      onClick={() => hasDetails && toggleSource(sourceName)}
-                                    >
-                                      <span className="font-medium text-sm">{sourceName}</span>
-                                      <div className="flex items-center gap-2">
-                                        <Badge variant="destructive" className="text-xs">
-                                          {result.count || 0} записей
-                                        </Badge>
-                                        {hasDetails && (
-                                          isExpanded ? 
-                                            <ChevronDown className="h-4 w-4 text-gray-500" /> : 
-                                            <ChevronRight className="h-4 w-4 text-gray-500" />
-                                        )}
-                                      </div>
-                                    </div>
-                                    
-                                    {isExpanded && hasDetails && (
-                                      <div className="border-t border-red-200 p-3 bg-red-25">
-                                        <h5 className="text-sm font-medium text-gray-900 mb-2">Детали утечки:</h5>
-                                        <div className="space-y-2">
-                                          {Array.isArray(result.items) ? (
-                                            result.items.map((item: any, itemIdx: number) => (
-                                              <div key={itemIdx} className="bg-gray-50 p-2 rounded text-xs">
-                                                {Object.entries(item)
-                                                  .filter(([key, value]) => 
-                                                    value && key !== 'id' && key !== 'user_id' && 
-                                                    String(value).length > 0 && String(value) !== 'null'
-                                                  )
-                                                  .map(([key, value]) => (
-                                                    <div key={key} className="flex justify-between py-1">
-                                                      <span className="font-medium text-gray-600">{
-                                                        key === 'name' ? 'Имя' :
-                                                        key === 'phone' ? 'Телефон' :
-                                                        key === 'email' ? 'Email' :
-                                                        key === 'address' ? 'Адрес' :
-                                                        key
-                                                      }:</span>
-                                                      <span className="text-gray-800 break-all">{maskSensitiveData(key, String(value))}</span>
-                                                    </div>
-                                                  ))
-                                                }
-                                              </div>
-                                            ))
-                                          ) : result.data && typeof result.data === 'object' ? (
-                                            Object.entries(result.data).map(([dbName, dbRecords]: [string, any], dbIdx: number) => (
-                                              <div key={dbIdx} className="bg-gray-50 p-3 rounded text-xs border-l-4 border-blue-200 mb-2">
-                                                <div className="font-medium text-gray-700 mb-2">📊 {dbName}</div>
-                                                {Array.isArray(dbRecords) && dbRecords.map((record: any, recordIdx: number) => (
-                                                  <div key={recordIdx} className="ml-2 mb-2 p-2 bg-white rounded">
-                                                    {Object.entries(record)
-                                                      .filter(([key, value]) => 
-                                                        value && key !== 'id' && String(value).length > 0
-                                                      )
-                                                      .map(([key, value]) => (
-                                                        <div key={key} className="flex justify-between py-0.5">
-                                                          <span className="font-medium text-gray-600">{
-                                                            key === 'name' ? 'Имя' :
-                                                            key === 'phone' ? 'Телефон' :
-                                                            key === 'email' ? 'Email' :
-                                                            key
-                                                          }:</span>
-                                                          <span className="text-gray-800 break-all">{maskSensitiveData(key, String(value))}</span>
-                                                        </div>
-                                                      ))
-                                                    }
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            ))
-                                          ) : (
-                                            <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-                                              Детали недоступны
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
+                            <div className="mt-3 space-y-3">
+                              {phoneResult.results.filter((r: any) => r.found).map((result: any, idx: number) => (
+                                <div key={idx} className="bg-white rounded-lg border border-red-200 p-3">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="font-medium text-sm">{result.source || result.name}</span>
+                                    <Badge variant="destructive" className="text-xs">
+                                      {result.count || 0} записей
+                                    </Badge>
                                   </div>
-                                )
-                              })}
+                                  <a href="/register" target="_blank" rel="noopener noreferrer">
+                                    <Button className="w-full bg-blue-600 hover:bg-blue-700" size="sm">
+                                      Зарегистрируйтесь чтобы удалить
+                                    </Button>
+                                  </a>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </>
