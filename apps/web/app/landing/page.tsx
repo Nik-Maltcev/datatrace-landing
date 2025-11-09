@@ -205,7 +205,7 @@ export default function PersonalRemovalLanding() {
                 Специальное предложение
               </span>
               <h2 className="text-3xl font-semibold leading-tight">
-                Пройди курс по кибергигиене и получи скидку 50% на услуги
+                Пройди бесплатный курс по кибергигиене и получи скидку 50% на услуги
               </h2>
               <p className="max-w-xl text-base text-emerald-50/90">
                 Удалите следы своих персональных данных из утечек и получите понятные советы по цифровой безопасности для себя и близких.
