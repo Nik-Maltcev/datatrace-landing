@@ -314,6 +314,9 @@ export default function DataTraceLanding() {
                 <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
                   ГЛАВНАЯ
                 </Link>
+                <Link href="/course" className="text-sm font-medium bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors">
+                  ПРАКТИЧЕСКИЙ КУРС ПО БЕЗОПАСНОСТИ
+                </Link>
                 <div 
                   className="relative"
                   onMouseEnter={() => setShowSolutionsDropdown(true)}
@@ -416,6 +419,13 @@ export default function DataTraceLanding() {
                 onClick={() => setShowMobileMenu(false)}
               >
                 ГЛАВНАЯ
+              </Link>
+              <Link 
+                href="/course" 
+                className="block text-sm font-medium bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors text-center"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                ПРАКТИЧЕСКИЙ КУРС ПО БЕЗОПАСНОСТИ
               </Link>
               <Link 
                 href="#solutions" 
