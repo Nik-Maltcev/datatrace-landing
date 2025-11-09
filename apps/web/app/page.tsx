@@ -314,9 +314,6 @@ export default function DataTraceLanding() {
                 <Link href="#" className="text-sm font-medium text-gray-700 hover:text-black">
                   ГЛАВНАЯ
                 </Link>
-                <Link href="/course" className="text-sm font-medium bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors">
-                  ПРАКТИЧЕСКИЙ КУРС ПО БЕЗОПАСНОСТИ
-                </Link>
                 <div 
                   className="relative"
                   onMouseEnter={() => setShowSolutionsDropdown(true)}
@@ -389,14 +386,21 @@ export default function DataTraceLanding() {
                   КОНТАКТЫ
                 </Link>
               </nav>
-              <Button
-                onClick={handleDashboardClick}
-                variant="outline"
-                className="hidden sm:flex border-black text-black hover:bg-black hover:text-white bg-transparent"
-                disabled={isLoading}
-              >
-                {isLoading ? "..." : isAuthenticated ? "ЛИЧНЫЙ КАБИНЕТ" : "ВОЙТИ"}
-              </Button>
+              <div className="hidden sm:flex items-center space-x-4">
+                <Link href="/course">
+                  <Button className="bg-black text-white hover:bg-gray-800">
+                    ПРАКТИЧЕСКИЙ КУРС ПО БЕЗОПАСНОСТИ
+                  </Button>
+                </Link>
+                <Button
+                  onClick={handleDashboardClick}
+                  variant="outline"
+                  className="border-black text-black hover:bg-black hover:text-white bg-transparent"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "..." : isAuthenticated ? "ЛИЧНЫЙ КАБИНЕТ" : "ВОЙТИ"}
+                </Button>
+              </div>
               <Button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 variant="outline"
@@ -419,13 +423,6 @@ export default function DataTraceLanding() {
                 onClick={() => setShowMobileMenu(false)}
               >
                 ГЛАВНАЯ
-              </Link>
-              <Link 
-                href="/course" 
-                className="block text-sm font-medium bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors text-center"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                ПРАКТИЧЕСКИЙ КУРС ПО БЕЗОПАСНОСТИ
               </Link>
               <Link 
                 href="#solutions" 
@@ -472,6 +469,14 @@ export default function DataTraceLanding() {
                 }}
               >
                 КОНТАКТЫ
+              </Link>
+              <Link href="/course">
+                <Button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="w-full bg-black text-white hover:bg-gray-800"
+                >
+                  ПРАКТИЧЕСКИЙ КУРС ПО БЕЗОПАСНОСТИ
+                </Button>
               </Link>
               <Button
                 onClick={() => {
