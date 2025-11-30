@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
+import Script from "next/script"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import Image from "next/image"
@@ -16,6 +17,34 @@ const ptMono = PT_Mono({
 import { Card, CardContent } from "@/components/ui/card"
 import { Check, ArrowRight, Mail, MessageSquare, ShieldCheck } from "lucide-react"
 import Link from "next/link"
+
+function YandexMetrikaLandingCounter() {
+  return (
+    <>
+      <Script
+        id="yandex-metrika-105574555"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+(function(m,e,t,r,i,k,a){
+  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+  m[i].l=1*new Date();
+  for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+})(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105574555', 'ym');
+
+ym(105574555, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+          `,
+        }}
+      />
+      <noscript>
+        <div>
+          <img src="https://mc.yandex.ru/watch/105574555" style={{position:'absolute', left:'-9999px'}} alt="" />
+        </div>
+      </noscript>
+    </>
+  )
+}
 
 function InteractiveHeroGraphic() {
   return (
@@ -296,6 +325,7 @@ export default function DataTraceLanding() {
 
   return (
     <div className={`min-h-screen bg-white ${ptMono.className}`}>
+      <YandexMetrikaLandingCounter />
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
