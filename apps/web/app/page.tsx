@@ -238,6 +238,9 @@ export default function DataTraceLanding() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showSolutionsDropdown, setShowSolutionsDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteFormData, setDeleteFormData] = useState({ links: '', phone: '', fullName: '', consent: false })
+  const [isSubmittingDelete, setIsSubmittingDelete] = useState(false)
 
   // Обработчик postMessage для открытия дашборда из фрейма
   useEffect(() => {
@@ -327,7 +330,7 @@ export default function DataTraceLanding() {
     <div className={`min-h-screen bg-white ${ptMono.className}`}>
       <YandexMetrikaLandingCounter />
       {/* Header */}
-      <header className="border-b border-gray-200">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center">
@@ -814,19 +817,17 @@ export default function DataTraceLanding() {
                   <MessageSquare className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Задать вопрос основателю сервиса</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Удалить информацию</h3>
               <p className="text-gray-600 mb-6">
-                Свяжитесь с нами в Telegram для быстрого получения ответа на ваши вопросы
+                Отправьте заявку на удаление вашей информации из интернета
               </p>
-              <a
-                href="https://t.me/nik_maltcev"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setShowDeleteModal(true)}
                 className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <MessageSquare className="h-5 w-5 mr-2" />
-                Написать в Telegram
-              </a>
+                Заполнить форму
+              </button>
             </div>
           </div>
         </div>
@@ -994,6 +995,106 @@ export default function DataTraceLanding() {
             >
               Отмена
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно удаления информации */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full my-8">
+            <h3 className="text-xl font-bold mb-4">Удалить информацию</h3>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              if (!deleteFormData.consent) {
+                alert('Необходимо согласие на обработку персональных данных')
+                return
+              }
+              setIsSubmittingDelete(true)
+              try {
+                const message = `🗑️ Форма удаления информации\n\n👤 ФИО: ${deleteFormData.fullName}\n📱 Телефон: ${deleteFormData.phone}\n🔗 Ссылки:\n${deleteFormData.links}`
+                
+                await fetch('https://api.telegram.org/bot' + process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN + '/sendMessage', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: '@datatrace_crm',
+                    text: message
+                  })
+                })
+                
+                alert('Заявка отправлена! Мы свяжемся с вами в ближайшее время.')
+                setShowDeleteModal(false)
+                setDeleteFormData({ links: '', phone: '', fullName: '', consent: false })
+              } catch (error) {
+                alert('Ошибка отправки. Попробуйте позже.')
+              } finally {
+                setIsSubmittingDelete(false)
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">ФИО *</label>
+                <input
+                  type="text"
+                  required
+                  value={deleteFormData.fullName}
+                  onChange={(e) => setDeleteFormData({...deleteFormData, fullName: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Иванов Иван Иванович"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Номер телефона *</label>
+                <input
+                  type="tel"
+                  required
+                  value={deleteFormData.phone}
+                  onChange={(e) => setDeleteFormData({...deleteFormData, phone: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="+7 (900) 000-00-00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Ссылки с вашей информацией (каждая с новой строки) *</label>
+                <textarea
+                  required
+                  value={deleteFormData.links}
+                  onChange={(e) => setDeleteFormData({...deleteFormData, links: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  rows={4}
+                  placeholder="https://example.com/page1&#13;&#10;https://example.com/page2"
+                />
+              </div>
+              <div className="flex items-start space-x-2">
+                <input
+                  type="checkbox"
+                  id="consent"
+                  checked={deleteFormData.consent}
+                  onChange={(e) => setDeleteFormData({...deleteFormData, consent: e.target.checked})}
+                  className="mt-1"
+                />
+                <label htmlFor="consent" className="text-sm text-gray-600">
+                  Я согласен на обработку персональных данных
+                </label>
+              </div>
+              <div className="flex space-x-3">
+                <Button
+                  type="submit"
+                  disabled={isSubmittingDelete}
+                  className="flex-1 bg-black text-white hover:bg-gray-800"
+                >
+                  {isSubmittingDelete ? 'Отправка...' : 'Отправить'}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  variant="outline"
+                  className="flex-1 border-black text-black hover:bg-black hover:text-white"
+                >
+                  Отмена
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
