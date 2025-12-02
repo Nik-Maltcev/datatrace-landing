@@ -817,7 +817,7 @@ export default function DataTraceLanding() {
                   <MessageSquare className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Удалить информацию</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Заявка на удаление информации</h3>
               <p className="text-gray-600 mb-6">
                 Отправьте заявку на удаление вашей информации из интернета
               </p>
@@ -1003,7 +1003,7 @@ export default function DataTraceLanding() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-lg p-6 max-w-md w-full my-8">
-            <h3 className="text-xl font-bold mb-4">Удалить информацию</h3>
+            <h3 className="text-xl font-bold mb-4">Заявка на удаление информации</h3>
             <form onSubmit={async (e) => {
               e.preventDefault()
               if (!deleteFormData.consent) {
