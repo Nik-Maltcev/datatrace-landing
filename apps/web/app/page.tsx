@@ -1012,11 +1012,13 @@ export default function DataTraceLanding() {
               }
               setIsSubmittingDelete(true)
               try {
-                const response = await fetch('/api/course/phone-request', {
+                const response = await fetch('/api/delete-request', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    phoneNumber: `🗑️ Заявка на удаление\n\n👤 ФИО: ${deleteFormData.fullName}\n📱 Телефон: ${deleteFormData.phone}\n🔗 Ссылки:\n${deleteFormData.links}`
+                    fullName: deleteFormData.fullName,
+                    phone: deleteFormData.phone,
+                    links: deleteFormData.links
                   })
                 })
                 
