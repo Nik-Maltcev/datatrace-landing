@@ -1014,18 +1014,23 @@ export default function DataTraceLanding() {
               try {
                 const message = `🗑️ Форма удаления информации\n\n👤 ФИО: ${deleteFormData.fullName}\n📱 Телефон: ${deleteFormData.phone}\n🔗 Ссылки:\n${deleteFormData.links}`
                 
-                await fetch('https://api.telegram.org/bot' + process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN + '/sendMessage', {
+                const response = await fetch('/api/course/phone-request', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    chat_id: '@datatrace_crm',
-                    text: message
+                    phoneNumber: deleteFormData.phone,
+                    fullName: deleteFormData.fullName,
+                    customMessage: message
                   })
                 })
                 
-                alert('Заявка отправлена! Мы свяжемся с вами в ближайшее время.')
-                setShowDeleteModal(false)
-                setDeleteFormData({ links: '', phone: '', fullName: '', consent: false })
+                if (response.ok) {
+                  alert('Заявка отправлена! Мы свяжемся с вами в ближайшее время.')
+                  setShowDeleteModal(false)
+                  setDeleteFormData({ links: '', phone: '', fullName: '', consent: false })
+                } else {
+                  alert('Ошибка отправки. Попробуйте позже.')
+                }
               } catch (error) {
                 alert('Ошибка отправки. Попробуйте позже.')
               } finally {
