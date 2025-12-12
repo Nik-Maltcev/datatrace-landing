@@ -712,7 +712,7 @@ export default function CoursePage() {
               </Badge>
               <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5">
                 <Shield className="mr-1.5 h-3.5 w-3.5" />
-                Проверка номера после урока 2
+                Проверка номера после урока 4
               </Badge>
               <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 px-3 py-1.5">
                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
@@ -787,7 +787,7 @@ export default function CoursePage() {
           </div>
 
           <div className="order-1 space-y-8 lg:order-2">
-            {completedLessons.has(2) && currentLessonId === 2 && (
+            {completedLessons.has(4) && currentLessonId === 4 && (
               <Card className="border-emerald-200 bg-white shadow-lg" data-phone-check>
                 <CardHeader>
                   <div className="flex items-center space-x-3">
@@ -1040,7 +1040,7 @@ export default function CoursePage() {
                         </Button>
                       ) : (
                         <div className="space-y-3">
-                          {currentLessonId === 2 && (
+                          {currentLessonId === 4 && (
                             <Button
                               onClick={() => {
                                 const checkBlock = document.querySelector('[data-phone-check]')

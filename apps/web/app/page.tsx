@@ -15,8 +15,10 @@ const ptMono = PT_Mono({
 })
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, ArrowRight, Mail, MessageSquare, ShieldCheck } from "lucide-react"
+import { Check, ArrowRight, Mail, MessageSquare, ShieldCheck, BookOpen } from "lucide-react"
 import Link from "next/link"
+import { CyberStatsSlider } from "@/components/cyber-stats-slider"
+import { ScamCasesSlider } from "@/components/scam-cases-slider"
 
 function YandexMetrikaLandingCounter() {
   return (
@@ -556,6 +558,8 @@ export default function DataTraceLanding() {
         </div>
       </section>
 
+      {/* Stats Slider Section */}
+      <CyberStatsSlider />
 
       {/* Description Section */}
       <section className="py-16 bg-gray-50">
@@ -591,6 +595,10 @@ export default function DataTraceLanding() {
           </div>
         </div>
       </section>
+
+      {/* Scam Cases Slider */}
+      <ScamCasesSlider />
+
       {/* Solutions Section */}
       <section id="solutions" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -796,19 +804,19 @@ export default function DataTraceLanding() {
             <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
               <div className="flex items-center justify-center mb-6">
                 <div className="bg-black text-white p-4 rounded-full">
-                  <Mail className="h-8 w-8" />
+                  <BookOpen className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Напишите нам</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Практический курс</h3>
               <p className="text-gray-600 mb-6">
-                Отправьте ваш вопрос на почту поддержки, и мы ответим в течение 24 часов
+                Пройдите наш практический курс по безопасности и научитесь защищать свои данные
               </p>
-              <a
-                href="mailto:support@datatrace.tech"
-                className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+              <Link
+                href="/course"
+                className="inline-flex items-center justify-center bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors w-full"
               >
-                support@datatrace.tech
-              </a>
+                Практический курс
+              </Link>
             </div>
 
             <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
