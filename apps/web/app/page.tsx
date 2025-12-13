@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { PT_Mono } from "next/font/google"
@@ -47,192 +47,6 @@ ym(105574555, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLa
     </>
   )
 }
-
-function InteractiveHeroGraphic() {
-  return (
-    <div className="flex justify-center">
-      <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg aspect-square">
-        <img src="/images/geometric-triangle.png" alt="Geometric Triangle" className="w-full h-full object-contain" />
-      </div>
-    </div>
-  )
-}
-
-const DATA_FLOW_SOURCES = [
-  {
-    code: 'SRC-01',
-    label: 'Телеграм-боты',
-    description: 'Боты-агрегаторы, где появляются свежие сливы личной информации и закрытые форумы.'
-  },
-  {
-    code: 'SRC-02',
-    label: 'OSINT-инструменты',
-    description: 'Поиск по открытым источникам, индексам утечек и историческим дампам.'
-  },
-  {
-    code: 'SRC-03',
-    label: 'Даркнет-форумы',
-    description: 'Мониторинг закрытых площадок с нелегальной продажей украденной информации.'
-  },
-  {
-    code: 'SRC-04',
-    label: 'Партнёры по кибербезопасности',
-    description: 'Обмен данными с вендорами и подтверждение инцидентов.'
-  }
-];
-
-const DATA_FLOW_DESTINATIONS = [
-  {
-    code: 'ACT-01',
-    label: 'Точечное удаление',
-    description: 'Обратная связь владельцам источников и контроль заявок на удаление или деиндексацию.'
-  },
-  {
-    code: 'ACT-02',
-    label: 'Уведомление клиента',
-    description: 'Подробный отчёт об обработанных утечках, статусе и SLA.'
-  },
-  {
-    code: 'ACT-03',
-    label: 'Защита цифрового следа',
-    description: 'Рекомендации по усилению защиты, ротации идентифицирующей информации и смене паролей.'
-  },
-  {
-    code: 'ACT-04',
-    label: 'Мониторинг повторных утечек информации',
-    description: 'Автоматические проверки на повторное появление данных и их удаление или деиндексация.'
-  }
-];
-
-const DATA_FLOW_LEGEND = [
-  'Легитимная проверка',
-  'Аналитика DataTrace',
-  'Удаление и контроль'
-];
-
-
-function DataFlowShowcaseLight() {
-  const dataSources = DATA_FLOW_SOURCES;
-
-  const dataDestinations = DATA_FLOW_DESTINATIONS;
-
-  const legend = DATA_FLOW_LEGEND;
-
-  return (
-    <section className={`relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-emerald-50 py-24 text-slate-900 ${ptMono.className}`}>
-      <div className="absolute inset-0 light-noise-mask opacity-30" />
-      <div className="absolute inset-0 light-grid-overlay" />
-      <div className="absolute inset-0 light-radial" />
-
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="mx-auto max-w-3xl text-center space-y-6">
-          <span className="inline-flex items-center justify-center rounded-full border border-emerald-300/80 bg-white/70 px-5 py-1 text-[11px] uppercase tracking-[0.45em] text-emerald-600 shadow-[0_8px_20px_rgba(34,197,94,0.15)]">
-            легитимное удаление
-          </span>
-          <h2 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            Понимаем, откуда приходят утечки, и бережно закрываем их источники
-          </h2>
-          <p className="text-base text-slate-600">
-            Мы соединяем сигналы от проверенных источников с внутренними протоколами DataTrace, чтобы быстро находить и удалять персональные данные без участия теневых схем.
-          </p>
-        </div>
-
-        <div className="mt-16 grid items-center gap-12 lg:grid-cols-[1fr_auto_1fr]">
-          <div className="space-y-8">
-            {dataSources.map((source, index) => (
-              <div key={source.code} className="group relative flex items-start justify-end gap-6 z-10">
-                <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-l from-emerald-300/70 to-transparent lg:block">
-                  <span
-                    className="trace-line-light"
-                    style={{ animationDelay: `${index * 0.6}s` }}
-                  />
-                </div>
-                <div className="max-w-sm text-right">
-                  <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-400">{source.code}</p>
-                  <p className="mt-2 text-lg text-slate-900">{source.label}</p>
-                  <p className="mt-2 text-sm text-slate-600">{source.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="relative flex w-full items-center justify-center min-h-[260px] sm:min-h-[320px] md:min-h-[360px] lg:min-h-[420px]">
-            <div className="absolute h-[200px] w-[200px] sm:h-[240px] sm:w-[240px] md:h-[280px] md:w-[280px] lg:h-[300px] lg:w-[300px] rounded-[2.5rem] border border-slate-200/80 bg-white/80 backdrop-blur-md shadow-[0_20px_60px_rgba(34,197,94,0.12)]" />
-            <div className="absolute h-[280px] w-[280px] sm:h-[340px] sm:w-[340px] md:h-[380px] md:w-[380px] lg:h-[420px] lg:w-[420px] rounded-full border border-emerald-200/70 blur-sm" />
-            <div className="absolute h-[320px] w-[320px] sm:h-[380px] sm:w-[380px] md:h-[420px] md:w-[420px] lg:h-[480px] lg:w-[480px] rounded-full border border-emerald-100/60" />
-            <div className="relative z-10 flex flex-col items-center gap-3 text-center px-4 sm:px-6">
-              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border border-emerald-400/50 bg-white">
-                <ShieldCheck className="h-8 w-8 sm:h-10 sm:w-10 text-emerald-400" strokeWidth={1.3} />
-              </div>
-              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.4em] sm:tracking-[0.5em] text-emerald-500/70">datatrace</p>
-              <p className="text-sm sm:text-base font-semibold text-slate-900">Легитимное удаление</p>
-              <div className="mt-2 sm:mt-4 grid gap-1 text-[9px] sm:text-[11px] text-slate-500 max-w-[180px] sm:max-w-none">
-                <p>Журнал проверок • Шифрование</p>
-                <p>Контроль повторных утечек</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            {dataDestinations.map((item, index) => (
-              <div key={item.code} className="group relative flex items-start gap-6">
-                <div className="max-w-sm">
-                  <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-400">{item.code}</p>
-                  <p className="mt-2 text-lg text-slate-900">{item.label}</p>
-                  <p className="mt-2 text-sm text-slate-600">{item.description}</p>
-                </div>
-                <div className="hidden relative h-px w-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-r from-emerald-300/70 to-transparent lg:block">
-                  <span
-                    className="trace-line-light"
-                    style={{ animationDelay: `${index * 0.6 + 0.3}s` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600">
-          {legend.map((item) => (
-            <span key={item} className="inline-flex items-center gap-3 rounded-full border border-emerald-200/80 px-4 py-2 bg-white/90 shadow-[0_10px_30px_rgba(34,197,94,0.12)]">
-              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-300 to-lime-200" />
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <style jsx>{`
-        .light-noise-mask {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
-        }
-        .light-grid-overlay {
-          background-image:
-            linear-gradient(to right, rgba(34, 197, 94, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(34, 197, 94, 0.1) 1px, transparent 1px);
-          background-size: 42px 42px;
-          mix-blend-mode: multiply;
-        }
-        .light-radial {
-          background: radial-gradient(circle at center, rgba(34, 197, 94, 0.18), transparent 60%);
-        }
-        .trace-line-light {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.65), transparent);
-          animation: sweep-light 3.6s linear infinite;
-        }
-        @keyframes sweep-light {
-          0% { transform: translateX(-100%); opacity: 0; }
-          25% { opacity: 1; }
-          75% { opacity: 1; }
-          100% { transform: translateX(100%); opacity: 0; }
-        }
-      `}</style>
-    </section>
-  );
-}
-
 
 export default function DataTraceLanding() {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -363,27 +177,37 @@ export default function DataTraceLanding() {
                   {showSolutionsDropdown && (
                     <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                       <div className="py-2">
+                        {/* Links here used to point to #solutions which is now removed,
+                            but keeping navigation links functional as general anchors
+                            or potentially pointing to other sections might be better.
+                            However, user asked to remove "Solutions" block, not necessarily the menu item.
+                            Ideally, we should remove the menu item if the section is gone,
+                            but the prompt was specific about layout blocks.
+                            I'll leave the menu item but maybe just scroll to top or something?
+                            Or let them remain as dead links for now if not instructed to change navbar.
+                            Actually, it's safer to keep them pointing to something that exists or remove them.
+                            Wait, "Блок 'решения' ... убрать".
+                            I will just leave the menu items alone for now to minimize scope creep unless they break.
+                            Since the #solutions section is gone, clicking them will do nothing.
+                            I'll point them to top for now.
+                        */}
                         <Link 
-                          href="#solutions" 
+                          href="#"
                           className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black border-b border-gray-100"
                           onClick={(e) => {
                             e.preventDefault();
-                            document.getElementById('solutions')?.scrollIntoView({ 
-                              behavior: 'smooth' 
-                            });
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                             setShowSolutionsDropdown(false);
                           }}
                         >
                           Обнаружение и удаление скомпрометированной личной информации
                         </Link>
                         <Link 
-                          href="#solutions" 
+                          href="#"
                           className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
                           onClick={(e) => {
                             e.preventDefault();
-                            document.getElementById('solutions')?.scrollIntoView({ 
-                              behavior: 'smooth' 
-                            });
+                             window.scrollTo({ top: 0, behavior: 'smooth' });
                             setShowSolutionsDropdown(false);
                           }}
                         >
@@ -459,14 +283,12 @@ export default function DataTraceLanding() {
               >
                 ГЛАВНАЯ
               </Link>
+              {/* Keeping menu items but removing #solutions anchor */}
               <Link 
-                href="#solutions" 
+                href="#"
                 className="block text-sm font-medium text-gray-700 hover:text-black"
                 onClick={(e) => {
                   e.preventDefault();
-                  document.getElementById('solutions')?.scrollIntoView({ 
-                    behavior: 'smooth' 
-                  });
                   setShowMobileMenu(false);
                 }}
               >
@@ -529,39 +351,23 @@ export default function DataTraceLanding() {
         )}
       </header>
 
-      {/* Hero Section */}
-      <section className="py-20 lg:py-32 overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div>
-                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-black leading-[1.0]">
-                  ИИ-платформа для поиска и удаления скомпрометированной личной информации
-                </h1>
-              </div>
-              <div>
-                <Button
-                  variant="outline"
-                  className="w-full border-black text-black hover:bg-black hover:text-white px-8 py-3 bg-transparent sm:w-auto"
-                  onClick={() => {
-                    document.getElementById('solutions')?.scrollIntoView({
-                      behavior: 'smooth'
-                    });
-                  }}
-                >
-                  {"УЗНАТЬ ПОДРОБНЕЕ"}
-                </Button>
-              </div>
-            </div>
-            <InteractiveHeroGraphic />
-          </div>
-        </div>
-      </section>
+      {/* 1. Scam Cases Slider (Real Stories) - replacing Hero */}
+      <ScamCasesSlider />
 
-      {/* Stats Slider Section */}
+      {/* 2. Button "Оставь заявку на удаление" */}
+      <div className="py-8 bg-white flex justify-center">
+        <Button
+          onClick={() => setShowDeleteModal(true)}
+          className="bg-black text-white px-8 py-6 text-lg rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
+        >
+          Оставь заявку на удаление
+        </Button>
+      </div>
+
+      {/* 3. Threat Statistics */}
       <CyberStatsSlider />
 
-      {/* Description Section */}
+      {/* 4. Description Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
@@ -595,42 +401,6 @@ export default function DataTraceLanding() {
           </div>
         </div>
       </section>
-
-      {/* Scam Cases Slider */}
-      <ScamCasesSlider />
-
-      {/* Solutions Section */}
-      <section id="solutions" className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="mb-12">
-            <div className="inline-block bg-black text-white px-4 py-2 text-sm font-medium">РЕШЕНИЯ</div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className="border-2 border-gray-200 hover:border-black transition-colors">
-              <CardContent className="p-8">
-                <div className="text-4xl font-bold text-black mb-4">01</div>
-                <h3 className="text-2xl font-bold text-black mb-6">Аналитический модуль</h3>
-                <p className="text-gray-700">
-                  Аналитический модуль DataTrace ищет утечки персональных данных по всем доступным источникам и
-                  предоставляет возможность их полного удаления с последующим мониторингом.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-2 border-gray-200 hover:border-black transition-colors">
-              <CardContent className="p-8">
-                <div className="text-4xl font-bold text-black mb-4">02</div>
-                <h3 className="text-2xl font-bold text-black mb-6">ИИ модуль</h3>
-                <p className="text-gray-700">
-                  ИИ модуль DataTrace анализирует репутацию в интернете на основе больших данных, предоставляя
-                  комплексную оценку цифрового следа и репутационных рисков.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      <DataFlowShowcaseLight />
 
       {/* Video Section */}
       <section className="py-20 bg-white">
@@ -897,28 +667,16 @@ export default function DataTraceLanding() {
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link 
-                    href="#solutions" 
+                    href="#"
                     className="hover:text-white"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('solutions')?.scrollIntoView({ 
-                        behavior: 'smooth' 
-                      });
-                    }}
                   >
                     Обнаружение и удаление скомпрометированной личной информации
                   </Link>
                 </li>
                 <li>
                   <Link 
-                    href="#solutions" 
+                    href="#"
                     className="hover:text-white"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById('solutions')?.scrollIntoView({ 
-                        behavior: 'smooth' 
-                      });
-                    }}
                   >
                     Мониторинг глубинного интернета и даркнета
                   </Link>
@@ -1112,7 +870,3 @@ export default function DataTraceLanding() {
     </div>
   )
 }
-
-
-
-
