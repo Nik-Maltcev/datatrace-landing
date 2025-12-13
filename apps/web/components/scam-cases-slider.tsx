@@ -73,7 +73,7 @@ export function ScamCasesSlider() {
           <div className="inline-flex items-center justify-center p-3 mb-4 rounded-full bg-red-100 text-red-600">
             <ShieldAlert className="w-6 h-6" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Реальные истории (Fuckups)</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Реальные истории</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Краткая сводка инцидентов, показывающая последствия действий мошенников и утечек данных.
           </p>
